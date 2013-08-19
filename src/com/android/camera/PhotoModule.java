@@ -1334,6 +1334,9 @@ public class PhotoModule
                     mParameters.getWhiteBalance(), mParameters.getFocusMode(),
                     Integer.toString(mParameters.getExposureCompensation()),
                     mCurrTouchAfAec, mParameters.getAutoExposure());
+        } else if (mFocusManager.isZslEnabled()) {
+            overrideCameraSettings(null, null, mParameters.getFocusMode(),
+                                   null, null, null);
         } else {
             overrideCameraSettings(null, null, null, null, null, null);
         }
@@ -2242,6 +2245,19 @@ public class PhotoModule
             editor.putString(CameraSettings.KEY_PICTURE_FORMAT, mActivity.getString(R.string.pref_camera_picture_format_value_jpeg));
             editor.apply();
 
+            //Try to set CAF for ZSL
+            if(CameraUtil.isSupported(Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,
+                    mParameters.getSupportedFocusModes()) && !mFocusManager.isTouch()) {
+                mFocusManager.overrideFocusMode(Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                mParameters.setFocusMode(Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            } else if (mFocusManager.isTouch()) {
+                mFocusManager.overrideFocusMode(null);
+                mParameters.setFocusMode(mFocusManager.getFocusMode());
+            } else {
+                // If not supported use the current mode
+                mFocusManager.overrideFocusMode(mFocusManager.getFocusMode());
+            }
+
             if(!pictureFormat.equals(PIXEL_FORMAT_JPEG)) {
                      mActivity.runOnUiThread(new Runnable() {
                      public void run() {
@@ -2263,6 +2279,8 @@ public class PhotoModule
             mSnapshotMode = CameraInfo.CAMERA_SUPPORT_MODE_NONZSL;
             mParameters.setCameraMode(0);
             mFocusManager.setZslEnable(false);
+            mFocusManager.overrideFocusMode(null);
+            mParameters.setFocusMode(mFocusManager.getFocusMode());
         }
         // Set face detetction parameter.
         String faceDetection = mPreferences.getString(
