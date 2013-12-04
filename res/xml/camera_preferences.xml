@@ -250,4 +250,10 @@
             camera:entries="@array/pref_camera_longshot_entries"
             camera:entryValues="@array/pref_camera_longshot_entryvalues" />
 
+    <ListPreference
+            camera:key="pref_camera_auto_hdr_key"
+            camera:defaultValue="@string/pref_camera_auto_hdr_default"
+            camera:title="@string/pref_camera_auto_hdr_title"
+            camera:entries="@array/pref_camera_auto_hdr_entries"
+            camera:entryValues="@array/pref_camera_auto_hdr_entryvalues" />
 </PreferenceGroup>

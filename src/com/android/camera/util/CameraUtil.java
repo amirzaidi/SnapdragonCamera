@@ -108,6 +108,7 @@ public class CameraUtil {
     private static final String AUTO_EXPOSURE_LOCK_SUPPORTED = "auto-exposure-lock-supported";
     private static final String AUTO_WHITE_BALANCE_LOCK_SUPPORTED = "auto-whitebalance-lock-supported";
     private static final String VIDEO_SNAPSHOT_SUPPORTED = "video-snapshot-supported";
+    private static final String AUTO_HDR_SUPPORTED = "auto-hdr-supported";
     public static final String SCENE_MODE_HDR = "hdr";
     public static final String TRUE = "true";
     public static final String FALSE = "false";
@@ -127,6 +128,9 @@ public class CameraUtil {
         return TRUE.equals(params.get(AUTO_EXPOSURE_LOCK_SUPPORTED));
     }
 
+    public static boolean isAutoHDRSupported(Parameters params) {
+        return TRUE.equals(params.get(AUTO_HDR_SUPPORTED));
+    }
     public static boolean isAutoWhiteBalanceLockSupported(Parameters params) {
         return TRUE.equals(params.get(AUTO_WHITE_BALANCE_LOCK_SUPPORTED));
     }
