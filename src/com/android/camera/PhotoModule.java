@@ -192,6 +192,7 @@ public class PhotoModule
 
     private static final String PERSIST_LONG_ENABLE = "persist.camera.longshot.enable";
     private static final String PERSIST_LONG_SAVE = "persist.camera.longshot.save";
+    private static final String PERSIST_PREVIEW_RESTART = "persist.camera.feature.restart";
 
     private static final int MINIMUM_BRIGHTNESS = 0;
     private static final int MAXIMUM_BRIGHTNESS = 6;
@@ -213,6 +214,8 @@ public class PhotoModule
     private TextView LeftValue;
     private TextView RightValue;
     private TextView Title;
+
+    private boolean mPreviewRestartSupport = false;
 
     // mCropValue and mSaveUri are used only if isImageCaptureIntent() is true.
     private String mCropValue;
@@ -980,6 +983,7 @@ public class PhotoModule
             mFocusManager.updateFocusUI(); // Ensure focus indicator is hidden.
 
             boolean needRestartPreview = !mIsImageCaptureIntent
+                      && !mPreviewRestartSupport
                       && (mCameraState != LONGSHOT)
                       && (mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL)
                       && (mReceivedSnapNum == mBurstSnapNum);
@@ -1279,6 +1283,13 @@ public class PhotoModule
 
         mBurstSnapNum = mParameters.getInt("num-snaps-per-shutter");
         mReceivedSnapNum = 0;
+        mPreviewRestartSupport = SystemProperties.getBoolean(
+                PERSIST_PREVIEW_RESTART, false);
+        mPreviewRestartSupport &= CameraSettings.isInternalPreviewSupported(
+                mParameters);
+        mPreviewRestartSupport &= (mBurstSnapNum == 1);
+        mPreviewRestartSupport &= PIXEL_FORMAT_JPEG.equalsIgnoreCase(
+                pictureFormat);
 
         // We don't want user to press the button again while taking a
         // multi-second HDR photo.

@@ -111,6 +111,10 @@ public class CameraSettings {
     public static final String KEY_QC_FACE_RECOGNITION = "face-recognition";
     public static final String KEY_QC_DIS_MODE = "dis";
 
+    public static final String KEY_INTERNAL_PREVIEW_RESTART = "internal-restart";
+    private static final String TRUE = "true";
+    private static final String FALSE = "false";
+
     //for flip
     public static final String KEY_QC_PREVIEW_FLIP = "preview-flip";
     public static final String KEY_QC_VIDEO_FLIP = "video-flip";
@@ -818,5 +822,16 @@ public class CameraSettings {
             return YOUTUBE_VIDEO_DURATION * 1000;
         }
         return DEFAULT_VIDEO_DURATION * 1000;
+    }
+
+    public static boolean isInternalPreviewSupported(Parameters params) {
+        boolean ret = false;
+        if (null != params) {
+            String val = params.get(KEY_INTERNAL_PREVIEW_RESTART);
+            if ((null != val) && (TRUE.equals(val))) {
+                ret = true;
+            }
+        }
+        return ret;
     }
 }
