@@ -93,6 +93,7 @@ public class CameraSettings {
     public static final String KEY_DENOISE = "pref_camera_denoise_key";
     public static final String KEY_REDEYE_REDUCTION = "pref_camera_redeyereduction_key";
     public static final String KEY_AE_BRACKET_HDR = "pref_camera_ae_bracket_hdr_key";
+    public static final String KEY_ADVANCED_FEATURES = "pref_camera_advanced_features_key";
 
     public static final String KEY_VIDEO_SNAPSHOT_SIZE = "pref_camera_videosnapsize_key";
     public static final String KEY_VIDEO_HIGH_FRAME_RATE = "pref_camera_hfr_key";
@@ -105,9 +106,15 @@ public class CameraSettings {
     public static final String KEY_DIS = "pref_camera_dis_key";
 
     private static final String KEY_QC_SUPPORTED_AE_BRACKETING_MODES = "ae-bracket-hdr-values";
+    private static final String KEY_QC_SUPPORTED_AF_BRACKETING_MODES = "af-bracket-values";
+    private static final String KEY_QC_SUPPORTED_CF_MODES = "chroma-flash-values";
+    private static final String KEY_QC_SUPPORTED_OZ_MODES = "opti-zoom-values";
     private static final String KEY_QC_SUPPORTED_FACE_RECOGNITION_MODES = "face-recognition-values";
     private static final String KEY_QC_SUPPORTED_DIS_MODES = "dis-values";
     public static final String KEY_QC_AE_BRACKETING = "ae-bracket-hdr";
+    public static final String KEY_QC_AF_BRACKETING = "af-bracket";
+    public static final String KEY_QC_CHROMA_FLASH = "chroma-flash";
+    public static final String KEY_QC_OPTI_ZOOM = "opti-zoom";
     public static final String KEY_QC_FACE_RECOGNITION = "face-recognition";
     public static final String KEY_QC_DIS_MODE = "dis";
 
@@ -246,6 +253,38 @@ public class CameraSettings {
         return split(str);
     }
 
+    public static List<String> getSupportedAdvancedFeatures(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_AF_BRACKETING_MODES);
+        str += ',' + params.get(KEY_QC_SUPPORTED_CF_MODES);
+        str += ',' + params.get(KEY_QC_SUPPORTED_OZ_MODES);
+        return split(str);
+    }
+
+    public static List<String> getSupportedAFBracketingModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_AF_BRACKETING_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedChromaFlashModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_CF_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedOptiZoomModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_OZ_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+
     // Splits a comma delimited string to an ArrayList of String.
     // Return null if the passing string is null or the size is 0.
     private static ArrayList<String> split(String str) {
@@ -294,6 +333,7 @@ public class CameraSettings {
         ListPreference denoise = group.findPreference(KEY_DENOISE);
         ListPreference redeyeReduction = group.findPreference(KEY_REDEYE_REDUCTION);
         ListPreference aeBracketing = group.findPreference(KEY_AE_BRACKET_HDR);
+        ListPreference advancedFeatures = group.findPreference(KEY_ADVANCED_FEATURES);
         ListPreference faceRC = group.findPreference(KEY_FACE_RECOGNITION);
         ListPreference jpegQuality = group.findPreference(KEY_JPEG_QUALITY);
         ListPreference videoSnapSize = group.findPreference(KEY_VIDEO_SNAPSHOT_SIZE);
@@ -376,7 +416,10 @@ public class CameraSettings {
             filterUnsupportedOptions(group,
                     pictureFormat, getSupportedPictureFormatLists());
         }
-
+        if(advancedFeatures != null) {
+            filterUnsupportedOptions(group,
+                    advancedFeatures, getSupportedAdvancedFeatures(mParameters));
+        }
     }
     private void initPreference(PreferenceGroup group) {
         ListPreference videoQuality = group.findPreference(KEY_VIDEO_QUALITY);

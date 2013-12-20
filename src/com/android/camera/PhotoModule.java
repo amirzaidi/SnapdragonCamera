@@ -2115,6 +2115,22 @@ public class PhotoModule
         return mRestartPreview;
     }
 
+    private void qcomUpdateAdvancedFeatures(String ubiFocus,
+                                            String chromaFlash,
+                                            String optiZoom) {
+        if (CameraUtil.isSupported(ubiFocus,
+              CameraSettings.getSupportedAFBracketingModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_QC_AF_BRACKETING, ubiFocus);
+        }
+        if (CameraUtil.isSupported(chromaFlash,
+              CameraSettings.getSupportedChromaFlashModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_QC_CHROMA_FLASH, chromaFlash);
+        }
+        if (CameraUtil.isSupported(optiZoom,
+              CameraSettings.getSupportedOptiZoomModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_QC_OPTI_ZOOM, optiZoom);
+        }
+    }
     private void qcomUpdateCameraParametersPreference() {
         //qcom Related Parameter update
         //Set Brightness.
@@ -2251,6 +2267,41 @@ public class PhotoModule
         if (CameraUtil.isSupported(aeBracketing,
                 CameraSettings.getSupportedAEBracketingModes(mParameters))) {
             mParameters.set(CameraSettings.KEY_QC_AE_BRACKETING, aeBracketing);
+        }
+        // Set Advanced features.
+        String advancedFeature = mPreferences.getString(
+                CameraSettings.KEY_ADVANCED_FEATURES,
+                mActivity.getString(R.string.pref_camera_advanced_feature_default));
+        Log.v(TAG, " advancedFeature value =" + advancedFeature);
+
+        if(advancedFeature != null) {
+             String ubiFocusOff = mActivity.getString(R.string.
+                 pref_camera_advanced_feature_value_ubifocus_off);
+             String chromaFlashOff = mActivity.getString(R.string.
+                 pref_camera_advanced_feature_value_chromaflash_off);
+             String optiZoomOff = mActivity.getString(R.string.
+                 pref_camera_advanced_feature_value_optizoom_off);
+
+             if (advancedFeature.equals(mActivity.getString(R.string.
+                 pref_camera_advanced_feature_value_ubifocus_on))) {
+                 qcomUpdateAdvancedFeatures(advancedFeature,
+                                           chromaFlashOff,
+                                           optiZoomOff);
+            } else if (advancedFeature.equals(mActivity.getString(R.string.
+                 pref_camera_advanced_feature_value_chromaflash_on))) {
+                 qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                           advancedFeature,
+                                           optiZoomOff);
+            } else if (advancedFeature.equals(mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_optizoom_on))) {
+                qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                           chromaFlashOff,
+                                           advancedFeature);
+            } else {
+                qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                           chromaFlashOff,
+                                           optiZoomOff);
+            }
         }
         // Set auto exposure parameter.
         String autoExposure = mPreferences.getString(
