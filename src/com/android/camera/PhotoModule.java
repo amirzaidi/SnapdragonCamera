@@ -724,6 +724,9 @@ public class PhotoModule
             s.setListener(this);
         }
         mNamedImages = new NamedImages();
+        if (!mIsImageCaptureIntent) {
+            mUI.showSwitcher();
+        }
         mUI.initializeSecondTime(mParameters);
         keepMediaProviderInstance();
     }
