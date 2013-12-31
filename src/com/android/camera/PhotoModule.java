@@ -1348,11 +1348,18 @@ public class PhotoModule
     }
 
     private void updateSceneMode() {
-        // If scene mode is set, we cannot set flash mode, white balance, and
-        // focus mode, instead, we read it from driver
+        // If scene mode is set, for flash mode, white balance and focus mode
+        // read settings from preferences so we retain user preferences.
         if (!Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
-            overrideCameraSettings(mParameters.getFlashMode(),
-                    mParameters.getWhiteBalance(), mParameters.getFocusMode(),
+            String flashMode = mPreferences.getString(
+                    CameraSettings.KEY_FLASH_MODE,
+                    mActivity.getString(R.string.pref_camera_flashmode_default));
+            String whiteBalance = mPreferences.getString(
+                    CameraSettings.KEY_WHITE_BALANCE,
+                    mActivity.getString(R.string.pref_camera_whitebalance_default));
+            String focusMode = mFocusManager.getFocusMode();
+
+            overrideCameraSettings(flashMode, whiteBalance, focusMode,
                     Integer.toString(mParameters.getExposureCompensation()),
                     mCurrTouchAfAec, mParameters.getAutoExposure());
         } else if (mFocusManager.isZslEnabled()) {
