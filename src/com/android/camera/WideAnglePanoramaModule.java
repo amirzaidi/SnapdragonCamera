@@ -130,7 +130,6 @@ public class WideAnglePanoramaModule
     private int mDeviceOrientation;
     private int mDeviceOrientationAtCapture;
     private int mCameraOrientation;
-    private int mPanoAngle;
     private int mOrientationCompensation;
 
     private SoundClips.Player mSoundPlayer;
@@ -657,9 +656,9 @@ public class WideAnglePanoramaModule
         if (mUsingFrontCamera) {
             // mCameraOrientation is negative with respect to the front facing camera.
             // See document of android.hardware.Camera.Parameters.setRotation.
-            orientation = (mDeviceOrientationAtCapture - mCameraOrientation - mPanoAngle + 360) % 360;
+            orientation = (mDeviceOrientationAtCapture - mCameraOrientation - 360) % 360;
         } else {
-            orientation = (mDeviceOrientationAtCapture + mCameraOrientation - mPanoAngle) % 360;
+            orientation = (mDeviceOrientationAtCapture + mCameraOrientation) % 360;
         }
         return orientation;
     }
@@ -1005,8 +1004,7 @@ public class WideAnglePanoramaModule
             // as Panoroma will add 90 degree rotation compensation during
             // postprocessing, we need to consider both camera mount angle and
             // this compensation angle
-            mPanoAngle = (mCameraOrientation - 90 + 360) % 360;
-            mCameraDevice.setDisplayOrientation(mPanoAngle);
+            mCameraDevice.setDisplayOrientation(0);
 
             if (mCameraTexture != null)
             mCameraTexture.setOnFrameAvailableListener(this);
