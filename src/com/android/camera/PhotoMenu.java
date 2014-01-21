@@ -99,7 +99,8 @@ public class PhotoMenu extends PieController
                 CameraSettings.KEY_JPEG_QUALITY,
                 CameraSettings.KEY_ZSL,
                 CameraSettings.KEY_TIMER,
-                CameraSettings.KEY_TIMER_SOUND_EFFECTS
+                CameraSettings.KEY_TIMER_SOUND_EFFECTS,
+                CameraSettings.KEY_CAMERA_SAVEPATH
         };
 
         mOtherKeys2 = new String[] {
