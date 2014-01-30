@@ -661,7 +661,7 @@ public class PhotoModule
     @Override
     public void resizeForPreviewAspectRatio() {
         setPreviewFrameLayoutCameraOrientation();
-        Size size = mParameters.getPictureSize();
+        Size size = mParameters.getPreviewSize();
         Log.e(TAG,"Width = "+ size.width+ "Height = "+size.height);
         mUI.setAspectRatio((float) size.width / size.height);
     }
@@ -2550,10 +2550,6 @@ public class PhotoModule
             mRestartPreview = true;
         }
 
-        if(optimalSize.width != 0 && optimalSize.height != 0) {
-            mUI.updatePreviewAspectRatio((float) optimalSize.width
-                    / (float) optimalSize.height);
-        }
         Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
 
         // Since changing scene mode may change supported values, set scene mode
