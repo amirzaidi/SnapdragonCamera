@@ -1370,26 +1370,31 @@ public class PhotoModule
 
             overrideCameraSettings(flashMode, whiteBalance, focusMode,
                     Integer.toString(mParameters.getExposureCompensation()),
-                    mCurrTouchAfAec, mParameters.getAutoExposure());
+                    mCurrTouchAfAec, mParameters.getAutoExposure(),
+                    Integer.toString(mParameters.getSaturation()),
+                    Integer.toString(mParameters.getContrast()));
         } else if (mFocusManager.isZslEnabled()) {
             overrideCameraSettings(null, null, mParameters.getFocusMode(),
-                                   null, null, null);
+                                   null, null, null, null, null);
         } else {
-            overrideCameraSettings(null, null, null, null, null, null);
+            overrideCameraSettings(null, null, null, null, null, null, null, null);
         }
     }
 
     private void overrideCameraSettings(final String flashMode,
             final String whiteBalance, final String focusMode,
             final String exposureMode, final String touchMode,
-            final String autoExposure) {
+            final String autoExposure, final String saturation,
+            final String contrast) {
         mUI.overrideSettings(
                 CameraSettings.KEY_FLASH_MODE, flashMode,
                 CameraSettings.KEY_WHITE_BALANCE, whiteBalance,
                 CameraSettings.KEY_FOCUS_MODE, focusMode,
                 CameraSettings.KEY_EXPOSURE, exposureMode,
                 CameraSettings.KEY_TOUCH_AF_AEC, touchMode,
-                CameraSettings.KEY_AUTOEXPOSURE, autoExposure);
+                CameraSettings.KEY_AUTOEXPOSURE, autoExposure,
+                CameraSettings.KEY_SATURATION, saturation,
+                CameraSettings.KEY_CONTRAST, contrast);
     }
 
     private void loadCameraPreferences() {
