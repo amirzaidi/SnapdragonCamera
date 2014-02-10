@@ -296,6 +296,7 @@ public class VideoModule implements CameraModule,
     private int videoHeight;
     boolean mUnsupportedResolution = false;
     private boolean mUnsupportedHFRVideoSize = false;
+    private boolean mUnsupportedHSRVideoSize = false;
     private boolean mUnsupportedHFRVideoCodec = false;
 
     // This Handler is used to post message back onto the main thread of the
@@ -1438,6 +1439,13 @@ public class VideoModule implements CameraModule,
             return;
         }
 
+        if (mUnsupportedHSRVideoSize == true) {
+            Log.e(TAG, "Unsupported HSR and video size combinations");
+            Toast.makeText(mActivity,R.string.error_app_unsupported_hsr, Toast.LENGTH_SHORT).show();
+            mStartRecPending = false;
+            return;
+        }
+
         if( mUnsupportedHFRVideoCodec == true) {
             Log.e(TAG, "Unsupported HFR and video codec combinations");
             Toast.makeText(mActivity, R.string.error_app_unsupported_hfr_codec,
@@ -1780,7 +1788,8 @@ public class VideoModule implements CameraModule,
         String HighFrameRate = mPreferences.getString(
             CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
             mActivity. getString(R.string.pref_camera_hfr_default));
-        if(!("off".equals(HighFrameRate))){
+
+        if(!("off".equals(HighFrameRate)) && !("hsr".equals(HighFrameRate))){
             mUnsupportedHFRVideoSize = true;
             String hfrsize = videoWidth+"x"+videoHeight;
             Log.v(TAG, "current set resolution is : "+hfrsize);
@@ -1810,10 +1819,47 @@ public class VideoModule implements CameraModule,
         }
         if (isSupported(HighFrameRate,
                 mParameters.getSupportedVideoHighFrameRateModes()) &&
-                !mUnsupportedHFRVideoSize) {
+                !mUnsupportedHFRVideoSize &&
+                !("hsr".equals(HighFrameRate))) {
             mParameters.setVideoHighFrameRate(HighFrameRate);
-            } else
+            mParameters.set("video-hsr", "off");
+        }
+        else {
             mParameters.setVideoHighFrameRate("off");
+        }
+        mUnsupportedHSRVideoSize = false;
+
+        if (("hsr".equals(HighFrameRate))) {
+            mUnsupportedHSRVideoSize = true;
+            String hsrsize = videoWidth+"x"+videoHeight;
+            Log.v(TAG, "current set resolution is : "+hsrsize);
+            try {
+                Size size = null;
+                if (isSupported("120",mParameters.getSupportedVideoHighFrameRateModes())) {
+                    int index = mParameters.getSupportedVideoHighFrameRateModes().indexOf(
+                        "120");
+                    size = mParameters.getSupportedHfrSizes().get(index);
+                }
+                if (size != null) {
+                    Log.v(TAG, "supported hsr size : "+ size.width+ " "+size.height);
+                    if (videoWidth <= size.width && videoHeight <= size.height) {
+                        mUnsupportedHSRVideoSize = false;
+                        Log.v(TAG,"Current hsr resolution is supported");
+                    }
+                }
+            } catch (NullPointerException e) {
+                Log.e(TAG, "supported hfr sizes is null");
+            }
+
+            if (mUnsupportedHSRVideoSize) Log.v(TAG,"Unsupported hsr resolution");
+        }
+
+        if (("hsr".equals(HighFrameRate)) && !mUnsupportedHSRVideoSize) {
+            mParameters.set("video-hsr", "on");
+        }
+        else {
+            mParameters.set("video-hsr", "off");
+        }
 
         // Read Flip mode from adb command
         //value: 0(default) - FLIP_MODE_OFF

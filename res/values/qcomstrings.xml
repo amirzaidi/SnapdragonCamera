@@ -197,6 +197,12 @@
      <!-- The message is shown in dialog when the app encounters an unsupported resolution for HFR mode -->
      <string name="error_app_unsupported_hfr">HFR is not supported for selected resolution</string>
 
+     <!-- The message is shown in dialog when the app
+         encounters an unsupported resolution for HSR mode -->
+     <string name="error_app_unsupported_hsr">
+         HSR(120 FPS) is not supported for selected resolution
+     </string>
+
      <!-- The message is shown in dialog when the app encounters an unsupported video codec for HFR mode -->
      <string name="error_app_unsupported_hfr_codec">Only H264 video encoding is supported when HFR is ON</string>
 
@@ -243,15 +249,17 @@
 
      <!-- Settings screen, hfr radio button choices -->
      <string name="pref_camera_hfr_entry_off">Off</string>
-     <string name="pref_camera_hfr_entry_2x">60</string>
-     <string name="pref_camera_hfr_entry_3x">90</string>
-     <string name="pref_camera_hfr_entry_4x">120</string>
+     <string name="pref_camera_hfr_entry_2x">HFR 60</string>
+     <string name="pref_camera_hfr_entry_3x">HFR 90</string>
+     <string name="pref_camera_hfr_entry_4x">HFR 120</string>
+     <string name="pref_camera_hfr_entry_hsr">HSR 120</string>
 
      <!-- HFR entry values. Do not translate. -->
      <string name="pref_camera_hfr_value_off">off</string>
      <string name="pref_camera_hfr_value_2x">60</string>
      <string name="pref_camera_hfr_value_3x">90</string>
      <string name="pref_camera_hfr_value_4x">120</string>
+     <string name="pref_camera_hfr_value_hsr">hsr</string>
 
         <!-- Denoise Settings screen, setting title text -->
     <string name="pref_camera_denoise_title">Wavelet Denoise Mode</string>
