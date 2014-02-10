@@ -343,6 +343,7 @@ public class CameraSettings {
         ListPreference videoSnapSize = group.findPreference(KEY_VIDEO_SNAPSHOT_SIZE);
         ListPreference videoHdr = group.findPreference(KEY_VIDEO_HDR);
         ListPreference pictureFormat = group.findPreference(KEY_PICTURE_FORMAT);
+        ListPreference hfr = group.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
 
         if (touchAfAec != null) {
             filterUnsupportedOptions(group,
@@ -420,6 +421,12 @@ public class CameraSettings {
             filterUnsupportedOptions(group,
                     pictureFormat, getSupportedPictureFormatLists());
         }
+
+        if (hfr != null) {
+            filterUnsupportedOptions(group,
+                    hfr, mParameters.getSupportedVideoHighFrameRateModes());
+        }
+
         if(advancedFeatures != null) {
             filterUnsupportedOptions(group,
                     advancedFeatures, getSupportedAdvancedFeatures(mParameters));
