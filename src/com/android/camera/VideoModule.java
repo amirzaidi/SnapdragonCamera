@@ -166,8 +166,6 @@ public class VideoModule implements CameraModule,
 
     private LocationManager mLocationManager;
     private OrientationManager mOrientationManager;
-    private static final String KEY_PREVIEW_FORMAT = "preview-format";
-    private static final String QC_FORMAT_NV12_VENUS = "nv12-venus";
     private int mPendingSwitchCameraId;
     private final Handler mHandler = new MainHandler();
     private VideoUI mUI;
@@ -466,7 +464,8 @@ public class VideoModule implements CameraModule,
 
     private void takeASnapshot() {
         // Only take snapshots if video snapshot is supported by device
-        if (CameraUtil.isVideoSnapshotSupported(mParameters) && !mIsVideoCaptureIntent) {
+        if (CameraUtil.isVideoSnapshotSupported(mParameters) && !mIsVideoCaptureIntent
+            && !is4KEnabled()) {
             if (!mMediaRecorderRecording || mPaused || mSnapshotInProgress) {
                 return;
             }
@@ -778,7 +777,7 @@ public class VideoModule implements CameraModule,
             return;
         }
         mParameters = mCameraDevice.getParameters();
-        if (mParameters.getSupportedVideoSizes() == null || is4KEnabled()) {
+        if (mParameters.getSupportedVideoSizes() == null) {
             mDesiredPreviewWidth = mProfile.videoFrameWidth;
             mDesiredPreviewHeight = mProfile.videoFrameHeight;
         } else { // Driver supports separates outputs for preview and video.
@@ -1779,11 +1778,7 @@ public class VideoModule implements CameraModule,
             Log.v(TAG, "preview format set to YV12");
             mParameters.setPreviewFormat (ImageFormat.YV12);
         }
-       // if 4K recoding is enabled, set preview format to NV12_VENUS
-       if (is4KEnabled()) {
-           Log.v(TAG, "4K enabled, preview format set to NV12_VENUS");
-           mParameters.set(KEY_PREVIEW_FORMAT, QC_FORMAT_NV12_VENUS);
-       }
+
         // Set High Frame Rate.
         String HighFrameRate = mPreferences.getString(
             CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
