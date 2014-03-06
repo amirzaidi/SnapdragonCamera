@@ -494,6 +494,8 @@ public class PhotoModule
         Title = (TextView)mRootView.findViewById(R.id.skintonetitle);
         RightValue = (TextView)mRootView.findViewById(R.id.skintoneright);
         LeftValue = (TextView)mRootView.findViewById(R.id.skintoneleft);
+        Storage.setSaveSDCard(
+            mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
 
     }
 
@@ -1712,6 +1714,12 @@ public class PhotoModule
             Log.v(TAG, "On resume.");
             onResumeTasks();
         }
+        mHandler.post(new Runnable(){
+            @Override
+            public void run(){
+                mActivity.updateStorageSpaceAndHint();
+            }
+        });
     }
 
     private void onResumeTasks() {
@@ -2811,6 +2819,9 @@ public class PhotoModule
                 disableSkinToneSeekBar();
             }
         }
+        Storage.setSaveSDCard(
+            mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
+        mActivity.updateStorageSpaceAndHint();
     }
 
     @Override

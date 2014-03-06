@@ -219,6 +219,12 @@
     <!-- Text followed by a checkbox to turn on/off sound effects during the countdown. [CHAR LIMIT = 24]-->
     <string name="pref_camera_timer_sound_title">Beep during countdown</string>
 
+    <!-- Entry of camera save path -->
+    <string name="pref_camera_savepath_title">Storage Position</string>
+    <string name="pref_camera_savepath_default">0</string>
+    <string name="pref_camera_savepath_entry_0">Phone</string>
+    <string name="pref_camera_savepath_entry_1">SD Card</string>
+
     <!-- Entry of a on/off setting. The setting is turned off. [CHAR LIMIT=15] -->
     <string name="setting_off">Off</string>
     <!-- Entry of a on/off setting. The setting is turned on. [CHAR LIMIT=15] -->

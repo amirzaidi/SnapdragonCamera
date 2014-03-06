@@ -27,6 +27,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 
+import com.android.camera.SDCard;
 import com.android.camera.Storage;
 import com.android.camera.app.PlaceholderManager;
 import com.android.camera.ui.FilmStripView.ImageData;
@@ -41,7 +42,7 @@ public class CameraDataAdapter implements LocalDataAdapter {
     private static final String TAG = "CAM_CameraDataAdapter";
 
     private static final int DEFAULT_DECODE_SIZE = 1600;
-    private static final String[] CAMERA_PATH = { Storage.DIRECTORY + "%" };
+    private static final String[] CAMERA_PATH = { Storage.DIRECTORY + "/%" ,SDCard.instance().getDirectory() + "/%"};
 
     private LocalDataList mImages;
 
@@ -135,7 +136,8 @@ public class CameraDataAdapter implements LocalDataAdapter {
     public void addNewVideo(ContentResolver cr, Uri uri) {
         Cursor c = cr.query(uri,
                 LocalMediaData.VideoData.QUERY_PROJECTION,
-                MediaStore.Images.Media.DATA + " like ? ", CAMERA_PATH,
+                MediaStore.Video.Media.DATA + " like ? or " +
+                MediaStore.Video.Media.DATA + " like ? ", CAMERA_PATH,
                 LocalMediaData.VideoData.QUERY_ORDER);
         if (c == null || !c.moveToFirst()) {
             return;
@@ -161,6 +163,7 @@ public class CameraDataAdapter implements LocalDataAdapter {
     public void addNewPhoto(ContentResolver cr, Uri uri) {
         Cursor c = cr.query(uri,
                 LocalMediaData.PhotoData.QUERY_PROJECTION,
+                MediaStore.Images.Media.DATA + " like ? or " +
                 MediaStore.Images.Media.DATA + " like ? ", CAMERA_PATH,
                 LocalMediaData.PhotoData.QUERY_ORDER);
         if (c == null || !c.moveToFirst()) {
@@ -285,6 +288,7 @@ public class CameraDataAdapter implements LocalDataAdapter {
             Cursor c = resolver[0].query(
                     LocalMediaData.PhotoData.CONTENT_URI,
                     LocalMediaData.PhotoData.QUERY_PROJECTION,
+                    MediaStore.Images.Media.DATA + " like ? or " +
                     MediaStore.Images.Media.DATA + " like ? ", CAMERA_PATH,
                     LocalMediaData.PhotoData.QUERY_ORDER);
             if (c != null && c.moveToFirst()) {
@@ -314,6 +318,7 @@ public class CameraDataAdapter implements LocalDataAdapter {
             c = resolver[0].query(
                     LocalMediaData.VideoData.CONTENT_URI,
                     LocalMediaData.VideoData.QUERY_PROJECTION,
+                    MediaStore.Video.Media.DATA + " like ? or " +
                     MediaStore.Video.Media.DATA + " like ? ", CAMERA_PATH,
                     LocalMediaData.VideoData.QUERY_ORDER);
             if (c != null && c.moveToFirst()) {
