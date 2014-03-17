@@ -568,6 +568,7 @@
     <string-array name="pref_camera_advanced_features_entries" translatable="false">
         <item>@string/pref_camera_advanced_feature_entry_none</item>
         <item>@string/pref_camera_advanced_feature_entry_ubifocus</item>
+        <item>@string/pref_camera_advanced_feature_entry_refocus</item>
         <item>@string/pref_camera_advanced_feature_entry_chromaflash</item>
         <item>@string/pref_camera_advanced_feature_entry_optizoom</item>
     </string-array>
@@ -575,6 +576,7 @@
     <string-array name="pref_camera_advanced_features_entryvalues" translatable="false">
         <item>@string/pref_camera_advanced_feature_value_none</item>
         <item>@string/pref_camera_advanced_feature_value_ubifocus_on</item>
+        <item>@string/pref_camera_advanced_feature_value_refocus_on</item>
         <item>@string/pref_camera_advanced_feature_value_chromaflash_on</item>
         <item>@string/pref_camera_advanced_feature_value_optizoom_on</item>
     </string-array>
