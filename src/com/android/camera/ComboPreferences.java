@@ -105,6 +105,7 @@ public class ComboPreferences implements
         movePrefFrom(prefMap, CameraSettings.KEY_CAMERA_FIRST_USE_HINT_SHOWN, src);
         movePrefFrom(prefMap, CameraSettings.KEY_VIDEO_FIRST_USE_HINT_SHOWN, src);
         movePrefFrom(prefMap, CameraSettings.KEY_VIDEO_EFFECT, src);
+        movePrefFrom(prefMap, CameraSettings.KEY_CAMERA_SAVEPATH, src);
     }
 
     public static String[] getSharedPreferencesNames(Context context) {
@@ -151,7 +152,8 @@ public class ComboPreferences implements
                 || key.equals(CameraSettings.KEY_VIDEO_EFFECT)
                 || key.equals(CameraSettings.KEY_TIMER)
                 || key.equals(CameraSettings.KEY_TIMER_SOUND_EFFECTS)
-                || key.equals(CameraSettings.KEY_PHOTOSPHERE_PICTURESIZE);
+                || key.equals(CameraSettings.KEY_PHOTOSPHERE_PICTURESIZE)
+                || key.equals(CameraSettings.KEY_CAMERA_SAVEPATH);
     }
 
     @Override
