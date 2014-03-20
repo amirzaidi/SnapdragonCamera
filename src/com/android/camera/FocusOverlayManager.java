@@ -420,6 +420,7 @@ public class FocusOverlayManager {
     }
 
     public void onCameraReleased() {
+        mTouchAFRunning = false;
         onPreviewStopped();
     }
 
