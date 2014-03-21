@@ -278,30 +278,43 @@ public class PhotoMenu extends PieController
      String optiZoomOn = mActivity.getString(R.string.
          pref_camera_advanced_feature_value_optizoom_on);
 
-     if ((advancedFeatures != null) && (advancedFeatures.equals(ubiFocusOn) ||
-             advancedFeatures.equals(chromaFlashOn) ||
-             advancedFeatures.equals(ubiFocusOn))) {
-         popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
-         popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
-         popup3.setPreferenceEnabled(CameraSettings.KEY_AE_BRACKET_HDR,false);
-         popup3.setPreferenceEnabled(CameraSettings.KEY_REDEYE_REDUCTION,false);
-         popup3.setPreferenceEnabled(CameraSettings.KEY_EXPOSURE,false);
-         popup2.setPreferenceEnabled(CameraSettings.KEY_COLOR_EFFECT,false);
-         popup2.setPreferenceEnabled(CameraSettings.KEY_TOUCH_AF_AEC,false);
-         popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE,false);
+     if ((zsl != null) && Parameters.ZSL_OFF.equals(zsl)) {
+         popup3.overrideSettings(CameraSettings.KEY_ADVANCED_FEATURES,
+                 mActivity.getString(R.string.pref_camera_advanced_feature_default));
 
+         popup3.setPreferenceEnabled(CameraSettings.KEY_ADVANCED_FEATURES,false);
          if (mHdrItem != null) {
-            mHdrItem.setEnabled(false);
+             mHdrItem.setEnabled(true);
          }
          if (mHdrPlusItem != null) {
-            mHdrPlusItem.setEnabled(false);
+             mHdrPlusItem.setEnabled(true);
          }
      } else {
-         if (mHdrItem != null) {
-            mHdrItem.setEnabled(true);
-         }
-         if (mHdrPlusItem != null) {
-            mHdrPlusItem.setEnabled(true);
+         if ((advancedFeatures != null) && (advancedFeatures.equals(ubiFocusOn) ||
+                 advancedFeatures.equals(chromaFlashOn) ||
+                 advancedFeatures.equals(ubiFocusOn))) {
+             popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
+             popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
+             popup3.setPreferenceEnabled(CameraSettings.KEY_AE_BRACKET_HDR,false);
+             popup3.setPreferenceEnabled(CameraSettings.KEY_REDEYE_REDUCTION,false);
+             popup3.setPreferenceEnabled(CameraSettings.KEY_EXPOSURE,false);
+             popup2.setPreferenceEnabled(CameraSettings.KEY_COLOR_EFFECT,false);
+             popup2.setPreferenceEnabled(CameraSettings.KEY_TOUCH_AF_AEC,false);
+             popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE,false);
+
+             if (mHdrItem != null) {
+                mHdrItem.setEnabled(false);
+             }
+             if (mHdrPlusItem != null) {
+                mHdrPlusItem.setEnabled(false);
+             }
+         } else {
+             if (mHdrItem != null) {
+                mHdrItem.setEnabled(true);
+             }
+             if (mHdrPlusItem != null) {
+                mHdrPlusItem.setEnabled(true);
+             }
          }
      }
 

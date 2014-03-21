@@ -258,10 +258,11 @@ public class CameraSettings {
         return split(str);
     }
 
-    public static List<String> getSupportedAdvancedFeatures(Parameters params) {
+    public List<String> getSupportedAdvancedFeatures(Parameters params) {
         String str = params.get(KEY_QC_SUPPORTED_AF_BRACKETING_MODES);
         str += ',' + params.get(KEY_QC_SUPPORTED_CF_MODES);
         str += ',' + params.get(KEY_QC_SUPPORTED_OZ_MODES);
+        str += ',' + mContext.getString(R.string.pref_camera_advanced_feature_default);
         return split(str);
     }
 
