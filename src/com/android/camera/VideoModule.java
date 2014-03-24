@@ -30,6 +30,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.graphics.ImageFormat;
+import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
@@ -508,6 +509,36 @@ public class VideoModule implements CameraModule,
         // Remove the video quality preference setting when the quality is given in the intent.
         mPreferenceGroup = filterPreferenceScreenByIntent(
                 settings.getPreferenceGroup(R.xml.video_preferences));
+
+        int numOfCams = Camera.getNumberOfCameras();
+        int backCamId = CameraHolder.instance().getBackCameraId();
+        int frontCamId = CameraHolder.instance().getFrontCameraId();
+        // We need to swap the list preference contents if back camera and front camera
+        // IDs are not 0 and 1 respectively
+        if( (numOfCams == 2) && ((backCamId != CameraInfo.CAMERA_FACING_BACK)
+                || (frontCamId != CameraInfo.CAMERA_FACING_FRONT))) {
+            Log.e(TAG,"loadCameraPreferences() updating camera_id pref");
+
+            IconListPreference switchIconPref =
+                    (IconListPreference)mPreferenceGroup.findPreference(
+                    CameraSettings.KEY_CAMERA_ID);
+
+            int[] iconIds = {R.drawable.ic_switch_front, R.drawable.ic_switch_back};
+            switchIconPref.setIconIds(iconIds);
+
+            String[] entries = {mActivity.getResources().getString(
+                    R.string.pref_camera_id_entry_front), mActivity.getResources().
+                    getString(R.string.pref_camera_id_entry_back)};
+            switchIconPref.setEntries(entries);
+
+            String[] labels = {mActivity.getResources().getString(
+                    R.string.pref_camera_id_label_front), mActivity.getResources().
+                    getString(R.string.pref_camera_id_label_back)};
+            switchIconPref.setLabels(labels);
+
+            int[] largeIconIds = {R.drawable.ic_switch_front, R.drawable.ic_switch_back};
+            switchIconPref.setLargeIconIds(largeIconIds);
+        }
     }
 
     private void initializeVideoControl() {

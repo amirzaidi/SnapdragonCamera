@@ -704,12 +704,15 @@ public class CameraSettings {
 
         int n = CameraHolder.instance().getNumberOfCameras();
         if (cameraId < 0 || cameraId >= n) {
-            writePreferredCameraId(pref, 0);
+            cameraId = 0;
         }
+        writePreferredCameraId(pref, cameraId);
     }
 
     public static int readPreferredCameraId(SharedPreferences pref) {
-        return Integer.parseInt(pref.getString(KEY_CAMERA_ID, "0"));
+        String rearCameraId = Integer.toString(
+                CameraHolder.instance().getBackCameraId());
+        return Integer.parseInt(pref.getString(KEY_CAMERA_ID, rearCameraId));
     }
 
     public static void writePreferredCameraId(SharedPreferences pref,
