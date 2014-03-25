@@ -261,6 +261,9 @@ public class PhotoMenu extends PieController
      if ((faceDetection != null) && !Parameters.FACE_DETECTION_ON.equals(faceDetection)){
          popup2.setPreferenceEnabled(CameraSettings.KEY_FACE_RECOGNITION,false);
      }
+     if (mListener != null) {
+         mListener.onSharedPreferenceChanged();
+     }
      }
 
     public void popupDismissed() {
