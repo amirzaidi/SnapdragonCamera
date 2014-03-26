@@ -114,7 +114,7 @@
     <!-- Settings screen, setting title text for ZSL-->
     <string name="pref_camera_zsl_title">ZSL</string>
 
-    <string name="pref_camera_zsl_default" translatable="false">off</string>
+    <string name="pref_camera_zsl_default" translatable="false">on</string>
 
          <!-- Default selectable zone af setting. Do not translate. -->
      <string name="pref_camera_selectablezoneaf_default">auto</string>
