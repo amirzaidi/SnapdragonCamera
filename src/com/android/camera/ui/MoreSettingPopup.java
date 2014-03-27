@@ -86,10 +86,8 @@ public class MoreSettingPopup extends AbstractSettingPopup
             int viewLayoutId = getSettingLayoutId(pref);
             InLineSettingItem view = (InLineSettingItem)convertView;
 
-            if (view == null) {
-                view = (InLineSettingItem)
-                        mInflater.inflate(viewLayoutId, parent, false);
-            }
+            view = (InLineSettingItem)
+                    mInflater.inflate(viewLayoutId, parent, false);
 
             view.initialize(pref); // no init for restore one
             view.setSettingChangedListener(MoreSettingPopup.this);
