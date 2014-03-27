@@ -339,8 +339,8 @@
     <string name="pref_camera_touchafaec_entry_off">Off</string>
     <string name="pref_camera_touchafaec_entry_on">On</string>
 
-    <!-- Select DIS title -->
-    <string name="pref_camera_dis_title">DIS</string>
+    <!-- Select IS title -->
+    <string name="pref_camera_dis_title">IS</string>
     <string name="pref_camera_dis_default">disable</string>
 
     <!-- DIS choices -->
