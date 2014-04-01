@@ -292,7 +292,7 @@ public class PhotoMenu extends PieController
      } else {
          if ((advancedFeatures != null) && (advancedFeatures.equals(ubiFocusOn) ||
                  advancedFeatures.equals(chromaFlashOn) ||
-                 advancedFeatures.equals(ubiFocusOn))) {
+                 advancedFeatures.equals(optiZoomOn))) {
              popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
              popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
              popup3.setPreferenceEnabled(CameraSettings.KEY_AE_BRACKET_HDR,false);
