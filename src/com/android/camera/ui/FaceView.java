@@ -233,7 +233,7 @@ public class FaceView extends View
                     Log.e(TAG, "blink: (" + face.getLeftEyeBlinkDegree()+ ", " +
                         face.getRightEyeBlinkDegree() + ")");
                     if (face.leftEye != null) {
-                        point[0] = face.leftEye.x + dx;
+                        point[0] = face.leftEye.x;
                         point[1] = face.leftEye.y-delta_y/2;
                         point[2] = face.leftEye.x;
                         point[3] = face.leftEye.y+delta_y/2;
