@@ -251,6 +251,10 @@ public class PhotoMenu extends PieController
          popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
          popup2.setPreferenceEnabled(CameraSettings.KEY_AUTOEXPOSURE,false);
          popup2.setPreferenceEnabled(CameraSettings.KEY_TOUCH_AF_AEC,false);
+         popup2.setPreferenceEnabled(CameraSettings.KEY_SATURATION,false);
+         popup2.setPreferenceEnabled(CameraSettings.KEY_CONTRAST,false);
+         popup2.setPreferenceEnabled(CameraSettings.KEY_SHARPNESS,false);
+         popup2.setPreferenceEnabled(CameraSettings.KEY_COLOR_EFFECT,false);
          popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
          popup3.setPreferenceEnabled(CameraSettings.KEY_WHITE_BALANCE,false);
          popup3.setPreferenceEnabled(CameraSettings.KEY_EXPOSURE,false);
