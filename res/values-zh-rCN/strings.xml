@@ -168,7 +168,7 @@
     <string name="pref_camera_scenemode_entry_sunset" msgid="5884302914893488509">"日落"</string>
     <string name="pref_camera_scenemode_entry_party" msgid="401232668169066415">"派对"</string>
     <string name="pref_camera_scenemode_label_auto" msgid="2874586883608401615">"无"</string>
-    <string name="pref_camera_scenemode_label_action" msgid="1822814017595414923">"运动"</string>
+    <string name="pref_camera_scenemode_label_action" msgid="1822814017595414923">"动作"</string>
     <string name="pref_camera_scenemode_label_night" msgid="7764371228088101131">"夜景"</string>
     <string name="pref_camera_scenemode_label_sunset" msgid="3443610538453611123">"日落"</string>
     <string name="pref_camera_scenemode_label_party" msgid="917499272505930322">"派对"</string>
@@ -292,4 +292,187 @@
     <string name="cannot_load_image" msgid="4100136187076585580">"无法加载该图片！"</string>
     <string name="switch_photo_filmstrip" msgid="1448511001008888767">"胶卷视图"</string>
     <string name="setting_wallpaper" msgid="2397759659347872725">"正在设置壁纸"</string>
+    <string name="pref_camera_focusmode_entry_normal">正常</string>
+    <string name="pref_camera_focusmode_entry_continuous">连续对焦</string>
+    <string name="pref_camera_scenemode_entry_portrait">"肖像"</string>
+    <string name="pref_camera_scenemode_entry_landscape">"景观"</string>
+    <string name="pref_camera_scenemode_entry_night_portrait">"夜景肖像"</string>
+    <string name="pref_camera_scenemode_entry_theatre">"剧院"</string>
+    <string name="pref_camera_scenemode_entry_beach">"海滩"</string>
+    <string name="pref_camera_scenemode_entry_snow">"雪景"</string>
+    <string name="pref_camera_scenemode_entry_steadyphoto">"稳定"</string>
+    <string name="pref_camera_scenemode_entry_fireworks">"焰火"</string>
+    <string name="pref_camera_scenemode_entry_sports">"运动"</string>
+    <string name="pref_camera_scenemode_entry_candlelight">"烛光"</string>
+    <string name="pref_camera_scenemode_entry_backlight">"背光"</string>
+    <string name="pref_camera_scenemode_entry_flowers">"花卉"</string>
+
+   <!-- Settings screen, Select Histogram title -->
+    <string name="pref_camera_histogram_title">"直方图"</string>
+   <!-- Settings screen, Histogram radio button choices -->
+    <string name="pref_camera_histogram_entry_enable">"开"</string>
+    <string name="pref_camera_histogram_entry_disable">"关"</string>
+
+   <!-- Settings screen, Select Picture format title -->
+    <string name="pref_camera_picture_format_title">"选择图片格式"</string>
+
+   <!-- Settings screen, Picture quality title -->
+    <string name="pref_camera_jpegquality_title">"图像质量"</string>
+   <!-- Settings screen, Picture quality dialog radio button choices -->
+    <string name="pref_camera_jpegquality_entry_superfine">"超精细"</string>
+    <string name="pref_camera_jpegquality_entry_fine">"高"</string>
+    <string name="pref_camera_jpegquality_entry_normal">"一般"</string>
+
+   <!-- Entry of camera save path -->
+    <string name="pref_camera_savepath_title">"存储位置"</string>
+    <string name="pref_camera_savepath_entry_0">"话机"</string>
+    <string name="pref_camera_savepath_entry_1">"SD卡"</string>
+
+   <!-- Settings screen, Select Color effect title -->
+    <string name="pref_camera_coloreffect_title">"色彩效果"</string>
+   <!-- Settings screen, Color effect dialog radio button choices -->
+    <string name="pref_camera_coloreffect_entry_none">"无"</string>
+    <string name="pref_camera_coloreffect_entry_mono">"单一"</string>
+    <string name="pref_camera_coloreffect_entry_sepia">"乌黑"</string>
+    <string name="pref_camera_coloreffect_entry_negative">"负片"</string>
+    <string name="pref_camera_coloreffect_entry_solarize">"过曝"</string>
+    <string name="pref_camera_coloreffect_entry_posterize">"分色"</string>
+    <string name="pref_camera_coloreffect_entry_aqua">"湖蓝"</string>
+    <string name="pref_camera_coloreffect_entry_emboss">"浮雕"</string>
+    <string name="pref_camera_coloreffect_entry_sketch">"草绘"</string>
+    <string name="pref_camera_coloreffect_entry_neon">"霓虹"</string>
+    <string name="pref_camera_coloreffect_entry_pastel">"蜡笔"</string>
+    <string name="pref_camera_coloreffect_entry_mosaic">"马赛克"</string>
+    <string name="pref_camera_coloreffect_entry_redtint">"浅红"</string>
+    <string name="pref_camera_coloreffect_entry_bluetint">"浅蓝"</string>
+    <string name="pref_camera_coloreffect_entry_greentint">"浅绿"</string>
+
+   <!-- Settings screen, Select Face Detection -->
+    <string name="pref_camera_facedetection_title">"人脸检测"</string>
+
+    <!-- Settings menu, Face Detection choices -->
+    <string name="pref_camera_facedetection_entry_off">"关"</string>
+    <string name="pref_camera_facedetection_entry_on">"开"</string>
+
+   <!-- Settings screen, Select saturation title -->
+    <string name="pref_camera_saturation_title">"饱和度"</string>
+
+   <!-- Settings screen, Select contrast title -->
+    <string name="pref_camera_contrast_title">"对比度"</string>
+
+   <!-- Settings screen, Select sharpness title -->
+    <string name="pref_camera_sharpness_title">"清晰度"</string>
+
+   <!-- Settings screen, Select auto exposure title -->
+    <string name="pref_camera_autoexposure_title">"选择自动曝光模式"</string>
+
+   <!-- Settings screen, auto exposure dialog radio button choices -->
+    <string name="pref_camera_autoexposure_entry_frameaverage">"帧平均"</string>
+    <string name="pref_camera_autoexposure_entry_centerweighted">"中心加权"</string>
+    <string name="pref_camera_autoexposure_entry_spotmetering">"点测光"</string>
+
+   <!-- Denoise Settings screen, setting title text -->
+    <string name="pref_camera_denoise_title">"小波消噪"</string>
+   <!-- Denoise Settings screen, Record location dialog choices -->
+    <string name="pref_camera_denoise_entry_off">"关"</string>
+    <string name="pref_camera_denoise_entry_on">"开"</string>
+
+   <!-- Settings screen, Select Redeye Reduction -->
+    <string name="pref_camera_redeyereduction_title">"红眼消除"</string>
+   <!-- Settings menu, redeye reduction choices -->
+    <string name="pref_camera_redeyereduction_entry_enable">"开"</string>
+    <string name="pref_camera_redeyereduction_entry_disable">"关"</string>
+
+   <!-- Settings screen, Video encoder title -->
+    <string name="pref_camera_videoencoder_title">"视频编码"</string>
+
+   <!-- Settings screen, Audio encoder title -->
+    <string name="pref_camera_audioencoder_title">"音频编码"</string>
+
+   <!-- Settings screen, Video duration title -->
+    <string name="pref_camera_video_duration_title">"视频时长"</string>
+   <!-- Settings screen, Video duration dialog radio button choices -->
+    <string name="pref_camera_video_duration_entry_mms">"30 秒(MMS)"</string>
+    <string name="pref_camera_video_duration_entry_10">"10 分钟"</string>
+    <string name="pref_camera_video_duration_entry_30">"30 分钟"</string>
+
+   <!-- Settings screen, Select hfr title -->
+    <string name="pref_camera_hfr_title">"视频高帧率"</string>
+    <string name="pref_camera_hfr_entry_off">"关"</string>
+
+   <!-- Settings screen, Anti Banding title -->
+    <string name="pref_camera_antibanding_title">"反带效应"</string>
+   <!-- Settings screen, Anti Banding entries -->
+    <string name="pref_camera_antibanding_entry_0">"关"</string>
+    <string name="pref_camera_antibanding_entry_3">"自动"</string>
+
+   <!-- Settings screen, Select Iso title -->
+    <string name="pref_camera_iso_title">"选择 ISO"</string>
+   <!-- Settings screen, ISO dialog radio button choices -->
+    <string name="pref_camera_iso_entry_auto">"自动"</string>
+    <string name="pref_camera_iso_entry_isodeblur">"ISO 自动(HJR)"</string>
+
+   <!-- Settings screen, Multiple levels entries -->
+    <string name="pref_camera_saturation_entry_level0">"等级 0"</string>
+    <string name="pref_camera_saturation_entry_level1">"等级 1"</string>
+    <string name="pref_camera_saturation_entry_level2">"等级 2"</string>
+    <string name="pref_camera_saturation_entry_level3">"等级 3"</string>
+    <string name="pref_camera_saturation_entry_level4">"等级 4"</string>
+    <string name="pref_camera_saturation_entry_level5">"等级 5(默认)"</string>
+    <string name="pref_camera_saturation_entry_level6">"等级 6"</string>
+    <string name="pref_camera_saturation_entry_level7">"等级 7"</string>
+    <string name="pref_camera_saturation_entry_level8">"等级 8"</string>
+    <string name="pref_camera_saturation_entry_level9">"等级 9"</string>
+    <string name="pref_camera_saturation_entry_level10">"等级 10"</string>
+
+   <!-- Settings screen, Multiple levels entries -->
+    <string name="pref_camera_contrast_entry_level0">"等级 0"</string>
+    <string name="pref_camera_contrast_entry_level1">"等级 1"</string>
+    <string name="pref_camera_contrast_entry_level2">"等级 2"</string>
+    <string name="pref_camera_contrast_entry_level3">"等级 3"</string>
+    <string name="pref_camera_contrast_entry_level4">"等级 4"</string>
+    <string name="pref_camera_contrast_entry_level5">"等级 5(默认)"</string>
+    <string name="pref_camera_contrast_entry_level6">"等级 6"</string>
+    <string name="pref_camera_contrast_entry_level7">"等级 7"</string>
+    <string name="pref_camera_contrast_entry_level8">"等级 8"</string>
+    <string name="pref_camera_contrast_entry_level9">"等级 9"</string>
+    <string name="pref_camera_contrast_entry_level10">"等级 10"</string>
+
+   <!-- Settings screen, Multiple levels entries -->
+    <string name="pref_camera_sharpness_entry_level0">等级 0</string>
+    <string name="pref_camera_sharpness_entry_level1">等级 1</string>
+    <string name="pref_camera_sharpness_entry_level2">等级 2(默认)</string>
+    <string name="pref_camera_sharpness_entry_level3">等级 3</string>
+    <string name="pref_camera_sharpness_entry_level4">等级 4</string>
+    <string name="pref_camera_sharpness_entry_level5">等级 5</string>
+    <string name="pref_camera_sharpness_entry_level6">等级 6</string>
+
+   <!-- Settings screen, setting title text for ZSL-->
+    <string name="pref_camera_zsl_title">"零秒快拍"</string>
+   <!-- Settings screen, ZSL location dialog choices -->
+    <string name="pref_camera_zsl_entry_off">"关"</string>
+    <string name="pref_camera_zsl_entry_on">"开"</string>
+
+   <!-- Settings screen, Select Touch AF/AEC title -->
+    <string name="pref_camera_touchafaec_title">"触摸 AF/AEC"</string>
+   <!-- Settings screen, Touch AF/AEC dialog radio button choices -->
+    <string name="pref_camera_touchafaec_entry_off">"关"</string>
+    <string name="pref_camera_touchafaec_entry_on">"开"</string>
+
+    <string name="pref_camera_ae_bracket_hdr_entry_on">"开"</string>
+    <string name="pref_camera_ae_bracket_hdr_entry_off">"关"</string>
+
+   <!-- DIS choices -->
+    <string name="pref_camera_dis_entry_off">"关"</string>
+    <string name="pref_camera_dis_entry_on">"开"</string>
+
+   <!-- Settings screen, Selectable zone af title -->
+    <string name="pref_camera_selectablezoneaf_title">"可选区域自动对焦模式"</string>
+
+    <string name="pref_camera_selectablezoneaf_entry_auto">"自动"</string>
+    <string name="pref_camera_selectablezoneaf_entry_spotmetering">"点测光"</string>
+    <string name="pref_camera_selectablezoneaf_entry_centerweighted">"中心加权"</string>
+    <string name="pref_camera_selectablezoneaf_entry_frameaverage">"帧平均"</string>
+
+
 </resources>
