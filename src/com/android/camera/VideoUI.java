@@ -98,6 +98,7 @@ public class VideoUI implements PieRenderer.PieListener,
     private View mFlashOverlay;
     private boolean mOrientationResize;
     private boolean mPrevOrientationResize;
+    private boolean mIsTimeLapse = false;
 
     private View mPreviewCover;
     private SurfaceView mSurfaceView = null;
@@ -550,6 +551,7 @@ public class VideoUI implements PieRenderer.PieListener,
         if (mTimeLapseLabel != null) {
             mTimeLapseLabel.setVisibility(enable ? View.VISIBLE : View.GONE);
         }
+        mIsTimeLapse = enable;
     }
 
     private void openMenu() {
@@ -640,7 +642,7 @@ public class VideoUI implements PieRenderer.PieListener,
             hideSwitcher();
             mRecordingTimeView.setText("");
             mRecordingTimeView.setVisibility(View.VISIBLE);
-            mPauseButton.setVisibility(View.VISIBLE);
+            mPauseButton.setVisibility(mIsTimeLapse ? View.GONE : View.VISIBLE);
         } else {
             mShutterButton.setImageResource(R.drawable.btn_new_shutter_video);
             if (!mController.isVideoCaptureIntent()) {
