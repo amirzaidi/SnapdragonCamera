@@ -452,9 +452,16 @@ public class CameraSettings {
         ListPreference cameraHdr = group.findPreference(KEY_CAMERA_HDR);
         ListPreference disMode = group.findPreference(KEY_DIS);
         ListPreference cameraHdrPlus = group.findPreference(KEY_CAMERA_HDR_PLUS);
+        ListPreference videoHfrMode =
+                group.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
 
         // Since the screen could be loaded from different resources, we need
         // to check if the preference is available here
+        if ((videoHfrMode != null) &&
+            (mParameters.getSupportedHfrSizes() == null)) {
+                filterUnsupportedOptions(group, videoHfrMode, null);
+        }
+
         if (videoQuality != null) {
             filterUnsupportedOptions(group, videoQuality, getSupportedVideoQuality(
                    mCameraId,mParameters));
