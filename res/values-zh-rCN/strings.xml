@@ -474,5 +474,11 @@
     <string name="pref_camera_selectablezoneaf_entry_centerweighted">"中心加权"</string>
     <string name="pref_camera_selectablezoneaf_entry_frameaverage">"帧平均"</string>
 
+   <!-- error message -->
+    <string name="error_app_unsupported_hfr">"当前分辨率下不支持高帧率视频，如需高帧率请更改视频画质"</string>
+    <string name="error_app_unsupported_hfr_codec">"高帧率下仅支持H264视频编码格式，如需高帧率请更改视频编码"</string>
+    <string name="error_app_unsupported">"此编码格式不支持当前的分辨率设置，请切换至H264"</string>
+    <string name="error_app_unsupported_raw">"RAW图片格式下不支持零秒快拍，已为您切换至JPEG格式"</string>
+    <string name="error_app_unsupported_hsr">当前格式下不支持HSR</string>
 
 </resources>
