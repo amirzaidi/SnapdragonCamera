@@ -301,6 +301,7 @@ public class VideoModule implements CameraModule,
     private boolean mUnsupportedHFRVideoSize = false;
     private boolean mUnsupportedHSRVideoSize = false;
     private boolean mUnsupportedHFRVideoCodec = false;
+    private String mDefaultAntibanding = null;
 
     // This Handler is used to post message back onto the main thread of the
     // application
@@ -1834,6 +1835,23 @@ public class VideoModule implements CameraModule,
                         CameraSettings.getSupportedDISModes(mParameters))) {
             mParameters.set(CameraSettings.KEY_QC_DIS_MODE, disMode);
         }
+
+        if (mDefaultAntibanding == null) {
+            mDefaultAntibanding = mParameters.getAntibanding();
+            Log.d(TAG, "default antibanding value = " + mDefaultAntibanding);
+        }
+
+        if (disMode.equals("enable")) {
+            Log.d(TAG, "dis is enabled, set antibanding to auto.");
+            if (isSupported(Parameters.ANTIBANDING_AUTO, mParameters.getSupportedAntibanding())) {
+                mParameters.setAntibanding(Parameters.ANTIBANDING_AUTO);
+            }
+        } else {
+            if (isSupported(mDefaultAntibanding, mParameters.getSupportedAntibanding())) {
+                mParameters.setAntibanding(mDefaultAntibanding);
+            }
+        }
+        Log.d(TAG, "antiBanding value = " + mParameters.getAntibanding());
 
         mUnsupportedHFRVideoSize = false;
         mUnsupportedHFRVideoCodec = false;
