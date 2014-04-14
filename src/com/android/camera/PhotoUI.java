@@ -638,7 +638,8 @@ public class PhotoUI implements PieListener,
                 @Override
                 public void onDismiss() {
                     mPopup = null;
-                    mMenu.popupDismissed();
+                    mMenu.popupDismissed(mDismissAll);
+                    mDismissAll = false;
                     showUI();
 
                     // Switch back into fullscreen/lights-out mode after popup
@@ -653,6 +654,14 @@ public class PhotoUI implements PieListener,
     }
 
     public void dismissPopup() {
+        if (mPopup != null && mPopup.isShowing()) {
+            mPopup.dismiss();
+        }
+    }
+
+    private boolean mDismissAll = false;
+    public void dismissAllPopup() {
+        mDismissAll = true;
         if (mPopup != null && mPopup.isShowing()) {
             mPopup.dismiss();
         }
@@ -680,7 +689,7 @@ public class PhotoUI implements PieListener,
         // Remove all the popups/dialog boxes
         boolean ret = false;
         if (mPopup != null) {
-            dismissPopup();
+            dismissAllPopup();
             ret = true;
         }
         onShowSwitcherPopup();

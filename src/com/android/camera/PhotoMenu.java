@@ -266,8 +266,8 @@ public class PhotoMenu extends PieController
      }
      }
 
-    public void popupDismissed() {
-        if (mPopupStatus == POPUP_SECOND_LEVEL) {
+    public void popupDismissed(boolean dismissAll) {
+        if (!dismissAll && mPopupStatus == POPUP_SECOND_LEVEL) {
             initializePopup();
             mPopupStatus = POPUP_FIRST_LEVEL;
                 if (popupNum == 1)
