@@ -302,6 +302,8 @@ public class PhotoMenu extends PieController
              popup2.setPreferenceEnabled(CameraSettings.KEY_TOUCH_AF_AEC,false);
              popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE,false);
 
+             setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
+
              if (mHdrItem != null) {
                 mHdrItem.setEnabled(false);
              }
