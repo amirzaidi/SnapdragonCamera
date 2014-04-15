@@ -2272,7 +2272,8 @@ public class PhotoModule
         //Set Brightness.
         mParameters.set("luma-adaptation", String.valueOf(mbrightness));
 
-        if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
+        if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
+            CameraUtil.SCENE_MODE_HDR.equals(mSceneMode)) {
             // Set Touch AF/AEC parameter.
             String touchAfAec = mPreferences.getString(
                  CameraSettings.KEY_TOUCH_AF_AEC,
