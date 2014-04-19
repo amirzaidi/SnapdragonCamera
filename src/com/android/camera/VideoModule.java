@@ -1389,6 +1389,21 @@ public class VideoModule implements CameraModule,
                 return;
             }
 
+            /* Change the duration as per HFR selection */
+            String hfr = mParameters.getVideoHighFrameRate();
+            int defaultFps = 30;
+            int hfrRatio = 1;
+            if (!("off".equals(hfr))) {
+                try {
+                   int hfrFps = Integer.parseInt(hfr);
+                   hfrRatio = hfrFps / defaultFps;
+                } catch(NumberFormatException ex) {
+                   //Default value will be used
+                   Log.e(TAG,"Invalid hfr values:"+hfr);
+                }
+            }
+            duration = duration * hfrRatio;
+
             mActivity.getMediaSaveService().addVideo(mCurrentVideoFilename,
                     duration, mCurrentVideoValues,
                     mOnVideoSavedListener, mContentResolver);
