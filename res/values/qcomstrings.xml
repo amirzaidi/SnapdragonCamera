@@ -214,7 +214,7 @@
 
     <!--The message is shown in dialog when the raw snapshot is selected in zsl mode-->
     <string name="error_app_unsupported_raw">Raw picture format is not supported
-        in zsl mode
+        in zsl mode, change to JPEG
     </string>
 
      <!-- Settings screen, AE bracketing and HDR location dialog choices -->
