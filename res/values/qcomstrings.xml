@@ -200,6 +200,9 @@
      <!-- The message is shown in dialog when the app encounters an unsupported resolution for HFR mode -->
      <string name="error_app_unsupported_hfr">HFR is not supported for selected resolution</string>
 
+     <!-- The message is shown in toast when the app encounters an unsupported resolution for DIS mode -->
+     <string name="error_app_unsupported_dis">Unsupported video resolution for Display Image Stabilization(DIS)</string>
+
      <!-- The message is shown in dialog when the app
          encounters an unsupported resolution for HSR mode -->
      <string name="error_app_unsupported_hsr">

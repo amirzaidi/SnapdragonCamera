@@ -2029,9 +2029,21 @@ public class VideoModule implements CameraModule,
                           Toast.LENGTH_LONG).show();
                 mParameters.setVideoHighFrameRate("off");
                 mParameters.set("video-hsr", "off");
-                mUI.overrideSettings(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,"disable");
-                mUI.initializePopup(mPreferenceGroup);
+                mUI.overrideSettings(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,"off");
              }
+        }
+
+        //getSupportedPictureSizes will always send a sorted a list in descending order
+        Size biggestSize = mParameters.getSupportedPictureSizes().get(0);
+
+        if (biggestSize.width <= videoWidth || biggestSize.height <= videoHeight) {
+            if (disMode.equals("enable")) {
+                Log.v(TAG,"DIS is not supported for this video quality");
+                Toast.makeText(mActivity, R.string.error_app_unsupported_dis,
+                               Toast.LENGTH_LONG).show();
+                mParameters.set(CameraSettings.KEY_QC_DIS_MODE, "disable");
+                mUI.overrideSettings(CameraSettings.KEY_DIS,"disable");
+            }
         }
     }
     @SuppressWarnings("deprecation")
