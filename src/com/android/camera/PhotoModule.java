@@ -1735,10 +1735,14 @@ public class PhotoModule
     @Override
     public void onShutterButtonLongClick() {
         if ((null != mCameraDevice) && ((mCameraState == IDLE) || (mCameraState == FOCUSING))) {
-            boolean enable = false;
-            enable = SystemProperties.getBoolean(PERSIST_LONG_ENABLE, false);
-            if ( enable ) {
-                enable = SystemProperties.getBoolean(PERSIST_LONG_SAVE, false);
+            //Add on/off Menu for longshot
+            String longshot_enable = mPreferences.getString(
+                CameraSettings.KEY_LONGSHOT,
+                mActivity.getString(R.string.pref_camera_longshot_default));
+
+            Log.d(TAG, "longshot_enable = " + longshot_enable);
+            if (longshot_enable.equals("on")) {
+                boolean enable = SystemProperties.getBoolean(PERSIST_LONG_SAVE, false);
                 mLongshotSave = enable;
                 mCameraDevice.setLongshot(true);
                 setCameraState(PhotoController.LONGSHOT);
