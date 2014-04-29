@@ -828,6 +828,61 @@ public class VideoModule implements CameraModule,
        }
     }
 
+    boolean isHFREnabled(int videoWidth, int videoHeight) {
+        if ((null == mPreferences) || (null == mParameters)) {
+            return false;
+        }
+
+        String HighFrameRate = mPreferences.getString(
+                CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
+                mActivity. getString(R.string.pref_camera_hfr_default));
+
+        if(!("off".equals(HighFrameRate)) && !("hsr".equals(HighFrameRate))) {
+            Size size = null;
+            try {
+                if (isSupported(HighFrameRate, mParameters.getSupportedVideoHighFrameRateModes())) {
+                    int index = mParameters.getSupportedVideoHighFrameRateModes().indexOf(
+                            HighFrameRate);
+                    size = mParameters.getSupportedHfrSizes().get(index);
+                } else {
+                    return false;
+                }
+            } catch (NullPointerException e) {
+                return false;
+            } catch (IndexOutOfBoundsException e) {
+                return false;
+            }
+
+            if (size != null) {
+                if (videoWidth > size.width || videoHeight > size.height) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            int hfrFps = Integer.parseInt(HighFrameRate);
+            int inputBitrate = videoWidth * videoHeight * hfrFps;
+
+            boolean supported = false;
+            List<VideoEncoderCap> videoEncoders = EncoderCapabilities.getVideoEncoders();
+            for (VideoEncoderCap videoEncoder: videoEncoders) {
+                if (videoEncoder.mCodec == mVideoEncoder) {
+                    int maxBitrate = (videoEncoder.mMaxHFRFrameWidth *
+                                     videoEncoder.mMaxHFRFrameHeight *
+                                     videoEncoder.mMaxHFRMode);
+                    if (inputBitrate > 0 && inputBitrate <= maxBitrate ) {
+                        supported = true;
+                    }
+                    break;
+                }
+            }
+
+            return supported;
+        }
+
+        return false;
+    }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void getDesiredPreviewSize() {
@@ -835,7 +890,8 @@ public class VideoModule implements CameraModule,
             return;
         }
         mParameters = mCameraDevice.getParameters();
-        if (mParameters.getSupportedVideoSizes() == null || is1080pEnabled()) {
+        if (mParameters.getSupportedVideoSizes() == null || is1080pEnabled() ||
+                    isHFREnabled(mProfile.videoFrameWidth, mProfile.videoFrameHeight)) {
             mDesiredPreviewWidth = mProfile.videoFrameWidth;
             mDesiredPreviewHeight = mProfile.videoFrameHeight;
         } else { // Driver supports separates outputs for preview and video.
