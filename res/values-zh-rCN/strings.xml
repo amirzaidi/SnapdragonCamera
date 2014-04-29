@@ -146,12 +146,12 @@
     <string name="pref_camera_whitebalance_title" msgid="7962809566612868179">"白平衡"</string>
     <string name="pref_camera_whitebalance_label" msgid="7370366644738746700">"白平衡"</string>
     <string name="pref_camera_whitebalance_entry_auto" msgid="1390631794449502796">"自动"</string>
-    <string name="pref_camera_whitebalance_entry_incandescent" msgid="1140391575294372706">"白炽光"</string>
+    <string name="pref_camera_whitebalance_entry_incandescent" msgid="1140391575294372706">"白炽灯"</string>
     <string name="pref_camera_whitebalance_entry_daylight" msgid="757833578153467254">"晴天"</string>
     <string name="pref_camera_whitebalance_entry_fluorescent" msgid="5157027611220790970">"日光灯"</string>
     <string name="pref_camera_whitebalance_entry_cloudy" msgid="3569589102226796875">"阴天"</string>
     <string name="pref_camera_whitebalance_label_auto" msgid="4305837287360485369">"自动"</string>
-    <string name="pref_camera_whitebalance_label_incandescent" msgid="2860805668879945185">"白炽光"</string>
+    <string name="pref_camera_whitebalance_label_incandescent" msgid="2860805668879945185">"白炽灯"</string>
     <string name="pref_camera_whitebalance_label_daylight" msgid="4562002095198912409">"晴天"</string>
     <string name="pref_camera_whitebalance_label_fluorescent" msgid="10552295745391742">"日光灯"</string>
     <string name="pref_camera_whitebalance_label_cloudy" msgid="4880793739075193336">"阴天"</string>
@@ -163,7 +163,7 @@
     <string name="pref_camera_scenemode_entry_turn_hdr_plus_off" msgid="2668770361856397834">"关闭 HDR+"</string>
     <string name="pref_camera_scenemode_entry_turn_hdr_on" msgid="5232394324298489502">"开启 HDR"</string>
     <string name="pref_camera_scenemode_entry_turn_hdr_off" msgid="7694606461440250206">"关闭 HDR"</string>
-    <string name="pref_camera_scenemode_entry_action" msgid="5753183620959062015">"运动"</string>
+    <string name="pref_camera_scenemode_entry_action" msgid="5753183620959062015">"动作"</string>
     <string name="pref_camera_scenemode_entry_night" msgid="3468037364159759991">"夜间"</string>
     <string name="pref_camera_scenemode_entry_sunset" msgid="5884302914893488509">"日落"</string>
     <string name="pref_camera_scenemode_entry_party" msgid="401232668169066415">"派对"</string>
@@ -295,7 +295,7 @@
     <string name="pref_camera_focusmode_entry_normal">正常</string>
     <string name="pref_camera_focusmode_entry_continuous">连续对焦</string>
     <string name="pref_camera_scenemode_entry_portrait">"肖像"</string>
-    <string name="pref_camera_scenemode_entry_landscape">"景观"</string>
+    <string name="pref_camera_scenemode_entry_landscape">"风景"</string>
     <string name="pref_camera_scenemode_entry_night_portrait">"夜景肖像"</string>
     <string name="pref_camera_scenemode_entry_theatre">"剧院"</string>
     <string name="pref_camera_scenemode_entry_beach">"海滩"</string>
@@ -331,10 +331,10 @@
    <!-- Settings screen, Select Color effect title -->
     <string name="pref_camera_coloreffect_title">"色彩效果"</string>
    <!-- Settings screen, Color effect dialog radio button choices -->
-    <string name="pref_camera_coloreffect_entry_none">"无"</string>
-    <string name="pref_camera_coloreffect_entry_mono">"单一"</string>
-    <string name="pref_camera_coloreffect_entry_sepia">"乌黑"</string>
-    <string name="pref_camera_coloreffect_entry_negative">"负片"</string>
+    <string name="pref_camera_coloreffect_entry_none">"关闭"</string>
+    <string name="pref_camera_coloreffect_entry_mono">"黑白"</string>
+    <string name="pref_camera_coloreffect_entry_sepia">"旧照片"</string>
+    <string name="pref_camera_coloreffect_entry_negative">"反色"</string>
     <string name="pref_camera_coloreffect_entry_solarize">"过曝"</string>
     <string name="pref_camera_coloreffect_entry_posterize">"分色"</string>
     <string name="pref_camera_coloreffect_entry_aqua">"湖蓝"</string>
@@ -482,4 +482,6 @@
     <string name="error_app_unsupported_hsr">当前格式下不支持HSR</string>
 
     <string name="pref_camera_longshot_title">连拍</string>
+    <string name="pref_camera_skinToneEnhancement_title">肤色增强</string>
+
 </resources>
