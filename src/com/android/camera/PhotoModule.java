@@ -2492,6 +2492,7 @@ public class PhotoModule
             mFocusManager.setZslEnable(true);
 
             //Raw picture format is not supported under ZSL mode
+            mParameters.set(KEY_PICTURE_FORMAT, PIXEL_FORMAT_JPEG);
             Editor editor = mPreferences.edit();
             editor.putString(CameraSettings.KEY_PICTURE_FORMAT, mActivity.getString(R.string.pref_camera_picture_format_value_jpeg));
             editor.apply();
