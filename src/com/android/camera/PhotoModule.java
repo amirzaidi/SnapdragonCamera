@@ -2947,6 +2947,30 @@ public class PhotoModule
         }
     }
 
+    // Return true if the preference has the specified key but not the value.
+    private static boolean notSame(ListPreference pref, String key, String value) {
+        return (key.equals(pref.getKey()) && !value.equals(pref.getValue()));
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(ListPreference pref) {
+        // ignore the events after "onPause()"
+        if (mPaused) return;
+
+        //filter off unsupported settings
+        final String settingOff = mActivity.getString(R.string.setting_off_value);
+        if (!CameraSettings.isZSLHDRSupported(mParameters)) {
+            if (notSame(pref, CameraSettings.KEY_CAMERA_HDR, settingOff)) {
+                mUI.setPreference(CameraSettings.KEY_ZSL,settingOff);
+            } else if (notSame(pref,CameraSettings.KEY_ZSL,settingOff)) {
+                mUI.setPreference(CameraSettings.KEY_CAMERA_HDR, settingOff);
+            }
+        }
+
+        //call generic onSharedPreferenceChanged
+        onSharedPreferenceChanged();
+    }
+
     @Override
     public void onSharedPreferenceChanged() {
         // ignore the events after "onPause()"

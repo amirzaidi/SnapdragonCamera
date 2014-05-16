@@ -34,6 +34,7 @@ public abstract class CameraPreference {
     private final Context mContext;
 
     static public interface OnPreferenceChangedListener {
+        public void onSharedPreferenceChanged(ListPreference pref);
         public void onSharedPreferenceChanged();
         public void onRestorePreferencesClicked();
         public void onOverriddenPreferencesClicked();
