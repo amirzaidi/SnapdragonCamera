@@ -2303,6 +2303,11 @@ public class PhotoModule
         //Set Brightness.
         mParameters.set("luma-adaptation", String.valueOf(mbrightness));
 
+        String longshot_enable = mPreferences.getString(
+                CameraSettings.KEY_LONGSHOT,
+                mActivity.getString(R.string.pref_camera_longshot_default));
+        mParameters.set("long-shot", longshot_enable);
+
         if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
             CameraUtil.SCENE_MODE_HDR.equals(mSceneMode)) {
             // Set Touch AF/AEC parameter.
