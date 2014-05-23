@@ -233,10 +233,19 @@ public class FaceView extends View
                     Log.e(TAG, "blink: (" + face.getLeftEyeBlinkDegree()+ ", " +
                         face.getRightEyeBlinkDegree() + ")");
                     if (face.leftEye != null) {
-                        point[0] = face.leftEye.x;
-                        point[1] = face.leftEye.y-delta_y/2;
-                        point[2] = face.leftEye.x;
-                        point[3] = face.leftEye.y+delta_y/2;
+                        if ((mDisplayOrientation == 90) ||
+                                (mDisplayOrientation == 270)) {
+                            point[0] = face.leftEye.x;
+                            point[1] = face.leftEye.y - delta_y / 2;
+                            point[2] = face.leftEye.x;
+                            point[3] = face.leftEye.y + delta_y / 2;
+                        } else {
+                            point[0] = face.leftEye.x - delta_x / 2;
+                            point[1] = face.leftEye.y;
+                            point[2] = face.leftEye.x + delta_x / 2;
+                            point[3] = face.leftEye.y;
+
+                        }
                         mMatrix.mapPoints (point);
                         if (face.getLeftEyeBlinkDegree() >= blink_threshold) {
                             canvas.drawLine(point[0]+ dx, point[1]+ dy,
@@ -244,10 +253,18 @@ public class FaceView extends View
                         }
                     }
                     if (face.rightEye != null) {
-                        point[0] = face.rightEye.x;
-                        point[1] = face.rightEye.y-delta_y/2;
-                        point[2] = face.rightEye.x;
-                        point[3] = face.rightEye.y+delta_y/2;
+                        if ((mDisplayOrientation == 90) ||
+                                (mDisplayOrientation == 270)) {
+                            point[0] = face.rightEye.x;
+                            point[1] = face.rightEye.y - delta_y / 2;
+                            point[2] = face.rightEye.x;
+                            point[3] = face.rightEye.y + delta_y / 2;
+                        } else {
+                            point[0] = face.rightEye.x - delta_x / 2;
+                            point[1] = face.rightEye.y;
+                            point[2] = face.rightEye.x + delta_x / 2;
+                            point[3] = face.rightEye.y;
+                        }
                         mMatrix.mapPoints (point);
                         if (face.getRightEyeBlinkDegree() >= blink_threshold) {
                             //Add offset to the points if the rect has an offset
@@ -286,20 +303,37 @@ public class FaceView extends View
                                 (-length) + 0.5);
 
                         if (face.getLeftEyeBlinkDegree() < blink_threshold) {
-                            point[0] = face.leftEye.x;
-                            point[1] = face.leftEye.y;
-                            point[2] = face.leftEye.x + gazeRollX;
-                            point[3] = face.leftEye.y + gazeRollY;
+                            if ((mDisplayOrientation == 90) ||
+                                    (mDisplayOrientation == 270)) {
+                                point[0] = face.leftEye.x;
+                                point[1] = face.leftEye.y;
+                                point[2] = face.leftEye.x + gazeRollX;
+                                point[3] = face.leftEye.y + gazeRollY;
+                            } else {
+                                point[0] = face.leftEye.x;
+                                point[1] = face.leftEye.y;
+                                point[2] = face.leftEye.x + gazeRollY;
+                                point[3] = face.leftEye.y + gazeRollX;
+                            }
                             mMatrix.mapPoints (point);
                             canvas.drawLine(point[0] +dx, point[1] + dy,
                                 point[2] + dx, point[3] +dy, mPaint);
                         }
 
                         if (face.getRightEyeBlinkDegree() < blink_threshold) {
-                            point[0] = face.rightEye.x;
-                            point[1] = face.rightEye.y;
-                            point[2] = face.rightEye.x + gazeRollX;
-                            point[3] = face.rightEye.y + gazeRollY;
+                            if ((mDisplayOrientation == 90) ||
+                                    (mDisplayOrientation == 270)) {
+                                point[0] = face.rightEye.x;
+                                point[1] = face.rightEye.y;
+                                point[2] = face.rightEye.x + gazeRollX;
+                                point[3] = face.rightEye.y + gazeRollY;
+                            } else {
+                                point[0] = face.rightEye.x;
+                                point[1] = face.rightEye.y;
+                                point[2] = face.rightEye.x + gazeRollY;
+                                point[3] = face.rightEye.y + gazeRollX;
+
+                            }
                             mMatrix.mapPoints (point);
                             canvas.drawLine(point[0] + dx, point[1] + dy,
                                 point[2] + dx, point[3] + dy, mPaint);
