@@ -484,4 +484,8 @@
     <string name="pref_camera_longshot_title">连拍</string>
     <string name="pref_camera_skinToneEnhancement_title">肤色增强</string>
 
+    <!-- The message is shown in toast when HDR or scene mode is enabled -->
+    <string name="hdr_enable_message">HDR启用后，只支持自动场景模式</string>
+    <string name="scene_enable_message">HDR不支持自动场景以外模式</string>
+
 </resources>
