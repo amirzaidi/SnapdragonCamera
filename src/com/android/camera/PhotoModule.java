@@ -2345,6 +2345,16 @@ public class PhotoModule
         String pictureFormat = mPreferences.getString(
                 CameraSettings.KEY_PICTURE_FORMAT,
                 mActivity.getString(R.string.pref_camera_picture_format_default));
+
+        //Change picture format to JPEG if camera is start from other APK by intent.
+        if (mIsImageCaptureIntent && !pictureFormat.equals(PIXEL_FORMAT_JPEG)) {
+            pictureFormat = PIXEL_FORMAT_JPEG;
+            Editor editor = mPreferences.edit();
+            editor.putString(CameraSettings.KEY_PICTURE_FORMAT,
+                mActivity.getString(R.string.pref_camera_picture_format_value_jpeg));
+            editor.apply();
+        }
+        Log.v(TAG, "Picture format value =" + pictureFormat);
         mParameters.set(KEY_PICTURE_FORMAT, pictureFormat);
 
         // Set JPEG quality.
