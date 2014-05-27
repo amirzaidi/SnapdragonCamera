@@ -1279,6 +1279,14 @@ public class CameraActivity extends Activity
         }
         mLocalImagesObserver.setActivityPaused(false);
         mLocalVideosObserver.setActivityPaused(false);
+
+        //This is a temporal solution to share LED resource
+        //as Android doesn’t have any default intent to share the state.
+        // if the led flash light is open, turn it off
+        Log.d(TAG, "send the turn off LED Flashlight the broadcast");
+        Intent intent = new Intent("qualcomm.android.LEDFlashlight.appWidgetUpdate");
+        intent.putExtra("camera_led", true);
+        sendBroadcast(intent);
     }
 
     @Override
