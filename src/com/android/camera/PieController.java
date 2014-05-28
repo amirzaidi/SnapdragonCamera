@@ -19,12 +19,14 @@ package com.android.camera;
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.camera.CameraPreference.OnPreferenceChangedListener;
 import com.android.camera.drawable.TextDrawable;
 import com.android.camera.ui.PieItem;
 import com.android.camera.ui.PieItem.OnClickListener;
 import com.android.camera.ui.PieRenderer;
+import com.android.camera2.R;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -167,6 +169,12 @@ public class PieController {
                     CharSequence[] values = pref.getEntryValues();
                     index = (index + 1) % values.length;
                     pref.setValueIndex(index);
+                    // when enable HDR,inform to disable Continuous Shot
+                    if (index == 1 && prefKey == CameraSettings.KEY_CAMERA_HDR)
+                    {
+                        Toast.makeText(mActivity, R.string.HDR_disable_continuous_shot,
+                                Toast.LENGTH_LONG).show();
+                    }
                     fitem.setLabel(pref.getLabels()[index]);
                     fitem.setImageResource(mActivity,
                             ((IconListPreference) pref).getLargeIconIds()[index]);
