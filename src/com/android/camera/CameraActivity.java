@@ -1321,9 +1321,7 @@ public class CameraActivity extends Activity
             // Prevent software keyboard or voice search from showing up.
             if (keyCode == KeyEvent.KEYCODE_SEARCH
                     || keyCode == KeyEvent.KEYCODE_MENU) {
-                if (event.isLongPress()) {
-                    return true;
-                }
+                return true;
             }
         }
 
