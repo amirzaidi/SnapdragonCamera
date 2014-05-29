@@ -480,6 +480,10 @@
     <string name="error_app_unsupported">"此编码格式不支持当前的分辨率设置，请切换至H264"</string>
     <string name="error_app_unsupported_raw">"RAW图片格式下不支持零秒快拍，已为您切换至JPEG格式"</string>
     <string name="error_app_unsupported_hsr">当前格式下不支持HSR</string>
+    <!-- The message is shown in toast when the app encounters an unsupported selection for HFR/HSR mode -->
+    <string name="error_app_unsupported_hfr_selection">HFR/HSR不支持DIS/延时拍摄/HDR模式</string>
+    <!-- The message is shown in toast when the app encounters an unsupported resolution for DIS mode -->
+    <string name="error_app_unsupported_dis">DIS不支持当前的分辨率设置</string>
 
     <string name="pref_camera_longshot_title">连拍</string>
     <string name="pref_camera_skinToneEnhancement_title">肤色增强</string>
