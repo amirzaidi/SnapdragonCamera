@@ -1398,6 +1398,8 @@ public class PhotoModule
 
         String ubiFocusOn = mActivity.getString(R.string.
             pref_camera_advanced_feature_value_ubifocus_on);
+        String continuousShotOn =
+                mActivity.getString(R.string.setting_on_value);
         String chromaFlashOn = mActivity.getString(R.string.
             pref_camera_advanced_feature_value_chromaflash_on);
         String optiZoomOn = mActivity.getString(R.string.
@@ -1408,7 +1410,16 @@ public class PhotoModule
             mParameters.get(CameraSettings.KEY_QC_CHROMA_FLASH);
         String ubiFocus =
             mParameters.get(CameraSettings.KEY_QC_AF_BRACKETING);
+        String continuousShot =
+                mParameters.get("long-shot");
 
+        if ((continuousShot != null) && continuousShot.equals(continuousShotOn)) {
+            String pictureFormat = mActivity.getString(R.string.
+                    pref_camera_picture_format_value_jpeg);
+            mUI.overrideSettings(CameraSettings.KEY_PICTURE_FORMAT, pictureFormat);
+        } else {
+            mUI.overrideSettings(CameraSettings.KEY_PICTURE_FORMAT, null);
+        }
         if ((ubiFocus != null && ubiFocus.equals(ubiFocusOn)) ||
                 (chromaFlash != null && chromaFlash.equals(chromaFlashOn)) ||
                 (optiZoom != null && optiZoom.equals(optiZoomOn))) {
