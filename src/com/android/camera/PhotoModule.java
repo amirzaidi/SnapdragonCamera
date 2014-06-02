@@ -1756,8 +1756,8 @@ public class PhotoModule
         }
         if (seconds > 0) {
             String zsl = mPreferences.getString(CameraSettings.KEY_ZSL,
-                                  mActivity.getString(R.string.pref_camera_zsl_default));
-            mUI.overrideSettings(CameraSettings.KEY_ZSL,zsl);
+                    mActivity.getString(R.string.pref_camera_zsl_default));
+            mUI.overrideSettings(CameraSettings.KEY_ZSL, zsl);
             mUI.startCountDown(seconds, playSound);
         } else {
             mSnapshotOnIdle = false;
@@ -3065,6 +3065,7 @@ public class PhotoModule
         mSnapshotOnIdle = false;
         mFocusManager.doSnap();
         mFocusManager.onShutterUp();
+        mUI.overrideSettings(CameraSettings.KEY_ZSL, null);
     }
 
     @Override
