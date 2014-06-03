@@ -492,4 +492,5 @@
     <string name="hdr_enable_message">HDR启用后，只支持自动场景模式</string>
     <string name="scene_enable_message">HDR不支持自动场景以外模式</string>
 
+    <string name="HDR_disable_continuous_shot">"开启HDR将禁用连拍功能"</string>
 </resources>
