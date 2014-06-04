@@ -2172,6 +2172,11 @@ public class VideoModule implements CameraModule,
     }
 
     @Override
+    public void onSharedPreferenceChanged(ListPreference pref) {
+        onSharedPreferenceChanged();
+    }
+
+    @Override
     public void onSharedPreferenceChanged() {
         // ignore the events after "onPause()" or preview has not started yet
         if (mPaused) {

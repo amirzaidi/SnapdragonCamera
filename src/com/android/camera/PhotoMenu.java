@@ -371,7 +371,7 @@ public class PhotoMenu extends PieController
         return (key.equals(pref.getKey()) && !value.equals(pref.getValue()));
     }
 
-    private void setPreference(String key, String value) {
+    public void setPreference(String key, String value) {
         ListPreference pref = mPreferenceGroup.findPreference(key);
         if (pref != null && !value.equals(pref.getValue())) {
             pref.setValue(value);
