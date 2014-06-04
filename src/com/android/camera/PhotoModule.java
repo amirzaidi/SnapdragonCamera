@@ -76,6 +76,9 @@ import com.android.camera.util.GcamHelper;
 import com.android.camera.util.UsageStatistics;
 import com.android.camera2.R;
 
+import com.android.internal.util.MemInfoReader;
+import android.app.ActivityManager;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -224,6 +227,16 @@ public class PhotoModule
     private Uri mSaveUri;
 
     private Uri mDebugUri;
+
+    // Used for check memory status for longshot mode
+    // Currently, this cancel threshold selection is based on test experiments,
+    // we can change it based on memory status or other requirements.
+    private static final int LONGSHOT_CANCEL_THRESHOLD = 40;
+    private MemInfoReader mMemInfoReader = new MemInfoReader();
+    private ActivityManager mAm;
+    private long SECONDARY_SERVER_MEM;
+    private long mMB = 1024 * 1024;
+    private boolean mLongshotActive = false;
 
     // We use a queue to generated names of the images to be used later
     // when the image is ready to be saved.
@@ -469,6 +482,7 @@ public class PhotoModule
         mCameraId = getPreferredCameraId(mPreferences);
 
         mContentResolver = mActivity.getContentResolver();
+        mAm = (ActivityManager)(mActivity.getSystemService(Context.ACTIVITY_SERVICE));
 
         // Surface texture is from camera screen nail and startPreview needs it.
         // This must be done before startPreview.
@@ -499,6 +513,10 @@ public class PhotoModule
         LeftValue = (TextView)mRootView.findViewById(R.id.skintoneleft);
         Storage.setSaveSDCard(
             mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
+
+        ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
+        mAm.getMemoryInfo(memInfo);
+        SECONDARY_SERVER_MEM = memInfo.secondaryServerThreshold;
 
     }
 
@@ -805,6 +823,29 @@ public class PhotoModule
         }
     }
 
+    private boolean isLongshotNeedCancel() {
+
+        long totalMemory = Runtime.getRuntime().totalMemory() / mMB;
+        long maxMemory = Runtime.getRuntime().maxMemory() / mMB;
+        long remainMemory = maxMemory - totalMemory;
+
+        mMemInfoReader.readMemInfo();
+        long availMem = mMemInfoReader.getFreeSize() + mMemInfoReader.getCachedSize()
+            - SECONDARY_SERVER_MEM;
+        availMem = availMem/ mMB;
+
+        if(availMem <= 0 ||
+            remainMemory <= LONGSHOT_CANCEL_THRESHOLD) {
+            Log.d(TAG, "memory used up, need cancel longshot.");
+            mLongshotActive = false;
+            Toast.makeText(mActivity,R.string.msg_cancel_longshot_for_limited_memory,
+                Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return false;
+    }
+
     private final class LongshotShutterCallback
             implements CameraShutterCallback {
 
@@ -815,7 +856,12 @@ public class PhotoModule
             Log.e(TAG, "[KPI Perf] PROFILE_SHUTTER_LAG mShutterLag = " + mShutterLag + "ms");
             synchronized(mCameraDevice) {
 
-                if (mCameraState != LONGSHOT) {
+                if (mCameraState != LONGSHOT ||
+                    !mLongshotActive) {
+                    return;
+                }
+
+                if(isLongshotNeedCancel()) {
                     return;
                 }
 
@@ -1739,6 +1785,7 @@ public class PhotoModule
 
         synchronized(mCameraDevice) {
            if (mCameraState == LONGSHOT) {
+               mLongshotActive = false;
                mCameraDevice.setLongshot(false);
                if (!mFocusManager.isZslEnabled()) {
                    setupPreview();
@@ -1848,6 +1895,12 @@ public class PhotoModule
             if (longshot_enable.equals("on")) {
                 boolean enable = SystemProperties.getBoolean(PERSIST_LONG_SAVE, false);
                 mLongshotSave = enable;
+
+                //check whether current memory is enough for longshot.
+                if(isLongshotNeedCancel()) {
+                    return;
+                }
+                mLongshotActive = true;
                 mCameraDevice.setLongshot(true);
                 setCameraState(PhotoController.LONGSHOT);
                 mFocusManager.doSnap();
