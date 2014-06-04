@@ -1576,6 +1576,8 @@ public class PhotoModule
             pref_camera_advanced_feature_value_chromaflash_on);
         String optiZoomOn = mActivity.getString(R.string.
             pref_camera_advanced_feature_value_optizoom_on);
+        String truPortraitOn = mActivity.getString(R.string.
+            pref_camera_advanced_feature_value_trueportrait_on);
         String optiZoom =
             mParameters.get(CameraSettings.KEY_QC_OPTI_ZOOM);
         String chromaFlash =
@@ -1584,6 +1586,8 @@ public class PhotoModule
             mParameters.get(CameraSettings.KEY_QC_AF_BRACKETING);
         String continuousShot =
                 mParameters.get("long-shot");
+        String truePortrait =
+            mParameters.get(CameraSettings.KEY_QC_TP);
 
         if ((continuousShot != null) && continuousShot.equals(continuousShotOn)) {
             String pictureFormat = mActivity.getString(R.string.
@@ -1605,7 +1609,8 @@ public class PhotoModule
         if ((ubiFocus != null && ubiFocus.equals(ubiFocusOn)) ||
                 (reFocus != null && reFocus.equals(reFocusOn)) ||
                 (chromaFlash != null && chromaFlash.equals(chromaFlashOn)) ||
-                (optiZoom != null && optiZoom.equals(optiZoomOn))) {
+                (optiZoom != null && optiZoom.equals(optiZoomOn)) ||
+                (truePortrait != null && truePortrait.equals(truPortraitOn))) {
             mSceneMode = sceneMode = Parameters.SCENE_MODE_AUTO;
             flashMode = Parameters.FLASH_MODE_OFF;
             focusMode = Parameters.FOCUS_MODE_INFINITY;
@@ -2545,7 +2550,8 @@ public class PhotoModule
     private void qcomUpdateAdvancedFeatures(String ubiFocus,
                                             String chromaFlash,
                                             String reFocus,
-                                            String optiZoom) {
+                                            String optiZoom,
+                                            String truePortrait) {
         if (CameraUtil.isSupported(ubiFocus,
               CameraSettings.getSupportedAFBracketingModes(mParameters))) {
             mParameters.set(CameraSettings.KEY_QC_AF_BRACKETING, ubiFocus);
@@ -2561,6 +2567,10 @@ public class PhotoModule
         if (CameraUtil.isSupported(reFocus,
               CameraSettings.getSupportedRefocusModes(mParameters))) {
             mParameters.set(CameraSettings.KEY_QC_RE_FOCUS, reFocus);
+        }
+        if (CameraUtil.isSupported(truePortrait,
+              CameraSettings.getSupportedTruePortraitModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_QC_TP, truePortrait);
         }
     }
 
@@ -2791,37 +2801,51 @@ public class PhotoModule
                  pref_camera_advanced_feature_value_optizoom_off);
              String reFocusOff = mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_refocus_off);
+             String truePortraitOff = mActivity.getString(R.string.
+                 pref_camera_advanced_feature_value_trueportrait_off);
 
              if (advancedFeature.equals(mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_ubifocus_on))) {
                  qcomUpdateAdvancedFeatures(advancedFeature,
                                            chromaFlashOff,
                                            reFocusOff,
-                                           optiZoomOff);
+                                           optiZoomOff,
+                                           truePortraitOff);
             } else if (advancedFeature.equals(mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_chromaflash_on))) {
                  qcomUpdateAdvancedFeatures(ubiFocusOff,
                                            advancedFeature,
                                            reFocusOff,
-                                           optiZoomOff);
+                                           optiZoomOff,
+                                           truePortraitOff);
             } else if (advancedFeature.equals(mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_refocus_on))) {
                  qcomUpdateAdvancedFeatures(ubiFocusOff,
                                            chromaFlashOff,
                                            advancedFeature,
-                                           optiZoomOff);
+                                           optiZoomOff,
+                                           truePortraitOff);
                  mRefocus = true;
             } else if (advancedFeature.equals(mActivity.getString(R.string.
                 pref_camera_advanced_feature_value_optizoom_on))) {
                 qcomUpdateAdvancedFeatures(ubiFocusOff,
                                            chromaFlashOff,
                                            reFocusOff,
+                                           advancedFeature,
+                                           truePortraitOff);
+            } else if (advancedFeature.equals(mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_trueportrait_on))) {
+                qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                           chromaFlashOff,
+                                           reFocusOff,
+                                           optiZoomOff,
                                            advancedFeature);
             } else {
                 qcomUpdateAdvancedFeatures(ubiFocusOff,
                                            chromaFlashOff,
                                            reFocusOff,
-                                           optiZoomOff);
+                                           optiZoomOff,
+                                           truePortraitOff);
             }
         }
         // Set auto exposure parameter.

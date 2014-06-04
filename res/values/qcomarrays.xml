@@ -577,6 +577,7 @@
         <item>@string/pref_camera_advanced_feature_entry_refocus</item>
         <item>@string/pref_camera_advanced_feature_entry_chromaflash</item>
         <item>@string/pref_camera_advanced_feature_entry_optizoom</item>
+        <item>@string/pref_camera_advanced_feature_entry_trueportrait</item>
     </string-array>
 
     <string-array name="pref_camera_advanced_features_entryvalues" translatable="false">
@@ -585,6 +586,7 @@
         <item>@string/pref_camera_advanced_feature_value_refocus_on</item>
         <item>@string/pref_camera_advanced_feature_value_chromaflash_on</item>
         <item>@string/pref_camera_advanced_feature_value_optizoom_on</item>
+        <item>@string/pref_camera_advanced_feature_value_trueportrait_on</item>
     </string-array>
 
     <!-- Camera Preferences Long Shot dialog box entries -->
