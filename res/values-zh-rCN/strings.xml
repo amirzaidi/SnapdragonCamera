@@ -493,4 +493,7 @@
     <string name="scene_enable_message">HDR不支持自动场景以外模式</string>
 
     <string name="HDR_disable_continuous_shot">"开启HDR将禁用连拍功能"</string>
+
+    <!-- Toast showing non-supported functionality for flash in AE bracket -->
+    <string name="flash_aebracket_message">闪光灯不支持AE-Bracket模式</string>
 </resources>
