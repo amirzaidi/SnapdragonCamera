@@ -339,9 +339,6 @@ public class PhotoMenu extends PieController
                     mUI.showPopup(mPopup2);
                 else if (popupNum == 3)
                     mUI.showPopup(mPopup3);
-                if(mPopup1 != null) mPopup1 = null;
-                if(mPopup2 != null) mPopup2 = null;
-                if(mPopup3 != null) mPopup3 = null;
         } else {
             initializePopup();
         }
