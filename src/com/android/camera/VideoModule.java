@@ -2248,6 +2248,9 @@ public class VideoModule implements CameraModule,
         // onFrameAvailable from the old camera may already exist.
         mHandler.sendEmptyMessage(SWITCH_CAMERA_START_ANIMATION);
         mUI.updateOnScreenIndicators(mParameters, mPreferences);
+
+        //Display timelapse msg depending upon selection in front/back camera.
+        mUI.showTimeLapseUI(mCaptureTimeLapse);
     }
 
     // Preview texture has been copied. Now camera can be released and the
