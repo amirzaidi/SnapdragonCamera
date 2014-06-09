@@ -144,9 +144,9 @@ public class CameraActivity extends Activity
     private static final int SUPPORT_ALL = 0xffffffff;
 
     /** This data adapter is used by FilmStripView. */
-    private LocalDataAdapter mDataAdapter;
+    private LocalDataAdapter mDataAdapter = null;
     /** This data adapter represents the real local camera data. */
-    private LocalDataAdapter mWrappedDataAdapter;
+    private LocalDataAdapter mWrappedDataAdapter = null;
 
     private PanoramaStitchingManager mPanoramaManager;
     private PlaceholderManager mPlaceholderManager;
@@ -1239,6 +1239,35 @@ public class CameraActivity extends Activity
 
     @Override
     public void onResume() {
+        if (!mSecureCamera) {
+            if (mWrappedDataAdapter == null) {
+                mWrappedDataAdapter = new FixedFirstDataAdapter(
+                        new CameraDataAdapter(new ColorDrawable(
+                            getResources().getColor(R.color.photo_placeholder))),
+                            mCameraPreviewData);
+            }
+            mDataAdapter = mWrappedDataAdapter;
+            mFilmStripView.setDataAdapter(mDataAdapter);
+            if (!isCaptureIntent()) {
+                mDataAdapter.requestLoad(getContentResolver());
+            }
+        } else {
+            ImageView v = (ImageView) getLayoutInflater().inflate(
+                    R.layout.secure_album_placeholder, null);
+            if (mDataAdapter == null) {
+                mDataAdapter = new FixedLastDataAdapter(
+                    mWrappedDataAdapter,
+                    new SimpleViewData(
+                            v,
+                            v.getDrawable().getIntrinsicWidth(),
+                            v.getDrawable().getIntrinsicHeight(),
+                            0, 0));
+            }
+            // Flush out all the original data.
+            mDataAdapter.flush();
+            mFilmStripView.setDataAdapter(mDataAdapter);
+        }
+
         // TODO: Handle this in OrientationManager.
         // Auto-rotate off
         if (Settings.System.getInt(getContentResolver(),
@@ -1299,12 +1328,22 @@ public class CameraActivity extends Activity
     @Override
     protected void onStop() {
         super.onStop();
+        if (mDataAdapter != null) {
+            mDataAdapter.removeData(CameraActivity.this,-1);
+        }
+        mDataAdapter = null;
+        mWrappedDataAdapter = null;
         mPanoramaViewHelper.onStop();
         unbindMediaSaveService();
     }
 
     @Override
     public void onDestroy() {
+
+        if (mDataAdapter != null) {
+            mDataAdapter.removeData(CameraActivity.this,-1);
+        }
+
         if (mSecureCamera) {
             unregisterReceiver(mScreenOffReceiver);
         }
