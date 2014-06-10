@@ -60,7 +60,6 @@ public class PhotoMenu extends PieController
     private int popupNum = 0;
     private PieItem mHdrItem = null;
     private PieItem mHdrPlusItem = null;
-    private boolean mHdrOn = false;
 
     public PhotoMenu(CameraActivity activity, PhotoUI ui, PieRenderer pie) {
         super(activity, pie);
@@ -384,17 +383,20 @@ public class PhotoMenu extends PieController
         // Reset the scene mode if HDR is set to on. Reset HDR if scene mode is
         // set to non-auto.
         if (notSame(pref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)) {
-            setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
-            Toast.makeText(mActivity, R.string.hdr_enable_message,
-                            Toast.LENGTH_LONG).show();
-            mHdrOn = true;
-        } else if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
-            setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
-            if (mHdrOn) {
-                Toast.makeText(mActivity, R.string.scene_enable_message,
-                            Toast.LENGTH_LONG).show();
+            ListPreference scenePref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
+            if (scenePref != null && notSame(scenePref, CameraSettings.KEY_SCENE_MODE,
+                    Parameters.SCENE_MODE_AUTO)) {
+                Toast.makeText(mActivity, R.string.hdr_enable_message, Toast.LENGTH_LONG).show();
             }
-            mHdrOn = false;
+            setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
+        } else if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
+            ListPreference hdrPref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_CAMERA_HDR);
+            if (hdrPref != null && notSame(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)) {
+                Toast.makeText(mActivity, R.string.scene_enable_message, Toast.LENGTH_LONG).show();
+            }
+            setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
         } else if (notSame(pref,CameraSettings.KEY_AE_BRACKET_HDR,"Off")) {
             Toast.makeText(mActivity,
                            R.string.flash_aebracket_message,Toast.LENGTH_SHORT).show();
