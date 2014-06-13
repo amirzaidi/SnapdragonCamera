@@ -67,6 +67,8 @@ public class FixedFirstDataAdapter extends AbstractLocalDataAdapterWrapper
     public void removeData(Context context, int dataID) {
         if (dataID > 0) {
             mAdapter.removeData(context, dataID - 1);
+        } else {
+            mAdapter.removeData(context, dataID);
         }
     }
 
