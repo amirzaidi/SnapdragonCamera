@@ -103,7 +103,8 @@ public class PhotoMenu extends PieController
                 CameraSettings.KEY_TIMER,
                 CameraSettings.KEY_TIMER_SOUND_EFFECTS,
                 CameraSettings.KEY_CAMERA_SAVEPATH,
-                CameraSettings.KEY_LONGSHOT
+                CameraSettings.KEY_LONGSHOT,
+                CameraSettings.KEY_AUTO_HDR
         };
 
         mOtherKeys2 = new String[] {
@@ -251,7 +252,10 @@ public class PhotoMenu extends PieController
      String faceDetection = (pref != null) ? pref.getValue() : null;
      pref = mPreferenceGroup.findPreference(CameraSettings.KEY_ZSL);
      String zsl = (pref != null) ? pref.getValue() : null;
-     if ((sceneMode != null) && !Parameters.SCENE_MODE_AUTO.equals(sceneMode)){
+     pref = mPreferenceGroup.findPreference (CameraSettings.KEY_AUTO_HDR);
+     String autohdr = (pref != null) ? pref.getValue() : null;
+     if (((sceneMode != null) && !Parameters.SCENE_MODE_AUTO.equals(sceneMode))
+         || ((autohdr != null) && autohdr.equals("enable"))) {
          popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
          popup2.setPreferenceEnabled(CameraSettings.KEY_AUTOEXPOSURE,false);
          popup2.setPreferenceEnabled(CameraSettings.KEY_TOUCH_AF_AEC,false);
@@ -262,6 +266,9 @@ public class PhotoMenu extends PieController
          popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
          popup3.setPreferenceEnabled(CameraSettings.KEY_WHITE_BALANCE,false);
          popup3.setPreferenceEnabled(CameraSettings.KEY_EXPOSURE,false);
+     }
+     if ((autohdr != null) && autohdr.equals("enable")) {
+         popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE,false);
      }
      if ((zsl != null) && Parameters.ZSL_ON.equals(zsl)) {
          popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);

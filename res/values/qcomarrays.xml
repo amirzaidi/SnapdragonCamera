@@ -590,5 +590,16 @@
         <item>@string/setting_on_value</item>
     </string-array>
 
+    <!-- AUTO HDR  dialog box entries -->
+    <string-array name="pref_camera_auto_hdr_entries" translatable="false">
+    <item>@string/pref_camera_auto_hdr_entry_enable</item>
+    <item>@string/pref_camera_auto_hdr_entry_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera_auto_hdr_entryvalues" translatable="false">
+    <item>@string/pref_camera_auto_hdr_value_enable</item>
+    <item>@string/pref_camera_auto_hdr_value_disable</item>
+    </string-array>
+
 </resources>
 

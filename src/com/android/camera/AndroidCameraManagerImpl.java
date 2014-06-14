@@ -40,6 +40,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.hardware.Camera.CameraDataCallback;
+import android.hardware.Camera.CameraMetaDataCallback;
 import com.android.camera.util.ApiHelper;
 import android.os.ConditionVariable;
 
@@ -94,7 +95,7 @@ class AndroidCameraManagerImpl implements CameraManager {
     private static final int SEND_HISTOGRAM_DATA =   602;
     //LONGSHOT
     private static final int SET_LONGSHOT = 701;
-
+    private static final int SET_AUTO_HDR_MODE = 801;
     private CameraHandler mCameraHandler;
     private android.hardware.Camera mCamera;
 
@@ -343,6 +344,10 @@ class AndroidCameraManagerImpl implements CameraManager {
                         mCamera.setLongshot((Boolean) msg.obj);
                         break;
 
+                    case SET_AUTO_HDR_MODE:
+                        mCamera.setMetadataCb((CameraMetaDataCallback) msg.obj);
+                        break;
+
                     default:
                         throw new RuntimeException("Invalid CameraProxy message=" + msg.what);
                 }
@@ -432,6 +437,11 @@ class AndroidCameraManagerImpl implements CameraManager {
         @Override
         public void lock() {
             mCameraHandler.sendEmptyMessage(LOCK);
+        }
+
+        @Override
+        public void setMetadataCb(CameraMetaDataCallback cb){
+            mCameraHandler.obtainMessage(SET_AUTO_HDR_MODE, cb).sendToTarget();
         }
 
         @Override
