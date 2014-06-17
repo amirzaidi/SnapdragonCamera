@@ -280,6 +280,10 @@ public class WideAnglePanoramaUI implements
         bitmap = null;
         mCaptureLayout.setVisibility(View.GONE);
         mReviewLayout.setVisibility(View.VISIBLE);
+        // If capture is stopped by device rotation, the rendering progress bar
+        // is sometimes not shown due to wrong layout result. It's likely to be
+        // a framework bug. Call requestLayout() as a workaround.
+        mSavingProgressBar.requestLayout();
     }
 
     public void onConfigurationChanged(
