@@ -36,6 +36,7 @@ import android.view.ViewConfiguration;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 
+import com.android.camera.CameraActivity;
 import com.android.camera.drawable.TextDrawable;
 import com.android.camera.ui.ProgressRenderer.VisibilityListener;
 import org.codeaurora.snapcam.R;
@@ -636,6 +637,8 @@ public class PieRenderer extends OverlayRenderer
 
     @Override
     public boolean onTouchEvent(MotionEvent evt) {
+        if (!CameraActivity.isPieMenuEnabled())
+            return false;
         float x = evt.getX();
         float y = evt.getY();
         int action = evt.getActionMasked();

@@ -222,6 +222,24 @@
         <item>@string/pref_camera_coloreffect_entry_greentint</item>
     </string-array>
 
+    <array name="coloreffect_thumbnails" translatable="false">
+        <item>@drawable/thumb_filter_nofilter</item>
+        <item>@drawable/thumb_filter_monochrome</item>
+        <item>@drawable/thumb_filter_sepia</item>
+        <item>@drawable/thumb_filter_negative</item>
+        <item>@drawable/thumb_filter_solarize</item>
+        <item>@drawable/thumb_filter_posterize</item>
+        <item>@drawable/thumb_filter_aqua</item>
+        <item>@drawable/thumb_filter_emboss</item>
+        <item>@drawable/thumb_filter_sketch</item>
+        <item>@drawable/thumb_filter_neon</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+    </array>
+
     <string-array name="pref_camera_coloreffect_entryvalues" translatable="false">
         <item>none</item>
         <item>mono</item>

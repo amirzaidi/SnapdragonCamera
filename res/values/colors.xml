@@ -70,4 +70,7 @@
     <color name="face_detect_fail">#80d05060</color>
     <color name="gray">#FFAAAAAA</color>
 
+    <color name="setting_color">#ff10aadc</color>
+    <color name="setting_color_light">#ffade9fd</color>
+    <color name="list_divider_color">#d8ababab</color>
 </resources>

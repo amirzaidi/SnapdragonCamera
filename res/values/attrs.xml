@@ -40,6 +40,7 @@
         <attr name="singleIcon" format="reference" />
         <attr name="icons" />
         <attr name="largeIcons" format="reference" />
+        <attr name="thumbnails" format="reference" />
         <attr name="images" format="reference" />
     </declare-styleable>
 

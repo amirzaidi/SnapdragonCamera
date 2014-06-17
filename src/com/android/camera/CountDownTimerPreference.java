@@ -21,7 +21,7 @@ import android.util.AttributeSet;
 
 import org.codeaurora.snapcam.R;
 
-public class CountDownTimerPreference extends ListPreference {
+public class CountDownTimerPreference extends IconListPreference {
     private static final int[] DURATIONS = {
         0, 1, 2, 3, 4, 5, 10, 15, 20, 30, 60
     };

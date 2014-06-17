@@ -80,6 +80,14 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:listSelector">@drawable/bg_pressed</item>
     </style>
+    <style name="CustomSettingItemTitle">
+        <item name="android:textSize">14sp</item>
+        <item name="android:gravity">left|center_vertical</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
     <style name="SettingItemTitle">
         <item name="android:textSize">@dimen/setting_item_text_size</item>
         <item name="android:gravity">left|center_vertical</item>
@@ -104,6 +112,15 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/setting_row_height</item>
         <item name="android:paddingLeft">@dimen/setting_item_list_margin</item>
+        <item name="android:paddingRight">@dimen/setting_item_list_margin</item>
+        <item name="android:background">@drawable/setting_picker</item>
+    </style>
+    <style name="CustomSettingRow">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:layout_width">3000dp</item>
+        <item name="android:layout_height">@dimen/setting_row_height</item>
+        <item name="android:paddingLeft">10dp</item>
         <item name="android:paddingRight">@dimen/setting_item_list_margin</item>
         <item name="android:background">@drawable/setting_picker</item>
     </style>
@@ -228,6 +245,24 @@
     <style name="SwitcherButton">
         <item name="android:layout_width">@dimen/switcher_size</item>
         <item name="android:layout_height">@dimen/switcher_size</item>
+        <item name="android:background">@drawable/bg_pressed_exit_fading</item>
+    </style>
+    <style name="MenuButton">
+        <item name="android:layout_width">@dimen/menu_size</item>
+        <item name="android:layout_height">@dimen/menu_size</item>
+    </style>
+    <style name="MenuButtonOuter">
+        <item name="android:layout_width">@dimen/menu_outer_size</item>
+        <item name="android:layout_height">@dimen/menu_outer_size</item>
+        <item name="android:background">@drawable/bg_pressed_exit_fading</item>
+    </style>
+    <style name="ToggleButton">
+        <item name="android:layout_width">@dimen/toggle_size</item>
+        <item name="android:layout_height">@dimen/toggle_size</item>
+    </style>
+    <style name="ToggleButtonOuter">
+        <item name="android:layout_width">@dimen/toggle_outer_size</item>
+        <item name="android:layout_height">@dimen/toggle_outer_size</item>
         <item name="android:background">@drawable/bg_pressed_exit_fading</item>
     </style>
     <style name="MenuIndicator">

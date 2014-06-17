@@ -31,6 +31,7 @@ public class IconListPreference extends ListPreference {
     private int mIconIds[];
     private int mLargeIconIds[];
     private int mImageIds[];
+    private int mThumbnailIds[];
     private boolean mUseSingleIcon;
 
     public IconListPreference(Context context, AttributeSet attrs) {
@@ -46,6 +47,8 @@ public class IconListPreference extends ListPreference {
                 R.styleable.IconListPreference_largeIcons, 0));
         mImageIds = getIds(res, a.getResourceId(
                 R.styleable.IconListPreference_images, 0));
+        mThumbnailIds = getIds(res, a.getResourceId(
+                R.styleable.IconListPreference_thumbnails, 0));
         a.recycle();
     }
 
@@ -59,6 +62,10 @@ public class IconListPreference extends ListPreference {
 
     public int[] getLargeIconIds() {
         return mLargeIconIds;
+    }
+
+    public int[] getThumbnailIds() {
+        return mThumbnailIds;
     }
 
     public int[] getImageIds() {
@@ -75,6 +82,10 @@ public class IconListPreference extends ListPreference {
 
     public void setLargeIconIds(int[] largeIconIds) {
         mLargeIconIds = largeIconIds;
+    }
+
+    public void setThumbnailIds(int[] thumbnailIds) {
+        mThumbnailIds = thumbnailIds;
     }
 
     public void setUseSingleIcon(boolean useSingle) {
@@ -99,12 +110,14 @@ public class IconListPreference extends ListPreference {
         IntArray iconIds = new IntArray();
         IntArray largeIconIds = new IntArray();
         IntArray imageIds = new IntArray();
+        IntArray thumbnailIds = new IntArray();
 
         for (int i = 0, len = entryValues.length; i < len; i++) {
             if (supported.indexOf(entryValues[i].toString()) >= 0) {
                 if (mIconIds != null) iconIds.add(mIconIds[i]);
                 if (mLargeIconIds != null) largeIconIds.add(mLargeIconIds[i]);
                 if (mImageIds != null) imageIds.add(mImageIds[i]);
+                if (mThumbnailIds != null) thumbnailIds.add(mThumbnailIds[i]);
             }
         }
         if (mIconIds != null) mIconIds = iconIds.toArray(new int[iconIds.size()]);
@@ -112,6 +125,7 @@ public class IconListPreference extends ListPreference {
             mLargeIconIds = largeIconIds.toArray(new int[largeIconIds.size()]);
         }
         if (mImageIds != null) mImageIds = imageIds.toArray(new int[imageIds.size()]);
+        if (mThumbnailIds != null) mThumbnailIds = thumbnailIds.toArray(new int[thumbnailIds.size()]);
         super.filterUnsupported(supported);
     }
 }

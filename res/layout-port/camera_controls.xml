@@ -13,59 +13,109 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<com.android.camera.ui.CameraControls
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.android.camera.ui.CameraControls xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/camera_controls"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-        <View
-            android:id="@+id/blocker"
-            android:clickable="true"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/switcher_size"
-            android:layout_gravity="bottom" />
+    <View
+        android:id="@+id/blocker"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/switcher_size"
+        android:layout_gravity="bottom"
+        android:clickable="true" />
 
-        <include layout="@layout/menu_indicators"
-            android:layout_width="64dip"
-            android:layout_height="64dip"
-            android:layout_gravity="bottom|right"
-            android:layout_marginBottom="6dip"
-            android:layout_marginRight="-5dip" />
+    <include
+        android:layout_width="64dip"
+        android:layout_height="64dip"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="8dip"
+        android:layout_marginRight="-8dip"
+        layout="@layout/menu_indicators" />
 
-        <com.android.camera.ui.PieMenuButton
-            android:id="@+id/menu"
-            style="@style/SwitcherButton"
-            android:layout_gravity="bottom|right"
-            android:layout_marginBottom="2dip"
-            android:contentDescription="@string/accessibility_menu_button" />
-
-        <com.android.camera.ui.ModuleSwitcher
-           android:id="@+id/camera_switcher"
-           style="@style/SwitcherButton"
-           android:layout_gravity="bottom|left"
-           android:layout_marginBottom="2dip"
-           android:contentDescription="@string/accessibility_mode_picker" />
-
-        <com.android.camera.ShutterButton
-            android:id="@+id/shutter_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="@dimen/shutter_offset"
-            android:clickable="true"
-            android:contentDescription="@string/accessibility_shutter_button"
-            android:focusable="true"
-            android:scaleType="center"
-            android:src="@drawable/btn_new_shutter" />
+    <com.android.camera.ui.RotatableLayout
+        android:id="@+id/menu"
+        style="@style/MenuButtonOuter"
+        android:layout_marginRight="2dip" >
 
         <ImageView
-            android:id="@+id/preview_thumb"
-            android:visibility="invisible"
-            android:layout_width="@dimen/capture_size"
-            android:layout_height="@dimen/capture_size"
-            android:scaleType="centerInside"
-            android:layout_gravity="top|right"
-            android:contentDescription="@string/switch_photo_filmstrip" />
+            style="@style/MenuButton"
+            android:layout_gravity="center"
+            android:contentDescription="@string/accessibility_menu_button"
+            android:src="@drawable/ic_settings" />
+    </com.android.camera.ui.RotatableLayout>
+
+    <com.android.camera.ui.ModuleSwitcher
+        android:id="@+id/camera_switcher"
+        style="@style/SwitcherButton"
+        android:layout_gravity="bottom|left"
+        android:layout_marginBottom="2dip"
+        android:contentDescription="@string/accessibility_mode_picker" />
+
+    <com.android.camera.ShutterButton
+        android:id="@+id/shutter_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="@dimen/shutter_offset"
+        android:clickable="true"
+        android:contentDescription="@string/accessibility_shutter_button"
+        android:focusable="true"
+        android:scaleType="center"
+        android:src="@drawable/btn_new_shutter" />
+
+    <ImageView
+        android:id="@+id/preview_thumb"
+        android:layout_width="@dimen/capture_size"
+        android:layout_height="@dimen/capture_size"
+        android:layout_gravity="top|right"
+        android:contentDescription="@string/switch_photo_filmstrip"
+        android:scaleType="centerInside"
+        android:visibility="invisible" />
+
+    <com.android.camera.ui.RotatableLayout
+        android:id="@+id/front_back_switcher"
+        style="@style/ToggleButtonOuter" >
+
+        <com.android.camera.ui.RotateImageView
+            style="@style/ToggleButton"
+            android:layout_gravity="center" />
+    </com.android.camera.ui.RotatableLayout>
+
+    <com.android.camera.ui.RotatableLayout
+        android:id="@+id/flash_switcher"
+        style="@style/ToggleButtonOuter" >
+
+        <com.android.camera.ui.RotateImageView
+            style="@style/ToggleButton"
+            android:layout_gravity="center" />
+    </com.android.camera.ui.RotatableLayout>
+
+    <com.android.camera.ui.RotatableLayout
+        android:id="@+id/hdr_switcher"
+        style="@style/ToggleButtonOuter" >
+
+        <com.android.camera.ui.RotateImageView
+            style="@style/ToggleButton"
+            android:layout_gravity="center" />
+    </com.android.camera.ui.RotatableLayout>
+
+    <com.android.camera.ui.RotatableLayout
+        android:id="@+id/scene_mode_switcher"
+        style="@style/ToggleButtonOuter" >
+
+        <com.android.camera.ui.RotateImageView
+            style="@style/ToggleButton"
+            android:layout_gravity="center" />
+    </com.android.camera.ui.RotatableLayout>
+
+    <com.android.camera.ui.RotatableLayout
+        android:id="@+id/filter_mode_switcher"
+        style="@style/ToggleButtonOuter" >
+
+        <com.android.camera.ui.RotateImageView
+            style="@style/ToggleButton"
+            android:layout_gravity="center" />
+    </com.android.camera.ui.RotatableLayout>
 
 </com.android.camera.ui.CameraControls>

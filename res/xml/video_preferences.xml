@@ -17,11 +17,12 @@
 <PreferenceGroup
         xmlns:camera="http://schemas.android.com/apk/res/org.codeaurora.snapcam"
         camera:title="@string/pref_camcorder_settings_category">
-    <ListPreference
+    <IconListPreference
             camera:key="pref_video_quality_key"
             camera:defaultValue="@string/pref_video_quality_default"
             camera:title="@string/pref_video_quality_title"
             camera:entries="@array/pref_video_quality_entries"
+            camera:singleIcon="@drawable/ic_settings_quality"
             camera:entryValues="@array/pref_video_quality_entryvalues"/>
     <ListPreference
             camera:key="pref_camera_videoencoder_key"
@@ -51,13 +52,13 @@
             camera:key="pref_camera_video_duration_key"
             camera:defaultValue="@string/pref_camera_video_duration_default"
             camera:title="@string/pref_camera_video_duration_title"
+            camera:singleIcon="@drawable/ic_settings_duration"
             camera:entries="@array/pref_camera_video_duration_entries"
             camera:entryValues="@array/pref_camera_video_duration_entryvalues" />
     <IconListPreference
             camera:key="pref_video_time_lapse_frame_interval_key"
             camera:defaultValue="@string/pref_video_time_lapse_frame_interval_default"
             camera:title="@string/pref_video_time_lapse_frame_interval_title"
-            camera:singleIcon="@drawable/ic_timelapse_none"
             camera:entries="@array/pref_video_time_lapse_frame_interval_entries"
             camera:entryValues="@array/pref_video_time_lapse_frame_interval_entryvalues"/>
     <IconListPreference
@@ -66,6 +67,7 @@
             camera:title="@string/pref_camera_flashmode_title"
             camera:icons="@array/video_flashmode_icons"
             camera:largeIcons="@array/video_flashmode_largeicons"
+            camera:singleIcon="@drawable/ic_settings_flash"
             camera:entries="@array/pref_camera_video_flashmode_entries"
             camera:labelList="@array/pref_camera_video_flashmode_labels"
             camera:entryValues="@array/pref_camera_video_flashmode_entryvalues"/>
@@ -77,6 +79,7 @@
             camera:largeIcons="@array/whitebalance_largeicons"
             camera:entries="@array/pref_camera_whitebalance_entries"
             camera:labelList="@array/pref_camera_whitebalance_labels"
+            camera:singleIcon="@drawable/ic_settings_lightsource"
             camera:entryValues="@array/pref_camera_whitebalance_entryvalues"/>
     <IconListPreference
             camera:key="pref_camera_id_key"
@@ -99,6 +102,7 @@
             camera:defaultValue="@string/pref_camera_recordlocation_default"
             camera:title="@string/pref_camera_recordlocation_title"
             camera:icons="@array/camera_recordlocation_icons"
+            camera:singleIcon="@drawable/ic_settings_location"
             camera:largeIcons="@array/camera_recordlocation_largeicons"
             camera:entries="@array/pref_camera_recordlocation_entries"
             camera:entryValues="@array/pref_camera_recordlocation_entryvalues" />
@@ -114,16 +118,19 @@
             camera:title="@string/pref_camera_dis_title"
             camera:entries="@array/pref_camera_dis_entries"
             camera:entryValues="@array/pref_camera_dis_entryvalues" />
-    <ListPreference
+    <IconListPreference
             camera:key="pref_camera_coloreffect_key"
             camera:defaultValue="@string/pref_camera_coloreffect_default"
             camera:title="@string/pref_camera_coloreffect_title"
             camera:entries="@array/pref_camera_coloreffect_entries"
+            camera:thumbnails="@array/coloreffect_thumbnails"
+            camera:singleIcon="@drawable/ic_settings_filter"
             camera:entryValues="@array/pref_camera_coloreffect_entryvalues" />
-    <ListPreference
+    <IconListPreference
             camera:key="pref_camera_hfr_key"
             camera:defaultValue="@string/pref_camera_hfr_default"
             camera:title="@string/pref_camera_hfr_title"
+            camera:singleIcon="@drawable/ic_settings_fps"
             camera:entries="@array/pref_camera_hfr_entries"
             camera:entryValues="@array/pref_camera_hfr_entryvalues"/>
     <ListPreference
@@ -144,11 +151,12 @@
             camera:title="@string/pref_camera_picturesize_title"
             camera:entries="@array/pref_camera_picturesize_entries"
             camera:entryValues="@array/pref_camera_picturesize_entryvalues" />
-    <ListPreference
+    <IconListPreference
             camera:key="pref_camera_savepath_key"
             camera:defaultValue="@string/pref_camera_savepath_default"
             camera:title="@string/pref_camera_savepath_title"
             camera:entries="@array/pref_camera_savepath_entries"
+            camera:singleIcon="@drawable/ic_settings_storage"
             camera:entryValues="@array/pref_camera_savepath_entryvalues" />
     <ListPreference
             camera:key="pref_camera_video_rotation_key"
