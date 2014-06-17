@@ -44,7 +44,7 @@ public class CameraDataAdapter implements LocalDataAdapter {
     private static final int DEFAULT_DECODE_SIZE = 1600;
     private static final String[] CAMERA_PATH = { Storage.DIRECTORY + "/%" ,SDCard.instance().getDirectory() + "/%"};
 
-    private LocalDataList mImages = null;
+    private LocalDataList mImages;
 
     private Listener mListener;
     private Drawable mPlaceHolder;
@@ -124,18 +124,11 @@ public class CameraDataAdapter implements LocalDataAdapter {
     @Override
     public void removeData(Context c, int dataID) {
         if (dataID >= mImages.size()) return;
-        if (dataID == -1) {
-            if ( (mImages != null) && (mImages.size() > 0) ) {
-                 mImages.cleanup();
-                 mImages = null;
-            }
-        } else {
-            LocalData d = mImages.remove(dataID);
-            // Delete previously removed data first.
-            executeDeletion(c);
-            mLocalDataToDelete = d;
-            mListener.onDataRemoved(dataID, d);
-        }
+        LocalData d = mImages.remove(dataID);
+        // Delete previously removed data first.
+        executeDeletion(c);
+        mLocalDataToDelete = d;
+        mListener.onDataRemoved(dataID, d);
     }
 
     // TODO: put the database query on background thread

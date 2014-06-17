@@ -91,7 +91,7 @@ public class WideAnglePanoramaModule
     private ContentResolver mContentResolver;
     private WideAnglePanoramaUI mUI;
 
-    private MosaicPreviewRenderer mMosaicPreviewRenderer = null;
+    private MosaicPreviewRenderer mMosaicPreviewRenderer;
     private Object mRendererLock = new Object();
     private Object mWaitObject = new Object();
 
