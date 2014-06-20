@@ -231,7 +231,7 @@ public class VideoModule implements CameraModule,
             return;
         }
         mParameters = mCameraDevice.getParameters();
-        mPreviewFocused = true;
+        mPreviewFocused = arePreviewControlsVisible();
     }
 
     //QCOM data Members Starts here
