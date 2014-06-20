@@ -662,6 +662,7 @@
     <!-- longshot value -->
     <string name="pref_camera_longshot_default" translatable="false">off</string>
     <string name="pref_camera_longshot_title">Continuous Shot</string>
+    <string name="msg_cancel_longshot_for_limited_memory">run out of memory, canceling longshot</string>
 
     <!-- Toast showing non-supported functionality for flash in AE bracket -->
     <string name="flash_aebracket_message">Flash is not supported in AE-Bracket Mode</string>
