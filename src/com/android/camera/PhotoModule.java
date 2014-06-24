@@ -1095,17 +1095,17 @@ public class PhotoModule
             mFocusManager.updateFocusUI(); // Ensure focus indicator is hidden.
 
             boolean needRestartPreview = !mIsImageCaptureIntent
-                      && !mPreviewRestartSupport
-                      && (mCameraState != LONGSHOT)
-                      && (mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL)
-                      && (mReceivedSnapNum == mBurstSnapNum);
+                    && !mPreviewRestartSupport
+                    && (mCameraState != LONGSHOT)
+                    && (mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL)
+                    && (mReceivedSnapNum == mBurstSnapNum);
             if (needRestartPreview) {
                 setupPreview();
                 if (CameraUtil.FOCUS_MODE_CONTINUOUS_PICTURE.equals(
                     mFocusManager.getFocusMode())) {
                     mCameraDevice.cancelAutoFocus();
                 }
-            }else if ((mReceivedSnapNum == mBurstSnapNum)
+            } else if ((mReceivedSnapNum == mBurstSnapNum)
                         && (mCameraState != LONGSHOT)){
                 mFocusManager.resetTouchFocus();
                 if (CameraUtil.FOCUS_MODE_CONTINUOUS_PICTURE.equals(
@@ -1117,125 +1117,141 @@ public class PhotoModule
                     setCameraState(IDLE);
                 }
             }
-
-            ExifInterface exif = Exif.getExif(jpegData);
-            int orientation = Exif.getOrientation(exif);
-
-            if (!mIsImageCaptureIntent) {
-                // Burst snapshot. Generate new image name.
-                if (mReceivedSnapNum > 1)
-                    mNamedImages.nameNewImage(mCaptureStartTime, mRefocus);
-
-                // Calculate the width and the height of the jpeg.
+            if ((mRefocus) && (mReceivedSnapNum == 6)) {
                 Size s = mParameters.getPictureSize();
-                int width, height;
-                if ((mJpegRotation + orientation) % 180 == 0) {
-                    width = s.width;
-                    height = s.height;
-                } else {
-                    width = s.height;
-                    height = s.width;
-                }
-
-                String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
-                if (pictureFormat != null && !pictureFormat.equalsIgnoreCase(PIXEL_FORMAT_JPEG)) {
-                    // overwrite width and height if raw picture
-                    String pair = mParameters.get(KEY_QC_RAW_PICUTRE_SIZE);
-                    if (pair != null) {
-                        int pos = pair.indexOf('x');
-                        if (pos != -1) {
-                            width = Integer.parseInt(pair.substring(0, pos));
-                            height = Integer.parseInt(pair.substring(pos + 1));
-                        }
-                    }
-                }
+                mNamedImages.nameNewImage(mCaptureStartTime, mRefocus);
                 NamedEntity name = mNamedImages.getNextNameEntity();
                 String title = (name == null) ? null : name.title;
                 long date = (name == null) ? -1 : name.date;
-
-                // Handle debug mode outputs
-                if (mDebugUri != null) {
-                    // If using a debug uri, save jpeg there.
-                    saveToDebugUri(jpegData);
-
-                    // Adjust the title of the debug image shown in mediastore.
-                    if (title != null) {
-                        title = DEBUG_IMAGE_PREFIX + title;
-                    }
-                }
-
                 if (title == null) {
                     Log.e(TAG, "Unbalanced name/data pair");
-                } else {
-                    if (date == -1) date = mCaptureStartTime;
-                    if (mHeading >= 0) {
-                        // heading direction has been updated by the sensor.
-                        ExifTag directionRefTag = exif.buildTag(
-                                ExifInterface.TAG_GPS_IMG_DIRECTION_REF,
-                                ExifInterface.GpsTrackRef.MAGNETIC_DIRECTION);
-                        ExifTag directionTag = exif.buildTag(
-                                ExifInterface.TAG_GPS_IMG_DIRECTION,
-                                new Rational(mHeading, 1));
-                        exif.setTag(directionRefTag);
-                        exif.setTag(directionTag);
-                    }
-                    String mPictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
-                    mActivity.getMediaSaveService().addImage(
-                            jpegData, title, date, mLocation, width, height,
-                            orientation, exif, mOnMediaSavedListener, mContentResolver, mPictureFormat);
+                    return;
                 }
-                // Animate capture with real jpeg data instead of a preview frame.
-                if (mCameraState != LONGSHOT) {
-                    Size pic_size = mParameters.getPictureSize();
-                    if ((pic_size.width <= 352) && (pic_size.height<= 288)) {
-                        mUI.setDownFactor(2); //Downsample by 2 for CIF & below
-                    }
-                    else {
-                        mUI.setDownFactor(4);
-                    }
-                    mUI.animateCapture(jpegData, orientation, mMirror);
+                if (date == -1) {
+                    Log.e(TAG, "Invalid filename date");
+                    return;
                 }
+                mActivity.getMediaSaveService().addImage(
+                        jpegData, title, date, mLocation, s.width, s.height,
+                        0, null, mOnMediaSavedListener, mContentResolver, ".jpeg");
+
             } else {
-                mJpegImageData = jpegData;
-                if (!mQuickCapture) {
-                    mUI.showCapturedImageForReview(jpegData, orientation, mMirror);
-                } else {
-                    onCaptureDone();
-                }
-            }
-
-            // Check this in advance of each shot so we don't add to shutter
-            // latency. It's true that someone else could write to the SD card in
-            // the mean time and fill it, but that could have happened between the
-            // shutter press and saving the JPEG too.
-            mActivity.updateStorageSpaceAndHint();
-
-            long now = System.currentTimeMillis();
-            mJpegCallbackFinishTime = now - mJpegPictureCallbackTime;
-            Log.v(TAG, "mJpegCallbackFinishTime = "
-                    + mJpegCallbackFinishTime + "ms");
-
-            if (mReceivedSnapNum == mBurstSnapNum)
-                mJpegPictureCallbackTime = 0;
-
-            if (mHiston && (mSnapshotMode ==CameraInfo.CAMERA_SUPPORT_MODE_ZSL)) {
-                mActivity.runOnUiThread(new Runnable() {
-                    public void run() {
-                        if (mGraphView != null) {
-                            mGraphView.setVisibility(View.VISIBLE);
-                            mGraphView.PreviewChanged();
+                ExifInterface exif = Exif.getExif(jpegData);
+                int orientation = Exif.getOrientation(exif);
+                if (!mIsImageCaptureIntent) {
+                    // Burst snapshot. Generate new image name.
+                    if (mReceivedSnapNum > 1) {
+                        mNamedImages.nameNewImage(mCaptureStartTime, mRefocus);
+                    }
+                    // Calculate the width and the height of the jpeg.
+                    Size s = mParameters.getPictureSize();
+                    int width, height;
+                    if ((mJpegRotation + orientation) % 180 == 0) {
+                        width = s.width;
+                        height = s.height;
+                    } else {
+                        width = s.height;
+                        height = s.width;
+                    }
+                    String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                    if (pictureFormat != null && !pictureFormat.equalsIgnoreCase(PIXEL_FORMAT_JPEG)) {
+                        // overwrite width and height if raw picture
+                        String pair = mParameters.get(KEY_QC_RAW_PICUTRE_SIZE);
+                        if (pair != null) {
+                            int pos = pair.indexOf('x');
+                            if (pos != -1) {
+                                width = Integer.parseInt(pair.substring(0, pos));
+                                height = Integer.parseInt(pair.substring(pos + 1));
+                            }
                         }
                     }
-                });
-            }
-            if (mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL &&
-                mCameraState != LONGSHOT &&
-                mReceivedSnapNum == mBurstSnapNum &&
-                !mIsImageCaptureIntent) {
-                cancelAutoFocus();
+                    NamedEntity name = mNamedImages.getNextNameEntity();
+                    String title = (name == null) ? null : name.title;
+                    long date = (name == null) ? -1 : name.date;
+                    // Handle debug mode outputs
+                    if (mDebugUri != null) {
+                        // If using a debug uri, save jpeg there.
+                        saveToDebugUri(jpegData);
+                        // Adjust the title of the debug image shown in mediastore.
+                        if (title != null) {
+                            title = DEBUG_IMAGE_PREFIX + title;
+                        }
+                     }
+                     if (title == null) {
+                         Log.e(TAG, "Unbalanced name/data pair");
+                     } else {
+                        if (date == -1) {
+                            date = mCaptureStartTime;
+                        }
+                        if (mHeading >= 0) {
+                            // heading direction has been updated by the sensor.
+                            ExifTag directionRefTag = exif.buildTag(
+                              ExifInterface.TAG_GPS_IMG_DIRECTION_REF,
+                              ExifInterface.GpsTrackRef.MAGNETIC_DIRECTION);
+                            ExifTag directionTag = exif.buildTag(
+                              ExifInterface.TAG_GPS_IMG_DIRECTION,
+                              new Rational(mHeading, 1));
+                            exif.setTag(directionRefTag);
+                            exif.setTag(directionTag);
+                        }
+                        String mPictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                            mActivity.getMediaSaveService().addImage(
+                                    jpegData, title, date, mLocation, width, height,
+                                    orientation, exif, mOnMediaSavedListener,
+                                    mContentResolver, mPictureFormat);
+                        }
+                        // Animate capture with real jpeg data instead of a preview frame.
+                        if (mCameraState != LONGSHOT) {
+                            Size pic_size = mParameters.getPictureSize();
+                            if ((pic_size.width <= 352) && (pic_size.height<= 288)) {
+                                mUI.setDownFactor(2); //Downsample by 2 for CIF & below
+                            } else {
+                                mUI.setDownFactor(4);
+                            }
+                            mUI.animateCapture(jpegData, orientation, mMirror);
+                        }
+                    } else {
+                        mJpegImageData = jpegData;
+                        if (!mQuickCapture) {
+                            mUI.showCapturedImageForReview(jpegData, orientation, mMirror);
+                        } else {
+                            onCaptureDone();
+                        }
+                    }
+                    // Check this in advance of each shot so we don't add to shutter
+                    // latency. It's true that someone else could write to the SD card in
+                    // the mean time and fill it, but that could have happened between the
+                    // shutter press and saving the JPEG too.
+                    mActivity.updateStorageSpaceAndHint();
+                    long now = System.currentTimeMillis();
+                    mJpegCallbackFinishTime = now - mJpegPictureCallbackTime;
+                    Log.v(TAG, "mJpegCallbackFinishTime = "
+                            + mJpegCallbackFinishTime + "ms");
+
+                    if (mReceivedSnapNum == mBurstSnapNum) {
+                        mJpegPictureCallbackTime = 0;
+                    }
+
+                    if (mHiston && (mSnapshotMode ==CameraInfo.CAMERA_SUPPORT_MODE_ZSL)) {
+                        mActivity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            if (mGraphView != null) {
+                                mGraphView.setVisibility(View.VISIBLE);
+                                mGraphView.PreviewChanged();
+                            }
+                        }
+                    });
+                }
+                if (mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL &&
+                        mCameraState != LONGSHOT &&
+                        mReceivedSnapNum == mBurstSnapNum &&
+                        !mIsImageCaptureIntent) {
+                    cancelAutoFocus();
+                }
             }
         }
     }
+
     private OnSeekBarChangeListener mSeekListener = new OnSeekBarChangeListener() {
         public void onStartTrackingTouch(SeekBar bar) {
         // no support
@@ -1509,6 +1525,8 @@ public class PhotoModule
             pref_camera_advanced_feature_value_ubifocus_on);
         String continuousShotOn =
                 mActivity.getString(R.string.setting_on_value);
+        String reFocusOn = mActivity.getString(R.string.
+            pref_camera_advanced_feature_value_refocus_on);
         String chromaFlashOn = mActivity.getString(R.string.
             pref_camera_advanced_feature_value_chromaflash_on);
         String optiZoomOn = mActivity.getString(R.string.
@@ -1529,7 +1547,10 @@ public class PhotoModule
         } else {
             mUI.overrideSettings(CameraSettings.KEY_PICTURE_FORMAT, null);
         }
+        String reFocus =
+            mParameters.get(CameraSettings.KEY_QC_RE_FOCUS);
         if ((ubiFocus != null && ubiFocus.equals(ubiFocusOn)) ||
+                (reFocus != null && reFocus.equals(reFocusOn)) ||
                 (chromaFlash != null && chromaFlash.equals(chromaFlashOn)) ||
                 (optiZoom != null && optiZoom.equals(optiZoomOn))) {
             mSceneMode = sceneMode = Parameters.SCENE_MODE_AUTO;
