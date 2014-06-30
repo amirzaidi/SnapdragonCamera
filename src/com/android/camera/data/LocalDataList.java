@@ -64,16 +64,6 @@ public class LocalDataList {
         return mUriMap.get(uri);
     }
 
-    public void cleanup() {
-        if ((mList != null) && (mList.size() > 0)) {
-             for(int i=0;i<mList.size();i++) {
-                 remove(i);
-             }
-        }
-        mList = null;
-        mUriMap = null;
-    }
-
     public void set(int pos, LocalData data) {
         mList.set(pos, data);
         mUriMap.put(data.getContentUri(), data);

@@ -276,8 +276,6 @@ public class WideAnglePanoramaUI implements
         }
 
         mReview.setImageBitmap(bitmap);
-        bitmap.recycle();
-        bitmap = null;
         mCaptureLayout.setVisibility(View.GONE);
         mReviewLayout.setVisibility(View.VISIBLE);
         // If capture is stopped by device rotation, the rendering progress bar

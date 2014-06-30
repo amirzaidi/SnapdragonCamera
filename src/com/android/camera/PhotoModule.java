@@ -3458,7 +3458,7 @@ class JpegEncodingQualityMappings {
 }
 
 class GraphView extends View {
-    private Bitmap  mBitmap = null;
+    private Bitmap  mBitmap;
     private Paint   mPaint = new Paint();
     private Paint   mPaintRect = new Paint();
     private Canvas  mCanvas = new Canvas();
@@ -3481,10 +3481,6 @@ class GraphView extends View {
     }
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        if (mBitmap != null) {
-            mBitmap.recycle();
-            mBitmap = null;
-        }
         mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);
         mCanvas.setBitmap(mBitmap);
         mWidth = w;
