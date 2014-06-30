@@ -133,7 +133,7 @@ public class PhotoMenu extends PieController
                 CameraSettings.KEY_AE_BRACKET_HDR
         };
 
-        PieItem item1 = makeItem(R.drawable.ic_settings_holo_light);
+        PieItem item1 = makeItem(R.drawable.ic_settings_holo_light_01);
         item1.setLabel(mActivity.getResources().getString(R.string.camera_menu_more_label));
         item1.setOnClickListener(new OnClickListener() {
              @Override
@@ -148,7 +148,7 @@ public class PhotoMenu extends PieController
         });
         mRenderer.addItem(item1);
 
-        PieItem item2 = makeItem(R.drawable.ic_settings_holo_light);
+        PieItem item2 = makeItem(R.drawable.ic_settings_holo_light_02);
         item2.setLabel(mActivity.getResources().getString(R.string.camera_menu_more_label));
         item2.setOnClickListener(new OnClickListener() {
              @Override
@@ -163,7 +163,7 @@ public class PhotoMenu extends PieController
         });
         mRenderer.addItem(item2);
 
-        PieItem item3= makeItem(R.drawable.ic_settings_holo_light);
+        PieItem item3= makeItem(R.drawable.ic_settings_holo_light_03);
         item3.setLabel(mActivity.getResources().getString(R.string.camera_menu_more_label));
         item3.setOnClickListener(new OnClickListener() {
              @Override
