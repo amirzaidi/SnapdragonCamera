@@ -543,7 +543,6 @@ public class FocusOverlayManager {
 
         if (mTouchAFRunning && mZslEnabled) {
             mTouchAFRunning = false;
-            mListener.setFocusParameters();
         }
     }
 
