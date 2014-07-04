@@ -108,7 +108,7 @@ public class PhotoModule
     private static final String TAG = "CAM_PhotoModule";
 
    //QCom data members
-    public static boolean mBrightnessVisible = true;
+    public static boolean mBrightnessVisible = false;
     private static final int MAX_SHARPNESS_LEVEL = 6;
     private boolean mRestartPreview = false;
     private int mSnapshotMode;
@@ -2209,6 +2209,7 @@ public class PhotoModule
                 }
                 brightnessProgressBar.setProgress(mbrightness);
                 brightnessProgressBar.setVisibility(View.VISIBLE);
+                mBrightnessVisible = true;
             }
             break;
            case KeyEvent.KEYCODE_DPAD_RIGHT:
@@ -2226,6 +2227,7 @@ public class PhotoModule
                 }
                 brightnessProgressBar.setProgress(mbrightness);
                 brightnessProgressBar.setVisibility(View.VISIBLE);
+                mBrightnessVisible = true;
             }
             break;
             case KeyEvent.KEYCODE_DPAD_CENTER:
@@ -3386,7 +3388,7 @@ public class PhotoModule
         editor.putString(CameraSettings.KEY_SKIN_TONE_ENHANCEMENT_FACTOR,
             Integer.toString(mskinToneValue - MIN_SCE_FACTOR));
         editor.apply();
-        if(brightnessProgressBar != null)
+        if ((brightnessProgressBar != null) && mBrightnessVisible)
              brightnessProgressBar.setVisibility(View.VISIBLE);
 }
 
