@@ -283,6 +283,8 @@ public class PhotoMenu extends PieController
 
      String ubiFocusOn = mActivity.getString(R.string.
          pref_camera_advanced_feature_value_ubifocus_on);
+     String reFocusOn = mActivity.getString(R.string.
+         pref_camera_advanced_feature_value_refocus_on);
      String chromaFlashOn = mActivity.getString(R.string.
          pref_camera_advanced_feature_value_chromaflash_on);
      String optiZoomOn = mActivity.getString(R.string.
@@ -302,6 +304,7 @@ public class PhotoMenu extends PieController
      } else {
          if ((advancedFeatures != null) && (advancedFeatures.equals(ubiFocusOn) ||
                  advancedFeatures.equals(chromaFlashOn) ||
+                 advancedFeatures.equals(reFocusOn) ||
                  advancedFeatures.equals(optiZoomOn))) {
              popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
              popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
