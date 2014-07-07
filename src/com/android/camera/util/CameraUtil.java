@@ -720,9 +720,15 @@ public class CameraUtil {
         matrix.setConcat(mapping, matrix);
     }
 
+    public static String createJpegName(long dateTaken, boolean refocus) {
+        synchronized (sImageFileNamer) {
+            return sImageFileNamer.generateName(dateTaken, refocus);
+        }
+    }
+
     public static String createJpegName(long dateTaken) {
         synchronized (sImageFileNamer) {
-            return sImageFileNamer.generateName(dateTaken);
+            return sImageFileNamer.generateName(dateTaken, false);
         }
     }
 
@@ -903,6 +909,12 @@ public class CameraUtil {
     private static class ImageFileNamer {
         private final SimpleDateFormat mFormat;
 
+        private final int REFOCUS_DEPTHMAP_IDX = 5;
+        private final String REFOCUS_DEPTHMAP_SUFFIX = "DepthMap";
+        private final int REFOCUS_ALLFOCUS_IDX = 6;
+        private final String REFOCUS_ALLFOCUS_SUFFIX = "Allfocus";
+        private int mRefocusIdx = 0;
+
         // The date (in milliseconds) used to generate the last name.
         private long mLastDate;
 
@@ -913,18 +925,31 @@ public class CameraUtil {
             mFormat = new SimpleDateFormat(format);
         }
 
-        public String generateName(long dateTaken) {
+        public String generateName(long dateTaken, boolean refocus) {
             Date date = new Date(dateTaken);
             String result = mFormat.format(date);
 
-            // If the last name was generated for the same second,
-            // we append _1, _2, etc to the name.
-            if (dateTaken / 1000 == mLastDate / 1000) {
-                mSameSecondCount++;
-                result += "_" + mSameSecondCount;
+            if (refocus) {
+                if (mRefocusIdx == REFOCUS_DEPTHMAP_IDX) {
+                    result += "_" + REFOCUS_DEPTHMAP_SUFFIX;
+                    mRefocusIdx++;
+                } else if (mRefocusIdx == REFOCUS_ALLFOCUS_IDX) {
+                    result += "_" + REFOCUS_ALLFOCUS_SUFFIX;
+                    mRefocusIdx = 0;
+                } else {
+                    result += "_" + mRefocusIdx;
+                    mRefocusIdx++;
+                }
             } else {
-                mLastDate = dateTaken;
-                mSameSecondCount = 0;
+                // If the last name was generated for the same second,
+                // we append _1, _2, etc to the name.
+                if (dateTaken / 1000 == mLastDate / 1000) {
+                    mSameSecondCount++;
+                    result += "_" + mSameSecondCount;
+                } else {
+                    mLastDate = dateTaken;
+                    mSameSecondCount = 0;
+                }
             }
 
             return result;
