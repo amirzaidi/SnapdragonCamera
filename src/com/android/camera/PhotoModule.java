@@ -1060,8 +1060,7 @@ public class PhotoModule
             }
             if (mIsImageCaptureIntent) {
                 stopPreview();
-            }
-            if (mSceneMode == CameraUtil.SCENE_MODE_HDR) {
+            } else if (mSceneMode == CameraUtil.SCENE_MODE_HDR) {
                 mUI.showSwitcher();
                 mUI.setSwipingEnabled(true);
             }
