@@ -920,11 +920,19 @@ public class PhotoUI implements PieListener,
     }
 
     public void onStartFaceDetection(int orientation, boolean mirror) {
+        mFaceView.setBlockDraw(false);
         mFaceView.clear();
         mFaceView.setVisibility(View.VISIBLE);
         mFaceView.setDisplayOrientation(orientation);
         mFaceView.setMirror(mirror);
         mFaceView.resume();
+    }
+
+    public void onStopFaceDetection() {
+        if (mFaceView != null) {
+            mFaceView.setBlockDraw(true);
+            mFaceView.clear();
+        }
     }
 
     @Override
