@@ -445,11 +445,6 @@ public class CameraSettings {
                     pictureFormat, getSupportedPictureFormatLists());
         }
 
-        if (hfr != null) {
-            filterUnsupportedOptions(group,
-                    hfr, mParameters.getSupportedVideoHighFrameRateModes());
-        }
-
         if(advancedFeatures != null) {
             filterUnsupportedOptions(group,
                     advancedFeatures, getSupportedAdvancedFeatures(mParameters));
