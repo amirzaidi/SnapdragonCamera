@@ -495,5 +495,22 @@
     <string name="HDR_disable_continuous_shot">"开启HDR将禁用连拍功能"</string>
 
     <!-- Toast showing non-supported functionality for flash in AE bracket -->
-    <string name="flash_aebracket_message">闪光灯不支持AE-Bracket模式</string>
+    <string name="flash_aebracket_message">闪光灯不支持自动包围曝光模式</string>
+
+    <string name="pref_camera_ae_bracket_hdr_title">自动包围曝光</string>
+
+    <!-- Settings screen, Selectable advanced features title -->
+    <string name="pref_camera_advanced_features_title">高级特性</string>
+    <!-- Settings screen, Selectable Zone Af dialog radio button choices -->
+    <string name="pref_camera_advanced_feature_entry_none">无</string>
+
+    <!-- Settings screen, setting title text for Auto HDR-->
+    <string name="pref_camera_auto_hdr_title">自动 HDR</string>
+
+    <!-- Settings screen, Auto HDR location dialog choices -->
+    <string name="pref_camera_auto_hdr_entry_enable">开</string>
+    <string name="pref_camera_auto_hdr_entry_disable">关</string>
+
+    <!-- toast about switch storage -->
+    <string name="on_switch_save_path_to_sdcard">内部存储空间不足，已切换存储到SD卡</string>
 </resources>
