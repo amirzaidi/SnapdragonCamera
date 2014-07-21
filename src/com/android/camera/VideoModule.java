@@ -878,6 +878,13 @@ public class VideoModule implements CameraModule,
     }
 
     @Override
+    public void onSwitchSavePath() {
+        mUI.setPreference(CameraSettings.KEY_CAMERA_SAVEPATH, "1");
+        Toast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
     public void installIntentFilter() {
         // install an intent filter to receive SD card related events.
         IntentFilter intentFilter =

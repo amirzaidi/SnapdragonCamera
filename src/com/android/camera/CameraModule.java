@@ -68,4 +68,6 @@ public interface CameraModule {
     public boolean arePreviewControlsVisible();
 
     public void resizeForPreviewAspectRatio();
+
+    public void onSwitchSavePath();
 }

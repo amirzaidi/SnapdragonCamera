@@ -160,6 +160,14 @@ public class VideoMenu extends PieController
         }
     }
 
+    public void setPreference(String key, String value) {
+        ListPreference pref = mPreferenceGroup.findPreference(key);
+        if (pref != null && !value.equals(pref.getValue())) {
+            pref.setValue(value);
+            reloadPreferences();
+        }
+    }
+
     @Override
     public void overrideSettings(final String ... keyvalues) {
         super.overrideSettings(keyvalues);

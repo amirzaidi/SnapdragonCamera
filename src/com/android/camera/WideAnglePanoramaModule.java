@@ -44,6 +44,7 @@ import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Toast;
 import com.android.camera.PhotoModule;
 import com.android.camera.CameraManager.CameraProxy;
 import com.android.camera.app.OrientationManager;
@@ -881,6 +882,13 @@ public class WideAnglePanoramaModule
 
     @Override
     public void resizeForPreviewAspectRatio() {
+    }
+
+    @Override
+    public void onSwitchSavePath() {
+        mPreferences.edit().putString(CameraSettings.KEY_CAMERA_SAVEPATH, "1").apply();
+        Toast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
+                Toast.LENGTH_SHORT).show();
     }
 
     @Override

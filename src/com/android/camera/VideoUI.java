@@ -846,4 +846,8 @@ public class VideoUI implements PieRenderer.PieListener,
             R.drawable.ic_recording_indicator, 0, 0, 0);
         mPauseButton.setPaused(false);
     }
+
+    public void setPreference(String key, String value) {
+        mVideoMenu.setPreference(key, value);
+    }
 }
