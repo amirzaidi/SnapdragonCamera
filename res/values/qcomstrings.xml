@@ -702,5 +702,19 @@
      <string name="pref_hdr_mode_value_sensor">hdr-mode-sensor</string>
      <string name="pref_hdr_mode_value_multi_frame">hdr-mode-multiframe</string>
 
+    <!--Default video rotation setting-->
+    <string name="pref_camera_video_rotation_default" translatable="false">0</string>
+
+    <!--Settings screen, video rotation title-->
+    <string name="pref_camera_video_rotation_title">Video Rotation</string>
+
+    <!--Menu, video rotation label-->
+    <string name="pref_camera_video_rotation_label">VIDEO ROTATION</string>
+
+    <!-- Settings screen, Video rotation dialog radio button choices -->
+    <string name="pref_camera_video_rotation_entry_0">0</string>
+    <string name="pref_camera_video_rotation_entry_90">90</string>
+    <string name="pref_camera_video_rotation_entry_180">180</string>
+    <string name="pref_camera_video_rotation_entry_270">270</string>
 </resources>
 

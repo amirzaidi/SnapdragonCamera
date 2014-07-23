@@ -2143,6 +2143,14 @@ public class VideoModule implements CameraModule,
                 mUI.overrideSettings(CameraSettings.KEY_DIS,"disable");
             }
         }
+        //setting video rotation
+        String videoRotation = mPreferences.getString(
+            CameraSettings.KEY_VIDEO_ROTATION,
+            mActivity.getString(R.string.pref_camera_video_rotation_default));
+        if (isSupported(videoRotation, mParameters.getSupportedVideoRotationValues())) {
+            mParameters.setVideoRotation(videoRotation);
+        }
+
     }
     @SuppressWarnings("deprecation")
     private void setCameraParameters() {

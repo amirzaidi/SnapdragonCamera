@@ -149,6 +149,7 @@ public class CameraSettings {
     public static final String FLIP_MODE_VH = "flip-vh";
 
     private static final String KEY_QC_PICTURE_FORMAT = "picture-format-values";
+    public static final String KEY_VIDEO_ROTATION = "pref_camera_video_rotation_key";
     private static final String VIDEO_QUALITY_HIGH = "high";
     private static final String VIDEO_QUALITY_MMS = "mms";
     private static final String VIDEO_QUALITY_YOUTUBE = "youtube";
@@ -384,6 +385,7 @@ public class CameraSettings {
             filterUnsupportedOptions(group,
                     hdr_mode, getSupportedHDRModes(mParameters));
         }
+        ListPreference videoRotation = group.findPreference(KEY_VIDEO_ROTATION);
 
         if (touchAfAec != null) {
             filterUnsupportedOptions(group,
@@ -468,6 +470,11 @@ public class CameraSettings {
         }
         if (longShot!= null && !isLongshotSupported(mParameters)) {
             removePreference(group, longShot.getKey());
+        }
+
+        if (videoRotation != null) {
+            filterUnsupportedOptions(group,
+                    videoRotation, mParameters.getSupportedVideoRotationValues());
         }
     }
 
