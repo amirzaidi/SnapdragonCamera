@@ -175,6 +175,8 @@ public class VideoModule implements CameraModule,
     private final Handler mHandler = new MainHandler();
     private VideoUI mUI;
     private CameraProxy mCameraDevice;
+    private static final String KEY_PREVIEW_FORMAT = "preview-format";
+    private static final String FORMAT_NV12_VENUS = "nv12-venus";
 
     // The degrees of the device rotated clockwise from its natural orientation.
     private int mOrientation = OrientationEventListener.ORIENTATION_UNKNOWN;
@@ -818,13 +820,22 @@ public class VideoModule implements CameraModule,
        }
     }
 
+    private boolean is1080pEnabled() {
+       if (mProfile.quality == CamcorderProfile.QUALITY_1080P) {
+           return true;
+       } else {
+           return false;
+       }
+    }
+
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void getDesiredPreviewSize() {
         if (mCameraDevice == null) {
             return;
         }
         mParameters = mCameraDevice.getParameters();
-        if (mParameters.getSupportedVideoSizes() == null) {
+        if (mParameters.getSupportedVideoSizes() == null || is1080pEnabled()) {
             mDesiredPreviewWidth = mProfile.videoFrameWidth;
             mDesiredPreviewHeight = mProfile.videoFrameHeight;
         } else { // Driver supports separates outputs for preview and video.
@@ -1886,6 +1897,11 @@ public class VideoModule implements CameraModule,
         if(yv12formatset.equals("true")) {
             Log.v(TAG, "preview format set to YV12");
             mParameters.setPreviewFormat (ImageFormat.YV12);
+        }
+
+        if (is1080pEnabled()) {
+           Log.v(TAG, "1080p enabled, preview format set to NV12_VENUS");
+           mParameters.set(KEY_PREVIEW_FORMAT, FORMAT_NV12_VENUS);
         }
 
         // Set High Frame Rate.
