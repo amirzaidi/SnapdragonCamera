@@ -27,13 +27,13 @@ LOCAL_PACKAGE_NAME := SnapdragonCamera
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
-# If this is an unbundled build (to install seprately) then include
+# If this is an unbundled build (to install separately) then include
 # the libraries in the APK, otherwise just put them in /system/lib and
 # leave them out of the APK
 ifneq (,$(TARGET_BUILD_APPS))
-  LOCAL_JNI_SHARED_LIBRARIES := libjni_mosaic libjni_tinyplanet
+  LOCAL_JNI_SHARED_LIBRARIES := libjni_snapcammosaic libjni_snapcamtinyplanet
 else
-  LOCAL_REQUIRED_MODULES := libjni_mosaic libjni_tinyplanet
+  LOCAL_REQUIRED_MODULES := libjni_snapcammosaic libjni_snapcamtinyplanet
 endif
 
 include $(BUILD_PACKAGE)
