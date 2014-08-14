@@ -95,6 +95,7 @@ public class CameraSettings {
     public static final String KEY_REDEYE_REDUCTION = "pref_camera_redeyereduction_key";
     public static final String KEY_AE_BRACKET_HDR = "pref_camera_ae_bracket_hdr_key";
     public static final String KEY_ADVANCED_FEATURES = "pref_camera_advanced_features_key";
+    public static final String KEY_HDR_MODE = "pref_camera_hdr_mode_key";
 
     public static final String KEY_VIDEO_SNAPSHOT_SIZE = "pref_camera_videosnapsize_key";
     public static final String KEY_VIDEO_HIGH_FRAME_RATE = "pref_camera_hfr_key";
@@ -115,6 +116,7 @@ public class CameraSettings {
     private static final String KEY_QC_SUPPORTED_OZ_MODES = "opti-zoom-values";
     private static final String KEY_QC_SUPPORTED_FACE_RECOGNITION_MODES = "face-recognition-values";
     private static final String KEY_QC_SUPPORTED_DIS_MODES = "dis-values";
+    private static final String KEY_SNAPCAM_SUPPORTED_HDR_MODES = "hdr-mode-values";
     public static final String KEY_QC_AE_BRACKETING = "ae-bracket-hdr";
     public static final String KEY_QC_AF_BRACKETING = "af-bracket";
     public static final String KEY_QC_RE_FOCUS = "re-focus";
@@ -124,6 +126,7 @@ public class CameraSettings {
     public static final String KEY_QC_OPTI_ZOOM = "opti-zoom";
     public static final String KEY_QC_FACE_RECOGNITION = "face-recognition";
     public static final String KEY_QC_DIS_MODE = "dis";
+    public static final String KEY_SNAPCAM_HDR_MODE = "hdr-mode";
 
     public static final String KEY_INTERNAL_PREVIEW_RESTART = "internal-restart";
     public static final String KEY_QC_ZSL_HDR_SUPPORTED = "zsl-hdr-supported";
@@ -268,6 +271,14 @@ public class CameraSettings {
         return split(str);
     }
 
+    public static List<String> getSupportedHDRModes(Parameters params) {
+        String str = params.get(KEY_SNAPCAM_SUPPORTED_HDR_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
     public List<String> getSupportedAdvancedFeatures(Parameters params) {
         String str = params.get(KEY_QC_SUPPORTED_AF_BRACKETING_MODES);
         str += ',' + params.get(KEY_QC_SUPPORTED_CF_MODES);
@@ -367,6 +378,12 @@ public class CameraSettings {
         ListPreference hfr = group.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
         ListPreference longShot = group.findPreference(KEY_LONGSHOT);
         ListPreference auto_hdr = group.findPreference(KEY_AUTO_HDR);
+        ListPreference hdr_mode = group.findPreference(KEY_HDR_MODE);
+
+        if (hdr_mode != null) {
+            filterUnsupportedOptions(group,
+                    hdr_mode, getSupportedHDRModes(mParameters));
+        }
 
         if (touchAfAec != null) {
             filterUnsupportedOptions(group,
