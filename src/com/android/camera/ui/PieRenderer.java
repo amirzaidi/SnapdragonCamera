@@ -38,7 +38,7 @@ import android.view.animation.Transformation;
 
 import com.android.camera.drawable.TextDrawable;
 import com.android.camera.ui.ProgressRenderer.VisibilityListener;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 import java.util.ArrayList;
 import java.util.List;

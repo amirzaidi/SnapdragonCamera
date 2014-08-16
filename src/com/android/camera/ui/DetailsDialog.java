@@ -31,7 +31,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.android.camera.data.MediaDetails;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

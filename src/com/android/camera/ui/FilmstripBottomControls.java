@@ -23,7 +23,7 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 
 import com.android.camera.CameraActivity;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 /**
  * Shows controls at the bottom of the screen for editing, viewing a photo

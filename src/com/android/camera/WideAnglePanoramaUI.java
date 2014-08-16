@@ -44,7 +44,7 @@ import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CameraRootView;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.util.CameraUtil;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 /**
  * The UI of {@link WideAnglePanoramaModule}.

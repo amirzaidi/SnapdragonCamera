@@ -28,7 +28,7 @@ import android.util.TypedValue;
 
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.UsageStatistics;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 /**
  * A type of <code>CameraPreference</code> whose number of possible values

@@ -42,7 +42,7 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

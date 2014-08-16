@@ -21,7 +21,7 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 /**
  * The base class of all Preferences used in Camera. The preferences can be

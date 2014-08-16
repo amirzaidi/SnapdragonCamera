@@ -24,7 +24,7 @@ import android.media.SoundPool;
 import android.os.Build;
 import android.util.Log;
 
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 import com.android.camera.util.ApiHelper;
 
 /*

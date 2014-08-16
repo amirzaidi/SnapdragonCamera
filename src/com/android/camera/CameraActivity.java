@@ -88,7 +88,7 @@ import com.android.camera.util.IntentHelper;
 import com.android.camera.util.PhotoSphereHelper;
 import com.android.camera.util.PhotoSphereHelper.PanoramaViewHelper;
 import com.android.camera.util.UsageStatistics;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 import java.io.File;
 

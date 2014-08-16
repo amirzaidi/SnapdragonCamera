@@ -21,7 +21,7 @@ LOCAL_AAPT_FLAGS := \
         --version-name "$(version_name_package)" \
         --version-code $(version_code_package) \
 
-LOCAL_PACKAGE_NAME := Camera2
+LOCAL_PACKAGE_NAME := SnapdragonCamera
 
 #LOCAL_SDK_VERSION := current
 
@@ -38,4 +38,4 @@ endif
 
 include $(BUILD_PACKAGE)
 
-include $(call all-makefiles-under, $(LOCAL_PATH))
+#include $(call all-makefiles-under, $(LOCAL_PATH))

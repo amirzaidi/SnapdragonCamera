@@ -23,22 +23,22 @@
     </application>
 
     <instrumentation android:name="android.test.InstrumentationTestRunner"
-             android:targetPackage="com.android.camera2"
+             android:targetPackage="org.codeaurora.snapcam"
              android:label="Tests for Camera2 application."/>
 
     <instrumentation android:name="com.android.camera.CameraTestRunner"
-            android:targetPackage="com.android.camera2"
+            android:targetPackage="org.codeaurora.snapcam"
             android:label="Camera continuous test runner"/>
 
     <instrumentation android:name="com.android.camera.exif.ExifTestRunner"
-            android:targetPackage="com.android.camera2"
+            android:targetPackage="org.codeaurora.snapcam"
             android:label="Tests for ExifParser."/>
 
     <instrumentation android:name="com.android.camera.jpegstream.JpegStreamTestRunner"
-            android:targetPackage="com.android.camera2"
+            android:targetPackage="org.codeaurora.snapcam"
             android:label="Tests for JpegStream classes."/>
 
     <instrumentation android:name="com.android.camera.stress.CameraStressTestRunner"
-            android:targetPackage="com.android.camera2"
+            android:targetPackage="org.codeaurora.snapcam"
             android:label="Camera stress test runner"/>
 </manifest>

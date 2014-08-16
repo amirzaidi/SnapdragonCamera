@@ -21,7 +21,7 @@ import android.util.AttributeSet;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 // A popup window that shows one or more camera settings.
 abstract public class AbstractSettingPopup extends RotateLayout {

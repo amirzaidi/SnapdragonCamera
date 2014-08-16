@@ -32,7 +32,7 @@ import android.widget.SimpleAdapter;
 
 import com.android.camera.IconListPreference;
 import com.android.camera.ListPreference;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 // A popup window that shows one camera setting. The title is the name of the
 // setting (ex: white-balance). The entries are the supported values (ex:

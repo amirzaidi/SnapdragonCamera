@@ -74,7 +74,7 @@ import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
 import com.android.camera.util.UsageStatistics;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 import com.android.internal.util.MemInfoReader;
 import android.app.ActivityManager;

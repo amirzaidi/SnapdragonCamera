@@ -39,7 +39,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.CompoundButton;
 
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 /**
  * A Switch is a two-state toggle switch widget that can select between two

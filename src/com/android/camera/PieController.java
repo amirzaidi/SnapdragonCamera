@@ -26,7 +26,7 @@ import com.android.camera.drawable.TextDrawable;
 import com.android.camera.ui.PieItem;
 import com.android.camera.ui.PieItem.OnClickListener;
 import com.android.camera.ui.PieRenderer;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 import java.util.ArrayList;
 import java.util.HashMap;

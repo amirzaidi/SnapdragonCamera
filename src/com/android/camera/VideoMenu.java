@@ -26,7 +26,7 @@ import com.android.camera.ui.PieItem;
 import com.android.camera.ui.PieItem.OnClickListener;
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.TimeIntervalPopup;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 public class VideoMenu extends PieController
         implements MoreSettingPopup.Listener,

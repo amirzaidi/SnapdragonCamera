@@ -24,7 +24,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.view.ScaleGestureDetector;
 
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 public class ZoomRenderer extends OverlayRenderer
         implements ScaleGestureDetector.OnScaleGestureListener {

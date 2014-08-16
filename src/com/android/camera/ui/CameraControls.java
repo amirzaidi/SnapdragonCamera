@@ -22,7 +22,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
 
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 public class CameraControls extends RotatableLayout {
 

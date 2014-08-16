@@ -26,7 +26,7 @@ import android.util.Log;
 import com.android.camera.data.LocalMediaData.PhotoData;
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.exif.ExifTag;
-import com.android.camera2.R;
+import org.codeaurora.snapcam.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;
