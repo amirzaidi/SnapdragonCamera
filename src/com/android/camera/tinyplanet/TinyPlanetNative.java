@@ -23,7 +23,7 @@ import android.graphics.Bitmap;
  */
 public class TinyPlanetNative {
     static {
-        System.loadLibrary("jni_tinyplanet");
+        System.loadLibrary("jni_snapcamtinyplanet");
     }
 
     /**
