@@ -1460,8 +1460,10 @@ public class PhotoModule
                 pictureFormat);
 
         // We don't want user to press the button again while taking a
-        // multi-second HDR photo.
-        mUI.enableShutter(false);
+        // multi-second HDR photo. For longshot, no need to disable.
+        if (mCameraState != LONGSHOT) {
+            mUI.enableShutter(false);
+        }
 
         if (mCameraState == LONGSHOT) {
             if(mLongshotSave) {
