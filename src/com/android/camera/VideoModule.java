@@ -840,9 +840,9 @@ public class VideoModule implements CameraModule,
         if(!("off".equals(HighFrameRate)) && !("hsr".equals(HighFrameRate))) {
             Size size = null;
             try {
-                if (isSupported(HighFrameRate, mParameters.getSupportedVideoHighFrameRateModes())) {
+                if (isSupported(HighFrameRate.substring(3), mParameters.getSupportedVideoHighFrameRateModes())) {
                     int index = mParameters.getSupportedVideoHighFrameRateModes().indexOf(
-                            HighFrameRate);
+                            HighFrameRate.substring(3));
                     size = mParameters.getSupportedHfrSizes().get(index);
                 } else {
                     return false;
@@ -861,7 +861,7 @@ public class VideoModule implements CameraModule,
                 return false;
             }
 
-            int hfrFps = Integer.parseInt(HighFrameRate);
+            int hfrFps = Integer.parseInt(HighFrameRate.substring(3));
             int inputBitrate = videoWidth * videoHeight * hfrFps;
 
             boolean supported = false;
