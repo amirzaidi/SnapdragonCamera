@@ -2631,6 +2631,17 @@ public class PhotoModule
                 CameraSettings.getSupportedAEBracketingModes(mParameters))) {
             mParameters.set(CameraSettings.KEY_QC_AE_BRACKETING, aeBracketing);
         }
+
+        // Set hdr mode
+        String hdrMode = mPreferences.getString(
+                CameraSettings.KEY_HDR_MODE,
+                mActivity.getString(R.string.pref_camera_hdr_mode_default));
+        Log.v(TAG, "HDR Mode value =" + hdrMode);
+        if (CameraUtil.isSupported(hdrMode,
+                CameraSettings.getSupportedHDRModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_SNAPCAM_HDR_MODE, hdrMode);
+        }
+
         // Set Advanced features.
         String advancedFeature = mPreferences.getString(
                 CameraSettings.KEY_ADVANCED_FEATURES,

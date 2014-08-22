@@ -687,5 +687,19 @@
 
     <!-- toast message for storage location switch -->
     <string name="on_switch_save_path_to_sdcard">Internal storage space is not enough - switched save path to SD card</string>
+
+    <string name="pref_camera_hdr_mode_default">hdr-mode-sensor</string>
+
+    <!-- Settings screen, Selectable HDR mode title -->
+    <string name="pref_camera_hdr_mode_title">HDR Mode</string>
+
+    <!-- Settings screen, Selectable HDR mode radio button choices -->
+    <string name="pref_camera_hdr_mode_entry_sensor">Sensor HDR</string>
+    <string name="pref_camera_hdr_mode_entry_multi_frame">Multi-frame HDR</string>
+
+     <!-- HDR mode entry values. Do not translate. -->
+     <string name="pref_hdr_mode_value_sensor">hdr-mode-sensor</string>
+     <string name="pref_hdr_mode_value_multi_frame">hdr-mode-multiframe</string>
+
 </resources>
 
