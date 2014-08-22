@@ -1359,6 +1359,10 @@ public class CameraActivity extends Activity
 
     protected void updateStorageSpace() {
         mStorageSpaceBytes = Storage.getAvailableSpace();
+        if (Storage.switchSavePath()) {
+            mStorageSpaceBytes = Storage.getAvailableSpace();
+            mCurrentModule.onSwitchSavePath();
+        }
     }
 
     protected long getStorageSpaceBytes() {

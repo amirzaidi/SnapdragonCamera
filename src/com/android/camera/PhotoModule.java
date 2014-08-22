@@ -697,6 +697,12 @@ public class PhotoModule
         mUI.setAspectRatio((float) size.width / size.height);
     }
 
+    @Override
+    public void onSwitchSavePath() {
+        mUI.setPreference(CameraSettings.KEY_CAMERA_SAVEPATH, "1");
+        Toast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
+                Toast.LENGTH_SHORT).show();
+    }
 
     private void keepMediaProviderInstance() {
         // We want to keep a reference to MediaProvider in camera's lifecycle.
