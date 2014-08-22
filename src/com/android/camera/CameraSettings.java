@@ -127,6 +127,7 @@ public class CameraSettings {
     public static final String KEY_QC_FACE_RECOGNITION = "face-recognition";
     public static final String KEY_QC_DIS_MODE = "dis";
     public static final String KEY_SNAPCAM_HDR_MODE = "hdr-mode";
+    public static final String KEY_VIDEO_HSR = "video-hsr";
 
     public static final String KEY_INTERNAL_PREVIEW_RESTART = "internal-restart";
     public static final String KEY_QC_ZSL_HDR_SUPPORTED = "zsl-hdr-supported";
@@ -375,7 +376,6 @@ public class CameraSettings {
         ListPreference videoSnapSize = group.findPreference(KEY_VIDEO_SNAPSHOT_SIZE);
         ListPreference videoHdr = group.findPreference(KEY_VIDEO_HDR);
         ListPreference pictureFormat = group.findPreference(KEY_PICTURE_FORMAT);
-        ListPreference hfr = group.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
         ListPreference longShot = group.findPreference(KEY_LONGSHOT);
         ListPreference auto_hdr = group.findPreference(KEY_AUTO_HDR);
         ListPreference hdr_mode = group.findPreference(KEY_HDR_MODE);
@@ -470,6 +470,7 @@ public class CameraSettings {
             removePreference(group, longShot.getKey());
         }
     }
+
     private void initPreference(PreferenceGroup group) {
         ListPreference videoQuality = group.findPreference(KEY_VIDEO_QUALITY);
         ListPreference timeLapseInterval = group.findPreference(KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL);
