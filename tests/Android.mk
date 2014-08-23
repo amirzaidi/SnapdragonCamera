@@ -15,4 +15,4 @@ LOCAL_PACKAGE_NAME := Camera2Tests
 
 LOCAL_INSTRUMENTATION_FOR := Camera2
 
-include $(BUILD_PACKAGE)
+#include $(BUILD_PACKAGE)
