@@ -825,6 +825,7 @@ public class PhotoModule
         if (mParameters.getMaxNumDetectedFaces() > 0) {
             mFaceDetectionStarted = false;
             mCameraDevice.setFaceDetectionCallback(null, null);
+            mUI.pauseFaceDetection();
             mCameraDevice.stopFaceDetection();
             mUI.onStopFaceDetection();
         }
