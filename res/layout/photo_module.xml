@@ -23,63 +23,68 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="center">
-    <include layout="@layout/count_down_to_capture"/>
-    <!-- Wrap a frame layout around texture view so that when scaled, texture
-         view will not draw outside its unscaled bounds -->
+    android:layout_gravity="center" >
+    <include layout="@layout/count_down_to_capture" />
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center_vertical|center_horizontal">
-        <TextureView
-            android:id="@+id/preview_content"
+        android:layout_gravity="center_vertical|center_horizontal" >
+        <SurfaceView
+            android:id="@+id/mdp_preview_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-     </FrameLayout>
-       <RelativeLayout android:id="@+id/linear"
+    </FrameLayout>
+    <View
+        android:id="@+id/preview_cover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black"
+        android:visibility="gone" />
+    <RelativeLayout android:id="@+id/linear"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:id="@+id/progress"
             android:orientation="vertical"
+            android:layout_width="200dip"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dip"
+            android:layout_marginBottom="14dip"
+            android:layout_marginLeft="30dip"
+            android:layout_marginRight="30dip" />
+        <com.android.camera.GraphView
+            android:id="@+id/graph_view"
+            android:layout_width="200dip"
+            android:layout_height="200dip"
+            android:layout_marginTop="60dip"
+            android:layout_marginLeft="90dip" />
+        <com.android.camera.DrawAutoHDR
+            android:id="@+id/autohdr_view"
+            android:layout_width="200dip"
+            android:layout_height="200dip"
+            android:layout_marginTop="15dip"
+            android:layout_marginLeft="15dip" />
+        <TableLayout
+            android:id="@+id/relative_seek"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <ProgressBar
-                style="?android:attr/progressBarStyleHorizontal"
-                android:id="@+id/progress"
-                android:visibility="gone"
-                android:orientation="vertical"
-                android:layout_width="200dip"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dip"
-                android:layout_marginBottom="14dip"
-                android:layout_marginLeft="30dip"
-                android:layout_marginRight="30dip" />
-            <com.android.camera.GraphView
-                android:id="@+id/graph_view"
-                android:layout_width="200dip"
-                android:layout_height="200dip"
-                android:layout_marginTop="60dip"
-                android:layout_marginLeft="90dip" />
-            <com.android.camera.DrawAutoHDR
-                android:id="@+id/autohdr_view"
-                android:layout_width="200dip"
-                android:layout_height="200dip"
-                android:layout_marginTop="15dip"
-                android:layout_marginLeft="15dip" />
-            <TableLayout
-                android:id="@+id/relative_seek"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="20px"
-                android:layout_marginRight="20px"
-                android:layout_marginLeft="20px"
-                android:stretchColumns="1">
-                <TableRow> <TextView
+            android:layout_height="match_parent"
+            android:layout_marginTop="20px"
+            android:layout_marginRight="20px"
+            android:layout_marginLeft="20px"
+            android:stretchColumns="1">
+            <TableRow>
+                <TextView
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/skintonetitle"
                     android:layout_gravity="center"
                     android:textSize="22.0sp"
                     android:textStyle="bold" />
-                </TableRow>
-                <TableRow> <SeekBar
+            </TableRow>
+            <TableRow>
+                <SeekBar
                     android:id="@+id/skintoneseek"
                     android:layout_below="@+id/skintonetitle"
                     android:layout_width="match_parent"
@@ -87,29 +92,23 @@
                     android:layout_height="33dip"
                     android:layout_marginLeft="25px"
                     android:layout_marginTop="2dip"/>
-                </TableRow>
-                <TableRow>
-                    <TextView
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/skintoneleft"
-                        android:textSize="22.0sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/skintoneright"
-                        android:textSize="22.0sp"
-                        android:textStyle="bold"/>
-                </TableRow>
-            </TableLayout>
-        </RelativeLayout>
-        <View
-            android:id="@+id/preview_cover"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/black"
-            android:visibility="gone" />
+            </TableRow>
+            <TableRow>
+                <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/skintoneleft"
+                    android:textSize="22.0sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/skintoneright"
+                    android:textSize="22.0sp"
+                    android:textStyle="bold"/>
+            </TableRow>
+        </TableLayout>
+    </RelativeLayout>
     <ImageView
         android:id="@+id/review_image"
         android:layout_width="match_parent"

@@ -26,7 +26,6 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
@@ -49,6 +48,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -297,6 +297,7 @@ public class PhotoModule
     private ContentResolver mContentResolver;
 
     private LocationManager mLocationManager;
+    private boolean mLocationPromptTriggered = false;
 
     private final PostViewPictureCallback mPostViewPictureCallback =
             new PostViewPictureCallback();
@@ -571,16 +572,20 @@ public class PhotoModule
     // Prompt the user to pick to record location for the very first run of
     // camera only
     private void locationFirstRun() {
-        if (RecordLocationPreference.isSet(mPreferences)) {
+        /* Do not prompt if the preference is already set, this is a secure
+         * camera session, or the prompt has already been triggered. */
+        if (RecordLocationPreference.isSet(mPreferences) ||
+                mActivity.isSecureCamera() || mLocationPromptTriggered) {
             return;
         }
-        if (mActivity.isSecureCamera()) return;
         // Check if the back camera exists
         int backCameraId = CameraHolder.instance().getBackCameraId();
         if (backCameraId == -1) {
             // If there is no back camera, do not show the prompt.
             return;
         }
+
+        mLocationPromptTriggered = true;
         mUI.showLocationDialog();
     }
 
@@ -599,12 +604,12 @@ public class PhotoModule
         if (mCameraState == PREVIEW_STOPPED || mCameraState == INIT) {
             startPreview();
         } else {
-            SurfaceTexture st = mUI.getSurfaceTexture();
-            if (st == null) {
-                Log.w(TAG, "startPreview: surfaceTexture is not ready.");
+            SurfaceHolder sh = mUI.getSurfaceHolder();
+            if (sh == null) {
+                Log.w(TAG, "startPreview: holder for preview are not ready.");
                 return;
             }
-            mCameraDevice.setPreviewTexture(st);
+            mCameraDevice.setPreviewDisplay(sh);
         }
     }
 
@@ -613,8 +618,7 @@ public class PhotoModule
         if (mCameraDevice == null) {
             return;
         }
-        Log.v(TAG, "onPreviewUIDestroyed");
-        mCameraDevice.setPreviewTexture(null);
+        mCameraDevice.setPreviewDisplay(null);
         stopPreview();
     }
 
@@ -770,7 +774,7 @@ public class PhotoModule
         }
         setPreviewFrameLayoutCameraOrientation();
         Size size = mParameters.getPreviewSize();
-        Log.e(TAG,"Width = "+ size.width+ "Height = "+size.height);
+        Log.i(TAG, "Using preview width = " + size.width + "& height = " + size.height);
         mUI.setAspectRatio((float) size.width / size.height);
     }
 
@@ -2584,20 +2588,18 @@ public class PhotoModule
             return;
         }
 
-        Log.v(TAG, "startPreview");
-
-        SurfaceTexture st = null;
+        SurfaceHolder sh = null;
+        Log.v(TAG, "startPreview: SurfaceHolder (MDP path)");
         if (mUI != null) {
-            st = mUI.getSurfaceTexture();
+            sh = mUI.getSurfaceHolder();
         }
-        // Surfacetexture could be null here, but its still valid and safe to set null
-        // surface before startpreview. This will help in basic preview setup and
-        // surface creation in parallel. Once valid surface is ready in onPreviewUIReady()
-        // we set the surface to camera to actually start preview.
-        mCameraDevice.setPreviewTexture(st);
+
+        setCameraParameters(UPDATE_PARAM_ALL);
+        // Let UI set its expected aspect ratio
+        mCameraDevice.setPreviewDisplay(sh);
 
         if (!mCameraPreviewParamsReady) {
-            Log.w(TAG, "startPreview: parameters for preview is not ready.");
+            Log.w(TAG, "startPreview: parameters for preview are not ready.");
             return;
         }
         mCameraDevice.setErrorCallback(mErrorCallback);
@@ -4063,7 +4065,7 @@ public class PhotoModule
                 mPreferences, mContentResolver);
         mLocationManager.recordLocation(recordLocation);
         if(needRestart()){
-            Log.v(TAG, "Restarting Preview... Camera Mode Changhed");
+            Log.v(TAG, "Restarting Preview... Camera Mode Changed");
             stopPreview();
             startPreview();
             setCameraState(IDLE);
