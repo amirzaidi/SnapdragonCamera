@@ -83,6 +83,7 @@ public class VideoMenu extends PieController
                 CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
                 CameraSettings.KEY_VIDEOCAMERA_FLASH_MODE,
+                CameraSettings.KEY_VIDEO_ROTATION
        };
 
         PieItem item1 = makeItem(R.drawable.ic_settings_holo_light_01);
