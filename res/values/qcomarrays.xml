@@ -620,5 +620,16 @@
         <item>@string/pref_hdr_mode_value_multi_frame</item>
     </string-array>
 
+    <!-- Camera Preferences Selectable HDR need 1x frame -->
+    <string-array name="pref_camera_hdr_need_1x_entries" translatable="false">
+        <item>@string/pref_camera_hdr_need_1x_entry_false</item>
+        <item>@string/pref_camera_hdr_need_1x_entry_true</item>
+    </string-array>
+
+    <string-array name="pref_camera_hdr_need_1x_entryvalues" translatable="false">
+        <item>@string/pref_hdr_need_1x_value_false</item>
+        <item>@string/pref_hdr_need_1x_value_true</item>
+    </string-array>
+
 </resources>
 

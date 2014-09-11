@@ -698,9 +698,23 @@
     <string name="pref_camera_hdr_mode_entry_sensor">Sensor HDR</string>
     <string name="pref_camera_hdr_mode_entry_multi_frame">Multi-frame HDR</string>
 
-     <!-- HDR mode entry values. Do not translate. -->
-     <string name="pref_hdr_mode_value_sensor">hdr-mode-sensor</string>
-     <string name="pref_hdr_mode_value_multi_frame">hdr-mode-multiframe</string>
+    <!-- HDR mode entry values. Do not translate. -->
+    <string name="pref_hdr_mode_value_sensor">hdr-mode-sensor</string>
+    <string name="pref_hdr_mode_value_multi_frame">hdr-mode-multiframe</string>
+
+    <!-- Settings screen, Selectable HDR need 1x frame default value -->
+    <string name="pref_camera_hdr_need_1x_default">true</string>
+
+    <!-- Settings screen, Selectable HDR need 1x frame title -->
+    <string name="pref_camera_hdr_need_1x_title">HDR need 1x frame</string>
+
+    <!-- Settings screen, Selectable HDR need 1x frame radio button choices -->
+    <string name="pref_camera_hdr_need_1x_entry_false">False</string>
+    <string name="pref_camera_hdr_need_1x_entry_true">True</string>
+
+    <!-- HDR need 1x frame entry values. Do not translate. -->
+    <string name="pref_hdr_need_1x_value_false">false</string>
+    <string name="pref_hdr_need_1x_value_true">true</string>
 
     <!--Default video rotation setting-->
     <string name="pref_camera_video_rotation_default" translatable="false">0</string>
