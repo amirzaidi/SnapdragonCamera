@@ -491,8 +491,6 @@ public class PhotoModule
 
         mPreferences.setLocalId(mActivity, mCameraId);
         CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
-        // we need to reset exposure for the preview
-        resetExposureCompensation();
 
         initializeControlByIntent();
         mQuickCapture = mActivity.getIntent().getBooleanExtra(EXTRA_QUICK_CAPTURE, false);
@@ -2021,7 +2019,6 @@ public class PhotoModule
 
         mJpegPictureCallbackTime = 0;
         mZoomValue = 0;
-        resetExposureCompensation();
         if (!prepareCamera()) {
             // Camera failure.
             return;
