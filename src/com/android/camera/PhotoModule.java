@@ -2639,6 +2639,16 @@ public class PhotoModule
             mParameters.set(CameraSettings.KEY_SNAPCAM_HDR_MODE, hdrMode);
         }
 
+        // Set hdr need 1x
+        String hdrNeed1x = mPreferences.getString(
+                CameraSettings.KEY_HDR_NEED_1X,
+                mActivity.getString(R.string.pref_camera_hdr_need_1x_default));
+        Log.v(TAG, "HDR need 1x value =" + hdrNeed1x);
+        if (CameraUtil.isSupported(hdrNeed1x,
+                CameraSettings.getSupportedHDRNeed1x(mParameters))) {
+            mParameters.set(CameraSettings.KEY_SNAPCAM_HDR_NEED_1X, hdrNeed1x);
+        }
+
         // Set Advanced features.
         String advancedFeature = mPreferences.getString(
                 CameraSettings.KEY_ADVANCED_FEATURES,

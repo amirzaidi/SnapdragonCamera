@@ -105,7 +105,8 @@ public class PhotoMenu extends PieController
                 CameraSettings.KEY_CAMERA_SAVEPATH,
                 CameraSettings.KEY_LONGSHOT,
                 CameraSettings.KEY_AUTO_HDR,
-                CameraSettings.KEY_HDR_MODE
+                CameraSettings.KEY_HDR_MODE,
+                CameraSettings.KEY_HDR_NEED_1X
         };
 
         mOtherKeys2 = new String[] {
