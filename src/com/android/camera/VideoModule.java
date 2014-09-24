@@ -187,6 +187,11 @@ public class VideoModule implements CameraModule,
     private boolean mStopRecPending = false;
     private boolean mStartPrevPending = false;
     private boolean mStopPrevPending = false;
+    private String mPrevSavedVideoCDS = null;
+    private String mTempVideoCDS = null;
+    private boolean mIsVideoTNREnabled;
+    private boolean mIsVideoCDSUpdated = false;
+    private boolean mOverrideCDS = false;
 
     // The preview window is on focus
     private boolean mPreviewFocused = false;
@@ -2094,6 +2099,57 @@ public class VideoModule implements CameraModule,
         }
         if(CameraUtil.isSupported(picture_flip, CameraSettings.getSupportedFlipMode(mParameters))){
             mParameters.set(CameraSettings.KEY_QC_SNAPSHOT_PICTURE_FLIP, picture_flip);
+        }
+
+        // Set video CDS
+        String video_cds = mPreferences.getString(
+                CameraSettings.KEY_VIDEO_CDS_MODE,
+                mActivity.getString(R.string.pref_camera_video_cds_default));
+
+        if ((mPrevSavedVideoCDS == null) && (video_cds != null)) {
+            mPrevSavedVideoCDS = video_cds;
+        }
+
+        if (mOverrideCDS) {
+            video_cds = mPrevSavedVideoCDS;
+            mOverrideCDS = false;
+        }
+
+        if (CameraUtil.isSupported(video_cds,
+                CameraSettings.getSupportedVideoCDSModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE, video_cds);
+        }
+
+        // Set video TNR
+        String video_tnr = mPreferences.getString(
+                CameraSettings.KEY_VIDEO_TNR_MODE,
+                mActivity.getString(R.string.pref_camera_video_tnr_default));
+        if (CameraUtil.isSupported(video_tnr,
+                CameraSettings.getSupportedVideoTNRModes(mParameters))) {
+            if (!video_tnr.equals(mActivity.getString(R.string.
+                    pref_camera_video_tnr_value_off))) {
+                mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
+                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
+                if (!mIsVideoCDSUpdated) {
+                    if (video_cds != null) {
+                        mPrevSavedVideoCDS = mTempVideoCDS;
+                    }
+                    mIsVideoTNREnabled = true;
+                    mIsVideoCDSUpdated = true;
+                }
+            } else if (mIsVideoTNREnabled) {
+                mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
+                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
+                mIsVideoTNREnabled = false;
+                mIsVideoCDSUpdated = false;
+                mOverrideCDS = true;
+            } else {
+                mTempVideoCDS = video_cds;
+            }
+            mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
+            mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE, video_tnr);
         }
 
         // Set Video HDR.

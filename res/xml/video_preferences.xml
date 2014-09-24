@@ -36,6 +36,18 @@
             camera:entries="@array/pref_camera_audioencoder_entries"
             camera:entryValues="@array/pref_camera_audioencoder_entryvalues" />
     <ListPreference
+            camera:key="pref_camera_video_cds_mode_key"
+            camera:defaultValue="@string/pref_camera_video_cds_default"
+            camera:title="@string/pref_camera_video_cds_title"
+            camera:entries="@array/pref_camera_video_cds_entries"
+            camera:entryValues="@array/pref_camera_video_cds_entryvalues" />
+    <ListPreference
+            camera:key="pref_camera_video_tnr_mode_key"
+            camera:defaultValue="@string/pref_camera_video_tnr_default"
+            camera:title="@string/pref_camera_video_tnr_title"
+            camera:entries="@array/pref_camera_video_tnr_entries"
+            camera:entryValues="@array/pref_camera_video_tnr_entryvalues" />
+    <ListPreference
             camera:key="pref_camera_video_duration_key"
             camera:defaultValue="@string/pref_camera_video_duration_default"
             camera:title="@string/pref_camera_video_duration_title"

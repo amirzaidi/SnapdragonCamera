@@ -175,10 +175,68 @@
     <string name="pref_camera_video_hdr_value_off">off</string>
     <string name="pref_camera_video_hdr_value_on">on</string>
 
+    <!-- Settings screen, CDS location dialog choices -->
+    <string name="pref_camera_cds_entry_off">Off</string>
+    <string name="pref_camera_cds_entry_on">On</string>
+    <string name="pref_camera_cds_entry_auto">Auto</string>
+
+    <string name="pref_camera_cds_value_off">off</string>
+    <string name="pref_camera_cds_value_on">on</string>
+    <string name="pref_camera_cds_value_auto">auto</string>
+
+     <!-- Settings screen, video CDS location dialog choices -->
+    <string name="pref_camera_video_cds_entry_off">Off</string>
+    <string name="pref_camera_video_cds_entry_on">On</string>
+    <string name="pref_camera_video_cds_entry_auto">Auto</string>
+
+    <string name="pref_camera_video_cds_value_off">off</string>
+    <string name="pref_camera_video_cds_value_on">on</string>
+    <string name="pref_camera_video_cds_value_auto">auto</string>
+
+    <!-- Settings screen, TNR location dialog choices -->
+    <string name="pref_camera_tnr_entry_disable">Disable</string>
+    <string name="pref_camera_tnr_entry_enable">Enable</string>
+
+    <!-- Settings screen, TNR location dialog choices -->
+    <string name="pref_camera_tnr_value_off">off</string>
+    <string name="pref_camera_tnr_value_on">on</string>
+
+    <!-- Settings screen, video TNR location dialog choices -->
+    <string name="pref_camera_video_tnr_entry_disable">Disable</string>
+    <string name="pref_camera_video_tnr_entry_enable">Enable</string>
+
+    <!-- Settings screen, video TNR location dialog choices -->
+    <string name="pref_camera_video_tnr_value_off">off</string>
+    <string name="pref_camera_video_tnr_value_on">on</string>
+
     <!-- Settings screen, setting title text for Video HDR-->
     <string name="pref_camera_video_hdr_title">Video HDR</string>
 
     <string name="pref_camera_video_hdr_default" translatable="false">off</string>
+
+    <!-- Settings menu, setting title text for cds mode-->
+    <string name="pref_camera_cds_title">CDS mode</string>
+
+    <!-- Settings menu, setting title text for video cds mode-->
+    <string name="pref_camera_video_cds_title">Video CDS mode</string>
+
+    <!-- Default cds mode setting-->
+    <string name="pref_camera_cds_default" translatable="false">on</string>
+
+    <!-- Default video cds mode setting-->
+    <string name="pref_camera_video_cds_default" translatable="false">on</string>
+
+     <!-- Settings menu, setting title text for tnr mode-->
+    <string name="pref_camera_tnr_title">TNR mode</string>
+
+    <!-- Settings menu, setting title text for video tnr mode-->
+    <string name="pref_camera_video_tnr_title">Video TNR mode</string>
+
+    <!-- Default tnr mode setting-->
+    <string name="pref_camera_tnr_default" translatable="false">off</string>
+
+    <!-- Default video tnr mode setting-->
+    <string name="pref_camera_video_tnr_default" translatable="false">off</string>
 
     <!-- Default face  detection setting. -->
     <string name="pref_camera_facedetection_default" translatable="false">on</string>

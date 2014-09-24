@@ -60,6 +60,9 @@ public class PhotoMenu extends PieController
     private int popupNum = 0;
     private PieItem mHdrItem = null;
     private PieItem mHdrPlusItem = null;
+    private String mPrevSavedCDS;
+    private boolean mIsTNREnabled = false;
+    private boolean mIsCDSUpdated = false;
 
     public PhotoMenu(CameraActivity activity, PhotoUI ui, PieRenderer pie) {
         super(activity, pie);
@@ -106,7 +109,9 @@ public class PhotoMenu extends PieController
                 CameraSettings.KEY_LONGSHOT,
                 CameraSettings.KEY_AUTO_HDR,
                 CameraSettings.KEY_HDR_MODE,
-                CameraSettings.KEY_HDR_NEED_1X
+                CameraSettings.KEY_HDR_NEED_1X,
+                CameraSettings.KEY_CDS_MODE,
+                CameraSettings.KEY_TNR_MODE
         };
 
         mOtherKeys2 = new String[] {
@@ -213,10 +218,43 @@ public class PhotoMenu extends PieController
         onSettingChanged(pref);
     }
 
-   @Override
+    @Override
     public void overrideSettings(final String ... keyvalues) {
+        if (mPopup1 != null) {
+            ListPreference pref_tnr = mPreferenceGroup.findPreference(CameraSettings.KEY_TNR_MODE);
+            ListPreference pref_cds = mPreferenceGroup.findPreference(CameraSettings.KEY_CDS_MODE);
+
+            String tnr = (pref_tnr != null) ? pref_tnr.getValue() : null;
+            String cds = (pref_cds != null) ? pref_cds.getValue() : null;
+
+            if (mPrevSavedCDS == null && cds != null) {
+                mPrevSavedCDS = cds;
+            }
+
+            if ((tnr != null) && !mActivity.getString(R.string.
+                    pref_camera_tnr_default).equals(tnr)) {
+                mPopup1.setPreferenceEnabled(CameraSettings.KEY_CDS_MODE, false);
+                mPopup1.overrideSettings(CameraSettings.KEY_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_cds_value_off));
+                mIsTNREnabled = true;
+                if (!mIsCDSUpdated) {
+                    if (cds != null) {
+                        mPrevSavedCDS = cds;
+                    }
+                    mIsCDSUpdated = true;
+                }
+            } else if (tnr != null) {
+                mPopup1.setPreferenceEnabled(CameraSettings.KEY_CDS_MODE, true);
+                if (mIsTNREnabled && mPrevSavedCDS != cds) {
+                    mPopup1.overrideSettings(CameraSettings.KEY_CDS_MODE, mPrevSavedCDS);
+                    mIsTNREnabled = false;
+                    mIsCDSUpdated = false;
+                }
+            }
+        }
+
         super.overrideSettings(keyvalues);
-       if ((mPopup1 == null) &&  (mPopup2 == null)  &&  (mPopup3 == null)) initializePopup();
+        if ((mPopup1 == null) &&  (mPopup2 == null)  &&  (mPopup3 == null)) initializePopup();
         mPopup1.overrideSettings(keyvalues);
         mPopup2.overrideSettings(keyvalues);
         mPopup3.overrideSettings(keyvalues);

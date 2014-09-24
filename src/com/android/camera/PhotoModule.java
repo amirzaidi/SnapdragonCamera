@@ -190,6 +190,8 @@ public class PhotoModule
     // The degrees of the device rotated clockwise from its natural orientation.
     private int mOrientation = OrientationEventListener.ORIENTATION_UNKNOWN;
     private ComboPreferences mPreferences;
+    private String mPrevSavedCDS;
+    private boolean isTNREnabled;
 
     private static final String sTempCropFilename = "crop-temp";
 
@@ -2627,6 +2629,42 @@ public class PhotoModule
         if (CameraUtil.isSupported(aeBracketing,
                 CameraSettings.getSupportedAEBracketingModes(mParameters))) {
             mParameters.set(CameraSettings.KEY_QC_AE_BRACKETING, aeBracketing);
+        }
+
+        // Set CDS
+        String cds = mPreferences.getString(
+                CameraSettings.KEY_CDS_MODE,
+                mActivity.getString(R.string.pref_camera_cds_default));
+        if ((mPrevSavedCDS == null) && (cds != null)) {
+            mPrevSavedCDS = cds;
+        }
+        if (CameraUtil.isSupported(cds,
+                CameraSettings.getSupportedCDSModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_QC_CDS_MODE, cds);
+        }
+
+        // Set TNR
+        String tnr = mPreferences.getString(
+                CameraSettings.KEY_TNR_MODE,
+                mActivity.getString(R.string.pref_camera_tnr_default));
+        if (CameraUtil.isSupported(tnr,
+                CameraSettings.getSupportedTNRModes(mParameters))) {
+            if (!tnr.equals(mActivity.getString(R.string.
+                    pref_camera_tnr_value_off))) {
+                mParameters.set(CameraSettings.KEY_QC_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_cds_value_off));
+                mUI.overrideSettings(CameraSettings.KEY_QC_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_cds_value_off));
+                if (cds != null) {
+                    mPrevSavedCDS = cds;
+                }
+                isTNREnabled = true;
+            } else if (isTNREnabled) {
+                mParameters.set(CameraSettings.KEY_QC_CDS_MODE, mPrevSavedCDS);
+                mUI.overrideSettings(CameraSettings.KEY_QC_CDS_MODE, mPrevSavedCDS);
+                isTNREnabled = false;
+            }
+            mParameters.set(CameraSettings.KEY_QC_TNR_MODE, tnr);
         }
 
         // Set hdr mode

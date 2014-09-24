@@ -48,6 +48,9 @@ public class VideoMenu extends PieController
     private int mPopupStatus;
     private int popupNum;
     private CameraActivity mActivity;
+    private String mPrevSavedVideoCDS;
+    private boolean mIsVideoTNREnabled = false;
+    private boolean mIsVideoCDSUpdated = false;
 
     public VideoMenu(CameraActivity activity, VideoUI ui, PieRenderer pie) {
         super(activity, pie);
@@ -83,7 +86,9 @@ public class VideoMenu extends PieController
                 CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
                 CameraSettings.KEY_VIDEOCAMERA_FLASH_MODE,
-                CameraSettings.KEY_VIDEO_ROTATION
+                CameraSettings.KEY_VIDEO_ROTATION,
+                CameraSettings.KEY_VIDEO_CDS_MODE,
+                CameraSettings.KEY_VIDEO_TNR_MODE
        };
 
         PieItem item1 = makeItem(R.drawable.ic_settings_holo_light_01);
@@ -169,8 +174,49 @@ public class VideoMenu extends PieController
         }
     }
 
+    public void overrideCDSMode() {
+        if (mPopup2 != null) {
+            ListPreference pref_tnr = mPreferenceGroup.
+                    findPreference(CameraSettings.KEY_VIDEO_TNR_MODE);
+            ListPreference pref_cds = mPreferenceGroup.
+                    findPreference(CameraSettings.KEY_VIDEO_CDS_MODE);
+            String tnr = (pref_tnr != null) ? pref_tnr.getValue() : null;
+            String cds = (pref_cds != null) ? pref_cds.getValue() : null;
+
+            if (mPrevSavedVideoCDS == null && cds != null) {
+                mPrevSavedVideoCDS = cds;
+            }
+
+            if ((tnr != null) && !mActivity.getString(R.string.
+                    pref_camera_video_tnr_default).equals(tnr)) {
+                ((MoreSettingPopup) mPopup2).setPreferenceEnabled(
+                        CameraSettings.KEY_VIDEO_CDS_MODE,false);
+                ((MoreSettingPopup) mPopup2).overrideSettings(
+                        CameraSettings.KEY_VIDEO_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
+                mIsVideoTNREnabled = true;
+                if (!mIsVideoCDSUpdated) {
+                    if (cds != null) {
+                        mPrevSavedVideoCDS = cds;
+                    }
+                    mIsVideoCDSUpdated = true;
+                }
+            } else if (tnr != null) {
+                ((MoreSettingPopup) mPopup2).setPreferenceEnabled(
+                        CameraSettings.KEY_VIDEO_CDS_MODE,true);
+                if (mIsVideoTNREnabled) {
+                    ((MoreSettingPopup) mPopup2).overrideSettings(
+                            CameraSettings.KEY_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
+                    mIsVideoTNREnabled = false;
+                    mIsVideoCDSUpdated = false;
+                }
+            }
+        }
+    }
+
     @Override
     public void overrideSettings(final String ... keyvalues) {
+        overrideCDSMode();
         super.overrideSettings(keyvalues);
         if (((mPopup1 == null) && (mPopup2 == null)) || mPopupStatus != POPUP_FIRST_LEVEL) {
             mPopupStatus = POPUP_FIRST_LEVEL;
@@ -212,6 +258,7 @@ public class VideoMenu extends PieController
         popup2.setSettingChangedListener(this);
         popup2.initialize(mPreferenceGroup, mOtherKeys2);
         mPopup2 = popup2;
+        overrideCDSMode();
     }
 
     public void popupDismissed(boolean topPopupOnly) {

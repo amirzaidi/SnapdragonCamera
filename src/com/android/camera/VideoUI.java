@@ -438,7 +438,9 @@ public class VideoUI implements PieRenderer.PieListener,
     }
 
     public void overrideSettings(final String... keyvalues) {
-        mVideoMenu.overrideSettings(keyvalues);
+        if (mVideoMenu != null) {
+            mVideoMenu.overrideSettings(keyvalues);
+        }
     }
 
     public void setOrientationIndicator(int orientation, boolean animation) {
