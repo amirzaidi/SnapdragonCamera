@@ -2864,10 +2864,12 @@ public class PhotoModule
             } else if (video_flip_value == 2) {
                 video_flip_value = 1;
             }
-            if (picture_flip_value == 1) {
-                picture_flip_value = 2;
-            } else if (picture_flip_value == 2) {
-                picture_flip_value = 1;
+            if (mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL) {
+                if (picture_flip_value == 1) {
+                    picture_flip_value = 2;
+                } else if (picture_flip_value == 2) {
+                    picture_flip_value = 1;
+                }
             }
         }
         String preview_flip = CameraUtil.getFilpModeString(preview_flip_value);
