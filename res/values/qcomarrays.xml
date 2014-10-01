@@ -559,6 +559,45 @@
          <item>@string/pref_camera_selectablezoneaf_value_frameaverage</item>
     </string-array>
 
+
+    <string-array name="pref_camera_manual_exp_entries" translatable="false">
+        <item>@string/pref_camera_manual_exp_entry_ISO_priority</item>
+        <item>@string/pref_camera_manual_exp_entry_exptime_priority</item>
+        <item>@string/pref_camera_manual_exp_entry_user_setting</item>
+        <item>@string/pref_camera_manual_exp_entry_off</item>
+    </string-array>
+
+    <string-array name="pref_camera_manual_exp_entry_values" translatable="false">
+         <item>@string/pref_camera_manual_exp_value_ISO_priority</item>
+         <item>@string/pref_camera_manual_exp_value_exptime_priority</item>
+         <item>@string/pref_camera_manual_exp_value_user_setting</item>
+         <item>@string/pref_camera_manual_exp_value_off</item>
+    </string-array>
+
+    <string-array name="pref_camera_manual_wb_entries" translatable="false">
+        <item>@string/pref_camera_manual_wb_entry_color_temperature</item>
+        <item>@string/pref_camera_manual_wb_entry_rbgb_gains</item>
+        <item>@string/pref_camera_manual_wb_entry_off</item>
+    </string-array>
+
+    <string-array name="pref_camera_manual_wb_entry_values" translatable="false">
+         <item>@string/pref_camera_manual_wb_value_color_temperature</item>
+         <item>@string/pref_camera_manual_wb_value_rbgb_gains</item>
+         <item>@string/pref_camera_manual_wb_value_off</item>
+    </string-array>
+
+    <string-array name="pref_camera_manual_focus_entries" translatable="false">
+        <item>@string/pref_camera_manual_focus_entry_scale_mode</item>
+        <item>@string/pref_camera_manual_focus_entry_diopter_mode</item>
+        <item>@string/pref_camera_manual_focus_entry_off</item>
+    </string-array>
+
+    <string-array name="pref_camera_manual_focus_entry_values" translatable="false">
+         <item>@string/pref_camera_manual_focus_value_scale_mode</item>
+         <item>@string/pref_camera_manual_focus_value_diopter_mode</item>
+         <item>@string/pref_camera_manual_focus_value_off</item>
+         </string-array>
+
     <!-- ZSL dialog box entries -->
     <string-array name="pref_camera_zsl_entries" translatable="false">
     <item>@string/pref_camera_zsl_entry_off</item>

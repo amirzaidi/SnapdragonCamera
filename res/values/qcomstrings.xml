@@ -166,6 +166,41 @@
      <string name="pref_camera_advanced_feature_value_trueportrait_off">true-portrait-off</string>
      <string name="pref_camera_advanced_feature_value_multi_touch_focus_off">multi-touch-focus-off</string>
 
+     <!-- Manual exposure control entry values -->
+     <string name="pref_camera_manual_exp_title">Manual Exposure</string>
+     <string name="pref_camera_manual_exp_entry_ISO_priority">ISO priority</string>
+     <string name="pref_camera_manual_exp_entry_exptime_priority">Exposure time priority</string>
+     <string name="pref_camera_manual_exp_entry_user_setting">User setting</string>
+     <string name="pref_camera_manual_exp_entry_off">Off</string>
+
+     <string name="pref_camera_manual_exp_default">off</string>
+     <string name="pref_camera_manual_exp_value_ISO_priority">iso-priority</string>
+     <string name="pref_camera_manual_exp_value_exptime_priority">exp-time-priority</string>
+     <string name="pref_camera_manual_exp_value_user_setting">user-setting</string>
+     <string name="pref_camera_manual_exp_value_off">off</string>
+
+     <!-- Manual white balance entry values -->
+     <string name="pref_camera_manual_wb_title">Manual White balance</string>
+     <string name="pref_camera_manual_wb_entry_color_temperature">Color temperature</string>
+     <string name="pref_camera_manual_wb_entry_rbgb_gains">RBGB gains</string>
+     <string name="pref_camera_manual_wb_entry_off">Off</string>
+
+     <string name="pref_camera_manual_wb_default">off</string>
+     <string name="pref_camera_manual_wb_value_color_temperature">color-temperature</string>
+     <string name="pref_camera_manual_wb_value_rbgb_gains">rbgb-gains</string>
+     <string name="pref_camera_manual_wb_value_off">off</string>
+
+     <!-- Manual Focus entry values -->
+     <string name="pref_camera_manual_focus_title">Manual Focus</string>
+     <string name="pref_camera_manual_focus_entry_scale_mode">Scale mode</string>
+     <string name="pref_camera_manual_focus_entry_diopter_mode">Diopter mode</string>
+     <string name="pref_camera_manual_focus_entry_off">Off</string>
+
+     <string name="pref_camera_manual_focus_default">off</string>
+     <string name="pref_camera_manual_focus_value_scale_mode">scale-mode</string>
+     <string name="pref_camera_manual_focus_value_diopter_mode">diopter-mode</string>
+     <string name="pref_camera_manual_focus_value_off">off</string>
+
     <!-- Settings screen, ZSL location dialog choices -->
     <string name="pref_camera_zsl_entry_off">Off</string>
     <string name="pref_camera_zsl_entry_on">On</string>
