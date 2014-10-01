@@ -372,7 +372,7 @@
     <string name="pref_camera_scenemode_title">Scene mode</string>
 
     <!-- Settings menu, scene mode choices [CHAR LIMIT=16] -->
-    <string name="pref_camera_scenemode_entry_auto">Auto</string>
+    <string name="pref_camera_scenemode_entry_auto">Automatic</string>
     <!-- Scene mode that uses HDR plus (better HDR) [CHAR LIMIT=16] -->
     <string name="pref_camera_scenemode_entry_hdr_plus">HDR+</string>
     <!-- Scene mode that uses HDR (high dynamic range) [CHAR LIMIT=16] -->
