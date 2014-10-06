@@ -272,8 +272,8 @@
 
     <!-- Do not localize entryvalues -->
     <string-array name="pref_camera_dis_entryvalues">
-        <item>disable</item>
-        <item>enable</item>
+        <item>@string/pref_camera_dis_value_disable</item>
+        <item>@string/pref_camera_dis_value_enable</item>
     </string-array>
 
     <!-- Face Recognition dialog box entries -->
