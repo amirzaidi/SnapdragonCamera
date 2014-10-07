@@ -1525,6 +1525,7 @@ public class PhotoModule
         String colorEffect = null;
         String exposureCompensation = null;
         String touchAfAec = null;
+        boolean disableLongShot = false;
 
         String ubiFocusOn = mActivity.getString(R.string.
             pref_camera_advanced_feature_value_ubifocus_on);
@@ -1573,6 +1574,9 @@ public class PhotoModule
                                    exposureCompensation, touchAfAec, null,
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
+            disableLongShot = true;
+            Toast.makeText(mActivity, R.string.advanced_capture_disable_continuous_shot,
+                    Toast.LENGTH_LONG).show();
         }
 
         // If scene mode is set, for flash mode, white balance and focus mode
@@ -1595,8 +1599,7 @@ public class PhotoModule
                     colorEffect,
                     sceneMode, redeyeReduction, aeBracketing);
             if (CameraUtil.SCENE_MODE_HDR.equals(mSceneMode)) {
-                mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
-                        mActivity.getString(R.string.setting_off_value));
+                disableLongShot = true;
             }
         } else if (mFocusManager.isZslEnabled()) {
             focusMode = mParameters.getFocusMode();
@@ -1617,7 +1620,10 @@ public class PhotoModule
             mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, fMode);
             mParameters.setFlashMode(fMode);
         }
-        if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
+        if (disableLongShot) {
+            mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
+                    mActivity.getString(R.string.setting_off_value));
+        } else {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, null);
         }
     }

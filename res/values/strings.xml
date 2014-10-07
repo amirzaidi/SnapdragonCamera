@@ -422,6 +422,9 @@
     <!-- Toast after enable HDR function to inform Continuous Shot has disabled -->
     <string name="HDR_disable_continuous_shot">Enable HDR will disable Continuous Shot.</string>
 
+    <!-- Toast after enable Advanced Capture function to inform Continuous Shot has disabled -->
+    <string name="advanced_capture_disable_continuous_shot">Enable Advanced Capture will disable Continuous Shot.</string>
+
     <!-- Exposure settings in preference -->
     <string name="pref_exposure_title">Exposure</string>
     <string name="pref_exposure_default" translatable="false">0</string>
