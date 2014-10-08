@@ -93,6 +93,10 @@ public class CameraSettings {
     public static final String KEY_HISTOGRAM = "pref_camera_histogram_key";
     public static final String KEY_DENOISE = "pref_camera_denoise_key";
     public static final String KEY_REDEYE_REDUCTION = "pref_camera_redeyereduction_key";
+    public static final String KEY_CDS_MODE = "pref_camera_cds_mode_key";
+    public static final String KEY_VIDEO_CDS_MODE = "pref_camera_video_cds_mode_key";
+    public static final String KEY_TNR_MODE = "pref_camera_tnr_mode_key";
+    public static final String KEY_VIDEO_TNR_MODE = "pref_camera_video_tnr_mode_key";
     public static final String KEY_AE_BRACKET_HDR = "pref_camera_ae_bracket_hdr_key";
     public static final String KEY_ADVANCED_FEATURES = "pref_camera_advanced_features_key";
     public static final String KEY_HDR_MODE = "pref_camera_hdr_mode_key";
@@ -117,6 +121,10 @@ public class CameraSettings {
     private static final String KEY_QC_SUPPORTED_OZ_MODES = "opti-zoom-values";
     private static final String KEY_QC_SUPPORTED_FACE_RECOGNITION_MODES = "face-recognition-values";
     private static final String KEY_QC_SUPPORTED_DIS_MODES = "dis-values";
+    private static final String KEY_QC_SUPPORTED_CDS_MODES = "cds-mode-values";
+    private static final String KEY_QC_SUPPORTED_VIDEO_CDS_MODES = "video-cds-mode-values";
+    private static final String KEY_QC_SUPPORTED_TNR_MODES = "tnr-mode-values";
+    private static final String KEY_QC_SUPPORTED_VIDEO_TNR_MODES = "video-tnr-mode-values";
     private static final String KEY_SNAPCAM_SUPPORTED_HDR_MODES = "hdr-mode-values";
     private static final String KEY_SNAPCAM_SUPPORTED_HDR_NEED_1X = "hdr-need-1x-values";
     public static final String KEY_QC_AE_BRACKETING = "ae-bracket-hdr";
@@ -128,6 +136,10 @@ public class CameraSettings {
     public static final String KEY_QC_OPTI_ZOOM = "opti-zoom";
     public static final String KEY_QC_FACE_RECOGNITION = "face-recognition";
     public static final String KEY_QC_DIS_MODE = "dis";
+    public static final String KEY_QC_CDS_MODE = "cds-mode";
+    public static final String KEY_QC_VIDEO_CDS_MODE = "video-cds-mode";
+    public static final String KEY_QC_TNR_MODE = "tnr-mode";
+    public static final String KEY_QC_VIDEO_TNR_MODE = "video-tnr-mode";
     public static final String KEY_SNAPCAM_HDR_MODE = "hdr-mode";
     public static final String KEY_SNAPCAM_HDR_NEED_1X = "hdr-need-1x";
     public static final String KEY_VIDEO_HSR = "video-hsr";
@@ -276,6 +288,38 @@ public class CameraSettings {
         return split(str);
     }
 
+    public static List<String> getSupportedCDSModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_CDS_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedVideoCDSModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_VIDEO_CDS_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedTNRModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_TNR_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedVideoTNRModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_VIDEO_TNR_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
     public static List<String> getSupportedHDRModes(Parameters params) {
         String str = params.get(KEY_SNAPCAM_SUPPORTED_HDR_MODES);
         if (str == null) {
@@ -392,6 +436,10 @@ public class CameraSettings {
         ListPreference auto_hdr = group.findPreference(KEY_AUTO_HDR);
         ListPreference hdr_mode = group.findPreference(KEY_HDR_MODE);
         ListPreference hdr_need_1x = group.findPreference(KEY_HDR_NEED_1X);
+        ListPreference cds_mode = group.findPreference(KEY_CDS_MODE);
+        ListPreference video_cds_mode = group.findPreference(KEY_VIDEO_CDS_MODE);
+        ListPreference tnr_mode = group.findPreference(KEY_TNR_MODE);
+        ListPreference video_tnr_mode = group.findPreference(KEY_VIDEO_TNR_MODE);
 
         if (hdr_need_1x != null) {
             filterUnsupportedOptions(group,
@@ -402,6 +450,27 @@ public class CameraSettings {
             filterUnsupportedOptions(group,
                     hdr_mode, getSupportedHDRModes(mParameters));
         }
+
+        if (cds_mode != null) {
+            filterUnsupportedOptions(group,
+                    cds_mode, getSupportedCDSModes(mParameters));
+        }
+
+        if (video_cds_mode != null) {
+            filterUnsupportedOptions(group,
+                    video_cds_mode, getSupportedVideoCDSModes(mParameters));
+        }
+
+        if (tnr_mode != null) {
+            filterUnsupportedOptions(group,
+                    tnr_mode, getSupportedTNRModes(mParameters));
+        }
+
+        if (video_tnr_mode != null) {
+            filterUnsupportedOptions(group,
+                    video_tnr_mode, getSupportedVideoTNRModes(mParameters));
+        }
+
         ListPreference videoRotation = group.findPreference(KEY_VIDEO_ROTATION);
 
         if (touchAfAec != null) {
