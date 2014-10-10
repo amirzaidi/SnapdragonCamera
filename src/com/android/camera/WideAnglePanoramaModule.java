@@ -96,6 +96,7 @@ public class WideAnglePanoramaModule
     private MosaicPreviewRenderer mMosaicPreviewRenderer;
     private Object mRendererLock = new Object();
     private Object mWaitObject = new Object();
+    private final CameraErrorCallback mErrorCallback = new CameraErrorCallback();
 
     private String mPreparePreviewString;
     private String mDialogTitle;
@@ -339,6 +340,7 @@ public class WideAnglePanoramaModule
     private void releaseCamera() {
         if (mCameraDevice != null) {
             CameraHolder.instance().release();
+            mCameraDevice.setErrorCallback(null);
             mCameraDevice = null;
             mCameraState = PREVIEW_STOPPED;
         }
@@ -1003,6 +1005,8 @@ public class WideAnglePanoramaModule
             // UI is not ready.
             return;
         }
+
+        mCameraDevice.setErrorCallback(mErrorCallback);
 
         // This works around a driver issue. startPreview may fail if
         // stopPreview/setPreviewTexture/startPreview are called several times
