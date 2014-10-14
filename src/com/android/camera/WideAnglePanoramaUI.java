@@ -34,12 +34,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.TextureView;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.camera.CameraActivity.UpdatePreviewThumbnail;
 import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CameraRootView;
 import com.android.camera.ui.ModuleSwitcher;
@@ -78,6 +80,7 @@ public class WideAnglePanoramaUI implements
     private TextureView mTextureView;
     private ShutterButton mShutterButton;
     private CameraControls mCameraControls;
+    private ImageView mPreviewThumb;
 
     private Matrix mProgressDirectionMatrix = new Matrix();
     private float[] mProgressAngle = new float[2];
@@ -104,6 +107,14 @@ public class WideAnglePanoramaUI implements
         mSwitcher = (ModuleSwitcher) mRootView.findViewById(R.id.camera_switcher);
         mSwitcher.setCurrentIndex(ModuleSwitcher.WIDE_ANGLE_PANO_MODULE_INDEX);
         mSwitcher.setSwitchListener(mActivity);
+        mPreviewThumb = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+        mPreviewThumb.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!CameraControls.isAnimating())
+                    mActivity.gotoGallery();
+            }
+        });
     }
 
     public void onStartCapture() {
@@ -202,6 +213,23 @@ public class WideAnglePanoramaUI implements
         mProgressDirectionMatrix.postRotate(orientation);
     }
 
+    public void updatePreviewThumbnail(Bitmap bitmap) {
+        mPreviewThumb.setVisibility(View.VISIBLE);
+        mPreviewThumb.setImageBitmap(bitmap);
+        mActivity.setPreviewThumbnailBitmap(bitmap);
+    }
+
+    public void updatePreviewThumbnail() {
+        mPreviewThumb.setVisibility(View.VISIBLE);
+        Bitmap bitmap = mActivity.getPreviewThumbBitmap();
+        if (bitmap != null)
+            mPreviewThumb.setImageBitmap(bitmap);
+        else {
+            UpdatePreviewThumbnail task = mActivity.new UpdatePreviewThumbnail(mPreviewThumb);
+            task.execute();
+        }
+    }
+
     public void showDirectionIndicators(int direction) {
         switch (direction) {
             case PanoProgressBar.DIRECTION_NONE:
@@ -227,6 +255,7 @@ public class WideAnglePanoramaUI implements
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i2) {
         mSurfaceTexture = surfaceTexture;
         mController.onPreviewUIReady();
+        updatePreviewThumbnail();
     }
 
     @Override
@@ -282,6 +311,9 @@ public class WideAnglePanoramaUI implements
         // is sometimes not shown due to wrong layout result. It's likely to be
         // a framework bug. Call requestLayout() as a workaround.
         mSavingProgressBar.requestLayout();
+
+        updatePreviewThumbnail(Bitmap.createScaledBitmap(bitmap,
+                bitmap.getWidth() / 2, bitmap.getHeight() / 2, false));
     }
 
     public void onConfigurationChanged(

@@ -41,7 +41,6 @@ public class CameraControls extends RotatableLayout {
     private View mSwitcher;
     private View mMenu;
     private View mFrontBackSwitcher;
-    private View mFlashSwitcher;
     private View mHdrSwitcher;
     private View mIndicators;
     private View mPreview;
@@ -53,13 +52,13 @@ public class CameraControls extends RotatableLayout {
     private static boolean isAnimating = false;
     private ArrayList<View> mViewList;
     private static final int FRONT_BACK_INDEX = 0;
-    private static final int FLASH_INDEX = 1;
-    private static final int HDR_INDEX = 2;
-    private static final int SCENE_MODE_INDEX = 3;
-    private static final int FILTER_MODE_INDEX = 4;
+    private static final int HDR_INDEX = 1;
+    private static final int SCENE_MODE_INDEX = 2;
+    private static final int FILTER_MODE_INDEX = 3;
+    private static final int MENU_INDEX = 4;
     private static final int SWITCHER_INDEX = 5;
     private static final int SHUTTER_INDEX = 6;
-    private static final int MENU_INDEX = 7;
+    private static final int PREVIEW_INDEX = 7;
     private static final int INDICATOR_INDEX = 8;
     private static final int ANIME_DURATION = 300;
     private float[][] mLocX = new float[4][9];
@@ -82,7 +81,6 @@ public class CameraControls extends RotatableLayout {
             resetLocation(0, 0);
 
             mFrontBackSwitcher.setVisibility(View.INVISIBLE);
-            mFlashSwitcher.setVisibility(View.INVISIBLE);
             mHdrSwitcher.setVisibility(View.INVISIBLE);
             mSceneModeSwitcher.setVisibility(View.INVISIBLE);
             mFilterModeSwitcher.setVisibility(View.INVISIBLE);
@@ -101,7 +99,6 @@ public class CameraControls extends RotatableLayout {
             resetLocation(0, 0);
 
             mFrontBackSwitcher.setVisibility(View.INVISIBLE);
-            mFlashSwitcher.setVisibility(View.INVISIBLE);
             mHdrSwitcher.setVisibility(View.INVISIBLE);
             mSceneModeSwitcher.setVisibility(View.INVISIBLE);
             mFilterModeSwitcher.setVisibility(View.INVISIBLE);
@@ -161,21 +158,19 @@ public class CameraControls extends RotatableLayout {
             mSwitcher.setPressed(false);
             mMenu.setPressed(false);
             mFrontBackSwitcher.setPressed(false);
-            mFlashSwitcher.setPressed(false);
             mHdrSwitcher.setPressed(false);
             mSceneModeSwitcher.setPressed(false);
             mFilterModeSwitcher.setPressed(false);
         } else {
-            mTempEnabled[FLASH_INDEX] = mFlashSwitcher.isEnabled();
             mTempEnabled[FILTER_MODE_INDEX] = mFilterModeSwitcher.isEnabled();
         }
         ((ShutterButton) mShutter).enableTouch(enable);
         ((ModuleSwitcher) mSwitcher).enableTouch(enable);
         mMenu.setEnabled(enable);
         mFrontBackSwitcher.setEnabled(enable);
-        mFlashSwitcher.setEnabled(enable && mTempEnabled[FLASH_INDEX]);
         mHdrSwitcher.setEnabled(enable);
         mSceneModeSwitcher.setEnabled(enable);
+        mPreview.setEnabled(enable);
         mFilterModeSwitcher.setEnabled(enable && mTempEnabled[FILTER_MODE_INDEX]);
     }
 
@@ -183,8 +178,6 @@ public class CameraControls extends RotatableLayout {
         mViewList = new ArrayList<View>();
         if (mFrontBackSwitcher.getVisibility() == View.VISIBLE)
             mViewList.add(mFrontBackSwitcher);
-        if (mFlashSwitcher.getVisibility() == View.VISIBLE)
-            mViewList.add(mFlashSwitcher);
         if (mHdrSwitcher.getVisibility() == View.VISIBLE)
             mViewList.add(mHdrSwitcher);
         if (mSceneModeSwitcher.getVisibility() == View.VISIBLE)
@@ -206,7 +199,6 @@ public class CameraControls extends RotatableLayout {
         mSwitcher = findViewById(R.id.camera_switcher);
         mShutter = findViewById(R.id.shutter_button);
         mFrontBackSwitcher = findViewById(R.id.front_back_switcher);
-        mFlashSwitcher = findViewById(R.id.flash_switcher);
         mHdrSwitcher = findViewById(R.id.hdr_switcher);
         mMenu = findViewById(R.id.menu);
         mIndicators = findViewById(R.id.on_screen_indicators);
@@ -232,7 +224,6 @@ public class CameraControls extends RotatableLayout {
             v.layout(l, t, r, b);
         }
         Rect shutter = new Rect();
-        topRight(mPreview, l, t, r, b);
         center(mShutter, l, t, r, b, orientation, rotation, shutter, SHUTTER_INDEX);
         mSize = (int) (Math.max(shutter.right - shutter.left, shutter.bottom - shutter.top) * 1.2f);
         center(mBackgroundView, l, t, r, b, orientation, rotation, new Rect(), -1);
@@ -252,11 +243,11 @@ public class CameraControls extends RotatableLayout {
     private void setLocation(int w, int h) {
         int rotation = getUnifiedRotation();
         toIndex(mSwitcher, w, h, rotation, 4, 6, SWITCHER_INDEX);
-        toIndex(mMenu, w, h, rotation, 0, 6, MENU_INDEX);
+        toIndex(mMenu, w, h, rotation, 4, 0, MENU_INDEX);
         toIndex(mIndicators, w, h, rotation, 0, 6, INDICATOR_INDEX);
         toIndex(mFrontBackSwitcher, w, h, rotation, 2, 0, FRONT_BACK_INDEX);
-        toIndex(mFlashSwitcher, w, h, rotation, 3, 0, FLASH_INDEX);
-        toIndex(mHdrSwitcher, w, h, rotation, 4, 0, HDR_INDEX);
+        toIndex(mPreview, w, h, rotation, 0, 6, PREVIEW_INDEX);
+        toIndex(mHdrSwitcher, w, h, rotation, 3, 0, HDR_INDEX);
         toIndex(mFilterModeSwitcher, w, h, rotation, 1, 0, FILTER_MODE_INDEX);
         toIndex(mSceneModeSwitcher, w, h, rotation, 0, 0, SCENE_MODE_INDEX);
     }
@@ -310,24 +301,24 @@ public class CameraControls extends RotatableLayout {
         int idx1 = rotation / 90;
 
         mFrontBackSwitcher.setX(mLocX[idx1][FRONT_BACK_INDEX] + x);
-        mFlashSwitcher.setX(mLocX[idx1][FLASH_INDEX] + x);
         mHdrSwitcher.setX(mLocX[idx1][HDR_INDEX] + x);
         mSceneModeSwitcher.setX(mLocX[idx1][SCENE_MODE_INDEX] + x);
         mFilterModeSwitcher.setX(mLocX[idx1][FILTER_MODE_INDEX] + x);
+        mMenu.setX(mLocX[idx1][MENU_INDEX] + x);
         mSwitcher.setX(mLocX[idx1][SWITCHER_INDEX] - x);
         mShutter.setX(mLocX[idx1][SHUTTER_INDEX] - x);
-        mMenu.setX(mLocX[idx1][MENU_INDEX] - x);
         mIndicators.setX(mLocX[idx1][INDICATOR_INDEX] - x);
+        mPreview.setX(mLocX[idx1][PREVIEW_INDEX] - x);
 
         mFrontBackSwitcher.setY(mLocY[idx1][FRONT_BACK_INDEX] + y);
-        mFlashSwitcher.setY(mLocY[idx1][FLASH_INDEX] + y);
         mHdrSwitcher.setY(mLocY[idx1][HDR_INDEX] + y);
         mSceneModeSwitcher.setY(mLocY[idx1][SCENE_MODE_INDEX] + y);
         mFilterModeSwitcher.setY(mLocY[idx1][FILTER_MODE_INDEX] + y);
+        mMenu.setY(mLocY[idx1][MENU_INDEX] + y);
         mSwitcher.setY(mLocY[idx1][SWITCHER_INDEX] - y);
         mShutter.setY(mLocY[idx1][SHUTTER_INDEX] - y);
-        mMenu.setY(mLocY[idx1][MENU_INDEX] - y);
         mIndicators.setY(mLocY[idx1][INDICATOR_INDEX] - y);
+        mPreview.setY(mLocY[idx1][PREVIEW_INDEX] - y);
     }
 
     public void hideUI() {
@@ -335,7 +326,6 @@ public class CameraControls extends RotatableLayout {
         enableTouch(false);
         int rotation = getUnifiedRotation();
         mFrontBackSwitcher.animate().cancel();
-        mFlashSwitcher.animate().cancel();
         mHdrSwitcher.animate().cancel();
         mSceneModeSwitcher.animate().cancel();
         mFilterModeSwitcher.animate().cancel();
@@ -343,6 +333,7 @@ public class CameraControls extends RotatableLayout {
         mShutter.animate().cancel();
         mMenu.animate().cancel();
         mIndicators.animate().cancel();
+        mPreview.animate().cancel();
         mFrontBackSwitcher.animate().setListener(outlistener);
         ((ModuleSwitcher) mSwitcher).removePopup();
         resetLocation(0, 0);
@@ -350,51 +341,51 @@ public class CameraControls extends RotatableLayout {
         switch (rotation) {
             case 0:
                 mFrontBackSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 break;
             case 90:
                 mFrontBackSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 break;
             case 180:
                 mFrontBackSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 break;
             case 270:
                 mFrontBackSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 break;
         }
     }
@@ -404,7 +395,6 @@ public class CameraControls extends RotatableLayout {
         enableTouch(false);
         int rotation = getUnifiedRotation();
         mFrontBackSwitcher.animate().cancel();
-        mFlashSwitcher.animate().cancel();
         mHdrSwitcher.animate().cancel();
         mSceneModeSwitcher.animate().cancel();
         mFilterModeSwitcher.animate().cancel();
@@ -412,6 +402,7 @@ public class CameraControls extends RotatableLayout {
         mShutter.animate().cancel();
         mMenu.animate().cancel();
         mIndicators.animate().cancel();
+        mPreview.animate().cancel();
         if (mViewList != null)
             for (View v : mViewList) {
                 v.setVisibility(View.VISIBLE);
@@ -423,6 +414,7 @@ public class CameraControls extends RotatableLayout {
 
         mMenu.setVisibility(View.VISIBLE);
         mIndicators.setVisibility(View.VISIBLE);
+        mPreview.setVisibility(View.VISIBLE);
 
         mFrontBackSwitcher.animate().setListener(inlistener);
         switch (rotation) {
@@ -430,57 +422,57 @@ public class CameraControls extends RotatableLayout {
                 resetLocation(0, -mSize);
 
                 mFrontBackSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 break;
             case 90:
                 resetLocation(-mSize, 0);
 
                 mFrontBackSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 break;
             case 180:
                 resetLocation(0, mSize);
 
                 mFrontBackSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 break;
             case 270:
                 resetLocation(mSize, 0);
 
                 mFrontBackSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
-                mFlashSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mHdrSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mSceneModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
+                mMenu.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
 
                 mSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mShutter.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
-                mMenu.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mIndicators.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
+                mPreview.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 break;
         }
     }
@@ -630,14 +622,6 @@ public class CameraControls extends RotatableLayout {
                 break;
         }
         v.layout(l, t, r, b);
-    }
-
-    private void topRight(View v, int l, int t, int r, int b) {
-        // layout using the specific margins; the rotation code messes up the
-        // others
-        int mt = getContext().getResources().getDimensionPixelSize(R.dimen.capture_margin_top);
-        int mr = getContext().getResources().getDimensionPixelSize(R.dimen.capture_margin_right);
-        v.layout(r - v.getMeasuredWidth() - mr, t + mt, r - mr, t + mt + v.getMeasuredHeight());
     }
 
     private void adjustBackground() {

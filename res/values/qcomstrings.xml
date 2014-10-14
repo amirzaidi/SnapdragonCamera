@@ -283,7 +283,7 @@
     <string name="pref_camera_video_tnr_default" translatable="false">off</string>
 
     <!-- Default face  detection setting. -->
-    <string name="pref_camera_facedetection_default" translatable="false">on</string>
+    <string name="pref_camera_facedetection_default" translatable="false">off</string>
 
     <!-- Settings screen, Select Face Detection -->
     <string name="pref_camera_facedetection_title">Face Detection</string>
