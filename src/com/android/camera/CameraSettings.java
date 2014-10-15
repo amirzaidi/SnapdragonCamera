@@ -123,6 +123,7 @@ public class CameraSettings {
     private static final String KEY_QC_SUPPORTED_OZ_MODES = "opti-zoom-values";
     private static final String KEY_QC_SUPPORTED_FSSR_MODES = "FSSR-values";
     private static final String KEY_QC_SUPPORTED_TP_MODES = "true-portrait-values";
+    private static final String KEY_QC_SUPPORTED_MTF_MODES = "multi-touch-focus-values";
     private static final String KEY_QC_SUPPORTED_FACE_RECOGNITION_MODES = "face-recognition-values";
     private static final String KEY_QC_SUPPORTED_DIS_MODES = "dis-values";
     private static final String KEY_QC_SUPPORTED_SEE_MORE_MODES = "see-more-values";
@@ -141,6 +142,7 @@ public class CameraSettings {
     public static final String KEY_QC_OPTI_ZOOM = "opti-zoom";
     public static final String KEY_QC_FSSR = "FSSR";
     public static final String KEY_QC_TP = "true-portrait";
+    public static final String KEY_QC_MULTI_TOUCH_FOCUS = "multi-touch-focus";
     public static final String KEY_QC_FACE_RECOGNITION = "face-recognition";
     public static final String KEY_QC_DIS_MODE = "dis";
     public static final String KEY_QC_CDS_MODE = "cds-mode";
@@ -358,6 +360,7 @@ public class CameraSettings {
         str += ',' + params.get(KEY_QC_SUPPORTED_OZ_MODES);
         str += ',' + params.get(KEY_QC_SUPPORTED_FSSR_MODES);
         str += ',' + params.get(KEY_QC_SUPPORTED_TP_MODES);
+        str += ',' + params.get(KEY_QC_SUPPORTED_MTF_MODES);
         str += ',' + mContext.getString(R.string.pref_camera_advanced_feature_default);
         str += ',' + params.get(KEY_QC_SUPPORTED_RE_FOCUS_MODES);
         return split(str);
@@ -405,6 +408,14 @@ public class CameraSettings {
 
     public static List<String> getSupportedTruePortraitModes(Parameters params) {
         String str = params.get(KEY_QC_SUPPORTED_TP_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedMultiTouchFocusModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_MTF_MODES);
         if (str == null) {
             return null;
         }
