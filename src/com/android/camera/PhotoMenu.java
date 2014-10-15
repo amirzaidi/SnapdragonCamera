@@ -455,6 +455,29 @@ public class PhotoMenu extends PieController
                Toast.makeText(mActivity,
                               R.string.flash_aebracket_message,Toast.LENGTH_SHORT).show();
             }
+        } else if (notSame(pref, CameraSettings.KEY_LONGSHOT, mSettingOff)) {
+            ListPreference advancefeaturePref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_ADVANCED_FEATURES);
+            if (advancefeaturePref != null) {
+                if (notSame(advancefeaturePref, CameraSettings.KEY_ADVANCED_FEATURES,
+                        mActivity.getString(R.string.pref_camera_advanced_feature_default))) {
+                    Toast.makeText(mActivity, R.string.longshot_enable_message,
+                            Toast.LENGTH_LONG).show();
+                }
+                setPreference(CameraSettings.KEY_ADVANCED_FEATURES,
+                        mActivity.getString(R.string.pref_camera_advanced_feature_default));
+            }
+        } else if (notSame(pref, CameraSettings.KEY_ADVANCED_FEATURES,
+                mActivity.getString(R.string.pref_camera_advanced_feature_default))) {
+            ListPreference longshotPref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_LONGSHOT);
+            if (longshotPref != null ) {
+                if (notSame(longshotPref, CameraSettings.KEY_LONGSHOT, mSettingOff)) {
+                    Toast.makeText(mActivity, R.string.advance_feature_enable_msg,
+                            Toast.LENGTH_LONG).show();
+                }
+                setPreference(CameraSettings.KEY_LONGSHOT, mSettingOff);
+            }
         }
         super.onSettingChanged(pref);
     }
