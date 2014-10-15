@@ -1576,6 +1576,8 @@ public class PhotoModule
             pref_camera_advanced_feature_value_chromaflash_on);
         String optiZoomOn = mActivity.getString(R.string.
             pref_camera_advanced_feature_value_optizoom_on);
+        String fssrOn = mActivity.getString(R.string.
+            pref_camera_advanced_feature_value_FSSR_on);
         String truPortraitOn = mActivity.getString(R.string.
             pref_camera_advanced_feature_value_trueportrait_on);
         String optiZoom =
@@ -1584,6 +1586,8 @@ public class PhotoModule
             mParameters.get(CameraSettings.KEY_QC_CHROMA_FLASH);
         String ubiFocus =
             mParameters.get(CameraSettings.KEY_QC_AF_BRACKETING);
+        String fssr =
+            mParameters.get(CameraSettings.KEY_QC_FSSR);
         String continuousShot =
                 mParameters.get("long-shot");
         String truePortrait =
@@ -1610,6 +1614,7 @@ public class PhotoModule
                 (reFocus != null && reFocus.equals(reFocusOn)) ||
                 (chromaFlash != null && chromaFlash.equals(chromaFlashOn)) ||
                 (optiZoom != null && optiZoom.equals(optiZoomOn)) ||
+                (fssr != null && fssr.equals(fssrOn)) ||
                 (truePortrait != null && truePortrait.equals(truPortraitOn))) {
             mSceneMode = sceneMode = Parameters.SCENE_MODE_AUTO;
             flashMode = Parameters.FLASH_MODE_OFF;
@@ -2551,6 +2556,7 @@ public class PhotoModule
                                             String chromaFlash,
                                             String reFocus,
                                             String optiZoom,
+                                            String fssr,
                                             String truePortrait) {
         if (CameraUtil.isSupported(ubiFocus,
               CameraSettings.getSupportedAFBracketingModes(mParameters))) {
@@ -2567,6 +2573,10 @@ public class PhotoModule
         if (CameraUtil.isSupported(reFocus,
               CameraSettings.getSupportedRefocusModes(mParameters))) {
             mParameters.set(CameraSettings.KEY_QC_RE_FOCUS, reFocus);
+        }
+        if (CameraUtil.isSupported(fssr,
+              CameraSettings.getSupportedFSSRModes(mParameters))) {
+             mParameters.set(CameraSettings.KEY_QC_FSSR, fssr);
         }
         if (CameraUtil.isSupported(truePortrait,
               CameraSettings.getSupportedTruePortraitModes(mParameters))) {
@@ -2801,6 +2811,8 @@ public class PhotoModule
                  pref_camera_advanced_feature_value_optizoom_off);
              String reFocusOff = mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_refocus_off);
+             String fssrOff = mActivity.getString(R.string.
+                 pref_camera_advanced_feature_value_FSSR_off);
              String truePortraitOff = mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_trueportrait_off);
 
@@ -2810,6 +2822,7 @@ public class PhotoModule
                                            chromaFlashOff,
                                            reFocusOff,
                                            optiZoomOff,
+                                           fssrOff,
                                            truePortraitOff);
             } else if (advancedFeature.equals(mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_chromaflash_on))) {
@@ -2817,6 +2830,7 @@ public class PhotoModule
                                            advancedFeature,
                                            reFocusOff,
                                            optiZoomOff,
+                                           fssrOff,
                                            truePortraitOff);
             } else if (advancedFeature.equals(mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_refocus_on))) {
@@ -2824,6 +2838,7 @@ public class PhotoModule
                                            chromaFlashOff,
                                            advancedFeature,
                                            optiZoomOff,
+                                           fssrOff,
                                            truePortraitOff);
                  mRefocus = true;
             } else if (advancedFeature.equals(mActivity.getString(R.string.
@@ -2832,6 +2847,15 @@ public class PhotoModule
                                            chromaFlashOff,
                                            reFocusOff,
                                            advancedFeature,
+                                           fssrOff,
+                                           truePortraitOff);
+            } else if (advancedFeature.equals(mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_FSSR_on))) {
+                 qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                           chromaFlashOff,
+                                           reFocusOff,
+                                           optiZoomOff,
+                                           advancedFeature,
                                            truePortraitOff);
             } else if (advancedFeature.equals(mActivity.getString(R.string.
                 pref_camera_advanced_feature_value_trueportrait_on))) {
@@ -2839,12 +2863,14 @@ public class PhotoModule
                                            chromaFlashOff,
                                            reFocusOff,
                                            optiZoomOff,
+                                           fssrOff,
                                            advancedFeature);
             } else {
                 qcomUpdateAdvancedFeatures(ubiFocusOff,
                                            chromaFlashOff,
                                            reFocusOff,
                                            optiZoomOff,
+                                           fssrOff,
                                            truePortraitOff);
             }
         }

@@ -145,6 +145,7 @@
      <string name="pref_camera_advanced_feature_entry_refocus">Refocus</string>
      <string name="pref_camera_advanced_feature_entry_chromaflash">Chroma Flash</string>
      <string name="pref_camera_advanced_feature_entry_optizoom">Opti Zoom</string>
+     <string name="pref_camera_advanced_feature_entry_FSSR">FSSR</string>
      <string name="pref_camera_advanced_feature_entry_trueportrait">True Portrait</string>
 
      <!-- Auto exposure entry values. Do not translate. -->
@@ -153,11 +154,13 @@
      <string name="pref_camera_advanced_feature_value_refocus_on">re-focus-on</string>
      <string name="pref_camera_advanced_feature_value_chromaflash_on">chroma-flash-on</string>
      <string name="pref_camera_advanced_feature_value_optizoom_on">opti-zoom-on</string>
+     <string name="pref_camera_advanced_feature_value_FSSR_on">FSSR-on</string>
      <string name="pref_camera_advanced_feature_value_trueportrait_on">true-portrait-on</string>
      <string name="pref_camera_advanced_feature_value_ubifocus_off">af-bracket-off</string>
      <string name="pref_camera_advanced_feature_value_refocus_off">re-focus-off</string>
      <string name="pref_camera_advanced_feature_value_chromaflash_off">chroma-flash-off</string>
      <string name="pref_camera_advanced_feature_value_optizoom_off">opti-zoom-off</string>
+     <string name="pref_camera_advanced_feature_value_FSSR_off">FSSR-off</string>
      <string name="pref_camera_advanced_feature_value_trueportrait_off">true-portrait-off</string>
 
     <!-- Settings screen, ZSL location dialog choices -->
