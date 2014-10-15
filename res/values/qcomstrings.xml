@@ -340,6 +340,20 @@
      <string name="pref_camera_hfr_value_hsr_90">hsr90</string>
      <string name="pref_camera_hfr_value_hsr_120">hsr120</string>
 
+     <!-- Default see more setting. Do not translate. -->
+     <string name="pref_camera_see_more_default">off</string>
+
+     <!-- Settings screen, Select See More title -->
+     <string name="pref_camera_see_more_title">See More</string>
+
+     <!-- Settings screen, see more radio button choices -->
+     <string name="pref_camera_see_more_entry_off">Off</string>
+     <string name="pref_camera_see_more_entry_on">On</string>
+
+     <!-- see more entry values. Do not translate. -->
+     <string name="pref_camera_see_more_value_off">off</string>
+     <string name="pref_camera_see_more_value_on">on</string>
+
         <!-- Denoise Settings screen, setting title text -->
     <string name="pref_camera_denoise_title">Wavelet Denoise Mode</string>
     <string name="pref_camera_denoise_default" translatable="false">denoise-on</string>

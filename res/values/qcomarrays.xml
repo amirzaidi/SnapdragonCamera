@@ -420,6 +420,17 @@
           <item>@string/pref_camera_hfr_value_hsr_120</item>
      </string-array>
 
+     <!-- Video Preferences See More dialog box entries -->
+     <string-array name="pref_camera_see_more_entries">
+          <item>@string/pref_camera_see_more_entry_off</item>
+          <item>@string/pref_camera_see_more_entry_on</item>
+     </string-array>
+     <!-- Do not localize entryvalues -->
+     <string-array name="pref_camera_see_more_entryvalues">
+          <item>@string/pref_camera_see_more_value_off</item>
+          <item>@string/pref_camera_see_more_value_on</item>
+     </string-array>
+
      <!-- Do not localize entryvalues -->
      <string-array name="pref_camera_histogram_entryvalues">
           <item>@string/pref_camera_histogram_value_disable</item>
