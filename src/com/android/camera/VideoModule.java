@@ -1934,9 +1934,27 @@ public class VideoModule implements CameraModule,
                 CameraSettings.KEY_DIS,
                 mActivity.getString(R.string.pref_camera_dis_default));
         Log.v(TAG, "DIS value =" + disMode);
-        if (isSupported(disMode,
-                        CameraSettings.getSupportedDISModes(mParameters))) {
-            mParameters.set(CameraSettings.KEY_QC_DIS_MODE, disMode);
+
+        if (is4KEnabled()) {
+            if (isSupported(mActivity.getString(R.string.pref_camera_dis_value_disable),
+                    CameraSettings.getSupportedDISModes(mParameters))) {
+                mParameters.set(CameraSettings.KEY_QC_DIS_MODE,
+                        mActivity.getString(R.string.pref_camera_dis_value_disable));
+                mUI.overrideSettings(CameraSettings.KEY_DIS,
+                        mActivity.getString(R.string.pref_camera_dis_value_disable));
+                Toast.makeText(mActivity, R.string.video_quality_4k_disable_IS,
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Log.e(TAG, "Not supported IS mode = " +
+                        mActivity.getString(R.string.pref_camera_dis_value_disable));
+            }
+        } else {
+            if (isSupported(disMode,
+                    CameraSettings.getSupportedDISModes(mParameters))) {
+                mParameters.set(CameraSettings.KEY_QC_DIS_MODE, disMode);
+            } else {
+                Log.e(TAG, "Not supported IS mode = " + disMode);
+            }
         }
 
         if (mDefaultAntibanding == null) {
