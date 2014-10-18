@@ -791,5 +791,13 @@
     <string name="pref_camera_video_rotation_entry_90">90</string>
     <string name="pref_camera_video_rotation_entry_180">180</string>
     <string name="pref_camera_video_rotation_entry_270">270</string>
+
+    <!-- Continous shot enable message -->
+    <string name="longshot_enable_message">
+            Advance features are not supported in continuous shot mode</string>
+    <!-- Advance features enable message -->
+    <string name="advance_feature_enable_msg">
+            Continuous shot is not supported when advance features are enabled</string>
+
 </resources>
 
