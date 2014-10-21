@@ -345,31 +345,32 @@ public class FaceView extends View
                             face.getSmileScore());
                         if (face.getSmileDegree() < smile_threashold_no_smile) {
 
-                            if ((mDisplayOrientation == 90) ||
-                                (mDisplayOrientation == 270)) {
-                                point[0] = face.mouth.x;
-                                point[1] = face.mouth.y - delta_y;
-                                point[2] = face.mouth.x;
-                                point[3] = face.mouth.y + delta_y;
-                            } else {
-                                point[0] = face.mouth.x - delta_x;
-                                point[1] = face.mouth.y;
-                                point[2] = face.mouth.x + delta_x ;
-                                point[3] = face.mouth.y;
-                            }
-                            mMatrix.mapPoints (point);
+                            point[0] = face.mouth.x - delta_x;
+                            point[1] = face.mouth.y;
+                            point[2] = face.mouth.x + delta_x ;
+                            point[3] = face.mouth.y;
+                            Matrix faceMatrix = new Matrix(mMatrix);
+                            faceMatrix.preRotate(face.getRollDirection(),
+                                    face.mouth.x, face.mouth.y);
+                            faceMatrix.mapPoints(point);
                             canvas.drawLine(point[0] + dx, point[1] + dy,
                                 point[2] + dx, point[3] + dy, mPaint);
 
                         } else if (face.getSmileDegree() <
                             smile_threashold_small_smile) {
+                            int rotation_mouth = mDisplayOrientation -
+                                    face.getRollDirection();
+                            if (0 > rotation_mouth) {
+                                rotation_mouth = 360 + rotation_mouth;
+                            }
 
                             mRect.set(face.mouth.x-delta_x,
                                 face.mouth.y-delta_y, face.mouth.x+delta_x,
                                 face.mouth.y+delta_y);
                             mMatrix.mapRect(mRect);
                             mRect.offset(dx, dy);
-                            canvas.drawArc(mRect, 0, 180, true, mPaint);
+                            canvas.drawArc(mRect, rotation_mouth,
+                                    180, true, mPaint);
                         } else {
                             mRect.set(face.mouth.x-delta_x,
                                 face.mouth.y-delta_y, face.mouth.x+delta_x,
