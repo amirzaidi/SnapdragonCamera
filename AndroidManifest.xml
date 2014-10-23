@@ -56,6 +56,7 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:icon="@mipmap/ic_launcher_camera"
             android:label="@string/snapcam_app_name"
+            android:launchMode="singleTop"
             android:logo="@mipmap/ic_launcher_gallery"
             android:taskAffinity="com.android.camera.CameraActivity"
             android:theme="@style/Theme.Camera"
@@ -82,6 +83,7 @@
             android:name="com.android.camera.CameraLauncher"
             android:icon="@mipmap/ic_launcher_camera"
             android:label="@string/snapcam_app_name"
+            android:launchMode="singleTop"
             android:targetActivity="com.android.camera.CameraActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -96,6 +98,7 @@
             android:name="com.android.camera.VideoCamera"
             android:icon="@mipmap/ic_launcher_video_camera"
             android:label="@string/video_camera_label"
+            android:launchMode="singleTop"
             android:targetActivity="com.android.camera.CameraActivity">
             <intent-filter>
                 <action android:name="android.media.action.VIDEO_CAMERA" />
@@ -114,6 +117,7 @@
             android:excludeFromRecents="true"
             android:icon="@mipmap/ic_launcher_camera"
             android:label="@string/snapcam_app_name"
+            android:launchMode="singleTop"
             android:logo="@mipmap/ic_launcher_gallery"
             android:taskAffinity="com.android.camera.SecureCameraActivity"
             android:theme="@style/Theme.Camera"
