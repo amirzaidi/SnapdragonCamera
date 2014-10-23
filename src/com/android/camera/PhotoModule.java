@@ -1157,6 +1157,7 @@ public class PhotoModule
                 if (!mIsImageCaptureIntent) {
                     setCameraState(IDLE);
                 }
+                startFaceDetection();
             }
             if ((mRefocus) && (mReceivedSnapNum == 6)) {
                 Size s = mParameters.getPictureSize();
