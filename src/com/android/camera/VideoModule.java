@@ -2167,7 +2167,7 @@ public class VideoModule implements CameraModule,
                 mTempVideoCDS = video_cds;
             }
             mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
-            mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE, video_tnr);
+            mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
         }
 
         // Set Video HDR.

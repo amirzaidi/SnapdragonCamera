@@ -231,6 +231,7 @@ public class PhotoMenu extends PieController
                 mPrevSavedCDS = cds;
             }
 
+            mPopup1.setPreferenceEnabled(CameraSettings.KEY_TNR_MODE, false);
             if ((tnr != null) && !mActivity.getString(R.string.
                     pref_camera_tnr_default).equals(tnr)) {
                 mPopup1.setPreferenceEnabled(CameraSettings.KEY_CDS_MODE, false);
