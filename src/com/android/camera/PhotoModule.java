@@ -3084,6 +3084,45 @@ public class PhotoModule
         List<Size> sizes = mParameters.getSupportedPreviewSizes();
         Size optimalSize = CameraUtil.getOptimalPreviewSize(mActivity, sizes,
                 (double) size.width / size.height);
+
+        //Read Preview Resolution from adb command
+        //value: 0(default) - Default value as per snapshot aspect ratio
+        //value: 1 - 640x480
+        //value: 2 - 720x480
+        //value: 3 - 1280x720
+        //value: 4 - 1920x1080
+        int preview_resolution = SystemProperties.getInt("persist.camera.preview.size", 0);
+        switch (preview_resolution) {
+            case 1: {
+                optimalSize.width = 640;
+                optimalSize.height = 480;
+                Log.v(TAG, "Preview resolution hardcoded to 640x480");
+                break;
+            }
+            case 2: {
+                optimalSize.width = 720;
+                optimalSize.height = 480;
+                Log.v(TAG, "Preview resolution hardcoded to 720x480");
+                break;
+            }
+            case 3: {
+                optimalSize.width = 1280;
+                optimalSize.height = 720;
+                Log.v(TAG, "Preview resolution hardcoded to 1280x720");
+                break;
+            }
+            case 4: {
+                optimalSize.width = 1920;
+                optimalSize.height = 1080;
+                Log.v(TAG, "Preview resolution hardcoded to 1920x1080");
+                break;
+            }
+            default: {
+                Log.v(TAG, "Preview resolution as per Snapshot aspect ratio");
+                break;
+            }
+        }
+
         Size original = mParameters.getPreviewSize();
         if (!original.equals(optimalSize)) {
             mParameters.setPreviewSize(optimalSize.width, optimalSize.height);
