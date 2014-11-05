@@ -335,6 +335,8 @@ public class PhotoMenu extends PieController
          pref_camera_advanced_feature_value_FSSR_on);
      String truePortraitOn = mActivity.getString(R.string.
          pref_camera_advanced_feature_value_trueportrait_on);
+     String multiTouchFocusOn = mActivity.getString(R.string.
+         pref_camera_advanced_feature_value_multi_touch_focus_on);
 
      if ((zsl != null) && Parameters.ZSL_OFF.equals(zsl)) {
          popup3.overrideSettings(CameraSettings.KEY_ADVANCED_FEATURES,
@@ -353,7 +355,8 @@ public class PhotoMenu extends PieController
                  advancedFeatures.equals(reFocusOn) ||
                  advancedFeatures.equals(optiZoomOn) ||
                  advancedFeatures.equals(fssrOn) ||
-                 advancedFeatures.equals(truePortraitOn))) {
+                 advancedFeatures.equals(truePortraitOn) ||
+                 advancedFeatures.equals(multiTouchFocusOn))) {
              popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
              popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
              popup3.setPreferenceEnabled(CameraSettings.KEY_AE_BRACKET_HDR,false);
