@@ -519,6 +519,10 @@ public class WideAnglePanoramaModule
         mActivity.setSwipingEnabled(false);
         mCaptureState = CAPTURE_STATE_MOSAIC;
         mUI.onStartCapture();
+        Parameters parameters = mCameraDevice.getParameters();
+        parameters.setAutoExposureLock(true);
+        parameters.setAutoWhiteBalanceLock(true);
+        configureCamera(parameters);
 
         mMosaicFrameProcessor.setProgressListener(new MosaicFrameProcessor.ProgressListener() {
             @Override
@@ -560,6 +564,10 @@ public class WideAnglePanoramaModule
     private void stopCapture(boolean aborted) {
         mCaptureState = CAPTURE_STATE_VIEWFINDER;
         mUI.onStopCapture();
+        Parameters parameters = mCameraDevice.getParameters();
+        parameters.setAutoExposureLock(false);
+        parameters.setAutoWhiteBalanceLock(false);
+        configureCamera(parameters);
 
         mMosaicFrameProcessor.setProgressListener(null);
         stopCameraPreview();
