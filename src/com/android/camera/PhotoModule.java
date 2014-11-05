@@ -586,7 +586,7 @@ public class PhotoModule
             return;
         }
         Log.v(TAG, "onPreviewUIReady");
-        if (mCameraState == PREVIEW_STOPPED) {
+        if (mCameraState == PREVIEW_STOPPED || mCameraState == INIT) {
             startPreview();
         } else {
             SurfaceTexture st = mUI.getSurfaceTexture();
@@ -624,6 +624,7 @@ public class PhotoModule
         Log.v(TAG, "onCameraOpened");
         openCameraCommon();
         resizeForPreviewAspectRatio();
+        updateFocusManager(mUI);
     }
 
     private void switchCamera() {
@@ -2224,12 +2225,22 @@ public class PhotoModule
                     mInitialParams, this, mMirror,
                     mActivity.getMainLooper(), mUI);
         }
-        View root = mUI.getRootView();
-        // These depend on camera parameters.
+    }
 
-        int width = root.getWidth();
-        int height = root.getHeight();
-        mFocusManager.setPreviewSize(width, height);
+    private void updateFocusManager(PhotoUI mUI) {
+        // Idea here is to let focus manager create in camera open thread
+        // (in initializeFocusManager) even if photoUI is null by that time so
+        // as to not block start preview process. Once UI creation is done,
+        // we will update focus manager with proper UI.
+        if (mFocusManager != null && mUI != null) {
+            mFocusManager.setPhotoUI(mUI);
+
+            View root = mUI.getRootView();
+            // These depend on camera parameters.
+            int width = root.getWidth();
+            int height = root.getHeight();
+            mFocusManager.setPreviewSize(width, height);
+        }
     }
 
     @Override
@@ -2437,7 +2448,11 @@ public class PhotoModule
         mDisplayRotation = CameraUtil.getDisplayRotation(mActivity);
         mDisplayOrientation = CameraUtil.getDisplayOrientation(mDisplayRotation, mCameraId);
         mCameraDisplayOrientation = mDisplayOrientation;
-        mUI.setDisplayOrientation(mDisplayOrientation);
+        // This will be called again in checkDisplayRotation(), so there
+        // should not be any problem even if mUI is null.
+        if (mUI != null) {
+            mUI.setDisplayOrientation(mDisplayOrientation);
+        }
         if (mFocusManager != null) {
             mFocusManager.setDisplayOrientation(mDisplayOrientation);
         }
@@ -2462,7 +2477,14 @@ public class PhotoModule
 
         Log.v(TAG, "startPreview");
 
-        SurfaceTexture st = mUI.getSurfaceTexture();
+        SurfaceTexture st = null;
+        if (mUI != null) {
+            st = mUI.getSurfaceTexture();
+        }
+        // Surfacetexture could be null here, but its still valid and safe to set null
+        // surface before startpreview. This will help in basic preview setup and
+        // surface creation in parallel. Once valid surface is ready in onPreviewUIReady()
+        // we set the surface to camera to actually start preview.
         mCameraDevice.setPreviewTexture(st);
 
         if (!mCameraPreviewParamsReady) {
