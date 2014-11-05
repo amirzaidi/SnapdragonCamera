@@ -3102,6 +3102,20 @@ public class PhotoModule
         }
 
         Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
+        size = mParameters.getPictureSize();
+
+        // Set jpegthumbnail size
+        // Set a jpegthumbnail size that is closest to the Picture height and has
+        // the right aspect ratio.
+        List<Size> supported = mParameters.getSupportedJpegThumbnailSizes();
+        optimalSize = CameraUtil.getOptimalJpegThumbnailSize(supported,
+                (double) size.width / size.height);
+        original = mParameters.getJpegThumbnailSize();
+        if (!original.equals(optimalSize)) {
+            mParameters.setJpegThumbnailSize(optimalSize.width, optimalSize.height);
+        }
+
+        Log.v(TAG, "Thumbnail size is " + optimalSize.width + "x" + optimalSize.height);
 
         // Since changing scene mode may change supported values, set scene mode
         // first. HDR is a scene mode. To promote it in UI, it is stored in a

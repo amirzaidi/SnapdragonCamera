@@ -2308,6 +2308,19 @@ public class VideoModule implements CameraModule,
         Log.v(TAG, "Video snapshot size is " + optimalSize.width + "x" +
                 optimalSize.height);
 
+        // Set jpegthumbnail size
+        // Set a jpegthumbnail size that is closest to the Picture height and has
+        // the right aspect ratio.
+        Size size = mParameters.getPictureSize();
+        List<Size> sizes = mParameters.getSupportedJpegThumbnailSizes();
+        optimalSize = CameraUtil.getOptimalJpegThumbnailSize(sizes,
+                (double) size.width / size.height);
+        original = mParameters.getJpegThumbnailSize();
+        if (!original.equals(optimalSize)) {
+            mParameters.setJpegThumbnailSize(optimalSize.width, optimalSize.height);
+        }
+        Log.v(TAG, "Thumbnail size is " + optimalSize.width + "x" + optimalSize.height);
+
         // Set JPEG quality.
         int jpegQuality = CameraProfile.getJpegEncodingQualityParameter(mCameraId,
                 CameraProfile.QUALITY_HIGH);
