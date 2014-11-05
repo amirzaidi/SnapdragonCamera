@@ -588,6 +588,7 @@
         <item>@string/pref_camera_advanced_feature_entry_refocus</item>
         <item>@string/pref_camera_advanced_feature_entry_chromaflash</item>
         <item>@string/pref_camera_advanced_feature_entry_optizoom</item>
+        <item>@string/pref_camera_advanced_feature_entry_FSSR</item>
         <item>@string/pref_camera_advanced_feature_entry_trueportrait</item>
     </string-array>
 
@@ -597,6 +598,7 @@
         <item>@string/pref_camera_advanced_feature_value_refocus_on</item>
         <item>@string/pref_camera_advanced_feature_value_chromaflash_on</item>
         <item>@string/pref_camera_advanced_feature_value_optizoom_on</item>
+        <item>@string/pref_camera_advanced_feature_value_FSSR_on</item>
         <item>@string/pref_camera_advanced_feature_value_trueportrait_on</item>
     </string-array>
 

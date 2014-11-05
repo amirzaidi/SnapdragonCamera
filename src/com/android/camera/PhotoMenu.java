@@ -331,6 +331,8 @@ public class PhotoMenu extends PieController
          pref_camera_advanced_feature_value_chromaflash_on);
      String optiZoomOn = mActivity.getString(R.string.
          pref_camera_advanced_feature_value_optizoom_on);
+     String fssrOn = mActivity.getString(R.string.
+         pref_camera_advanced_feature_value_FSSR_on);
      String truePortraitOn = mActivity.getString(R.string.
          pref_camera_advanced_feature_value_trueportrait_on);
 
@@ -350,6 +352,7 @@ public class PhotoMenu extends PieController
                  advancedFeatures.equals(chromaFlashOn) ||
                  advancedFeatures.equals(reFocusOn) ||
                  advancedFeatures.equals(optiZoomOn) ||
+                 advancedFeatures.equals(fssrOn) ||
                  advancedFeatures.equals(truePortraitOn))) {
              popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
              popup3.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
