@@ -2028,6 +2028,15 @@ public class VideoModule implements CameraModule,
         }
         Log.d(TAG, "antiBanding value = " + mParameters.getAntibanding());
 
+        String seeMoreMode = mPreferences.getString(
+                CameraSettings.KEY_SEE_MORE,
+                mActivity.getString(R.string.pref_camera_see_more_default));
+        Log.v(TAG, "See More value =" + seeMoreMode);
+        if (isSupported(seeMoreMode,
+                        CameraSettings.getSupportedSeeMoreModes(mParameters))) {
+            mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE, seeMoreMode);
+        }
+
         mUnsupportedHFRVideoSize = false;
         mUnsupportedHFRVideoCodec = false;
         mUnsupportedHSRVideoSize = false;
