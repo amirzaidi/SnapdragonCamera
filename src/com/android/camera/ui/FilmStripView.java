@@ -37,8 +37,8 @@ import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Scroller;
 
-import com.android.camera.CustomPhotoMenu;
-import com.android.camera.CustomVideoMenu;
+import com.android.camera.PhotoMenu;
+import com.android.camera.VideoMenu;
 import com.android.camera.PreviewGestures;
 import com.android.camera.CameraActivity;
 import com.android.camera.data.LocalData;
@@ -1829,8 +1829,8 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
     public boolean checkSendToModeView(MotionEvent ev) {
         if (mSendToPreviewMenu || mSendToMenu || mPreviewGestures == null)
             return true;
-        CustomPhotoMenu pMenu = mPreviewGestures.getCustomPhotoMenu();
-        CustomVideoMenu vMenu = mPreviewGestures.getCustomVideoMenu();
+        PhotoMenu pMenu = mPreviewGestures.getPhotoMenu();
+        VideoMenu vMenu = mPreviewGestures.getVideoMenu();
         if (pMenu != null) {
             if (pMenu.isMenuBeingShown()) {
                 if (pMenu.isMenuBeingAnimated()) {
@@ -1882,8 +1882,8 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
                     || MotionEvent.ACTION_CANCEL == ev.getActionMasked())
                 mReset = true;
         }
-        CustomPhotoMenu pMenu = mPreviewGestures.getCustomPhotoMenu();
-        CustomVideoMenu vMenu = mPreviewGestures.getCustomVideoMenu();
+        PhotoMenu pMenu = mPreviewGestures.getPhotoMenu();
+        VideoMenu vMenu = mPreviewGestures.getVideoMenu();
 
         if (pMenu != null) {
             if (mSendToPreviewMenu)
