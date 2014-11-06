@@ -835,6 +835,14 @@ public class VideoModule implements CameraModule,
        }
     }
 
+    private boolean is720pEnabled() {
+       if (mProfile.quality == CamcorderProfile.QUALITY_720P) {
+           return true;
+       } else {
+           return false;
+       }
+    }
+
     boolean isHFREnabled(int videoWidth, int videoHeight) {
         if ((null == mPreferences) || (null == mParameters)) {
             return false;
@@ -897,7 +905,7 @@ public class VideoModule implements CameraModule,
             return;
         }
         mParameters = mCameraDevice.getParameters();
-        if (mParameters.getSupportedVideoSizes() == null || is1080pEnabled() ||
+        if (mParameters.getSupportedVideoSizes() == null || is1080pEnabled() || is720pEnabled() ||
                     isHFREnabled(mProfile.videoFrameWidth, mProfile.videoFrameHeight)) {
             mDesiredPreviewWidth = mProfile.videoFrameWidth;
             mDesiredPreviewHeight = mProfile.videoFrameHeight;
@@ -2048,8 +2056,8 @@ public class VideoModule implements CameraModule,
             mParameters.setPreviewFormat (ImageFormat.YV12);
         }
 
-        if (is1080pEnabled()) {
-           Log.v(TAG, "1080p enabled, preview format set to NV12_VENUS");
+        if (is1080pEnabled() || is720pEnabled()) {
+           Log.v(TAG, "1080p or 720p enabled, preview format set to NV12_VENUS");
            mParameters.set(KEY_PREVIEW_FORMAT, FORMAT_NV12_VENUS);
         }
 
