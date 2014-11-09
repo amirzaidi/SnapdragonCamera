@@ -137,7 +137,10 @@ public class PhotoMenu extends PieController
                 CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_FOCUS_MODE,
                 CameraSettings.KEY_REDEYE_REDUCTION,
-                CameraSettings.KEY_AE_BRACKET_HDR
+                CameraSettings.KEY_AE_BRACKET_HDR,
+                CameraSettings.KEY_MANUAL_EXPOSURE,
+                CameraSettings.KEY_MANUAL_WB,
+                CameraSettings.KEY_MANUAL_FOCUS
         };
 
         PieItem item1 = makeItem(R.drawable.ic_settings_holo_light_01);
@@ -314,6 +317,9 @@ public class PhotoMenu extends PieController
      }
      if ((zsl != null) && Parameters.ZSL_ON.equals(zsl)) {
          popup3.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE,false);
+         popup3.setPreferenceEnabled(CameraSettings.KEY_MANUAL_EXPOSURE,false);
+         popup3.setPreferenceEnabled(CameraSettings.KEY_MANUAL_WB,false);
+         popup3.setPreferenceEnabled(CameraSettings.KEY_MANUAL_FOCUS,false);
      }
      if ((faceDetection != null) && !Parameters.FACE_DETECTION_ON.equals(faceDetection)){
          popup2.setPreferenceEnabled(CameraSettings.KEY_FACE_RECOGNITION,false);

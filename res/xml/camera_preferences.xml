@@ -282,4 +282,25 @@
             camera:title="@string/pref_camera_hdr_need_1x_title"
             camera:entries="@array/pref_camera_hdr_need_1x_entries"
             camera:entryValues="@array/pref_camera_hdr_need_1x_entryvalues" />
+
+    <ListPreference
+            camera:key="pref_camera_manual_exp_key"
+            camera:defaultValue="@string/pref_camera_manual_exp_default"
+            camera:title="@string/pref_camera_manual_exp_title"
+            camera:entries="@array/pref_camera_manual_exp_entries"
+            camera:entryValues="@array/pref_camera_manual_exp_entry_values" />
+
+    <ListPreference
+            camera:key="pref_camera_manual_wb_key"
+            camera:defaultValue="@string/pref_camera_manual_wb_default"
+            camera:title="@string/pref_camera_manual_wb_title"
+            camera:entries="@array/pref_camera_manual_wb_entries"
+            camera:entryValues="@array/pref_camera_manual_wb_entry_values" />
+
+    <ListPreference
+            camera:key="pref_camera_manual_focus_key"
+            camera:defaultValue="@string/pref_camera_manual_focus_default"
+            camera:title="@string/pref_camera_manual_focus_title"
+            camera:entries="@array/pref_camera_manual_focus_entries"
+            camera:entryValues="@array/pref_camera_manual_focus_entry_values" />
 </PreferenceGroup>

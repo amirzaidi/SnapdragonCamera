@@ -76,6 +76,11 @@ import com.android.camera.util.GcamHelper;
 import com.android.camera.util.UsageStatistics;
 import org.codeaurora.snapcam.R;
 
+import android.widget.EditText;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.text.InputType;
+
 import com.android.internal.util.MemInfoReader;
 import android.app.ActivityManager;
 
@@ -343,6 +348,11 @@ public class PhotoModule
 
     // True if all the parameters needed to start preview is ready.
     private boolean mCameraPreviewParamsReady = false;
+
+    private int mManual3AEnabled = 0;
+    private static final int MANUAL_FOCUS = 1;
+    private static final int MANUAL_WB = 2;
+    private static final int MANUAL_EXPOSURE = 4;
 
     private MediaSaveService.OnMediaSavedListener mOnMediaSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
@@ -688,6 +698,7 @@ public class PhotoModule
         }
         updateCameraSettings();
         showTapToFocusToastIfNeeded();
+        resetManual3ASettings();
     }
 
     @Override
@@ -708,6 +719,37 @@ public class PhotoModule
             editor.putString(CameraSettings.KEY_EXPOSURE, "0");
             editor.apply();
         }
+    }
+
+    private void resetManual3ASettings() {
+        String manualExposureDefault = mActivity.getString(
+                R.string.pref_camera_manual_exp_default);
+        String manualExposureMode = mPreferences.getString(
+                CameraSettings.KEY_MANUAL_EXPOSURE, manualExposureDefault);
+        if (!manualExposureMode.equals(manualExposureDefault)) {
+            mUI.setPreference(
+                    CameraSettings.KEY_MANUAL_EXPOSURE, manualExposureDefault);
+            UpdateManualExposureSettings();
+        }
+        String manualFocusDefault = mActivity.getString(
+                R.string.pref_camera_manual_focus_default);
+        String manualFocusMode = mPreferences.getString(
+                CameraSettings.KEY_MANUAL_FOCUS, manualFocusDefault);
+        if (!manualFocusMode.equals(manualFocusDefault)) {
+            mUI.setPreference(
+                    CameraSettings.KEY_MANUAL_FOCUS, manualFocusDefault);
+            UpdateManualFocusSettings();
+        }
+        String manualWBDefault = mActivity.getString(
+                R.string.pref_camera_manual_wb_default);
+        String manualWBMode = mPreferences.getString(
+                CameraSettings.KEY_MANUAL_WB, manualWBDefault);
+        if (!manualWBMode.equals(manualWBDefault)) {
+            mUI.setPreference(
+                    CameraSettings.KEY_MANUAL_WB, manualWBDefault);
+            UpdateManualWBSettings();
+        }
+        mManual3AEnabled = 0;
     }
 
     void setPreviewFrameLayoutCameraOrientation(){
@@ -1556,6 +1598,60 @@ public class PhotoModule
         }
     }
 
+    private void updateCommonManual3ASettings() {
+        String touchAfAec = mParameters.TOUCH_AF_AEC_OFF;
+        mSceneMode = Parameters.SCENE_MODE_AUTO;
+        String flashMode = Parameters.FLASH_MODE_OFF;
+        String redeyeReduction = mActivity.getString(R.string.
+                pref_camera_redeyereduction_entry_disable);
+        String aeBracketing = mActivity.getString(R.string.
+                pref_camera_ae_bracket_hdr_entry_off);
+        String colorEffect = mActivity.getString(R.string.
+                pref_camera_coloreffect_default);
+        String exposureCompensation = CameraSettings.EXPOSURE_DEFAULT_VALUE;
+
+        if (mManual3AEnabled > 0) {
+            overrideCameraSettings(flashMode, null, null,
+                                   exposureCompensation, touchAfAec,
+                                   mParameters.getAutoExposure(),
+                                   Integer.toString(mParameters.getSaturation()),
+                                   Integer.toString(mParameters.getContrast()),
+                                   Integer.toString(mParameters.getSharpness()),
+                                   colorEffect,
+                                   mSceneMode, redeyeReduction, aeBracketing);
+            mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
+                        mActivity.getString(R.string.setting_off_value));
+        } else {
+            //enable all
+            touchAfAec = mActivity.getString(
+                    R.string.pref_camera_touchafaec_default);
+            overrideCameraSettings(null, null, null,
+                                   null, touchAfAec, null,
+                                   null, null, null, null,
+                                   null, null, null);
+            mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, null);
+        }
+
+        String isoMode = mParameters.getISOValue();
+        final String isoManual = CameraSettings.KEY_MANUAL_ISO;
+        if (isoMode.equals(isoManual)) {
+            final String isoPref = mPreferences.getString(
+                    CameraSettings.KEY_ISO,
+                    mActivity.getString(R.string.pref_camera_iso_default));
+            mUI.overrideSettings(CameraSettings.KEY_ISO, isoPref);
+        }
+        if ((mManual3AEnabled & MANUAL_WB) != 0) {
+            String whiteBalance = mPreferences.getString(
+                    CameraSettings.KEY_WHITE_BALANCE,
+                    mActivity.getString(R.string.pref_camera_whitebalance_default));
+            mUI.overrideSettings(CameraSettings.KEY_WHITE_BALANCE, whiteBalance);
+        }
+        if ((mManual3AEnabled & MANUAL_FOCUS) != 0) {
+            mUI.overrideSettings(CameraSettings.KEY_FOCUS_MODE,
+                    mFocusManager.getFocusMode());
+        }
+    }
+
     private void updateCameraSettings() {
         String sceneMode = null;
         String flashMode = null;
@@ -1597,6 +1693,11 @@ public class PhotoModule
             mParameters.get(CameraSettings.KEY_QC_MULTI_TOUCH_FOCUS);
         String continuousShot =
                 mParameters.get("long-shot");
+
+        if (mManual3AEnabled > 0) {
+            disableLongShot = true;
+        }
+
         if ((continuousShot != null) && continuousShot.equals(continuousShotOn)) {
             String pictureFormat = mActivity.getString(R.string.
                     pref_camera_picture_format_value_jpeg);
@@ -1670,10 +1771,14 @@ public class PhotoModule
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
         } else {
-            overrideCameraSettings(flashMode, null, focusMode,
-                                   exposureCompensation, touchAfAec, null,
-                                   null, null, null, colorEffect,
-                                   sceneMode, redeyeReduction, aeBracketing);
+            if (mManual3AEnabled > 0) {
+                updateCommonManual3ASettings();
+            } else {
+                overrideCameraSettings(flashMode, null, focusMode,
+                                       exposureCompensation, touchAfAec, null,
+                                       null, null, null, colorEffect,
+                                       sceneMode, redeyeReduction, aeBracketing);
+            }
         }
         /* Disable focus if aebracket is ON */
         String aeBracket = mParameters.get(CameraSettings.KEY_QC_AE_BRACKETING);
@@ -2176,6 +2281,7 @@ public class PhotoModule
         if (mCameraDevice != null && mCameraState != PREVIEW_STOPPED) {
             mCameraDevice.cancelAutoFocus();
         }
+        resetManual3ASettings();
         // If the camera has not been opened asynchronously yet,
         // and startPreview hasn't been called, then this is a no-op.
         // (e.g. onResume -> onPause -> onResume).
@@ -2708,12 +2814,14 @@ public class PhotoModule
             mParameters.setRedeyeReductionMode(redeyeReduction);
         }
         // Set ISO parameter
-        String iso = mPreferences.getString(
-                CameraSettings.KEY_ISO,
-                mActivity.getString(R.string.pref_camera_iso_default));
-        if (CameraUtil.isSupported(iso,
+        if ((mManual3AEnabled & MANUAL_EXPOSURE) == 0) {
+            String iso = mPreferences.getString(
+                    CameraSettings.KEY_ISO,
+                    mActivity.getString(R.string.pref_camera_iso_default));
+            if (CameraUtil.isSupported(iso,
                 mParameters.getSupportedIsoValues())) {
                 mParameters.setISOValue(iso);
+            }
         }
         // Set color effect parameter.
         String colorEffect = mPreferences.getString(
@@ -3004,8 +3112,10 @@ public class PhotoModule
             mSnapshotMode = CameraInfo.CAMERA_SUPPORT_MODE_NONZSL;
             mParameters.setCameraMode(0);
             mFocusManager.setZslEnable(false);
-            mFocusManager.overrideFocusMode(null);
-            mParameters.setFocusMode(mFocusManager.getFocusMode());
+            if ((mManual3AEnabled & MANUAL_FOCUS) == 0) {
+                mFocusManager.overrideFocusMode(null);
+                mParameters.setFocusMode(mFocusManager.getFocusMode());
+            }
         }
         // Set face detetction parameter.
         String faceDetection = mPreferences.getString(
@@ -3151,8 +3261,10 @@ public class PhotoModule
         setMeteringAreasIfSupported();
 
         // initialize focus mode
-        mFocusManager.overrideFocusMode(null);
-        mParameters.setFocusMode(mFocusManager.getFocusMode());
+        if ((mManual3AEnabled & MANUAL_FOCUS) == 0) {
+            mFocusManager.overrideFocusMode(null);
+            mParameters.setFocusMode(mFocusManager.getFocusMode());
+        }
 
         // Set picture size.
         String pictureSize = mPreferences.getString(
@@ -3335,22 +3447,26 @@ public class PhotoModule
             }
 
             // Set white balance parameter.
-            String whiteBalance = mPreferences.getString(
-                    CameraSettings.KEY_WHITE_BALANCE,
-                    mActivity.getString(R.string.pref_camera_whitebalance_default));
-            if (CameraUtil.isSupported(whiteBalance,
-                    mParameters.getSupportedWhiteBalance())) {
-                mParameters.setWhiteBalance(whiteBalance);
-            } else {
-                whiteBalance = mParameters.getWhiteBalance();
-                if (whiteBalance == null) {
-                    whiteBalance = Parameters.WHITE_BALANCE_AUTO;
+            if ((mManual3AEnabled & MANUAL_WB) == 0) {
+                String whiteBalance = mPreferences.getString(
+                        CameraSettings.KEY_WHITE_BALANCE,
+                        mActivity.getString(R.string.pref_camera_whitebalance_default));
+                if (CameraUtil.isSupported(whiteBalance,
+                        mParameters.getSupportedWhiteBalance())) {
+                    mParameters.setWhiteBalance(whiteBalance);
+                } else {
+                    whiteBalance = mParameters.getWhiteBalance();
+                    if (whiteBalance == null) {
+                        whiteBalance = Parameters.WHITE_BALANCE_AUTO;
+                    }
                 }
             }
 
             // Set focus mode.
-            mFocusManager.overrideFocusMode(null);
-            mParameters.setFocusMode(mFocusManager.getFocusMode());
+            if ((mManual3AEnabled & MANUAL_FOCUS) == 0) {
+                mFocusManager.overrideFocusMode(null);
+                mParameters.setFocusMode(mFocusManager.getFocusMode());
+            }
         } else {
             mFocusManager.overrideFocusMode(mParameters.getFocusMode());
             if (hdrOn)
@@ -3465,6 +3581,439 @@ public class PhotoModule
         }
     }
 
+    private void UpdateManualFocusSettings() {
+        //dismiss all popups first, because we need to show edit dialog
+        mUI.collapseCameraControls();
+        final AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
+        LinearLayout linear = new LinearLayout(mActivity);
+        linear.setOrientation(1);
+        alert.setTitle("Manual Focus Settings");
+        alert.setNegativeButton("Cancel",new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog,int id)
+            {
+                dialog.cancel();
+            }
+        });
+        final TextView focusPositionText = new TextView(mActivity);
+        String scaleMode = mActivity.getString(
+                R.string.pref_camera_manual_focus_value_scale_mode);
+        String diopterMode = mActivity.getString(
+                R.string.pref_camera_manual_focus_value_diopter_mode);
+        String manualFocusMode = mPreferences.getString(
+                CameraSettings.KEY_MANUAL_FOCUS,
+                mActivity.getString(R.string.pref_camera_manual_focus_default));
+
+        Log.v(TAG, "manualFocusMode selected = " + manualFocusMode);
+        if (manualFocusMode.equals(scaleMode)) {
+            final SeekBar focusbar = new SeekBar(mActivity);
+            final int minFocusPos = mParameters.getInt(CameraSettings.KEY_MIN_FOCUS_SCALE);
+            final int maxFocusPos = mParameters.getInt(CameraSettings.KEY_MAX_FOCUS_SCALE);
+            //update mparameters to fetch latest focus position
+            mParameters = mCameraDevice.getParameters();
+            final int CurFocusPos = mParameters.getInt(CameraSettings.KEY_MANUAL_FOCUS_SCALE);
+            focusbar.setProgress(CurFocusPos);
+            focusPositionText.setText("Current focus position is " + CurFocusPos);
+
+            alert.setMessage("Enter focus position in the range of " + minFocusPos
+                    + " to " + maxFocusPos);
+
+            focusbar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress,boolean fromUser) {
+                    focusPositionText.setText("Current focus position is " + progress);
+                }
+            });
+            linear.addView(focusbar);
+            linear.addView(focusPositionText);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog,int id)
+                {
+                    int focusPos = focusbar.getProgress();
+                    Log.v(TAG, "Setting focus position : " + focusPos);
+                    mManual3AEnabled |= MANUAL_FOCUS;
+                    mParameters.setFocusMode(Parameters.FOCUS_MODE_MANUAL_POSITION);
+                    mParameters.set(CameraSettings.KEY_MANUAL_FOCUS_TYPE, 2); // 2 for scale mode
+                    mParameters.set(CameraSettings.KEY_MANUAL_FOCUS_POSITION, focusPos);
+                    updateCommonManual3ASettings();
+                    onSharedPreferenceChanged();
+                }
+            });
+            alert.show();
+        } else if (manualFocusMode.equals(diopterMode)) {
+            String minFocusStr = mParameters.get(CameraSettings.KEY_MIN_FOCUS_DIOPTER);
+            String maxFocusStr = mParameters.get(CameraSettings.KEY_MAX_FOCUS_DIOPTER);
+            final double minFocusPos = Double.parseDouble(minFocusStr);
+            final double maxFocusPos = Double.parseDouble(maxFocusStr);
+            final EditText input = new EditText(mActivity);
+            int floatType = InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_NUMBER;
+            input.setInputType(floatType);
+            alert.setMessage("Enter focus position in the range of " + minFocusPos
+                    + " to " + maxFocusPos);
+            //update mparameters to fetch latest focus position
+            mParameters = mCameraDevice.getParameters();
+            final String CurFocusPos = mParameters.get(CameraSettings.KEY_MANUAL_FOCUS_DIOPTER);
+            focusPositionText.setText("Current focus position is " + CurFocusPos);
+            linear.addView(input);
+            linear.addView(focusPositionText);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog,int id)
+                {
+                    double focuspos = 0;
+                    String focusStr = input.getText().toString();
+                    if (focusStr.length() > 0) {
+                        focuspos = Double.parseDouble(focusStr);
+                    } else {
+                        Toast.makeText(mActivity, "Invalid focus position",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (focuspos >= minFocusPos && focuspos <= maxFocusPos) {
+                        Log.v(TAG, "Setting focus position : " + focusStr);
+                        mManual3AEnabled |= MANUAL_FOCUS;
+                        mParameters.setFocusMode(Parameters.FOCUS_MODE_MANUAL_POSITION);
+                        //focus type 3 is diopter mode
+                        mParameters.set(CameraSettings.KEY_MANUAL_FOCUS_TYPE, 3);
+                        mParameters.set(CameraSettings.KEY_MANUAL_FOCUS_POSITION, focusStr);
+                        updateCommonManual3ASettings();
+                        onSharedPreferenceChanged();
+                    } else {
+                        Toast.makeText(mActivity, "Invalid focus position",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else {
+            mManual3AEnabled &= ~MANUAL_FOCUS;
+            mParameters.setFocusMode(mFocusManager.getFocusMode());
+            mUI.overrideSettings(CameraSettings.KEY_FOCUS_MODE, null);
+            updateCommonManual3ASettings();
+            onSharedPreferenceChanged();
+        }
+    }
+
+    private void UpdateManualWBSettings() {
+        //dismiss all popups first, because we need to show edit dialog
+        mUI.collapseCameraControls();
+        final AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
+        LinearLayout linear = new LinearLayout(mActivity);
+        linear.setOrientation(1);
+        alert.setTitle("Manual White Balance Settings");
+        alert.setNegativeButton("Cancel",new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog,int id)
+            {
+                dialog.cancel();
+            }
+        });
+
+        String cctMode = mActivity.getString(
+                R.string.pref_camera_manual_wb_value_color_temperature);
+        String rgbGainMode = mActivity.getString(
+                R.string.pref_camera_manual_wb_value_rbgb_gains);
+        String manualWBMode = mPreferences.getString(
+                CameraSettings.KEY_MANUAL_WB,
+                mActivity.getString(R.string.pref_camera_manual_wb_default));
+        final String wbPref = mPreferences.getString(
+                CameraSettings.KEY_WHITE_BALANCE,
+                mActivity.getString(R.string.pref_camera_whitebalance_default));
+        Log.v(TAG, "manualWBMode selected = " + manualWBMode);
+        if (manualWBMode.equals(cctMode)) {
+            final TextView CCTtext = new TextView(mActivity);
+            final EditText CCTinput = new EditText(mActivity);
+            CCTinput.setInputType(InputType.TYPE_CLASS_NUMBER);
+            final int minCCT = mParameters.getInt(CameraSettings.KEY_MIN_WB_CCT);
+            final int maxCCT = mParameters.getInt(CameraSettings.KEY_MAX_WB_CCT);
+
+            //refresh camera parameters to get latest CCT value
+            mParameters = mCameraDevice.getParameters();
+            String currentCCT = mParameters.get(CameraSettings.KEY_MANUAL_WB_CCT);
+            if (currentCCT != null) {
+                CCTtext.setText("Current CCT is " + currentCCT);
+            }
+            alert.setMessage("Enter CCT value in the range of " + minCCT+ " to " + maxCCT);
+            linear.addView(CCTinput);
+            linear.addView(CCTtext);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog,int id)
+                {
+                    int newCCT = -1;
+                    String cct = CCTinput.getText().toString();
+                    if (cct.length() > 0) {
+                        newCCT = Integer.parseInt(cct);
+                    }
+                    if (newCCT <= maxCCT && newCCT >= minCCT) {
+                        mManual3AEnabled |= MANUAL_WB;
+                        Log.v(TAG, "Setting CCT value : " + newCCT);
+                        mParameters.setWhiteBalance(CameraSettings.KEY_MANUAL_WHITE_BALANCE);
+                        //0 corresponds to manual CCT mode
+                        mParameters.set(CameraSettings.KEY_MANUAL_WB_TYPE, 0);
+                        mParameters.set(CameraSettings.KEY_MANUAL_WB_VALUE, newCCT);
+                        updateCommonManual3ASettings();
+                        onSharedPreferenceChanged();
+                    } else {
+                        Toast.makeText(mActivity, "Invalid CCT", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else if (manualWBMode.equals(rgbGainMode)) {
+            final TextView RGBtext = new TextView(mActivity);
+            final EditText Rinput = new EditText(mActivity);
+            Rinput.setHint("Enter R gain here");
+            final EditText Ginput = new EditText(mActivity);
+            Ginput.setHint("Enter G gain here");
+            final EditText Binput = new EditText(mActivity);
+            Binput.setHint("Enter B gain here");
+
+            int floatType = InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_NUMBER;
+            Rinput.setInputType(floatType);
+            Ginput.setInputType(floatType);
+            Binput.setInputType(floatType);
+
+            String minGainStr = mParameters.get(CameraSettings.KEY_MIN_WB_GAIN);
+            final double minGain = Double.parseDouble(minGainStr);
+            String maxGainStr = mParameters.get(CameraSettings.KEY_MAX_WB_GAIN);
+            final double maxGain = Double.parseDouble(maxGainStr);
+
+            //refresh camera parameters to get latest WB gains
+            mParameters = mCameraDevice.getParameters();
+            String currentGains = mParameters.get(CameraSettings.KEY_MANUAL_WB_GAINS);
+            if (currentGains != null) {
+                RGBtext.setText("Current RGB gains are " + currentGains);
+            }
+
+            alert.setMessage("Enter RGB gains in the range of " + minGain
+                + " to " + maxGain);
+            linear.addView(Rinput);
+            linear.addView(Ginput);
+            linear.addView(Binput);
+            linear.addView(RGBtext);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog,int id)
+                {
+                    String Rgain = Rinput.getText().toString();
+                    String Ggain = Ginput.getText().toString();
+                    String Bgain = Binput.getText().toString();
+                    if (Rgain.length() > 0 && Ggain.length() > 0 && Bgain.length() > 0) {
+                        double Rgainf = Double.parseDouble(Rgain);
+                        double Ggainf = Double.parseDouble(Ggain);
+                        double Bgainf = Double.parseDouble(Bgain);
+                        String RGBGain = Rgain + "," + Ggain + "," + Bgain;
+                        if (Rgainf <= maxGain && Rgainf >= minGain &&
+                            Ggainf <= maxGain && Ggainf >= minGain &&
+                            Bgainf <= maxGain && Bgainf >= minGain) {
+                            Log.v(TAG, "Setting RGB gains : " + RGBGain);
+                            mManual3AEnabled |= MANUAL_WB;
+                            mParameters.setWhiteBalance(CameraSettings.KEY_MANUAL_WHITE_BALANCE);
+                            // 1 corresponds to manual WB gain mode
+                            mParameters.set(CameraSettings.KEY_MANUAL_WB_TYPE, 1);
+                            mParameters.set(CameraSettings.KEY_MANUAL_WB_VALUE, RGBGain);
+                            updateCommonManual3ASettings();
+                            onSharedPreferenceChanged();
+                        } else {
+                            Toast.makeText(mActivity, "Invalid RGB gains",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(mActivity, "Invalid RGB gains",
+                                    Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else {
+            //reset white balance
+            mManual3AEnabled &= ~MANUAL_WB;
+            mUI.overrideSettings(CameraSettings.KEY_WHITE_BALANCE, null);
+            updateCommonManual3ASettings();
+            onSharedPreferenceChanged();
+        }
+    }
+
+    private void UpdateManualExposureSettings() {
+        //dismiss all popups first, because we need to show edit dialog
+        mUI.collapseCameraControls();
+        final AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
+        LinearLayout linear = new LinearLayout(mActivity);
+        linear.setOrientation(1);
+        final TextView ISOtext = new TextView(mActivity);
+        final EditText ISOinput = new EditText(mActivity);
+        final TextView ExpTimeText = new TextView(mActivity);
+        final EditText ExpTimeInput = new EditText(mActivity);
+        ISOinput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        int floatType = InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_NUMBER;
+        ExpTimeInput.setInputType(floatType);
+        alert.setTitle("Manual Exposure Settings");
+        alert.setNegativeButton("Cancel",new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog,int id)
+            {
+                dialog.cancel();
+            }
+        });
+
+        mParameters = mCameraDevice.getParameters();
+        final int minISO = mParameters.getInt(CameraSettings.KEY_MIN_ISO);
+        final int maxISO = mParameters.getInt(CameraSettings.KEY_MAX_ISO);
+        String isoMode = mParameters.getISOValue();
+        final String isoManual = CameraSettings.KEY_MANUAL_ISO;
+        String currentISO = mParameters.get(CameraSettings.KEY_CURRENT_ISO);
+        if (currentISO != null) {
+            ISOtext.setText("Current ISO is " + currentISO);
+        }
+
+        final String minExpTime = mParameters.get(CameraSettings.KEY_MIN_EXPOSURE_TIME);
+        final String maxExpTime = mParameters.get(CameraSettings.KEY_MAX_EXPOSURE_TIME);
+        String currentExpTime = mParameters.get(CameraSettings.KEY_CURRENT_EXPOSURE_TIME);
+        if (currentExpTime != null) {
+            ExpTimeText.setText("Current exposure time is " + currentExpTime);
+        }
+
+        String isoPriority = mActivity.getString(
+                R.string.pref_camera_manual_exp_value_ISO_priority);
+        String expTimePriority = mActivity.getString(
+                R.string.pref_camera_manual_exp_value_exptime_priority);
+        String userSetting = mActivity.getString(
+                R.string.pref_camera_manual_exp_value_user_setting);
+        String manualExposureMode = mPreferences.getString(
+                CameraSettings.KEY_MANUAL_EXPOSURE,
+                mActivity.getString(R.string.pref_camera_manual_exp_default));
+        Log.v(TAG, "manual Exposure Mode selected = " + manualExposureMode);
+        if (manualExposureMode.equals(isoPriority)) {
+            alert.setMessage("Enter ISO in the range of " + minISO + " to " + maxISO);
+            linear.addView(ISOinput);
+            linear.addView(ISOtext);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog,int id)
+                {
+                    int newISO = -1;
+                    String iso = ISOinput.getText().toString();
+                    Log.v(TAG, "string iso length " + iso.length());
+                    if (iso.length() > 0) {
+                        newISO = Integer.parseInt(iso);
+                    }
+                    if (newISO <= maxISO && newISO >= minISO) {
+                        Log.v(TAG, "Setting ISO : " + newISO);
+                        mManual3AEnabled |= MANUAL_EXPOSURE;
+                        mParameters.setISOValue(isoManual);
+                        mParameters.set(CameraSettings.KEY_CONTINUOUS_ISO, newISO);
+                        mParameters.set(CameraSettings.KEY_EXPOSURE_TIME, "0");
+                        updateCommonManual3ASettings();
+                        onSharedPreferenceChanged();
+                    } else {
+                        Toast.makeText(mActivity, "Invalid ISO", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else if (manualExposureMode.equals(expTimePriority)) {
+            alert.setMessage("Enter exposure time in the range of " + minExpTime
+                + "ms to " + maxExpTime + "ms");
+            linear.addView(ExpTimeInput);
+            linear.addView(ExpTimeText);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog,int id)
+                {
+                    double newExpTime = -1;
+                    String expTime = ExpTimeInput.getText().toString();
+                    if (expTime.length() > 0) {
+                        newExpTime = Double.parseDouble(expTime);
+                    }
+                    if (newExpTime <= Double.parseDouble(maxExpTime) &&
+                        newExpTime >= Double.parseDouble(minExpTime)) {
+                        Log.v(TAG, "Setting Exposure time : " + newExpTime);
+                        mManual3AEnabled |= MANUAL_EXPOSURE;
+                        mParameters.set(CameraSettings.KEY_EXPOSURE_TIME, expTime);
+                        mParameters.setISOValue(Parameters.ISO_AUTO);
+                        mUI.setPreference(CameraSettings.KEY_ISO, Parameters.ISO_AUTO);
+                        mUI.overrideSettings(CameraSettings.KEY_ISO, null);
+                        updateCommonManual3ASettings();
+                        onSharedPreferenceChanged();
+                    } else {
+                        Toast.makeText(mActivity, "Invalid exposure time",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else if (manualExposureMode.equals(userSetting)) {
+            alert.setMessage("Full manual mode - Enter both ISO and Exposure Time");
+            final TextView ISORangeText = new TextView(mActivity);
+            final TextView ExpTimeRangeText = new TextView(mActivity);
+            ISORangeText.setText("Enter ISO in the range of " + minISO + " to " + maxISO);
+            ExpTimeRangeText.setText("Enter exposure time in the range of " + minExpTime
+                    + "ms to " + maxExpTime + "ms");
+            linear.addView(ISORangeText);
+            linear.addView(ISOinput);
+            linear.addView(ISOtext);
+            linear.addView(ExpTimeRangeText);
+            linear.addView(ExpTimeInput);
+            linear.addView(ExpTimeText);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog,int id)
+                {
+                    int newISO = -1;
+                    String iso = ISOinput.getText().toString();
+                    Log.v(TAG, "string iso length " + iso.length());
+                    if (iso.length() > 0) {
+                        newISO = Integer.parseInt(iso);
+                    }
+                    double newExpTime = -1;
+                    String expTime = ExpTimeInput.getText().toString();
+                    if (expTime.length() > 0) {
+                        newExpTime = Double.parseDouble(expTime);
+                    }
+                    if (newISO <= maxISO && newISO >= minISO &&
+                        newExpTime <= Double.parseDouble(maxExpTime) &&
+                        newExpTime >= Double.parseDouble(minExpTime)) {
+                        mManual3AEnabled |= MANUAL_EXPOSURE;
+                        Log.v(TAG, "Setting ISO : " + newISO);
+                        mParameters.setISOValue(isoManual);
+                        mParameters.set(CameraSettings.KEY_CONTINUOUS_ISO, newISO);
+                        Log.v(TAG, "Setting Exposure time : " + newExpTime);
+                        mParameters.set(CameraSettings.KEY_EXPOSURE_TIME, expTime);
+                        updateCommonManual3ASettings();
+                        onSharedPreferenceChanged();
+                    } else {
+                        Toast.makeText(mActivity, "Invalid input", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else {
+            mManual3AEnabled &= ~MANUAL_EXPOSURE;
+            //auto exposure mode - reset both exposure time and ISO
+            mParameters.set(CameraSettings.KEY_EXPOSURE_TIME, "0");
+            mUI.overrideSettings(CameraSettings.KEY_ISO, null);
+            updateCommonManual3ASettings();
+            onSharedPreferenceChanged();
+        }
+    }
+
     // Return true if the preference has the specified key but not the value.
     private static boolean notSame(ListPreference pref, String key, String value) {
         return (key.equals(pref.getKey()) && !value.equals(pref.getValue()));
@@ -3483,6 +4032,19 @@ public class PhotoModule
             } else if (notSame(pref,CameraSettings.KEY_ZSL,settingOff)) {
                 mUI.setPreference(CameraSettings.KEY_CAMERA_HDR, settingOff);
             }
+        }
+
+        if(CameraSettings.KEY_MANUAL_EXPOSURE.equals(pref.getKey())) {
+            UpdateManualExposureSettings();
+            return;
+        }
+        if (CameraSettings.KEY_MANUAL_WB.equals(pref.getKey())) {
+            UpdateManualWBSettings();
+            return;
+        }
+        if (CameraSettings.KEY_MANUAL_FOCUS.equals(pref.getKey())) {
+            UpdateManualFocusSettings();
+            return;
         }
 
         //call generic onSharedPreferenceChanged

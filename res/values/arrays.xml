@@ -19,7 +19,7 @@
     <!-- Camera Preferences Video Quality entries -->
     <string-array name="pref_video_quality_entries" translatable="false">
         <item>@string/pref_video_quality_entry_4kdci</item>
-		<item>@string/pref_video_quality_entry_2160p</item>
+        <item>@string/pref_video_quality_entry_2160p</item>
         <item>@string/pref_video_quality_entry_1080p</item>
         <item>@string/pref_video_quality_entry_720p</item>
         <item>@string/pref_video_quality_entry_480p</item>
