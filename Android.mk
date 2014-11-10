@@ -14,6 +14,7 @@ LOCAL_SRC_FILES += $(call all-java-files-under, src_pd_gcam)
 
 LOCAL_RESOURCE_DIR += $(LOCAL_PATH)/res
 
+LOCAL_CERTIFICATE := platform
 
 include $(LOCAL_PATH)/version.mk
 LOCAL_AAPT_FLAGS := \
