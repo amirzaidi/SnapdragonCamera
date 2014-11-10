@@ -275,6 +275,9 @@
     <string name="time_lapse_hours" msgid="5294001144133261436">"小时"</string>
     <string name="time_lapse_interval_set" msgid="2418594453248958440">"完成"</string>
     <string name="set_time_interval" msgid="2531393962847535331">"设置时间间隔"</string>
+    <string name="pref_camera_video_hdr_title">视频HDR</string>
+    <string name="pref_camera_video_hdr_entry_off">@string/setting_off</string>
+    <string name="pref_camera_video_hdr_entry_on">@string/setting_on</string>
     <string name="set_time_interval_help" msgid="64145154088021389">"延时拍摄功能已关闭，要设置时间间隔，请先开启该功能。"</string>
     <string name="set_duration" msgid="1638453882581604341">"设置倒数时间（秒）"</string>
     <string name="count_down_title_text" msgid="7586031110595513050">"拍照倒计时中"</string>
