@@ -96,7 +96,7 @@ public class VideoModule implements CameraModule,
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
-    private static final long SHUTTER_BUTTON_TIMEOUT = 500L; // 500ms
+    private static final long SHUTTER_BUTTON_TIMEOUT = 0L; // 0ms
 
     /**
      * An unpublished intent flag requesting to start recording straight away
@@ -684,6 +684,8 @@ public class VideoModule implements CameraModule,
         if (isRecorderReady() == false)
             return;
 
+        mUI.enableShutter(false);
+
         if (stop) {
             onStopVideoRecording();
             mUI.showUIafterRecording();
@@ -691,7 +693,6 @@ public class VideoModule implements CameraModule,
             startVideoRecording();
             mUI.hideUIwhileRecording();
         }
-        mUI.enableShutter(false);
 
         // Keep the shutter button disabled when in video capture intent
         // mode and recording is stopped. It'll be re-enabled when
