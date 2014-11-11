@@ -74,12 +74,12 @@ public class Storage {
         }
     }
 
-    public static void writeFile(String path, byte[] jpeg, ExifInterface exif,
+    public static int writeFile(String path, byte[] jpeg, ExifInterface exif,
             String mimeType) {
         if (exif != null && (mimeType == null ||
             mimeType.equalsIgnoreCase("jpeg"))) {
             try {
-                exif.writeExif(jpeg, path);
+                return exif.writeExif(jpeg, path);
             } catch (Exception e) {
                 Log.e(TAG, "Failed to write data", e);
             }
@@ -89,7 +89,9 @@ public class Storage {
                  dir.mkdirs();
             }
             writeFile(path, jpeg);
+            return jpeg.length;
         }
+        return 0;
     }
 
     public static void writeFile(String path, byte[] data) {
@@ -114,9 +116,9 @@ public class Storage {
             int height, String mimeType) {
 
         String path = generateFilepath(title, mimeType);
-        writeFile(path, jpeg, exif, mimeType);
+        int size = writeFile(path, jpeg, exif, mimeType);
         return addImage(resolver, title, date, location, orientation,
-                jpeg.length, path, width, height, mimeType);
+                size, path, width, height, mimeType);
     }
 
     // Get a ContentValues object for the given photo data
