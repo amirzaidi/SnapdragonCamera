@@ -177,6 +177,8 @@ public class VideoModule implements CameraModule,
     private CameraProxy mCameraDevice;
     private static final String KEY_PREVIEW_FORMAT = "preview-format";
     private static final String FORMAT_NV12_VENUS = "nv12-venus";
+    private static final String PERSIST_CAMERA_CPP_DUPLICATION =
+            "persist.camera.cpp.duplication";
 
     // The degrees of the device rotated clockwise from its natural orientation.
     private int mOrientation = OrientationEventListener.ORIENTATION_UNKNOWN;
@@ -905,8 +907,11 @@ public class VideoModule implements CameraModule,
             return;
         }
         mParameters = mCameraDevice.getParameters();
-        if (mParameters.getSupportedVideoSizes() == null || is1080pEnabled() || is720pEnabled() ||
-                    isHFREnabled(mProfile.videoFrameWidth, mProfile.videoFrameHeight)) {
+        boolean isDuplicationEnabled =
+                SystemProperties.getBoolean(PERSIST_CAMERA_CPP_DUPLICATION, false);
+        if (mParameters.getSupportedVideoSizes() == null || ((is1080pEnabled() ||
+                is720pEnabled()) && isDuplicationEnabled) ||
+                isHFREnabled(mProfile.videoFrameWidth, mProfile.videoFrameHeight)) {
             mDesiredPreviewWidth = mProfile.videoFrameWidth;
             mDesiredPreviewHeight = mProfile.videoFrameHeight;
         } else { // Driver supports separates outputs for preview and video.
@@ -2055,8 +2060,9 @@ public class VideoModule implements CameraModule,
             Log.v(TAG, "preview format set to YV12");
             mParameters.setPreviewFormat (ImageFormat.YV12);
         }
-
-        if (is1080pEnabled() || is720pEnabled()) {
+        boolean isDuplicationEnabled =
+                SystemProperties.getBoolean(PERSIST_CAMERA_CPP_DUPLICATION, false);
+        if ((is1080pEnabled() || is720pEnabled()) && isDuplicationEnabled) {
            Log.v(TAG, "1080p or 720p enabled, preview format set to NV12_VENUS");
            mParameters.set(KEY_PREVIEW_FORMAT, FORMAT_NV12_VENUS);
         }
