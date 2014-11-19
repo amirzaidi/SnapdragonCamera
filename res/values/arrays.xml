@@ -403,26 +403,32 @@
 
     <!-- Camera Preferences Scene Mode dialog box entries -->
     <string-array name="pref_camera_scenemode_entries" translatable="false">
-        <item>@string/pref_camera_scenemode_entry_action</item>
-        <item>@string/pref_camera_scenemode_entry_night</item>
         <item>@string/pref_camera_scenemode_entry_auto</item>
-        <item>@string/pref_camera_scenemode_entry_sunset</item>
-        <item>@string/pref_camera_scenemode_entry_party</item>
-        <item>@string/pref_camera_scenemode_entry_asd</item>
-        <item>@string/pref_camera_scenemode_entry_portrait</item>
+        <!-- <item>@string/pref_camera_scenemode_entry_portrait</item> -->
         <item>@string/pref_camera_scenemode_entry_landscape</item>
-        <item>@string/pref_camera_scenemode_entry_night_portrait</item>
-        <item>@string/pref_camera_scenemode_entry_theatre</item>
+        <item>@string/pref_camera_scenemode_entry_sports</item>
+        <item>@string/pref_camera_scenemode_entry_flowers</item>
+        <item>@string/pref_camera_scenemode_entry_backlight</item>
+        <item>@string/pref_camera_scenemode_entry_candlelight</item>
+        <item>@string/pref_camera_scenemode_entry_sunset</item>
+        <item>@string/pref_camera_scenemode_entry_night</item>
         <item>@string/pref_camera_scenemode_entry_beach</item>
         <item>@string/pref_camera_scenemode_entry_snow</item>
-        <item>@string/pref_camera_scenemode_entry_steadyphoto</item>
-        <item>@string/pref_camera_scenemode_entry_fireworks</item>
-        <item>@string/pref_camera_scenemode_entry_sports</item>
-        <item>@string/pref_camera_scenemode_entry_candlelight</item>
-        <item>@string/pref_camera_scenemode_entry_backlight</item>
-        <item>@string/pref_camera_scenemode_entry_flowers</item>
-        <item>@string/pref_camera_scenemode_entry_ar</item>
     </string-array>
+
+    <array name="scenemode_thumbnails" translatable="false">
+        <item>@drawable/ic_scene_mode_auto</item>
+        <!-- <item>@drawable/ic_scene_mode_portrait</item> -->
+        <item>@drawable/ic_scene_mode_landscape</item>
+        <item>@drawable/ic_scene_mode_sports</item>
+        <item>@drawable/ic_scene_mode_flower</item>
+        <item>@drawable/ic_scene_mode_backlight</item>
+        <item>@drawable/ic_scene_mode_candlelight</item>
+        <item>@drawable/ic_scene_mode_sunset</item>
+        <item>@drawable/ic_scene_mode_night</item>
+        <item>@drawable/ic_scene_mode_beach</item>
+        <item>@drawable/ic_scene_mode_snow</item>
+    </array>
 
     <string-array name="pref_camera_scenemode_labels">
         <item>@string/pref_camera_scenemode_label_action</item>
@@ -441,25 +447,17 @@
     </array>
 
     <string-array name="pref_camera_scenemode_entryvalues" translatable="false">
-        <item>action</item>
-        <item>night</item>
         <item>auto</item>
-        <item>sunset</item>
-        <item>party</item>
-        <item>asd</item>
-        <item>portrait</item>
+        <!-- <item>portrait</item> -->
         <item>landscape</item>
-        <item>night-portrait</item>
-        <item>theatre</item>
+        <item>sports</item>
+        <item>flowers</item>
+        <item>backlight</item>
+        <item>candlelight</item>
+        <item>sunset</item>
+        <item>night</item>
         <item>beach</item>
         <item>snow</item>
-        <item>steadyphoto</item>
-        <item>fireworks</item>
-        <item>sports</item>
-        <item>candlelight</item>
-        <item>backlight</item>
-        <item>flowers</item>
-        <item>AR</item>
     </string-array>
 
     <array name="camera_id_entries" translatable="false">

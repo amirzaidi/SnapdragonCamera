@@ -16,6 +16,8 @@
 
 package com.android.camera;
 
+import android.view.Display;
+import android.graphics.Point;
 import android.animation.Animator;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
@@ -143,6 +145,10 @@ public class CameraActivity extends Activity
     private static final int SUPPORT_SHOW_ON_MAP = 1 << 9;
     private static final int SUPPORT_ALL = 0xffffffff;
 
+    // Pie Setting Menu enabled
+    private static boolean PIE_MENU_ENABLED = false;
+    private boolean mDeveloperMenuEnabled = false;
+
     /** This data adapter is used by FilmStripView. */
     private LocalDataAdapter mDataAdapter;
     /** This data adapter represents the real local camera data. */
@@ -193,6 +199,8 @@ public class CameraActivity extends Activity
 
     private Intent mVideoShareIntent;
     private Intent mImageShareIntent;
+    public static int SETTING_LIST_WIDTH_1 = 250;
+    public static int SETTING_LIST_WIDTH_2 = 250;
 
     private class MyOrientationEventListener
             extends OrientationEventListener {
@@ -301,6 +309,18 @@ public class CameraActivity extends Activity
 
     public static boolean isFirstStartAfterScreenOn() {
         return sFirstStartAfterScreenOn;
+    }
+
+    public static boolean isPieMenuEnabled() {
+        return PIE_MENU_ENABLED;
+    }
+
+    public boolean isDeveloperMenuEnabled() {
+        return mDeveloperMenuEnabled;
+    }
+
+    public void enableDeveloperMenu() {
+        mDeveloperMenuEnabled = true;
     }
 
     public static void resetFirstStartAfterScreenOn() {
@@ -1182,6 +1202,21 @@ public class CameraActivity extends Activity
         getContentResolver().registerContentObserver(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true,
                 mLocalVideosObserver);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mDeveloperMenuEnabled = prefs.getBoolean(CameraSettings.KEY_DEVELOPER_MENU, false);
+
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+        int height = size.y;
+
+        int lower = Math.min(width, height);
+
+        int offset = lower * 10 / 100;
+        SETTING_LIST_WIDTH_1 = lower / 2 + offset;
+        SETTING_LIST_WIDTH_2 = lower / 2 - offset;
     }
 
     private void setRotationAnimation() {
@@ -1201,7 +1236,12 @@ public class CameraActivity extends Activity
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        boolean result = super.dispatchTouchEvent(ev);
+        boolean result = false;
+        if (mFilmStripView.checkSendToModeView(ev)) {
+            result = mFilmStripView.sendToModeView(ev);
+        }
+        if (result == false)
+            result = super.dispatchTouchEvent(ev);
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
             // Real deletion is postponed until the next user interaction after
             // the gesture that triggers deletion. Until real deletion is performed,
@@ -1352,6 +1392,10 @@ public class CameraActivity extends Activity
         } else if (!mCurrentModule.onBackPressed()) {
             super.onBackPressed();
         }
+    }
+
+    public void setPreviewGestures(PreviewGestures previewGestures) {
+        mFilmStripView.setPreviewGestures(previewGestures);
     }
 
     public boolean isAutoRotateScreen() {

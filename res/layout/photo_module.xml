@@ -43,6 +43,7 @@
             <ProgressBar
                 style="?android:attr/progressBarStyleHorizontal"
                 android:id="@+id/progress"
+                android:visibility="gone"
                 android:orientation="vertical"
                 android:layout_width="200dip"
                 android:layout_height="wrap_content"

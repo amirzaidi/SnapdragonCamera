@@ -21,6 +21,8 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
+import com.android.camera.CustomPhotoMenu;
+import com.android.camera.CustomVideoMenu;
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.RenderOverlay;
 import com.android.camera.ui.ZoomRenderer;
@@ -54,6 +56,10 @@ public class PreviewGestures
     private boolean mEnabled;
     private boolean mZoomOnly;
     private GestureDetector mGestureDetector;
+    private CustomPhotoMenu mCustomPhotoMenu;
+    private CustomVideoMenu mCustomVideoMenu;
+    private boolean waitUntilNextDown;
+    private boolean setToFalse;
 
     private GestureDetector.SimpleOnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
         @Override
@@ -89,6 +95,23 @@ public class PreviewGestures
                     openPie();
                     return true;
                 }
+            }
+
+            if (deltaX < 0 && Math.abs(deltaX) > 2 * Math.abs(deltaY)) {
+                // Open menu on swipe left
+                waitUntilNextDown = true;
+                if (mCustomPhotoMenu != null) {
+                    if (!mCustomPhotoMenu.isMenuBeingShown()) {
+                        mCustomPhotoMenu.openFirstLevel();
+                    }
+                }
+
+                if (mCustomVideoMenu != null) {
+                    if (!mCustomVideoMenu.isMenuBeingShown()) {
+                        mCustomVideoMenu.openFirstLevel();
+                    }
+                }
+                return true;
             }
             return false;
         }
@@ -129,7 +152,36 @@ public class PreviewGestures
         return mEnabled;
     }
 
+    public void setCustomPhotoMenu(CustomPhotoMenu menu) {
+        mCustomPhotoMenu = menu;
+    }
+
+    public void setCustomVideoMenu(CustomVideoMenu menu) {
+        mCustomVideoMenu = menu;
+    }
+
+    public CustomPhotoMenu getCustomPhotoMenu() {
+        return mCustomPhotoMenu;
+    }
+
+    public CustomVideoMenu getCustomVideoMenu() {
+        return mCustomVideoMenu;
+    }
+
     public boolean dispatchTouch(MotionEvent m) {
+        if (setToFalse) {
+            waitUntilNextDown = false;
+            setToFalse = false;
+        }
+        if (waitUntilNextDown) {
+            if (MotionEvent.ACTION_UP != m.getActionMasked()
+                    && MotionEvent.ACTION_CANCEL != m.getActionMasked())
+                return true;
+            else {
+                setToFalse = true;
+                return true;
+            }
+        }
         if (!mEnabled) {
             return false;
         }
@@ -142,6 +194,37 @@ public class PreviewGestures
         // If pie is open, redirects all the touch events to pie.
         if (mPie != null && mPie.isOpen()) {
             return sendToPie(m);
+        }
+
+        if (mCustomPhotoMenu != null) {
+            if (mCustomPhotoMenu.isMenuBeingShown()) {
+                if (!mCustomPhotoMenu.isMenuBeingAnimated()) {
+                    waitUntilNextDown = true;
+                    mCustomPhotoMenu.closeView();
+                }
+                return true;
+            }
+            if (mCustomPhotoMenu.isPreviewMenuBeingShown()) {
+                waitUntilNextDown = true;
+                mCustomPhotoMenu.animateSlideOutPreviewMenu();
+                return true;
+            }
+        }
+
+        if (mCustomVideoMenu != null) {
+            if (mCustomVideoMenu.isMenuBeingShown()) {
+                if (!mCustomVideoMenu.isMenuBeingAnimated()) {
+                    waitUntilNextDown = true;
+                    mCustomVideoMenu.closeView();
+                }
+                return true;
+            }
+
+            if (mCustomVideoMenu.isPreviewMenuBeingShown()) {
+                waitUntilNextDown = true;
+                mCustomVideoMenu.animateSlideOutPreviewMenu();
+                return true;
+            }
         }
 
         // If pie is not open, send touch events to gesture detector and scale
@@ -160,6 +243,10 @@ public class PreviewGestures
             }
         }
         return true;
+    }
+
+    public boolean waitUntilNextDown() {
+        return waitUntilNextDown;
     }
 
     private MotionEvent makeCancelEvent(MotionEvent m) {
