@@ -31,12 +31,12 @@
     android:layout_height="match_parent"
     android:layout_gravity="center"
     android:orientation="vertical"
-    android:padding="5dp" >
+    android:padding="@dimen/scene_mode_padding" >
 
     <LinearLayout
         android:id="@+id/border"
-        android:layout_width="90dp"
-        android:layout_height="85dp"
+        android:layout_width="@dimen/scene_mode_width"
+        android:layout_height="@dimen/scene_mode_height"
         android:layout_gravity="center"
         android:background="@drawable/scene_mode_view_border"
         android:orientation="vertical"

@@ -134,37 +134,31 @@ public class CustomPhotoMenu extends MenuController
         }
 
         mOtherKeys1 = new String[] {
-                CameraSettings.KEY_SCENE_MODE,
                 CameraSettings.KEY_RECORD_LOCATION,
                 CameraSettings.KEY_PICTURE_SIZE,
                 CameraSettings.KEY_JPEG_QUALITY,
                 CameraSettings.KEY_TIMER,
                 CameraSettings.KEY_CAMERA_SAVEPATH,
                 CameraSettings.KEY_LONGSHOT,
-                CameraSettings.KEY_COLOR_EFFECT,
                 CameraSettings.KEY_FACE_DETECTION,
                 CameraSettings.KEY_ISO,
                 CameraSettings.KEY_EXPOSURE,
                 CameraSettings.KEY_WHITE_BALANCE,
-                CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_FOCUS_MODE,
                 CameraSettings.KEY_REDEYE_REDUCTION
         };
 
         mOtherKeys2 = new String[] {
-                CameraSettings.KEY_SCENE_MODE,
                 CameraSettings.KEY_RECORD_LOCATION,
                 CameraSettings.KEY_PICTURE_SIZE,
                 CameraSettings.KEY_JPEG_QUALITY,
                 CameraSettings.KEY_TIMER,
                 CameraSettings.KEY_CAMERA_SAVEPATH,
                 CameraSettings.KEY_LONGSHOT,
-                CameraSettings.KEY_COLOR_EFFECT,
                 CameraSettings.KEY_FACE_DETECTION,
                 CameraSettings.KEY_ISO,
                 CameraSettings.KEY_EXPOSURE,
                 CameraSettings.KEY_WHITE_BALANCE,
-                CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_FOCUS_MODE,
                 CameraSettings.KEY_REDEYE_REDUCTION,
                 CameraSettings.KEY_HISTOGRAM,
@@ -621,17 +615,7 @@ public class CustomPhotoMenu extends MenuController
 
     public void initSceneModeButton(View button) {
         button.setVisibility(View.INVISIBLE);
-        final IconListPreference pref = (IconListPreference) mPreferenceGroup
-                .findPreference(CameraSettings.KEY_SCENE_MODE);
-        if (pref == null)
-            return;
-
-        int[] iconIds = pref.getLargeIconIds();
-        int resid = -1;
-        // The preference only has a single icon to represent it.
-        resid = pref.getSingleIcon();
-        ImageView iv = (ImageView) ((FrameLayout) button).getChildAt(0);
-        iv.setImageResource(resid);
+        updateSceneModeIcon();
         button.setVisibility(View.VISIBLE);
         button.setOnClickListener(new OnClickListener() {
             @Override
@@ -670,12 +654,18 @@ public class CustomPhotoMenu extends MenuController
 
         int[] thumbnails = pref.getThumbnailIds();
 
+        Resources r = mActivity.getResources();
+        int height = (int) (r.getDimension(R.dimen.scene_mode_height) + 2
+                * r.getDimension(R.dimen.scene_mode_padding) + 1);
+        int width = (int) (r.getDimension(R.dimen.scene_mode_width) + 2
+                * r.getDimension(R.dimen.scene_mode_padding) + 1);
+
         int gridRes = 0;
         boolean portrait = (rotation == 0) || (rotation == 180);
-        int size = Math.min(display.getWidth(), display.getHeight()) * 30 / 100;
+        int size = height;
         if (portrait) {
             gridRes = R.layout.vertical_grid;
-            size = Math.min(display.getWidth(), display.getHeight()) * 30 / 100;
+            size = width;
         } else {
             gridRes = R.layout.horiz_grid;
         }
@@ -725,11 +715,11 @@ public class CustomPhotoMenu extends MenuController
                 public boolean onTouch(View v, MotionEvent event) {
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
                         startTime = System.currentTimeMillis();
-
                     } else if (event.getAction() == MotionEvent.ACTION_UP) {
                         if (System.currentTimeMillis() - startTime < CLICK_THRESHOLD) {
                             pref.setValueIndex(j);
                             onSettingChanged(pref);
+                            updateSceneModeIcon();
                             for (View v1 : views) {
                                 v1.setBackgroundResource(R.drawable.scene_mode_view_border);
                             }
@@ -752,6 +742,19 @@ public class CustomPhotoMenu extends MenuController
         }
         previewMenuLayout.addView(basic);
         mPreviewMenu = basic;
+    }
+
+    public void updateSceneModeIcon() {
+        final IconListPreference pref = (IconListPreference) mPreferenceGroup
+                .findPreference(CameraSettings.KEY_SCENE_MODE);
+        if (pref == null)
+            return;
+        ImageView iv = (ImageView) ((FrameLayout) mSceneModeSwitcher).getChildAt(0);
+        int[] thumbnails = pref.getThumbnailIds();
+        int ind = pref.getCurrentIndex();
+        if (ind == -1)
+            ind = 0;
+        iv.setImageResource(thumbnails[ind]);
     }
 
     public void initFilterModeButton(View button) {
@@ -792,12 +795,19 @@ public class CustomPhotoMenu extends MenuController
         WindowManager wm = (WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         CharSequence[] entries = pref.getEntries();
+
+        Resources r = mActivity.getResources();
+        int height = (int) (r.getDimension(R.dimen.filter_mode_height) + 2
+                * r.getDimension(R.dimen.filter_mode_padding) + 1);
+        int width = (int) (r.getDimension(R.dimen.filter_mode_width) + 2
+                * r.getDimension(R.dimen.filter_mode_padding) + 1);
+
         int gridRes = 0;
         boolean portrait = (rotation == 0) || (rotation == 180);
-        int size = Math.min(display.getWidth(), display.getHeight()) * 35 / 100;
+        int size = height;
         if (portrait) {
             gridRes = R.layout.vertical_grid;
-            size = Math.min(display.getWidth(), display.getHeight()) * 30 / 100;
+            size = width;
         } else {
             gridRes = R.layout.horiz_grid;
         }

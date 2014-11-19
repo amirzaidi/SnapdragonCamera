@@ -234,7 +234,7 @@ public class CameraControls extends RotatableLayout {
         Rect shutter = new Rect();
         topRight(mPreview, l, t, r, b);
         center(mShutter, l, t, r, b, orientation, rotation, shutter, SHUTTER_INDEX);
-        mSize = Math.max(shutter.right - shutter.left, shutter.bottom - shutter.top);
+        mSize = (int) (Math.max(shutter.right - shutter.left, shutter.bottom - shutter.top) * 1.2f);
         center(mBackgroundView, l, t, r, b, orientation, rotation, new Rect(), -1);
         mBackgroundView.setVisibility(View.GONE);
         setLocation(r - l, b - t);
