@@ -33,8 +33,12 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.media.ThumbnailUtils;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAdapter.CreateBeamUrisCallback;
 import android.nfc.NfcEvent;
@@ -83,6 +87,7 @@ import com.android.camera.tinyplanet.TinyPlanetFragment;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.DetailsDialog;
 import com.android.camera.ui.FilmStripView;
+import com.android.camera.ui.FilmStripView.ImageData;
 import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
@@ -183,6 +188,8 @@ public class CameraActivity extends Activity
     private boolean mIsUndoingDeletion = false;
     private boolean mIsEditActivityInProgress = false;
     protected boolean mIsModuleSwitchInProgress = false;
+    private View mPreviewCover;
+    private FrameLayout mPreviewContentLayout;
 
     private Uri[] mNfcPushUris = new Uri[1];
 
@@ -201,6 +208,7 @@ public class CameraActivity extends Activity
     private Intent mImageShareIntent;
     public static int SETTING_LIST_WIDTH_1 = 250;
     public static int SETTING_LIST_WIDTH_2 = 250;
+    private Bitmap mPreviewThumbnailBitmap;
 
     private class MyOrientationEventListener
             extends OrientationEventListener {
@@ -511,10 +519,13 @@ public class CameraActivity extends Activity
             };
 
     public void gotoGallery() {
-        UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA, UsageStatistics.ACTION_FILMSTRIP,
-                "thumbnailTap");
-
-        mFilmStripView.getController().goToNextItem();
+        LocalDataAdapter adapter = getDataAdapter();
+        ImageData img = adapter.getImageData(1);
+        if (img == null)
+            return;
+        Uri uri = img.getContentUri();
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        startActivity(intent);
     }
 
     /**
@@ -596,6 +607,98 @@ public class CameraActivity extends Activity
 
     private void setNfcBeamPushUri(Uri uri) {
         mNfcPushUris[0] = uri;
+    }
+
+    public LocalDataAdapter getDataAdapter() {
+        return mDataAdapter;
+    }
+
+    private String getPathFromUri(Uri uri) {
+        String[] projection = {
+                MediaStore.Images.Media.DATA
+        };
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+        if (cursor == null)
+            return null;
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        String s = cursor.getString(column_index);
+        cursor.close();
+        return s;
+    }
+
+    public void setPreviewThumbnailBitmap(Bitmap bitmap) {
+        mPreviewThumbnailBitmap = bitmap;
+    }
+
+    public Bitmap getPreviewThumbBitmap() {
+        return mPreviewThumbnailBitmap;
+    }
+
+    public void updatePreviewThumbnail() {
+        if (mCurrentModule != null) {
+            if (mCurrentModule instanceof VideoModule) {
+                ((VideoModule) mCurrentModule).updatePreviewThumbnail();
+            }
+            else if (mCurrentModule instanceof WideAnglePanoramaModule) {
+                ((WideAnglePanoramaModule) mCurrentModule).updatePreviewThumbnail();
+            }
+            else if (mCurrentModule instanceof PhotoModule) {
+                ((PhotoModule) mCurrentModule).updatePreviewThumbnail();
+            }
+        }
+    }
+
+    public void updatePreviewThumbnailForVideo() {
+        if (mCurrentModule != null) {
+            if (mCurrentModule instanceof VideoModule) {
+                ((VideoModule) mCurrentModule).updatePreviewThumbnail();
+            }
+        }
+    }
+
+    public class UpdatePreviewThumbnail extends AsyncTask<Void, Void, Bitmap> {
+        private ImageView imgView;
+        private Bitmap imgBitmap = null;
+
+        public UpdatePreviewThumbnail(ImageView view) {
+            imgView = view;
+        }
+
+        @Override
+        protected Bitmap doInBackground(Void... params) {
+            if (imgBitmap != null)
+                return imgBitmap;
+
+            LocalDataAdapter adapter = getDataAdapter();
+            ImageData img = adapter.getImageData(1);
+            if (img == null) {
+                return null;
+            }
+            Uri uri = img.getContentUri();
+            String path = getPathFromUri(uri);
+            if (path == null) {
+                return null;
+            }
+            else {
+                if (img.isPhoto()) {
+                    BitmapFactory.Options opt = new BitmapFactory.Options();
+                    opt.inSampleSize = 4;
+                    return BitmapFactory.decodeFile(path, opt);
+                } else {
+                    return ThumbnailUtils
+                            .createVideoThumbnail(path, MediaStore.Video.Thumbnails.MICRO_KIND);
+                }
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            if (imgView == null)
+                return;
+            imgView.setImageBitmap(bitmap);
+            setPreviewThumbnailBitmap(bitmap);
+        }
     }
 
     private void setStandardShareIntent(Uri contentUri, String mimeType) {

@@ -64,26 +64,17 @@
         android:scaleType="center"
         android:src="@drawable/btn_new_shutter" />
 
-    <ImageView
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/preview_thumb"
         android:layout_width="@dimen/capture_size"
         android:layout_height="@dimen/capture_size"
         android:layout_gravity="top|right"
+        android:background="@android:color/black"
         android:contentDescription="@string/switch_photo_filmstrip"
-        android:scaleType="centerInside"
-        android:visibility="invisible" />
+        android:scaleType="fitCenter" />
 
     <com.android.camera.ui.RotatableLayout
         android:id="@+id/front_back_switcher"
-        style="@style/ToggleButtonOuter" >
-
-        <com.android.camera.ui.RotateImageView
-            style="@style/ToggleButton"
-            android:layout_gravity="center" />
-    </com.android.camera.ui.RotatableLayout>
-
-    <com.android.camera.ui.RotatableLayout
-        android:id="@+id/flash_switcher"
         style="@style/ToggleButtonOuter" >
 
         <com.android.camera.ui.RotateImageView

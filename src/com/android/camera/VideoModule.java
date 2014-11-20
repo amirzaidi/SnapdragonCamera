@@ -1524,6 +1524,10 @@ public class VideoModule implements CameraModule,
         mCurrentVideoValues = null;
     }
 
+    public void updatePreviewThumbnail() {
+        mUI.updateWithNewPreviewThumbnail();
+    }
+
     private void deleteVideoFile(String fileName) {
         Log.v(TAG, "Deleting video " + fileName);
         File f = new File(fileName);

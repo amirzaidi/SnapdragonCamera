@@ -81,7 +81,6 @@ public class CustomPhotoMenu extends MenuController
     private static final int MODE_FILTER = 1;
     private static final int DEVELOPER_MENU_TOUCH_COUNT = 10;
     private int mSceneStatus;
-    private View mFlashSwitcher;
     private View mHdrSwitcher;
     private View mFrontBackSwitcher;
     private View mSceneModeSwitcher;
@@ -103,7 +102,6 @@ public class CustomPhotoMenu extends MenuController
         mSettingOff = activity.getString(R.string.setting_off_value);
         mActivity = activity;
         mFrontBackSwitcher = ui.getRootView().findViewById(R.id.front_back_switcher);
-        mFlashSwitcher = ui.getRootView().findViewById(R.id.flash_switcher);
         mHdrSwitcher = ui.getRootView().findViewById(R.id.hdr_switcher);
         mSceneModeSwitcher = ui.getRootView().findViewById(R.id.scene_mode_switcher);
         mFilterModeSwitcher = ui.getRootView().findViewById(R.id.filter_mode_switcher);
@@ -122,7 +120,6 @@ public class CustomPhotoMenu extends MenuController
         initSceneModeButton(mSceneModeSwitcher);
         initFilterModeButton(mFilterModeSwitcher);
         mHdrSwitcher.setVisibility(View.INVISIBLE);
-        mFlashSwitcher.setVisibility(View.INVISIBLE);
 
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         // HDR.
@@ -179,7 +176,6 @@ public class CustomPhotoMenu extends MenuController
         };
 
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);
-        initSwitchItem(CameraSettings.KEY_FLASH_MODE, mFlashSwitcher);
     }
 
     @Override
@@ -457,9 +453,6 @@ public class CustomPhotoMenu extends MenuController
     @Override
     public void overrideSettings(final String... keyvalues) {
         for (int i = 0; i < keyvalues.length; i += 2) {
-            if (keyvalues[i].equals(CameraSettings.KEY_FLASH_MODE)) {
-                buttonSetEnabled(mFlashSwitcher, keyvalues[i + 1] == null);
-            }
             if (keyvalues[i].equals(CameraSettings.KEY_SCENE_MODE)) {
                 buttonSetEnabled(mSceneModeSwitcher, keyvalues[i + 1] == null);
             }
