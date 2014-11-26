@@ -2210,7 +2210,6 @@ public class PhotoModule
 
         mJpegPictureCallbackTime = 0;
         mZoomValue = 0;
-        resetExposureCompensation();
 
         if (mSkinToneSeekBar != true)
         {
