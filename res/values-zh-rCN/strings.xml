@@ -514,6 +514,9 @@
     <string name="pref_camera_auto_hdr_entry_enable">开</string>
     <string name="pref_camera_auto_hdr_entry_disable">关</string>
 
+    <!-- The message is shown in toast when click showOnMap Menu and there is no map app -->
+    <string name="map_activity_not_found_err">没有地图应用显示地理位置信息</string>
+
     <!-- toast about switch storage -->
     <string name="on_switch_save_path_to_sdcard">内部存储空间不足，已切换存储到SD卡</string>
 </resources>
