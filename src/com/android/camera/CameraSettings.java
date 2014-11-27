@@ -247,13 +247,30 @@ public class CameraSettings {
     private final int mCameraId;
     private static final HashMap<Integer, String>
             VIDEO_ENCODER_TABLE = new HashMap<Integer, String>();
+    public static final HashMap<String, Integer>
+            VIDEO_QUALITY_TABLE = new HashMap<String, Integer>();
 
     static {
+        //video encoders
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H263, "h263");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H264, "h264");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H265, "h265");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.MPEG_4_SP, "m4v");
-    }
+
+        //video qualities
+        VIDEO_QUALITY_TABLE.put("4096x2160", CamcorderProfile.QUALITY_4kDCI);
+        VIDEO_QUALITY_TABLE.put("3840x2160", CamcorderProfile.QUALITY_2160P);
+        VIDEO_QUALITY_TABLE.put("1920x1080", CamcorderProfile.QUALITY_1080P);
+        VIDEO_QUALITY_TABLE.put("1280x720",  CamcorderProfile.QUALITY_720P);
+        VIDEO_QUALITY_TABLE.put("720x480",   CamcorderProfile.QUALITY_480P);
+        VIDEO_QUALITY_TABLE.put("864x480",   CamcorderProfile.QUALITY_FWVGA);
+        VIDEO_QUALITY_TABLE.put("800x480",   CamcorderProfile.QUALITY_WVGA);
+        VIDEO_QUALITY_TABLE.put("640x480",   CamcorderProfile.QUALITY_VGA);
+        VIDEO_QUALITY_TABLE.put("400x240",   CamcorderProfile.QUALITY_WQVGA);
+        VIDEO_QUALITY_TABLE.put("352x288",   CamcorderProfile.QUALITY_CIF);
+        VIDEO_QUALITY_TABLE.put("320x240",   CamcorderProfile.QUALITY_QVGA);
+        VIDEO_QUALITY_TABLE.put("176x144",   CamcorderProfile.QUALITY_QCIF);
+   }
 
     public CameraSettings(Activity activity, Parameters parameters,
                           int cameraId, CameraInfo[] cameraInfo) {
@@ -275,7 +292,7 @@ public class CameraSettings {
             String defaultQuality,Parameters parameters) {
         // When launching the camera app first time, we will set the video quality
         // to the first one (i.e. highest quality) in the supported list
-        List<String> supported = getSupportedVideoQuality(cameraId,parameters);
+        List<String> supported = getSupportedVideoQualities(cameraId,parameters);
         if (supported == null) {
             Log.e(TAG, "No supported video quality is found");
             return defaultQuality;
@@ -734,7 +751,7 @@ public class CameraSettings {
         }
 
         if (videoQuality != null) {
-            filterUnsupportedOptions(group, videoQuality, getSupportedVideoQuality(
+            filterUnsupportedOptions(group, videoQuality, getSupportedVideoQualities(
                    mCameraId,mParameters));
         }
 
@@ -1150,6 +1167,20 @@ public class CameraSettings {
            }
         }
 
+    }
+
+    public static ArrayList<String> getSupportedVideoQualities(int cameraId,Parameters parameters) {
+        ArrayList<String> supported = new ArrayList<String>();
+        List<String> temp = sizeListToStringList(parameters.getSupportedVideoSizes());
+        for (String videoSize : temp) {
+            if (VIDEO_QUALITY_TABLE.containsKey(videoSize)) {
+                int profile = VIDEO_QUALITY_TABLE.get(videoSize);
+                if (CamcorderProfile.hasProfile(cameraId, profile)) {
+                      supported.add(videoSize);
+                }
+            }
+        }
+        return supported;
     }
     public static int getVideoDurationInMillis(String quality) {
         if (VIDEO_QUALITY_MMS.equals(quality)) {

@@ -31,32 +31,19 @@
         <item>@string/pref_video_quality_entry_qvga</item>
         <item>@string/pref_video_quality_entry_qcif</item>
    </string-array>
-
     <string-array name="pref_video_quality_entryvalues" translatable="false">
-        <!-- The integer value of CamcorderProfile.QUALITY_4kDCI -->
-        <item>13</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_2160P -->
-        <item>8</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_1080P -->
-        <item>6</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_720P -->
-        <item>5</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_480P -->
-        <item>4</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_FWVGA -->
-        <item>12</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_WVGA -->
-        <item>9</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_VGA -->
-        <item>10</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_WQVGA -->
-        <item>11</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_CIF -->
-        <item>@string/pref_video_quality_default</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_QVGA -->
-        <item>7</item>
-        <!-- The integer value of CamcorderProfile.QUALITY_QCIF -->
-        <item>2</item>
+        <item>4096x2160</item>
+        <item>3840x2160</item>
+        <item>1920x1080</item>
+        <item>1280x720</item>
+        <item>720x480</item>
+        <item>864x480</item>
+        <item>800x480</item>
+        <item>640x480</item>
+        <item>400x240</item>
+        <item>352x288</item>
+        <item>320x240</item>
+        <item>176x144</item>
     </string-array>
 
     <!-- Camera Preference save path entries -->
