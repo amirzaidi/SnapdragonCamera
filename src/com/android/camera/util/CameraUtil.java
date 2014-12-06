@@ -1035,8 +1035,14 @@ public class CameraUtil {
             // Use the "geo intent" if no GMM is installed
             Log.e(TAG, "GMM activity not found!", e);
             String url = String.format(Locale.ENGLISH, "geo:%f,%f", latLong[0], latLong[1]);
-            Intent mapsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            activity.startActivity(mapsIntent);
+            try {
+                Intent mapsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                activity.startActivity(mapsIntent);
+            } catch (ActivityNotFoundException ex) {
+                Log.e(TAG, "Map view activity not found!", ex);
+                Toast.makeText(activity, activity.getString(R.string.map_activity_not_found_err),
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
