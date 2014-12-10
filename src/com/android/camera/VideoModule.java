@@ -177,6 +177,7 @@ public class VideoModule implements CameraModule,
     private CameraProxy mCameraDevice;
     private static final String KEY_PREVIEW_FORMAT = "preview-format";
     private static final String FORMAT_NV12_VENUS = "nv12-venus";
+    private static final String FORMAT_NV21 = "yuv420sp";
     private static final String PERSIST_CAMERA_CPP_DUPLICATION =
             "persist.camera.cpp.duplication";
 
@@ -909,10 +910,7 @@ public class VideoModule implements CameraModule,
             return;
         }
         mParameters = mCameraDevice.getParameters();
-        boolean isDuplicationEnabled =
-                SystemProperties.getBoolean(PERSIST_CAMERA_CPP_DUPLICATION, false);
-        if (mParameters.getSupportedVideoSizes() == null || ((is1080pEnabled() ||
-                is720pEnabled()) && isDuplicationEnabled) ||
+        if (mParameters.getSupportedVideoSizes() == null ||
                 isHFREnabled(mProfile.videoFrameWidth, mProfile.videoFrameHeight)) {
             mDesiredPreviewWidth = mProfile.videoFrameWidth;
             mDesiredPreviewHeight = mProfile.videoFrameHeight;
@@ -2070,11 +2068,19 @@ public class VideoModule implements CameraModule,
             Log.v(TAG, "preview format set to YV12");
             mParameters.setPreviewFormat (ImageFormat.YV12);
         }
+
+        // Set NV12_VENUS for preview stream, when both the below conditions are met
+        // 1. setprop "persist.camera.cpp.duplication" is enabled(Default value is enabled)
+        // 2. If both preview & video resolution are exactly same
         boolean isDuplicationEnabled =
-                SystemProperties.getBoolean(PERSIST_CAMERA_CPP_DUPLICATION, false);
-        if ((is1080pEnabled() || is720pEnabled()) && isDuplicationEnabled) {
-           Log.v(TAG, "1080p or 720p enabled, preview format set to NV12_VENUS");
+                SystemProperties.getBoolean(PERSIST_CAMERA_CPP_DUPLICATION, true);
+        if (isDuplicationEnabled && (mDesiredPreviewWidth == mProfile.videoFrameWidth) &&
+                (mDesiredPreviewHeight == mProfile.videoFrameHeight)) {
+           Log.v(TAG, "Preview is same as Video resolution, So preview format set to NV12_VENUS");
            mParameters.set(KEY_PREVIEW_FORMAT, FORMAT_NV12_VENUS);
+        } else {
+           mParameters.set(KEY_PREVIEW_FORMAT, FORMAT_NV21);
+           Log.v(TAG, "preview format set to NV21");
         }
 
         // Set High Frame Rate.
