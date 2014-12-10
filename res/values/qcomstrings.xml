@@ -861,5 +861,7 @@
     <string name="advance_feature_enable_msg">
             Continuous shot is not supported when advance features are enabled</string>
 
+    <!-- The alas of CameraActivity for gesture operation -->
+    <string name="camera_gesture_title">Launch camera</string>
 </resources>
 

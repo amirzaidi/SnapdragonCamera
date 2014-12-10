@@ -520,4 +520,7 @@
 
     <!-- toast about switch storage -->
     <string name="on_switch_save_path_to_sdcard">内部存储空间不足，已切换存储到SD卡</string>
+
+    <!-- The alas of CameraActivity for gesture operation -->
+    <string name="camera_gesture_title">打开相机</string>
 </resources>

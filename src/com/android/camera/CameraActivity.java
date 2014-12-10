@@ -1156,6 +1156,10 @@ public class CameraActivity extends Activity
 
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.camera_filmstrip);
+        int flags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
+        getWindow().addFlags(flags);
+
         mActionBar = getActionBar();
         mActionBar.addOnMenuVisibilityListener(this);
 
