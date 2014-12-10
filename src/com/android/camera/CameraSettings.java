@@ -769,9 +769,19 @@ public class CameraSettings {
             filterUnsupportedOptions(group,
                     whiteBalance, mParameters.getSupportedWhiteBalance());
         }
+
         if (sceneMode != null) {
-            filterUnsupportedOptions(group,
-                    sceneMode, mParameters.getSupportedSceneModes());
+            List<String> supportedSceneModes = mParameters.getSupportedSceneModes();
+            List<String> supportedAdvancedFeatures =
+                    getSupportedAdvancedFeatures(mParameters);
+            if (CameraUtil.isSupported(
+                        mContext.getString(R.string
+                                .pref_camera_advanced_feature_value_refocus_on),
+                        supportedAdvancedFeatures)) {
+                supportedSceneModes.add(mContext.getString(R.string
+                            .pref_camera_advanced_feature_value_refocus_on));
+            }
+            filterUnsupportedOptions(group, sceneMode, supportedSceneModes);
         }
         if (flashMode != null) {
             filterUnsupportedOptions(group,

@@ -396,6 +396,8 @@
     <string name="pref_camera_scenemode_entry_sunset">Sunset</string>
     <!-- Scene mode optimized for taking indoor low-lights pictures. [CHAR LIMIT=16] -->
     <string name="pref_camera_scenemode_entry_party">Party</string>
+    <!-- Scene mode for refocus feature [CHAR LIMIT=16] -->
+    <string name="pref_camera_scenemode_entry_refocus">Macro+</string>
 
     <!-- Settings menu, scene mode labels [CHAR LIMIT=50] -->
     <string name="pref_camera_scenemode_label_auto">NONE</string>
@@ -714,4 +716,6 @@ CHAR LIMIT = NONE] -->
     <string name="pref_camera_video_rotation_label_270">270</string>
 
     <string name="remaining_photos_format">%d left</string>
+
+    <string name="refocus_toast">To re-focus last photo, tap here</string>
  </resources>

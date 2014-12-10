@@ -527,6 +527,15 @@ public class CameraActivity extends Activity
         if (img == null)
             return;
         Uri uri = img.getContentUri();
+        if (mCurrentModule instanceof PhotoModule) {
+            if (((PhotoModule) mCurrentModule).isRefocus()) {
+                Intent intent = new Intent();
+                intent.setClass(this, RefocusActivity.class);
+                intent.setData(uri);
+                startActivity(intent);
+                return;
+            }
+        }
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         startActivity(intent);
     }

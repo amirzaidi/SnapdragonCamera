@@ -529,6 +529,10 @@ public class PhotoUI implements PieListener,
         task.execute();
     }
 
+    public void showRefocusToast(boolean show) {
+        mCameraControls.showRefocusToast(show);
+    }
+
     private void openMenu() {
         if (mPieRenderer != null) {
             // If autofocus is not finished, cancel autofocus so that the
@@ -962,6 +966,7 @@ public class PhotoUI implements PieListener,
             ret = true;
         }
         onShowSwitcherPopup();
+        mCameraControls.showRefocusToast(false);
         return ret;
     }
 
