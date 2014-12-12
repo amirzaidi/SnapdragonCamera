@@ -503,6 +503,9 @@
 
     <string name="pref_camera_ae_bracket_hdr_title">自动包围曝光</string>
 
+    <!-- Settings screen, Selectable HDR need 1x frame title -->
+    <string name="pref_camera_hdr_need_1x_title">多帧HDR</string>
+
     <!-- Settings screen, Selectable advanced features title -->
     <string name="pref_camera_advanced_features_title">高级特性</string>
     <!-- Settings screen, Selectable Zone Af dialog radio button choices -->
