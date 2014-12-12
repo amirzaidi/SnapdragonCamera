@@ -621,8 +621,10 @@ public class CameraActivity extends Activity
         if (cursor == null)
             return null;
         int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-        cursor.moveToFirst();
-        String s = cursor.getString(column_index);
+        String s = null;
+        if (cursor.moveToFirst()) {
+            s = cursor.getString(column_index);
+        }
         cursor.close();
         return s;
     }
@@ -1418,6 +1420,7 @@ public class CameraActivity extends Activity
                 // If it's secure camera, requestLoad() should not be called
                 // as it will load all the data.
                 mDataAdapter.requestLoad(getContentResolver());
+                setPreviewThumbnailBitmap(null);
             }
         }
         mLocalImagesObserver.setActivityPaused(false);
