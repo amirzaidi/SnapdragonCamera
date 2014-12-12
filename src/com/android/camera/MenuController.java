@@ -67,7 +67,7 @@ public class MenuController {
 
     public void onSettingChanged(ListPreference pref) {
         if (mListener != null) {
-            mListener.onSharedPreferenceChanged();
+            mListener.onSharedPreferenceChanged(pref);
         }
     }
 
