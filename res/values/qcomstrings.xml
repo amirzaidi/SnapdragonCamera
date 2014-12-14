@@ -25,6 +25,8 @@
     <string name="pref_video_quality_entry_wvga" translatable="false">WVGA</string>
     <!-- Video quality setting entry. Videos will be recorded in VGA quality. [CHAR LIMIT=24] -->
     <string name="pref_video_quality_entry_vga" translatable="false">VGA</string>
+    <!-- Video quality setting entry. Videos will be recorded in HVGA quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_hvga" translatable="false">HVGA</string>
     <!-- Video quality setting entry. Videos will be recorded in WQVGA quality. [CHAR LIMIT=24] -->
     <string name="pref_video_quality_entry_wqvga" translatable="false">WQVGA</string>
     <!-- Video quality setting entry. Videos will be recorded in CIF quality. [CHAR LIMIT=24] -->
