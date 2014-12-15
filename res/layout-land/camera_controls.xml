@@ -109,4 +109,12 @@
             android:layout_gravity="center" />
     </com.android.camera.ui.RotatableLayout>
 
+    <TextView
+        android:id="@+id/remaining_photos"
+        android:background="@android:color/transparent"
+        android:textColor="@android:color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
 </com.android.camera.ui.CameraControls>

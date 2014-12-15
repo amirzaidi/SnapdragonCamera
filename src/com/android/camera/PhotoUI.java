@@ -1159,4 +1159,7 @@ public class PhotoUI implements PieListener,
         mMenu.setPreference(key, value);
     }
 
+    public void updateRemainingPhotos(int remaining) {
+        mCameraControls.updateRemainingPhotos(remaining);
+    }
 }
