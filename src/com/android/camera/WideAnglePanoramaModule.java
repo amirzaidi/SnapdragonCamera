@@ -850,9 +850,14 @@ public class WideAnglePanoramaModule
             perct = mActivity.getResources().getInteger(R.integer.panorama_frame_size_reduction);
         }
 
-        mMosaicFrameProcessor.initialize(mCameraPreviewWidth * perct / 100,
-                mCameraPreviewHeight * perct / 100, getPreviewBufSize());
-        mMosaicFrameProcessorInitialized = true;
+        int width = (mCameraPreviewWidth * perct) / 100;
+        int height = (mCameraPreviewHeight * perct) / 100;
+        if ((0 < width) && (0 < height)) {
+            mMosaicFrameProcessor.initialize(width, height, getPreviewBufSize());
+            mMosaicFrameProcessorInitialized = true;
+        } else {
+            throw new RuntimeException("Invalid preview dimension");
+        }
     }
 
     @Override
