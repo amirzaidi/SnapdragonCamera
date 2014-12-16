@@ -1514,12 +1514,13 @@ public class PhotoModule
             mParameters.remove(CameraSettings.KEY_QC_LEGACY_BURST);
         }
 
-        // Unlock AE&AWB during longshot
-        if (LONGSHOT == mCameraState) {
-            mFocusManager.setAeAwbLock(false);
-            setAutoExposureLockIfSupported();
-            setAutoWhiteBalanceLockIfSupported();
-        }
+        // Unlock AE&AWB, if they continue
+        // to be locked during snapshot, then
+        // side effects could be triggered w.r.t.
+        // flash.
+        mFocusManager.setAeAwbLock(false);
+        setAutoExposureLockIfSupported();
+        setAutoWhiteBalanceLockIfSupported();
 
         mCameraDevice.setParameters(mParameters);
         mParameters = mCameraDevice.getParameters();
