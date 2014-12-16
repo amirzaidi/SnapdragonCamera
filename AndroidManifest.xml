@@ -93,6 +93,18 @@
             </intent-filter>
         </activity-alias>
 
+        <activity-alias
+            android:name="com.android.camera.CameraGestureActivity"
+            android:icon="@mipmap/ic_launcher_camera"
+            android:label="@string/camera_gesture_title"
+            android:targetActivity="com.android.camera.CameraActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- Video camera and capture use the Camcorder label and icon. -->
         <activity-alias
             android:name="com.android.camera.VideoCamera"
