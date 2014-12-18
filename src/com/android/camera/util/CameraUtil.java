@@ -120,6 +120,10 @@ public class CameraUtil {
     /** Has to be in sync with the receiving MovieActivity. */
     public static final String KEY_TREAT_UP_AS_BACK = "treat-up-as-back";
 
+    public static final int RATIO_UNKNOWN = 0;
+    public static final int RATIO_16_9 = 1;
+    public static final int RATIO_4_3 = 2;
+
     public static boolean isSupported(String value, List<String> supported) {
         return supported == null ? false : supported.indexOf(value) >= 0;
     }
@@ -1066,5 +1070,33 @@ public class CameraUtil {
 
     public static boolean volumeKeyShutterDisable(Context context) {
         return context.getResources().getBoolean(R.bool.volume_key_shutter_disable);
+    }
+
+    public static int determineRatio(int width, int height) {
+        int s = width, l = height;
+        if (width > height) {
+            l = width;
+            s = height;
+        }
+        if (l * 3 == s * 4) {
+            return RATIO_4_3;
+        } else if (l * 9 == s * 16) {
+            return RATIO_16_9;
+        } else {
+            return RATIO_UNKNOWN;
+        }
+    }
+
+    public static int determineRatio(float ratio) {
+        if (ratio < 1) {
+            ratio = 1 / ratio;
+        }
+        if (ratio > 1.33f && ratio < 1.34f) {
+            return RATIO_4_3;
+        } else if (ratio > 1.77f && ratio < 1.78f) {
+            return RATIO_16_9;
+        } else {
+            return RATIO_UNKNOWN;
+        }
     }
 }
