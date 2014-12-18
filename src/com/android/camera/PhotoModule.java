@@ -962,15 +962,16 @@ public class PhotoModule
 
                 mUI.doShutterAnimation();
 
+                Location loc = getLocationAccordPictureFormat(mParameters.get(KEY_PICTURE_FORMAT));
                 if (mLongshotSave) {
                     mCameraDevice.takePicture(mHandler,
                             new LongshotShutterCallback(),
                             mRawPictureCallback, mPostViewPictureCallback,
-                            new LongshotPictureCallback(null));
+                            new LongshotPictureCallback(loc));
                 } else {
                     mCameraDevice.takePicture(mHandler,new LongshotShutterCallback(),
                             mRawPictureCallback, mPostViewPictureCallback,
-                            new JpegPictureCallback(null));
+                            new JpegPictureCallback(loc));
                 }
             }
         }
@@ -1532,11 +1533,7 @@ public class PhotoModule
         mJpegRotation = CameraUtil.getJpegRotation(mCameraId, orientation);
         mParameters.setRotation(mJpegRotation);
         String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
-        Location loc = null;
-        if (pictureFormat != null &&
-              PIXEL_FORMAT_JPEG.equalsIgnoreCase(pictureFormat)) {
-            loc = mLocationManager.getCurrentLocation();
-        }
+        Location loc = getLocationAccordPictureFormat(pictureFormat);
         CameraUtil.setGpsParameters(mParameters, loc);
 
         if (mRefocus) {
@@ -1599,6 +1596,14 @@ public class PhotoModule
     @Override
     public void setFocusParameters() {
         setCameraParameters(UPDATE_PARAM_PREFERENCE);
+    }
+
+    private Location getLocationAccordPictureFormat(String pictureFormat) {
+        if (pictureFormat != null &&
+                PIXEL_FORMAT_JPEG.equalsIgnoreCase(pictureFormat)) {
+            return mLocationManager.getCurrentLocation();
+        }
+        return null;
     }
 
     private int getPreferredCameraId(ComboPreferences preferences) {
