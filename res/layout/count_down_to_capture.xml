@@ -25,10 +25,10 @@
         android:textColor="@android:color/white"
         android:gravity="center" />
     <TextView android:id="@+id/count_down_title"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="10dp"
-        android:paddingTop="20dp"
+        android:layout_marginTop="@dimen/count_down_title_margin_top"
+        android:gravity="center_horizontal"
         android:textSize="20sp"
         android:textColor="@android:color/white"
         android:text="@string/count_down_title_text" />

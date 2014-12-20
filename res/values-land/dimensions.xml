@@ -18,4 +18,5 @@
     <dimen name="manage_cache_bottom_height">39dp</dimen>
     <dimen name="capture_top_margin">0dip</dimen>
     <integer name="SRI_pano_layout_weight">3</integer>
+    <dimen name="count_down_title_margin_top">20dp</dimen>
 </resources>
