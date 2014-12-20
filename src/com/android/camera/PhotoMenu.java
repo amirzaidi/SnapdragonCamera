@@ -671,7 +671,11 @@ public class PhotoMenu extends MenuController
 
     public void initSceneModeButton(View button) {
         button.setVisibility(View.INVISIBLE);
-        updateSceneModeIcon();
+        final IconListPreference pref = (IconListPreference) mPreferenceGroup
+                .findPreference(CameraSettings.KEY_SCENE_MODE);
+        if (pref == null)
+            return;
+        updateSceneModeIcon(pref);
         button.setVisibility(View.VISIBLE);
         button.setOnClickListener(new OnClickListener() {
             @Override
@@ -774,7 +778,7 @@ public class PhotoMenu extends MenuController
                         if (System.currentTimeMillis() - startTime < CLICK_THRESHOLD) {
                             pref.setValueIndex(j);
                             onSettingChanged(pref);
-                            updateSceneModeIcon();
+                            updateSceneModeIcon(pref);
                             for (View v1 : views) {
                                 v1.setBackgroundResource(R.drawable.scene_mode_view_border);
                             }
@@ -799,11 +803,7 @@ public class PhotoMenu extends MenuController
         mPreviewMenu = basic;
     }
 
-    public void updateSceneModeIcon() {
-        final IconListPreference pref = (IconListPreference) mPreferenceGroup
-                .findPreference(CameraSettings.KEY_SCENE_MODE);
-        if (pref == null)
-            return;
+    public void updateSceneModeIcon(IconListPreference pref) {
         ImageView iv = (ImageView) ((FrameLayout) mSceneModeSwitcher).getChildAt(0);
         int[] thumbnails = pref.getThumbnailIds();
         int ind = pref.getCurrentIndex();
