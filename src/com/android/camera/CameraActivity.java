@@ -1433,8 +1433,8 @@ public class CameraActivity extends Activity
         //This is a temporal solution to share LED resource
         //as Android doesn’t have any default intent to share the state.
         // if the led flash light is open, turn it off
-        Log.d(TAG, "send the turn off LED Flashlight the broadcast");
-        Intent intent = new Intent("qualcomm.android.LEDFlashlight.appWidgetUpdate");
+        Log.d(TAG, "send the turn off Flashlight broadcast");
+        Intent intent = new Intent("org.codeaurora.snapcam.action.CLOSE_FLASHLIGHT");
         intent.putExtra("camera_led", true);
         sendBroadcast(intent);
     }
