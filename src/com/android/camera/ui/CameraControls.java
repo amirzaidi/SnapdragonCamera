@@ -26,6 +26,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import java.util.ArrayList;
 
 import org.codeaurora.snapcam.R;
@@ -65,6 +66,8 @@ public class CameraControls extends RotatableLayout {
     private float[][] mLocY = new float[4][9];
     private boolean[] mTempEnabled = new boolean[9];
     private boolean mLocSet = false;
+
+    private TextView mRemainingPhotos;
 
     AnimatorListener outlistener = new AnimatorListener() {
         @Override
@@ -205,6 +208,7 @@ public class CameraControls extends RotatableLayout {
         mPreview = findViewById(R.id.preview_thumb);
         mSceneModeSwitcher = findViewById(R.id.scene_mode_switcher);
         mFilterModeSwitcher = findViewById(R.id.filter_mode_switcher);
+        mRemainingPhotos = (TextView) findViewById(R.id.remaining_photos);
     }
 
     @Override
@@ -238,6 +242,8 @@ public class CameraControls extends RotatableLayout {
             View done = findViewById(R.id.btn_done);
             toRight(done, shutter, rotation);
         }
+
+        layoutRemaingPhotos();
     }
 
     private void setLocation(int w, int h) {
@@ -388,6 +394,7 @@ public class CameraControls extends RotatableLayout {
                 mPreview.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 break;
         }
+        mRemainingPhotos.setVisibility(View.INVISIBLE);
     }
 
     public void showUI() {
@@ -474,6 +481,9 @@ public class CameraControls extends RotatableLayout {
                 mIndicators.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mPreview.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 break;
+        }
+        if (mRemainingPhotos.getVisibility() == View.INVISIBLE) {
+            mRemainingPhotos.setVisibility(View.VISIBLE);
         }
     }
 
@@ -646,4 +656,45 @@ public class CameraControls extends RotatableLayout {
         mBackgroundView.setBackgroundResource(R.drawable.switcher_bg);
     }
 
+    private void layoutRemaingPhotos() {
+        int rl = mPreview.getLeft();
+        int rt = mPreview.getTop();
+        int rr = mPreview.getRight();
+        int rb = mPreview.getBottom();
+        int w = mRemainingPhotos.getMeasuredWidth();
+        int h = mRemainingPhotos.getMeasuredHeight();
+        int m = getResources().getDimensionPixelSize(R.dimen.remaining_photos_margin);
+
+        int hc, vc;
+        int rotation = getUnifiedRotation();
+        switch (rotation) {
+            case 90:
+                hc = (rl + rr) / 2 - m;
+                vc = (rt + rb) / 2;
+                break;
+            case 180:
+                hc = (rl + rr) / 2;
+                vc = (rt + rb) / 2 + m;
+                break;
+            case 270:
+                hc = (rl + rr) / 2 + m;
+                vc = (rt + rb) / 2;
+                break;
+            default:
+                hc = (rl + rr) / 2;
+                vc = (rt + rb) / 2 - m;
+                break;
+        }
+        mRemainingPhotos.layout(hc - w / 2, vc - h / 2, hc + w / 2, vc + h / 2);
+    }
+
+    public void updateRemainingPhotos(int remaining) {
+        if (remaining < 0) {
+            mRemainingPhotos.setVisibility(View.GONE);
+        } else {
+            mRemainingPhotos.setVisibility(View.VISIBLE);
+            mRemainingPhotos.setText(String.format(
+                    getResources().getString(R.string.remaining_photos_format), remaining));
+        }
+    }
 }

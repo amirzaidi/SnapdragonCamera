@@ -527,4 +527,6 @@
 
     <!-- The alas of CameraActivity for gesture operation -->
     <string name="camera_gesture_title">打开相机</string>
+
+    <string name="remaining_photos_format">剩余 %d 张</string>
 </resources>
