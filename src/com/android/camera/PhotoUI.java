@@ -350,7 +350,7 @@ public class PhotoUI implements PieListener,
             mAspectRatioResize = true;
             mAspectRatio = ratio;
         }
-        mCameraControls.setPreviewRatio(mAspectRatio);
+        mCameraControls.setPreviewRatio(mAspectRatio, false);
         layoutPreview(ratio);
     }
 

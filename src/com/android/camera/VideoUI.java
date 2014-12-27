@@ -369,7 +369,7 @@ public class VideoUI implements PieRenderer.PieListener,
             mHandler.sendEmptyMessage(UPDATE_TRANSFORM_MATRIX);
         }
         // ensure a semi-transparent background for now
-        mCameraControls.setPreviewRatio(1.0f);
+        mCameraControls.setPreviewRatio(1.0f, false);
     }
 
     public int getPreviewWidth() {

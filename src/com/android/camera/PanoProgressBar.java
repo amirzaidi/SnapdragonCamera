@@ -181,8 +181,5 @@ class PanoProgressBar extends ImageView {
             }
             canvas.drawRect(l, mDrawBounds.top, r, mDrawBounds.bottom, mIndicatorPaint);
         }
-
-        // draw the mask image on the top for shaping.
-        super.onDraw(canvas);
     }
 }

@@ -34,6 +34,7 @@ public class MosaicPreviewRenderer {
     private int mHeight; // height of the view in UI
 
     private boolean mIsLandscape = true;
+    private int mOrientation = 0;
     private final float[] mTransformMatrix = new float[16];
 
     private ConditionVariable mEglThreadBlockVar = new ConditionVariable();
@@ -43,13 +44,15 @@ public class MosaicPreviewRenderer {
 
     private SurfaceTexture mInputSurfaceTexture;
 
+    private boolean mEnableWarpedPanoPreview = false;
+
     private class MyHandler extends Handler {
         public static final int MSG_INIT_SYNC = 0;
         public static final int MSG_SHOW_PREVIEW_FRAME_SYNC = 1;
         public static final int MSG_SHOW_PREVIEW_FRAME = 2;
         public static final int MSG_ALIGN_FRAME_SYNC = 3;
         public static final int MSG_RELEASE = 4;
-
+        public static final int MSG_DO_PREVIEW_RESET = 5;
         public MyHandler(Looper looper) {
             super(looper);
         }
@@ -64,6 +67,9 @@ public class MosaicPreviewRenderer {
                 case MSG_SHOW_PREVIEW_FRAME_SYNC:
                     doShowPreviewFrame();
                     mEglThreadBlockVar.open();
+                    break;
+                case MSG_DO_PREVIEW_RESET:
+                    doPreviewReset();
                     break;
                 case MSG_SHOW_PREVIEW_FRAME:
                     doShowPreviewFrame();
@@ -83,10 +89,13 @@ public class MosaicPreviewRenderer {
             mInputSurfaceTexture.updateTexImage();
             mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
 
-            MosaicRenderer.setWarping(true);
-            // Call preprocess to render it to low-res and high-res RGB textures.
+            // Call setPreviewBackground to render high-res RGB textures to full screen.
+            MosaicRenderer.setPreviewBackground(true);
             MosaicRenderer.preprocess(mTransformMatrix);
-            // Now, transfer the textures from GPU to CPU memory for processing
+            MosaicRenderer.step();
+            MosaicRenderer.setPreviewBackground(false);
+
+            MosaicRenderer.setWarping(true);
             MosaicRenderer.transferGPUtoCPU();
             MosaicRenderer.updateMatrix();
             MosaicRenderer.step();
@@ -104,8 +113,12 @@ public class MosaicPreviewRenderer {
         }
 
         private void doInit() {
-            mInputSurfaceTexture = new SurfaceTexture(MosaicRenderer.init());
-            MosaicRenderer.reset(mWidth, mHeight, mIsLandscape);
+            mInputSurfaceTexture = new SurfaceTexture(MosaicRenderer.init(mEnableWarpedPanoPreview));
+            MosaicRenderer.reset(mWidth, mHeight, mIsLandscape, mOrientation);
+        }
+
+        private void doPreviewReset() {
+            MosaicRenderer.reset(mWidth, mHeight, mIsLandscape, mOrientation);
         }
 
         private void doRelease() {
@@ -134,9 +147,11 @@ public class MosaicPreviewRenderer {
      * @param isLandscape The UI orientation. {@code true} if in landscape,
      *                    false if in portrait.
      */
-    public MosaicPreviewRenderer(SurfaceTexture tex, int w, int h, boolean isLandscape) {
+    public MosaicPreviewRenderer(SurfaceTexture tex, int w, int h, boolean isLandscape,
+            int orientation, boolean enableWarpedPanoPreview) {
         mIsLandscape = isLandscape;
-
+        mOrientation = orientation;
+        mEnableWarpedPanoPreview = enableWarpedPanoPreview;
         mEglThread = new HandlerThread("PanoramaRealtimeRenderer");
         mEglThread.start();
         mHandler = new MyHandler(mEglThread.getLooper());
@@ -155,6 +170,15 @@ public class MosaicPreviewRenderer {
         // done here and the client will continue with the assumption that the
         // generation is completed.
         mHandler.sendMessageSync(MyHandler.MSG_INIT_SYNC);
+    }
+
+    public void previewReset(int w, int h, boolean isLandscape, int orientation) {
+        mWidth = w;
+        mHeight = h;
+        mIsLandscape = isLandscape;
+        mOrientation = orientation;
+        mHandler.sendEmptyMessage(MyHandler.MSG_DO_PREVIEW_RESET);
+        mSTRenderer.draw(false);
     }
 
     public void release() {

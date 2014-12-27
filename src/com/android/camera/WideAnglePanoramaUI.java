@@ -35,6 +35,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.TextureView;
 import android.view.View;
@@ -100,6 +101,7 @@ public class WideAnglePanoramaUI implements
     private View mPreviewCover;
 
     private int mOrientation;
+    private int mPreviewYOffset;
 
     /** Constructor. */
     public WideAnglePanoramaUI(
@@ -353,6 +355,39 @@ public class WideAnglePanoramaUI implements
         }
     }
 
+    private void setPanoramaPreviewView() {
+        int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
+        Display display = mActivity.getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+
+        int width = size.x;
+        int height = size.y;
+        int xOffset = 0;
+        int yOffset = 0;
+        int w = width;
+        int h = height;
+
+        h = w * 4 / 3;
+        yOffset = (height - h) / 2;
+
+        FrameLayout.LayoutParams param = new FrameLayout.LayoutParams(w, h);
+        mTextureView.setLayoutParams(param);
+        mTextureView.setX(xOffset);
+        mTextureView.setY(yOffset);
+        mPreviewBorder.setLayoutParams(param);
+        mPreviewBorder.setX(xOffset);
+        mPreviewBorder.setY(yOffset);
+        mPreviewYOffset = yOffset;
+
+        int t = mPreviewYOffset;
+        int b1 = mTextureView.getBottom() - mPreviewYOffset;
+        int r = mTextureView.getRight();
+        int b2 = mTextureView.getBottom();
+
+        mCameraControls.setPreviewRatio(1.0f, true);
+    }
+
     public void resetSavingProgress() {
         mSavingProgressBar.reset();
         mSavingProgressBar.setRightIncreasing(true);
@@ -441,6 +476,7 @@ public class WideAnglePanoramaUI implements
         mTextureView.setSurfaceTextureListener(this);
         mTextureView.addOnLayoutChangeListener(this);
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
+        setPanoramaPreviewView();
 
         mDialogHelper = new DialogHelper();
         setViews(appRes);
@@ -448,14 +484,6 @@ public class WideAnglePanoramaUI implements
 
     private void setViews(Resources appRes) {
         int weight = appRes.getInteger(R.integer.SRI_pano_layout_weight);
-
-        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) mPreviewLayout.getLayoutParams();
-        lp.weight = weight;
-        mPreviewLayout.setLayoutParams(lp);
-
-        lp = (LinearLayout.LayoutParams) mReview.getLayoutParams();
-        lp.weight = weight;
-        mPreviewLayout.setLayoutParams(lp);
 
         mSavingProgressBar = (PanoProgressBar) mRootView.findViewById(R.id.pano_saving_progress_bar);
         mSavingProgressBar.setIndicatorWidth(0);
@@ -603,11 +631,11 @@ public class WideAnglePanoramaUI implements
         // |    3    |
         // `---------' =b2
         //          =r
-        int t = mPreviewLayout.getTop();
-        int b1 = mPreviewLayout.getBottom();
-        int r = mPreviewLayout.getRight();
-        int b2 = mCaptureLayout.getBottom();
-
+        final View dummy = mRootView.findViewById(R.id.pano_dummy_layout);
+        int t = dummy.getTop();
+        int b1 = dummy.getBottom();
+        int r = dummy.getRight();
+        int b2 = dummy.getBottom();
         final FrameLayout progressLayout = (FrameLayout)
                 mRootView.findViewById(R.id.pano_progress_layout);
         int pivotY = ((ViewGroup) progressLayout).getPaddingTop()

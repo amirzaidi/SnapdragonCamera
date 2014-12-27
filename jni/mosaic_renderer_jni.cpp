@@ -36,6 +36,8 @@
 GLuint gSurfaceTextureID[1];
 
 bool gWarpImage = true;
+bool gPreviewBackgroundImage = true;
+bool gEnableWarpedPanoPreview = false;
 
 // Low-Res input image frame in YUVA format for preview rendering and processing
 // and high-res YUVA input image for processing.
@@ -87,6 +89,9 @@ FrameBuffer gBuffer[2];
 // Shader to warp and render the preview FBO to the screen
 WarpRenderer gPreview;
 
+// Shader to render the fullscreen preview background FBO to the screen
+WarpRenderer gPreviewBackground;
+
 // Index of the gBuffer FBO gWarper1 is going to write into
 int gCurrentFBOIndex = 0;
 
@@ -121,6 +126,9 @@ double gUILayoutScalingY = 1.0f;
 // Whether the view that we will render preview FBO onto is in landscape or portrait
 // orientation.
 bool gIsLandscapeOrientation = true;
+
+// Current device orientation
+int gOrientation = 0;
 
 // State of the viewfinder. Set to false when the viewfinder hits the UI edge.
 bool gPanViewfinder = true;
@@ -315,8 +323,8 @@ void UpdateWarpTransformation(float *trs)
     // Alignment is done based on low-res data.
     // To render the preview mosaic, the translation of the high-res mosaic is estimated to
     // H2L_FACTOR x low-res-based tranlation.
-    gThisH1t[2] *= H2L_FACTOR;
-    gThisH1t[5] *= H2L_FACTOR;
+    //gThisH1t[2] *= H2L_FACTOR;
+    //gThisH1t[5] *= H2L_FACTOR;
 
     db_Identity3x3(T);
     T[2] = -gCenterOffsetX;
@@ -397,13 +405,13 @@ void AllocateTextureMemory(int widthHR, int heightHR, int widthLR, int heightLR)
             gPreviewImageHeight[HR], 4);
     sem_post(&gPreviewImage_semaphore);
 
-    gPreviewFBOWidth = PREVIEW_FBO_WIDTH_SCALE * gPreviewImageWidth[HR];
-    gPreviewFBOHeight = PREVIEW_FBO_HEIGHT_SCALE * gPreviewImageHeight[HR];
+    gPreviewFBOWidth = PREVIEW_FBO_WIDTH_SCALE * gPreviewImageWidth[LR];
+    gPreviewFBOHeight = PREVIEW_FBO_HEIGHT_SCALE * gPreviewImageHeight[LR];
 
     // The origin is such that the current frame will sit with its center
     // at the center of the previewFBO
-    gCenterOffsetX = (gPreviewFBOWidth / 2 - gPreviewImageWidth[HR] / 2);
-    gCenterOffsetY = (gPreviewFBOHeight / 2 - gPreviewImageHeight[HR] / 2);
+    gCenterOffsetX = (gPreviewFBOWidth / 2 - gPreviewImageWidth[LR] / 2);
+    gCenterOffsetY = (gPreviewFBOHeight / 2 - gPreviewImageHeight[LR] / 2);
 
     gPanOffset = 0.0f;
 
@@ -412,8 +420,8 @@ void AllocateTextureMemory(int widthHR, int heightHR, int widthLR, int heightLR)
 
     gPanViewfinder = true;
 
-    int w = gPreviewImageWidth[HR];
-    int h = gPreviewImageHeight[HR];
+    int w = gPreviewImageWidth[LR];
+    int h = gPreviewImageHeight[LR];
 
     int wm = gPreviewFBOWidth;
     int hm = gPreviewFBOHeight;
@@ -479,10 +487,10 @@ extern "C"
     JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved);
     JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved);
     JNIEXPORT jint JNICALL Java_com_android_camera_MosaicRenderer_init(
-            JNIEnv * env, jobject obj);
+            JNIEnv * env, jobject obj, jboolean mEnableWarpedPanoPreview);
     JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_reset(
             JNIEnv * env, jobject obj,  jint width, jint height,
-            jboolean isLandscapeOrientation);
+            jboolean isLandscapeOrientation, jint orientation);
     JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_preprocess(
             JNIEnv * env, jobject obj, jfloatArray stMatrix);
     JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_transferGPUtoCPU(
@@ -492,6 +500,8 @@ extern "C"
     JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_updateMatrix(
             JNIEnv * env, jobject obj);
     JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setWarping(
+            JNIEnv * env, jobject obj, jboolean flag);
+    JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setPreviewBackground(
             JNIEnv * env, jobject obj, jboolean flag);
 };
 
@@ -509,21 +519,25 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved)
     sem_destroy(&gPreviewImage_semaphore);
 }
 JNIEXPORT jint JNICALL Java_com_android_camera_MosaicRenderer_init(
-        JNIEnv * env, jobject obj)
+        JNIEnv * env, jobject obj, jboolean mEnableWarpedPanoPreview)
 {
+    gEnableWarpedPanoPreview = mEnableWarpedPanoPreview;
     gSurfTexRenderer[LR].InitializeGLProgram();
     gSurfTexRenderer[HR].InitializeGLProgram();
     gYVURenderer[LR].InitializeGLProgram();
     gYVURenderer[HR].InitializeGLProgram();
-    gWarper1.InitializeGLProgram();
-    gWarper2.InitializeGLProgram();
-    gPreview.InitializeGLProgram();
-    gBuffer[0].InitializeGLContext();
-    gBuffer[1].InitializeGLContext();
+    if (gEnableWarpedPanoPreview) {
+        gWarper1.InitializeGLProgram();
+        gWarper2.InitializeGLProgram();
+        gPreview.InitializeGLProgram();
+        gBuffer[0].InitializeGLContext();
+        gBuffer[1].InitializeGLContext();
+    }
     gBufferInput[LR].InitializeGLContext();
     gBufferInput[HR].InitializeGLContext();
     gBufferInputYVU[LR].InitializeGLContext();
     gBufferInputYVU[HR].InitializeGLContext();
+    gPreviewBackground.InitializeGLProgram();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -579,13 +593,17 @@ void calculateUILayoutScaling(int width, int height, bool isLandscape) {
 }
 
 JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_reset(
-        JNIEnv * env, jobject obj,  jint width, jint height, jboolean isLandscapeOrientation)
+        JNIEnv * env, jobject obj,  jint width, jint height,
+        jboolean isLandscapeOrientation, jint orientation)
 {
     gIsLandscapeOrientation = isLandscapeOrientation;
-    calculateUILayoutScaling(width, height, gIsLandscapeOrientation);
+    gOrientation = orientation;
+    calculateUILayoutScaling(gPreviewFBOWidth, gPreviewFBOHeight, gIsLandscapeOrientation);
 
-    gBuffer[0].Init(gPreviewFBOWidth, gPreviewFBOHeight, GL_RGBA);
-    gBuffer[1].Init(gPreviewFBOWidth, gPreviewFBOHeight, GL_RGBA);
+    if (gEnableWarpedPanoPreview) {
+        gBuffer[0].Init(gPreviewFBOWidth, gPreviewFBOHeight, GL_RGBA);
+        gBuffer[1].Init(gPreviewFBOWidth, gPreviewFBOHeight, GL_RGBA);
+    }
 
     gBufferInput[LR].Init(gPreviewImageWidth[LR],
             gPreviewImageHeight[LR], GL_RGBA);
@@ -626,37 +644,76 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_reset(
     gYVURenderer[HR].SetInputTextureName(gBufferInput[HR].GetTextureName());
     gYVURenderer[HR].SetInputTextureType(GL_TEXTURE_2D);
 
-    // gBuffer[1-gCurrentFBOIndex] --> gWarper1 --> gBuffer[gCurrentFBOIndex]
-    gWarper1.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
+    if(gEnableWarpedPanoPreview) {
+        // gBuffer[1-gCurrentFBOIndex] --> gWarper1 --> gBuffer[gCurrentFBOIndex]
+        gWarper1.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
 
-    // Clear the destination buffer of gWarper1.
-    gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
-    gWarper1.SetViewportMatrix(1, 1, 1, 1);
-    gWarper1.SetScalingMatrix(1.0f, 1.0f);
-    gWarper1.SetInputTextureName(gBuffer[1 - gCurrentFBOIndex].GetTextureName());
-    gWarper1.SetInputTextureType(GL_TEXTURE_2D);
+        // Clear the destination buffer of gWarper1.
+        gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
+        gWarper1.SetViewportMatrix(1, 1, 1, 1);
+        gWarper1.SetScalingMatrix(1.0f, 1.0f);
+        gWarper1.SetRotation(0);
+        gWarper1.SetInputTextureName(gBuffer[1 - gCurrentFBOIndex].GetTextureName());
+        gWarper1.SetInputTextureType(GL_TEXTURE_2D);
 
-    // gBufferInput[HR] --> gWarper2 --> gBuffer[gCurrentFBOIndex]
-    gWarper2.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
+        // gBufferInput[LR] --> gWarper2 --> gBuffer[gCurrentFBOIndex]
+        gWarper2.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
 
-    // gWarp2's destination buffer is the same to gWarp1's. No need to clear it
-    // again.
-    gWarper2.SetViewportMatrix(gPreviewImageWidth[HR],
-            gPreviewImageHeight[HR], gBuffer[gCurrentFBOIndex].GetWidth(),
-            gBuffer[gCurrentFBOIndex].GetHeight());
-    gWarper2.SetScalingMatrix(1.0f, 1.0f);
-    gWarper2.SetInputTextureName(gBufferInput[HR].GetTextureName());
-    gWarper2.SetInputTextureType(GL_TEXTURE_2D);
+        // gWarp2's destination buffer is the same to gWarp1's. No need to clear it
+        // again.
+        gWarper2.SetViewportMatrix(gPreviewImageWidth[LR],
+                gPreviewImageHeight[LR], gBuffer[gCurrentFBOIndex].GetWidth(),
+                gBuffer[gCurrentFBOIndex].GetHeight());
+        gWarper2.SetScalingMatrix(1.0f, 1.0f);
+        gWarper2.SetRotation(0);
+        gWarper2.SetInputTextureName(gBufferInput[LR].GetTextureName());
+        gWarper2.SetInputTextureType(GL_TEXTURE_2D);
 
-    // gBuffer[gCurrentFBOIndex] --> gPreview --> Screen
-    gPreview.SetupGraphics(width, height);
-    gPreview.SetViewportMatrix(1, 1, 1, 1);
+        int xoffset = (width / 2 - gPreviewFBOWidth / 2);
+        int yoffset = (height / 2 - gPreviewFBOHeight / 2);
+        if (gOrientation == 0) {
+            yoffset = (height - gPreviewFBOHeight) * 1 / 5;
+        } else {
+            yoffset = (height - gPreviewFBOHeight) * 4 / 5;
+        }
 
-    // Scale the previewFBO so that the viewfinder window fills the layout height
-    // while maintaining the image aspect ratio
-    gPreview.SetScalingMatrix(gUILayoutScalingX, -1.0f * gUILayoutScalingY);
-    gPreview.SetInputTextureName(gBuffer[gCurrentFBOIndex].GetTextureName());
-    gPreview.SetInputTextureType(GL_TEXTURE_2D);
+        // gBuffer[gCurrentFBOIndex] --> gPreview --> Screen
+        if(!gIsLandscapeOrientation) {
+            gPreview.SetupGraphics(xoffset,yoffset,gPreviewFBOWidth, gPreviewFBOHeight);
+        } else {
+            yoffset = (height / 2 - gPreviewFBOWidth / 2);
+            if (gOrientation == 90) {
+                xoffset = (width - gPreviewFBOHeight) * 4 / 5;
+            } else {
+                xoffset = (width - gPreviewFBOHeight) * 1 / 5;
+            }
+            gPreview.SetupGraphics(xoffset,yoffset,gPreviewFBOHeight ,gPreviewFBOWidth);
+        }
+        gPreview.SetViewportMatrix(1, 1, 1, 1);
+
+        // Scale the previewFBO so that the viewfinder window fills the layout height
+        // while maintaining the image aspect ratio
+        gPreview.SetScalingMatrix(gUILayoutScalingX, -1.0f * gUILayoutScalingY);
+        gPreview.SetInputTextureName(gBuffer[gCurrentFBOIndex].GetTextureName());
+        gPreview.SetInputTextureType(GL_TEXTURE_2D);
+        if (gIsLandscapeOrientation) {
+            gPreview.SetRotation(90);
+        } else {
+            gPreview.SetRotation(0);
+        }
+    }
+
+    // gBufferInput[HR] --> gPreviewBackground --> screen
+    gPreviewBackground.SetupGraphics(0,0,width, height);
+    gPreviewBackground.SetViewportMatrix(1,1,1,1);
+    gPreviewBackground.SetScalingMatrix(1.0f, -1.0f);
+    gPreviewBackground.SetInputTextureName(gBufferInput[HR].GetTextureName());
+    gPreviewBackground.SetInputTextureType(GL_TEXTURE_2D);
+    if (gIsLandscapeOrientation) {
+        gPreviewBackground.SetRotation(90);
+    } else {
+        gPreviewBackground.SetRotation(0);
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_preprocess(
@@ -731,32 +788,37 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_step(
 {
     if(!gWarpImage) // ViewFinder
     {
-        gWarper2.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
-        gPreview.SetInputTextureName(gBuffer[gCurrentFBOIndex].GetTextureName());
-
-        gWarper2.DrawTexture(g_dTranslationToFBOCenterGL);
-
         if (gIsLandscapeOrientation) {
-            gPreview.DrawTexture(g_dAffinetransIdentGL);
+            gPreviewBackground.DrawTexture(g_dAffinetransIdentGL);
         } else {
-            gPreview.DrawTexture(g_dAffinetransRotation90GL);
+            gPreviewBackground.DrawTexture(g_dAffinetransRotation90GL);
+        }
+    }
+    else if (gPreviewBackgroundImage)
+    {
+        if (gIsLandscapeOrientation) {
+            gPreviewBackground.DrawTexture(g_dAffinetransIdentGL);
+        } else {
+            gPreviewBackground.DrawTexture(g_dAffinetransRotation90GL);
         }
     }
     else
     {
-        gWarper1.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
-        // Clear the destination so that we can paint on it afresh
-        gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
-        gWarper1.SetInputTextureName(
-                gBuffer[1 - gCurrentFBOIndex].GetTextureName());
-        gWarper2.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
-        gPreview.SetInputTextureName(gBuffer[gCurrentFBOIndex].GetTextureName());
+        if (gEnableWarpedPanoPreview) {
+            gWarper1.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
+            // Clear the destination so that we can paint on it afresh
+            gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
+            gWarper1.SetInputTextureName(
+                    gBuffer[1 - gCurrentFBOIndex].GetTextureName());
+            gWarper2.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
+            gPreview.SetInputTextureName(gBuffer[gCurrentFBOIndex].GetTextureName());
 
-        gWarper1.DrawTexture(g_dAffinetransGL);
-        gWarper2.DrawTexture(g_dTranslationToFBOCenterGL);
-        gPreview.DrawTexture(g_dAffinetransPanGL);
+            gWarper1.DrawTexture(g_dAffinetransGL);
+            gWarper2.DrawTexture(g_dTranslationToFBOCenterGL);
+            gPreview.DrawTexture(g_dAffinetransPanGL);
 
-        gCurrentFBOIndex = 1 - gCurrentFBOIndex;
+            gCurrentFBOIndex = 1 - gCurrentFBOIndex;
+        }
     }
 }
 
@@ -766,15 +828,17 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setWarping(
     // TODO: Review this logic
     if(gWarpImage != (bool) flag) //switching from viewfinder to capture or vice-versa
     {
-        // Clear gBuffer[0]
-        gWarper1.SetupGraphics(&gBuffer[0]);
-        gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
-        // Clear gBuffer[1]
-        gWarper1.SetupGraphics(&gBuffer[1]);
-        gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
-        // Clear the screen to black.
-        gPreview.Clear(0.0, 0.0, 0.0, 1.0);
-
+        if (gEnableWarpedPanoPreview) {
+            // Clear gBuffer[0]
+            gWarper1.SetupGraphics(&gBuffer[0]);
+            gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
+            // Clear gBuffer[1]
+            gWarper1.SetupGraphics(&gBuffer[1]);
+            gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
+            // Clear the screen to black.
+            gPreview.Clear(0.0, 0.0, 0.0, 1.0);
+        }
+        gPreviewBackground.Clear(0.0, 0.0, 0.0, 1.0);
         gLastTx = 0.0f;
         gPanOffset = 0.0f;
         gPanViewfinder = true;
@@ -801,4 +865,10 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_updateMatrix(
         g_dAffinetransPanGL[i] = g_dAffinetransPan[i];
         g_dTranslationToFBOCenterGL[i] = g_dTranslationToFBOCenter[i];
     }
+}
+
+JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setPreviewBackground(
+        JNIEnv * env, jobject obj, jboolean flag)
+{
+    gPreviewBackgroundImage = (bool)flag;
 }

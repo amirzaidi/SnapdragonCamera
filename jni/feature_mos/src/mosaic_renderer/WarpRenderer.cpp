@@ -68,6 +68,51 @@ void WarpRenderer::SetScalingMatrix(float xscale, float yscale)
     mScalingMatrix[15] = 1.0f;
 }
 
+void WarpRenderer::SetRotation(int degree)
+{
+    for(int i=0; i<16; i++)
+    {
+        mRotationMatrix[i] = 0.0f;
+    }
+
+	switch(degree)
+	{
+		case 0:
+			mRotationMatrix[0] = 1.0f;
+			mRotationMatrix[1] = 0.0f;
+			mRotationMatrix[4] = 0.0f;
+			mRotationMatrix[5] = 1.0f;
+			break;
+		case 90:
+			mRotationMatrix[0] = 0.0f;
+			mRotationMatrix[1] = 1.0f;
+			mRotationMatrix[4] = -1.0f;
+			mRotationMatrix[5] = 0.0f;
+			break;
+		case 180:
+			mRotationMatrix[0] = -1.0f;
+			mRotationMatrix[1] = 0.0f;
+			mRotationMatrix[4] = 0.0f;
+			mRotationMatrix[5] = -1.0f;
+			break;
+		case 270:
+			mRotationMatrix[0] = 0.0f;
+			mRotationMatrix[1] = -1.0f;
+			mRotationMatrix[4] = 1.0f;
+			mRotationMatrix[5] = 0.0f;
+			break;
+		default:
+			mRotationMatrix[0] = 1.0f;
+			mRotationMatrix[1] = 0.0f;
+			mRotationMatrix[4] = 0.0f;
+			mRotationMatrix[5] = 1.0f;
+			break;
+	}
+
+    mRotationMatrix[10] = 1.0f;
+    mRotationMatrix[15] = 1.0f;
+}
+
 bool WarpRenderer::InitializeGLProgram()
 {
     bool succeeded = false;
@@ -87,6 +132,7 @@ bool WarpRenderer::InitializeGLProgram()
         mAffinetransLoc  = glGetUniformLocation(glProgram, "u_affinetrans");
         mViewporttransLoc = glGetUniformLocation(glProgram, "u_viewporttrans");
         mScalingtransLoc = glGetUniformLocation(glProgram, "u_scalingtrans");
+        mRotationtransLoc = glGetUniformLocation(glProgram, "u_rotationtrans");
         mTexCoordLoc     = glGetAttribLocation(glProgram, "a_texCoord");
 
         // Get sampler location
@@ -110,7 +156,7 @@ bool WarpRenderer::DrawTexture(GLfloat *affine)
     bool succeeded = false;
     do {
         bool rt = (mFrameBuffer == NULL)?
-                SetupGraphics(mSurfaceWidth, mSurfaceHeight) :
+                SetupGraphics(mSurfaceXOffset, mSurfaceYOffset, mSurfaceWidth, mSurfaceHeight) :
                 SetupGraphics(mFrameBuffer);
 
         if(!rt)
@@ -143,6 +189,7 @@ bool WarpRenderer::DrawTexture(GLfloat *affine)
         glUniformMatrix4fv(mAffinetransLoc, 1, GL_FALSE, affine);
         glUniformMatrix4fv(mViewporttransLoc, 1, GL_FALSE, mViewportMatrix);
         glUniformMatrix4fv(mScalingtransLoc, 1, GL_FALSE, mScalingMatrix);
+        glUniformMatrix4fv(mRotationtransLoc, 1, GL_FALSE, mRotationMatrix);
 
         // And, finally, execute the GL draw command.
         glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, g_iIndices);
@@ -161,12 +208,13 @@ const char* WarpRenderer::VertexShaderSource() const
         "uniform mat4 u_affinetrans;  \n"
         "uniform mat4 u_viewporttrans;  \n"
         "uniform mat4 u_scalingtrans;  \n"
+        "uniform mat4 u_rotationtrans;  \n"
         "attribute vec4 a_position;   \n"
         "attribute vec2 a_texCoord;   \n"
         "varying vec2 v_texCoord;     \n"
         "void main()                  \n"
         "{                            \n"
-        "   gl_Position = u_scalingtrans * u_viewporttrans * u_affinetrans * a_position; \n"
+        "   gl_Position = u_scalingtrans * u_viewporttrans * u_affinetrans * u_rotationtrans * a_position; \n"
         "   v_texCoord = a_texCoord;  \n"
         "}                            \n";
 
