@@ -115,6 +115,13 @@ public class WideAnglePanoramaUI implements
                     mActivity.gotoGallery();
             }
         });
+
+        mSwitcher.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSwitcher.showPopup();
+            }
+        });
     }
 
     public void onStartCapture() {

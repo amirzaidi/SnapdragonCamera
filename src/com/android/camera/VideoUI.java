@@ -238,6 +238,12 @@ public class VideoUI implements PieRenderer.PieListener,
         mSwitcher = (ModuleSwitcher) mRootView.findViewById(R.id.camera_switcher);
         mSwitcher.setCurrentIndex(ModuleSwitcher.VIDEO_MODULE_INDEX);
         mSwitcher.setSwitchListener(mActivity);
+        mSwitcher.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSwitcher.showPopup();
+            }
+        });
 
         initializeMiscControls();
         initializeControlByIntent();

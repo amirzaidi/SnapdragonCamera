@@ -280,6 +280,15 @@ public class PhotoUI implements PieListener,
         mSwitcher = (ModuleSwitcher) mRootView.findViewById(R.id.camera_switcher);
         mSwitcher.setCurrentIndex(ModuleSwitcher.PHOTO_MODULE_INDEX);
         mSwitcher.setSwitchListener(mActivity);
+        mSwitcher.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mController.getCameraState() == PhotoController.LONGSHOT) {
+                       return;
+                }
+                mSwitcher.showPopup();
+            }
+        });
         mMenuButton = mRootView.findViewById(R.id.menu);
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
         ViewStub faceViewStub = (ViewStub) mRootView

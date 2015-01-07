@@ -41,7 +41,7 @@ import com.android.camera.util.UsageStatistics;
 import org.codeaurora.snapcam.R;
 
 public class ModuleSwitcher extends RotateImageView
-        implements OnClickListener, OnTouchListener {
+        implements OnTouchListener {
 
     @SuppressWarnings("unused")
     private static final String TAG = "CAM_Switcher";
@@ -97,7 +97,6 @@ public class ModuleSwitcher extends RotateImageView
 
     private void init(Context context) {
         mItemSize = context.getResources().getDimensionPixelSize(R.dimen.switcher_size);
-        setOnClickListener(this);
         mIndicator = context.getResources().getDrawable(R.drawable.ic_switcher_menu_indicator);
         initializeDrawables(context);
     }
@@ -160,8 +159,7 @@ public class ModuleSwitcher extends RotateImageView
         mTouchEnabled = enable;
     }
 
-    @Override
-    public void onClick(View v) {
+    public void showPopup() {
         showSwitcher();
         mListener.onShowSwitcherPopup();
     }
