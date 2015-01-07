@@ -484,6 +484,7 @@ public class PhotoModule
 
                 case SWITCH_TO_GCAM_MODULE: {
                     mActivity.onModuleSelected(ModuleSwitcher.GCAM_MODULE_INDEX);
+                    break;
                 }
 
                 case CONFIGURE_SKIN_TONE_FACTOR: {
@@ -716,6 +717,7 @@ public class PhotoModule
         updateCameraSettings();
         showTapToFocusToastIfNeeded();
         resetManual3ASettings();
+        resetMiscSettings();
     }
 
     @Override
@@ -767,6 +769,25 @@ public class PhotoModule
             UpdateManualWBSettings();
         }
         mManual3AEnabled = 0;
+    }
+
+    private void resetMiscSettings() {
+        boolean disableQcomMiscSetting =
+                SystemProperties.getBoolean("camera.qcom.misc.disable", false);
+        if (disableQcomMiscSetting) {
+            mUI.setPreference(CameraSettings.KEY_ZSL, Parameters.ZSL_OFF);
+            mUI.setPreference(CameraSettings.KEY_FACE_DETECTION,
+                    Parameters.FACE_DETECTION_OFF);
+            mUI.setPreference(CameraSettings.KEY_TOUCH_AF_AEC,
+                    Parameters.TOUCH_AF_AEC_OFF);
+            mUI.setPreference(CameraSettings.KEY_FOCUS_MODE,
+                    Parameters.FOCUS_MODE_AUTO);
+            mUI.setPreference(CameraSettings.KEY_FLASH_MODE,
+                    Parameters.FLASH_MODE_OFF);
+            mUI.setPreference(CameraSettings.KEY_DENOISE,
+                    Parameters.DENOISE_OFF);
+            onSharedPreferenceChanged();
+        }
     }
 
     void setPreviewFrameLayoutCameraOrientation(){
@@ -1819,17 +1840,6 @@ public class PhotoModule
                     mActivity.getString(R.string.setting_off_value));
         } else {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, null);
-        }
-
-        boolean disableQcomMiscSetting =
-                SystemProperties.getBoolean("camera.qcom.misc.disable", false);
-        if (disableQcomMiscSetting) {
-            mUI.overrideSettings(CameraSettings.KEY_ZSL, Parameters.ZSL_OFF);
-            mUI.overrideSettings(CameraSettings.KEY_FACE_DETECTION, Parameters.FACE_DETECTION_OFF);
-            mUI.overrideSettings(CameraSettings.KEY_TOUCH_AF_AEC, Parameters.TOUCH_AF_AEC_OFF);
-            mUI.overrideSettings(CameraSettings.KEY_FOCUS_MODE, Parameters.FOCUS_MODE_AUTO);
-            mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, Parameters.FLASH_MODE_OFF);
-            mUI.overrideSettings(CameraSettings.KEY_DENOISE, Parameters.DENOISE_OFF);
         }
     }
 
