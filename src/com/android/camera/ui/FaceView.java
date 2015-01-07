@@ -347,11 +347,18 @@ public class FaceView extends View
                         Log.e(TAG, "smile: " + face.getSmileDegree() + "," +
                             face.getSmileScore());
                         if (face.getSmileDegree() < smile_threashold_no_smile) {
-
-                            point[0] = face.mouth.x - delta_x;
-                            point[1] = face.mouth.y;
-                            point[2] = face.mouth.x + delta_x ;
-                            point[3] = face.mouth.y;
+                           if ((mDisplayOrientation == 90) ||
+                                (mDisplayOrientation == 270)) {
+                                point[0] = face.mouth.x;
+                                point[1] = face.mouth.y - delta_y + dy;
+                                point[2] = face.mouth.x;
+                                point[3] = face.mouth.y + delta_y + dy;
+                            } else {
+                                point[0] = face.mouth.x + dx - delta_x;
+                                point[1] = face.mouth.y;
+                                point[2] = face.mouth.x + dx + delta_x ;
+                                point[3] = face.mouth.y;
+                            }
                             Matrix faceMatrix = new Matrix(mMatrix);
                             faceMatrix.preRotate(face.getRollDirection(),
                                     face.mouth.x, face.mouth.y);
