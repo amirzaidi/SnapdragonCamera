@@ -19,6 +19,7 @@ package com.android.camera.ui;
 import java.util.Locale;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Handler;
@@ -38,6 +39,8 @@ public class CountDownView extends FrameLayout {
     private static final String TAG = "CAM_CountDownView";
     private static final int SET_TIMER_TEXT = 1;
     private TextView mRemainingSecondsView;
+    private TextView mCountDownTitle = null;
+    private Context mContext;
     private int mRemainingSecs = 0;
     private OnCountDownFinishedListener mListener;
     private Animation mCountDownAnim;
@@ -49,6 +52,7 @@ public class CountDownView extends FrameLayout {
 
     public CountDownView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         mCountDownAnim = AnimationUtils.loadAnimation(context, R.anim.count_down_exit);
         // Load the beeps
         if (context.getResources().getBoolean(R.bool.force_count_down_sound)) {
@@ -100,7 +104,18 @@ public class CountDownView extends FrameLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
         mRemainingSecondsView = (TextView) findViewById(R.id.remaining_seconds);
+        mCountDownTitle = (TextView) findViewById(R.id.count_down_title);
     }
+
+    @Override
+    public void onConfigurationChanged(Configuration config) {
+        if (mCountDownTitle == null) return;
+        LayoutParams lp = (LayoutParams) mCountDownTitle.getLayoutParams();
+        lp.topMargin = mContext.getResources()
+                .getDimensionPixelSize(R.dimen.count_down_title_margin_top);
+        mCountDownTitle.setLayoutParams(lp);
+    }
+
 
     public void setCountDownFinishedListener(OnCountDownFinishedListener listener) {
         mListener = listener;
