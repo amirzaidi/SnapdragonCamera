@@ -110,7 +110,7 @@ bool WarpRenderer::DrawTexture(GLfloat *affine)
     bool succeeded = false;
     do {
         bool rt = (mFrameBuffer == NULL)?
-                SetupGraphics(mSurfaceWidth, mSurfaceHeight) :
+                SetupGraphics(mSurfaceXOffset, mSurfaceYOffset, mSurfaceWidth, mSurfaceHeight) :
                 SetupGraphics(mFrameBuffer);
 
         if(!rt)

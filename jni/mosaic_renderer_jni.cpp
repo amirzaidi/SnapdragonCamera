@@ -27,6 +27,7 @@
 #include "mosaic_renderer/SurfaceTextureRenderer.h"
 #include "mosaic_renderer/YVURenderer.h"
 
+
 #include "mosaic/Log.h"
 #define LOG_TAG "MosaicRenderer"
 
@@ -36,6 +37,7 @@
 GLuint gSurfaceTextureID[1];
 
 bool gWarpImage = true;
+bool gPreviewBackgroundImage = true;
 
 // Low-Res input image frame in YUVA format for preview rendering and processing
 // and high-res YUVA input image for processing.
@@ -86,6 +88,9 @@ FrameBuffer gBuffer[2];
 
 // Shader to warp and render the preview FBO to the screen
 WarpRenderer gPreview;
+
+// Shader to render the fullscreen preview background FBO to the screen
+WarpRenderer gPreviewBackground;
 
 // Index of the gBuffer FBO gWarper1 is going to write into
 int gCurrentFBOIndex = 0;
@@ -139,6 +144,12 @@ double g_dAffinetransPan[16];
 // preview mosaic in the preview FBO
 GLfloat g_dTranslationToFBOCenterGL[16];
 double g_dTranslationToFBOCenter[16];
+
+
+
+
+
+
 
 // GL 4x4 Identity transformation
 GLfloat g_dAffinetransIdentGL[] = {
@@ -315,8 +326,8 @@ void UpdateWarpTransformation(float *trs)
     // Alignment is done based on low-res data.
     // To render the preview mosaic, the translation of the high-res mosaic is estimated to
     // H2L_FACTOR x low-res-based tranlation.
-    gThisH1t[2] *= H2L_FACTOR;
-    gThisH1t[5] *= H2L_FACTOR;
+    //gThisH1t[2] *= H2L_FACTOR;
+    //gThisH1t[5] *= H2L_FACTOR;
 
     db_Identity3x3(T);
     T[2] = -gCenterOffsetX;
@@ -368,6 +379,7 @@ void UpdateWarpTransformation(float *trs)
     db_Identity3x3(H);
     H[2] = gPanOffset;
 
+
     // Hp = inv(Km) * H * Km
     db_Identity3x3(Htemp1);
     db_Multiply3x3_3x3(Htemp1, H, gKm);
@@ -397,13 +409,13 @@ void AllocateTextureMemory(int widthHR, int heightHR, int widthLR, int heightLR)
             gPreviewImageHeight[HR], 4);
     sem_post(&gPreviewImage_semaphore);
 
-    gPreviewFBOWidth = PREVIEW_FBO_WIDTH_SCALE * gPreviewImageWidth[HR];
-    gPreviewFBOHeight = PREVIEW_FBO_HEIGHT_SCALE * gPreviewImageHeight[HR];
+    gPreviewFBOWidth = PREVIEW_FBO_WIDTH_SCALE * gPreviewImageWidth[LR];
+    gPreviewFBOHeight = PREVIEW_FBO_HEIGHT_SCALE * gPreviewImageHeight[LR];
 
     // The origin is such that the current frame will sit with its center
     // at the center of the previewFBO
-    gCenterOffsetX = (gPreviewFBOWidth / 2 - gPreviewImageWidth[HR] / 2);
-    gCenterOffsetY = (gPreviewFBOHeight / 2 - gPreviewImageHeight[HR] / 2);
+    gCenterOffsetX = (gPreviewFBOWidth / 2 - gPreviewImageWidth[LR] / 2);
+    gCenterOffsetY = (gPreviewFBOHeight / 2 - gPreviewImageHeight[LR] / 2);
 
     gPanOffset = 0.0f;
 
@@ -412,8 +424,8 @@ void AllocateTextureMemory(int widthHR, int heightHR, int widthLR, int heightLR)
 
     gPanViewfinder = true;
 
-    int w = gPreviewImageWidth[HR];
-    int h = gPreviewImageHeight[HR];
+    int w = gPreviewImageWidth[LR];
+    int h = gPreviewImageHeight[LR];
 
     int wm = gPreviewFBOWidth;
     int hm = gPreviewFBOHeight;
@@ -493,6 +505,8 @@ extern "C"
             JNIEnv * env, jobject obj);
     JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setWarping(
             JNIEnv * env, jobject obj, jboolean flag);
+    JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setPreviewBackground(
+        JNIEnv * env, jobject obj, jboolean flag);
 };
 
 
@@ -524,6 +538,7 @@ JNIEXPORT jint JNICALL Java_com_android_camera_MosaicRenderer_init(
     gBufferInput[HR].InitializeGLContext();
     gBufferInputYVU[LR].InitializeGLContext();
     gBufferInputYVU[HR].InitializeGLContext();
+    gPreviewBackground.InitializeGLProgram();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -548,13 +563,16 @@ void calculateUILayoutScaling(int width, int height, bool isLandscape) {
         //
         // Scale the preview FBO's height to the height of view and
         // maintain the aspect ratio of the current frame on the screen.
+
         gUILayoutScalingY = PREVIEW_FBO_HEIGHT_SCALE;
 
         // Note that OpenGL scales a texture to view's width and height automatically.
         // The "width / height" inverts the scaling, so as to maintain the aspect ratio
         // of the current frame.
+
         gUILayoutScalingX = ((float) gPreviewFBOWidth / gPreviewFBOHeight)
                 / ((float) width / height) * PREVIEW_FBO_HEIGHT_SCALE;
+
     } else {
         //                   ___
         //  __________      |   |     ______
@@ -573,8 +591,10 @@ void calculateUILayoutScaling(int width, int height, bool isLandscape) {
         // Note that OpenGL scales a texture to view's width and height automatically.
         // The "height / width" inverts the scaling, so as to maintain the aspect ratio
         // of the current frame.
+
         gUILayoutScalingX = ((float) gPreviewFBOHeight / gPreviewFBOWidth)
                 / ((float) width / height) * PREVIEW_FBO_WIDTH_SCALE;
+
     }
 }
 
@@ -582,7 +602,7 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_reset(
         JNIEnv * env, jobject obj,  jint width, jint height, jboolean isLandscapeOrientation)
 {
     gIsLandscapeOrientation = isLandscapeOrientation;
-    calculateUILayoutScaling(width, height, gIsLandscapeOrientation);
+    calculateUILayoutScaling(gPreviewFBOWidth, gPreviewFBOHeight, gIsLandscapeOrientation);
 
     gBuffer[0].Init(gPreviewFBOWidth, gPreviewFBOHeight, GL_RGBA);
     gBuffer[1].Init(gPreviewFBOWidth, gPreviewFBOHeight, GL_RGBA);
@@ -636,20 +656,23 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_reset(
     gWarper1.SetInputTextureName(gBuffer[1 - gCurrentFBOIndex].GetTextureName());
     gWarper1.SetInputTextureType(GL_TEXTURE_2D);
 
-    // gBufferInput[HR] --> gWarper2 --> gBuffer[gCurrentFBOIndex]
+    // gBufferInput[LR] --> gWarper2 --> gBuffer[gCurrentFBOIndex]
     gWarper2.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
 
     // gWarp2's destination buffer is the same to gWarp1's. No need to clear it
     // again.
-    gWarper2.SetViewportMatrix(gPreviewImageWidth[HR],
-            gPreviewImageHeight[HR], gBuffer[gCurrentFBOIndex].GetWidth(),
+    gWarper2.SetViewportMatrix(gPreviewImageWidth[LR],
+            gPreviewImageHeight[LR], gBuffer[gCurrentFBOIndex].GetWidth(),
             gBuffer[gCurrentFBOIndex].GetHeight());
     gWarper2.SetScalingMatrix(1.0f, 1.0f);
-    gWarper2.SetInputTextureName(gBufferInput[HR].GetTextureName());
+    gWarper2.SetInputTextureName(gBufferInput[LR].GetTextureName());
     gWarper2.SetInputTextureType(GL_TEXTURE_2D);
 
+    int xoffset = (width/2 - gPreviewFBOWidth/2);
+    int yoffset = (height/2 - gPreviewFBOHeight/2);
+
     // gBuffer[gCurrentFBOIndex] --> gPreview --> Screen
-    gPreview.SetupGraphics(width, height);
+    gPreview.SetupGraphics(xoffset,yoffset,gPreviewFBOWidth, gPreviewFBOHeight);
     gPreview.SetViewportMatrix(1, 1, 1, 1);
 
     // Scale the previewFBO so that the viewfinder window fills the layout height
@@ -657,6 +680,13 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_reset(
     gPreview.SetScalingMatrix(gUILayoutScalingX, -1.0f * gUILayoutScalingY);
     gPreview.SetInputTextureName(gBuffer[gCurrentFBOIndex].GetTextureName());
     gPreview.SetInputTextureType(GL_TEXTURE_2D);
+
+    // gBufferInput[HR] --> gPreviewBackground --> screen
+    gPreviewBackground.SetupGraphics(0,0,width, height);
+    gPreviewBackground.SetViewportMatrix(1,1,1,1);
+    gPreviewBackground.SetScalingMatrix(1.0f, -1.0f);
+    gPreviewBackground.SetInputTextureName(gBufferInput[HR].GetTextureName());
+    gPreviewBackground.SetInputTextureType(GL_TEXTURE_2D);
 }
 
 JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_preprocess(
@@ -731,15 +761,18 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_step(
 {
     if(!gWarpImage) // ViewFinder
     {
-        gWarper2.SetupGraphics(&gBuffer[gCurrentFBOIndex]);
-        gPreview.SetInputTextureName(gBuffer[gCurrentFBOIndex].GetTextureName());
-
-        gWarper2.DrawTexture(g_dTranslationToFBOCenterGL);
-
-        if (gIsLandscapeOrientation) {
-            gPreview.DrawTexture(g_dAffinetransIdentGL);
+       if (gIsLandscapeOrientation) {
+            gPreviewBackground.DrawTexture(g_dAffinetransIdentGL);
         } else {
-            gPreview.DrawTexture(g_dAffinetransRotation90GL);
+            gPreviewBackground.DrawTexture(g_dAffinetransRotation90GL);
+        }
+    }
+    else if(gPreviewBackgroundImage)
+    {
+        if (gIsLandscapeOrientation) {
+        gPreviewBackground.DrawTexture(g_dAffinetransIdentGL);
+        } else {
+            gPreviewBackground.DrawTexture(g_dAffinetransRotation90GL);
         }
     }
     else
@@ -774,7 +807,7 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setWarping(
         gWarper1.Clear(0.0, 0.0, 0.0, 1.0);
         // Clear the screen to black.
         gPreview.Clear(0.0, 0.0, 0.0, 1.0);
-
+        gPreviewBackground.Clear(0.0, 0.0, 0.0, 1.0);
         gLastTx = 0.0f;
         gPanOffset = 0.0f;
         gPanViewfinder = true;
@@ -801,4 +834,10 @@ JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_updateMatrix(
         g_dAffinetransPanGL[i] = g_dAffinetransPan[i];
         g_dTranslationToFBOCenterGL[i] = g_dTranslationToFBOCenter[i];
     }
+}
+
+JNIEXPORT void JNICALL Java_com_android_camera_MosaicRenderer_setPreviewBackground(
+        JNIEnv * env, jobject obj, jboolean flag)
+{
+    gPreviewBackgroundImage = (bool)flag;
 }

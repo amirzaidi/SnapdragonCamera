@@ -111,8 +111,8 @@ GLuint Renderer::createProgram(const char* pVertexSource, const char* pFragmentS
 }
 
 // Set this renderer to use the default frame-buffer (screen) and
-// set the viewport size to be the given width and height (pixels).
-bool Renderer::SetupGraphics(int width, int height)
+// set the viewport size to be the given x, y, width and height (pixels).
+bool Renderer::SetupGraphics(int x, int y, int width, int height)
 {
     bool succeeded = false;
     do {
@@ -131,8 +131,10 @@ bool Renderer::SetupGraphics(int width, int height)
         mFrameBuffer = NULL;
         mSurfaceWidth = width;
         mSurfaceHeight = height;
+        mSurfaceXOffset = x;
+        mSurfaceYOffset = y;
 
-        glViewport(0, 0, mSurfaceWidth, mSurfaceHeight);
+        glViewport(mSurfaceXOffset, mSurfaceYOffset, mSurfaceWidth, mSurfaceHeight);
         if (!checkGlError("glViewport")) break;
         succeeded = true;
     } while (false);
@@ -176,7 +178,7 @@ bool Renderer::Clear(float r, float g, float b, float a)
     bool succeeded = false;
     do {
         bool rt = (mFrameBuffer == NULL)?
-                SetupGraphics(mSurfaceWidth, mSurfaceHeight) :
+                SetupGraphics(mSurfaceXOffset, mSurfaceYOffset, mSurfaceWidth, mSurfaceHeight) :
                 SetupGraphics(mFrameBuffer);
 
         if(!rt)
