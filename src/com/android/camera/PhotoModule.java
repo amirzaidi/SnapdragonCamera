@@ -606,7 +606,7 @@ public class PhotoModule
             return;
         }
         Log.v(TAG, "onPreviewUIReady");
-        if (mCameraState == PREVIEW_STOPPED || mCameraState == INIT) {
+        if (mCameraState == PREVIEW_STOPPED) {
             startPreview();
         } else {
             SurfaceHolder sh = mUI.getSurfaceHolder();
