@@ -49,6 +49,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -100,6 +101,8 @@ import org.codeaurora.snapcam.R;
 import java.io.File;
 
 import static com.android.camera.CameraManager.CameraOpenErrorCallback;
+
+import android.media.AudioManager;
 
 public class CameraActivity extends Activity
         implements ModuleSwitcher.ModuleSwitchListener,
@@ -212,6 +215,10 @@ public class CameraActivity extends Activity
     public static int SETTING_LIST_WIDTH_1 = 250;
     public static int SETTING_LIST_WIDTH_2 = 250;
     private Bitmap mPreviewThumbnailBitmap;
+
+    private AudioManager mAudioManager;
+    private int mShutterVol;
+    private int mOriginalMasterVol;
 
     private class MyOrientationEventListener
             extends OrientationEventListener {
@@ -1159,6 +1166,12 @@ public class CameraActivity extends Activity
         super.onCreate(state);
         GcamHelper.init(getContentResolver());
 
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        mOriginalMasterVol = mAudioManager.getMasterVolume();
+        mShutterVol =  SystemProperties.getInt("persist.camera.snapshot.volume", -1);
+        if (mShutterVol >= 0 && mShutterVol <= 100 )
+            mAudioManager.setMasterVolume(mShutterVol,0);
+
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.camera_filmstrip);
 
@@ -1369,6 +1382,8 @@ public class CameraActivity extends Activity
 
     @Override
     public void onPause() {
+        if (mShutterVol >= 0 && mShutterVol <= 100)
+            mAudioManager.setMasterVolume(mOriginalMasterVol,0);
         // Delete photos that are pending deletion
         performDeletion();
         mOrientationListener.disable();
@@ -1392,6 +1407,8 @@ public class CameraActivity extends Activity
 
     @Override
     public void onResume() {
+        if (mShutterVol >= 0 && mShutterVol <= 100)
+            mAudioManager.setMasterVolume(mShutterVol,0);
         // TODO: Handle this in OrientationManager.
         // Auto-rotate off
         if (Settings.System.getInt(getContentResolver(),
@@ -1459,6 +1476,8 @@ public class CameraActivity extends Activity
 
     @Override
     public void onDestroy() {
+        if (mShutterVol >= 0 && mShutterVol <= 100)
+            mAudioManager.setMasterVolume(mOriginalMasterVol,0);
         if (mSecureCamera) {
             unregisterReceiver(mScreenOffReceiver);
         }
