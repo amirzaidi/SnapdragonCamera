@@ -26,6 +26,8 @@ LOCAL_PACKAGE_NAME := SnapdragonCamera
 
 #LOCAL_SDK_VERSION := current
 
+LOCAL_OVERRIDES_PACKAGES := Camera2
+
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
 # If this is an unbundled build (to install separately) then include
