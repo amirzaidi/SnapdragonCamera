@@ -66,7 +66,8 @@ public class VideoMenu extends MenuController
     private static final int POPUP_NONE = 0;
     private static final int POPUP_FIRST_LEVEL = 1;
     private static final int POPUP_SECOND_LEVEL = 2;
-    private static final int POPUP_IN_ANIMATION = 3;
+    private static final int POPUP_IN_ANIMATION_SLIDE = 3;
+    private static final int POPUP_IN_ANIMATION_FADE = 4;
     private static final int PREVIEW_MENU_NONE = 0;
     private static final int PREVIEW_MENU_IN_ANIMATION = 1;
     private static final int PREVIEW_MENU_ON = 2;
@@ -164,9 +165,9 @@ public class VideoMenu extends MenuController
     }
 
     private void animateFadeOut(final ListView v, final int level) {
-        if (v == null || mPopupStatus == POPUP_IN_ANIMATION)
+        if (v == null || mPopupStatus == POPUP_IN_ANIMATION_FADE)
             return;
-        mPopupStatus = POPUP_IN_ANIMATION;
+        mPopupStatus = POPUP_IN_ANIMATION_FADE;
 
         ViewPropertyAnimator vp = v.animate();
         vp.alpha(0f).setDuration(ANIMATION_DURATION);
@@ -213,9 +214,9 @@ public class VideoMenu extends MenuController
     }
 
     private void animateSlideOut(final ListView v, final int level) {
-        if (v == null || mPopupStatus == POPUP_IN_ANIMATION)
+        if (v == null || mPopupStatus == POPUP_IN_ANIMATION_SLIDE)
             return;
-        mPopupStatus = POPUP_IN_ANIMATION;
+        mPopupStatus = POPUP_IN_ANIMATION_SLIDE;
 
         ViewPropertyAnimator vp = v.animate();
         vp.translationX(v.getX() - v.getWidth()).setDuration(ANIMATION_DURATION);
@@ -340,7 +341,9 @@ public class VideoMenu extends MenuController
     }
 
     public boolean isOverMenu(MotionEvent ev) {
-        if (mPopupStatus == POPUP_NONE || mPopupStatus == POPUP_IN_ANIMATION)
+        if (mPopupStatus == POPUP_NONE
+                || mPopupStatus == POPUP_IN_ANIMATION_SLIDE
+                || mPopupStatus == POPUP_IN_ANIMATION_FADE)
             return false;
         if (mUI.getMenuLayout() == null)
             return false;
@@ -366,7 +369,7 @@ public class VideoMenu extends MenuController
     }
 
     public boolean isMenuBeingAnimated() {
-        return mPopupStatus == POPUP_IN_ANIMATION;
+        return mPopupStatus == POPUP_IN_ANIMATION_SLIDE || mPopupStatus == POPUP_IN_ANIMATION_FADE;
     }
 
     public boolean isPreviewMenuBeingShown() {
