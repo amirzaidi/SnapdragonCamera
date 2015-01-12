@@ -21,6 +21,8 @@ import android.animation.Animator.AnimatorListener;
 import android.content.Context;
 import android.util.Log;
 import android.graphics.drawable.AnimationDrawable;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import org.codeaurora.snapcam.R;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ShutterButton;
+import com.android.camera.util.CameraUtil;
 
 public class CameraControls extends RotatableLayout {
 
@@ -68,6 +71,12 @@ public class CameraControls extends RotatableLayout {
     private boolean mLocSet = false;
 
     private TextView mRemainingPhotos;
+
+    private int mPreviewRatio;
+    private static int mTopMargin = 0;
+    private static int mBottomMargin = 0;
+
+    private Paint mPaint;
 
     AnimatorListener outlistener = new AnimatorListener() {
         @Override
@@ -143,12 +152,12 @@ public class CameraControls extends RotatableLayout {
 
     public CameraControls(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setMeasureAllChildren(true);
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        setWillNotDraw(false);
     }
 
     public CameraControls(Context context) {
-        super(context);
-        setMeasureAllChildren(true);
+        this(context, null);
     }
 
     public static boolean isAnimating() {
@@ -244,6 +253,32 @@ public class CameraControls extends RotatableLayout {
         }
 
         layoutRemaingPhotos();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (mTopMargin != 0) {
+            int rotation = getUnifiedRotation();
+            int w = canvas.getWidth(), h = canvas.getHeight();
+            switch (rotation) {
+                case 90:
+                    canvas.drawRect(0, 0, mTopMargin, h, mPaint);
+                    canvas.drawRect(w - mBottomMargin, 0, w, h, mPaint);
+                    break;
+                case 180:
+                    canvas.drawRect(0, 0, w, mBottomMargin, mPaint);
+                    canvas.drawRect(0, h - mTopMargin, w, h, mPaint);
+                    break;
+                case 270:
+                    canvas.drawRect(0, 0, mBottomMargin, h, mPaint);
+                    canvas.drawRect(w - mTopMargin, 0, w, h, mPaint);
+                    break;
+                default:
+                    canvas.drawRect(0, 0, w, mTopMargin, mPaint);
+                    canvas.drawRect(0, h - mBottomMargin, w, h, mPaint);
+                    break;
+            }
+        }
     }
 
     private void setLocation(int w, int h) {
@@ -544,6 +579,23 @@ public class CameraControls extends RotatableLayout {
         int cx = (2 * windex + 1) * boxw / 2;
         int cy = (2 * hindex + 1) * boxh / 2;
 
+        if (index2 == 0 && mTopMargin != 0) {
+            switch (rotation) {
+                case 90:
+                    cx = mTopMargin / 2;
+                    break;
+                case 180:
+                    cy = h - mTopMargin / 2;
+                    break;
+                case 270:
+                    cx = w - mTopMargin / 2;
+                    break;
+                default:
+                    cy = mTopMargin / 2;
+                    break;
+            }
+        }
+
         l = cx - tw / 2;
         r = cx + tw / 2;
         t = cy - th / 2;
@@ -696,5 +748,21 @@ public class CameraControls extends RotatableLayout {
             mRemainingPhotos.setText(String.format(
                     getResources().getString(R.string.remaining_photos_format), remaining));
         }
+    }
+
+    public void setMargins(int top, int bottom) {
+        mTopMargin = top;
+        mBottomMargin = bottom;
+    }
+
+    public void setPreviewRatio(float ratio) {
+        int r = CameraUtil.determineRatio(ratio);
+        mPreviewRatio = r;
+        if (mPreviewRatio == CameraUtil.RATIO_4_3 && mTopMargin != 0) {
+            mPaint.setColor(getResources().getColor(R.color.camera_control_bg_opaque));
+        } else {
+            mPaint.setColor(getResources().getColor(R.color.camera_control_bg_transparent));
+        }
+        invalidate();
     }
 }

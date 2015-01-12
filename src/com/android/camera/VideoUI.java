@@ -22,6 +22,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera.Parameters;
 import android.os.Handler;
@@ -252,6 +253,14 @@ public class VideoUI implements PieRenderer.PieListener,
         mAnimationManager = new AnimationManager();
         mOrientationResize = false;
         mPrevOrientationResize = false;
+
+        Point size = new Point();
+        mActivity.getWindowManager().getDefaultDisplay().getSize(size);
+        int l = size.x > size.y ? size.x : size.y;
+        int tm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_top_margin);
+        int bm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_bottom_margin);
+        int topMargin = l / 4 * tm / (tm + bm);
+        mCameraControls.setMargins(topMargin, l / 4 - topMargin);
     }
 
     public void updatePreviewThumbnail() {
@@ -355,6 +364,8 @@ public class VideoUI implements PieRenderer.PieListener,
         if (mPreviewWidth > 0 && mPreviewHeight > 0) {
             mHandler.sendEmptyMessage(UPDATE_TRANSFORM_MATRIX);
         }
+        // ensure a semi-transparent background for now
+        mCameraControls.setPreviewRatio(1.0f);
     }
 
     public int getPreviewWidth() {
@@ -844,10 +855,12 @@ public class VideoUI implements PieRenderer.PieListener,
     }
 
     public void hideUIwhileRecording() {
+        mCameraControls.setWillNotDraw(true);
         mVideoMenu.hideUI();
     }
 
     public void showUIafterRecording() {
+        mCameraControls.setWillNotDraw(false);
         mVideoMenu.showUI();
     }
 

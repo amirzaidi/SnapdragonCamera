@@ -26,6 +26,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
 import android.hardware.Camera.Face;
@@ -144,23 +145,9 @@ public class PhotoUI implements PieListener,
     private boolean mUIhidden = false;
     private int mPreviewOrientation = -1;
 
-    // temporary variables for updating SurfaceView
-    private int mTempWidth;
-    private int mTempHeight;
-
-    private final Handler mSurfaceViewUpdateHandler = new Handler();
-
-    private Runnable updateSurfaceView = new Runnable() {
-
-        @Override
-        public void run() {
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) mSurfaceView
-                    .getLayoutParams();
-            params.width = mTempWidth;
-            params.height = mTempHeight;
-            mSurfaceView.setLayoutParams(params);
-        }
-    };
+    private int mScreenRatio = CameraUtil.RATIO_UNKNOWN;
+    private int mTopMargin = 0;
+    private int mBottomMargin = 0;
 
     public interface SurfaceTextureSizeChangedListener {
         public void onSurfaceTextureSizeChanged(int uncroppedWidth, int uncroppedHeight);
@@ -196,7 +183,7 @@ public class PhotoUI implements PieListener,
                 if (mOriginalPreviewHeight == 0) mOriginalPreviewHeight = height;
                 mPreviewWidth = width;
                 mPreviewHeight = height;
-                setTransformMatrix(mOriginalPreviewWidth, mOriginalPreviewHeight);
+                setTransformMatrix(mPreviewWidth, mPreviewHeight);
                 mController.onScreenSizeChanged((int) mSurfaceTextureUncroppedWidth,
                         (int) mSurfaceTextureUncroppedHeight);
                 mAspectRatioResize = false;
@@ -302,6 +289,18 @@ public class PhotoUI implements PieListener,
         mAnimationManager = new AnimationManager();
         mOrientationResize = false;
         mPrevOrientationResize = false;
+
+        Point size = new Point();
+        mActivity.getWindowManager().getDefaultDisplay().getSize(size);
+        mScreenRatio = CameraUtil.determineRatio(size.x, size.y);
+        if (mScreenRatio == CameraUtil.RATIO_16_9) {
+            int l = size.x > size.y ? size.x : size.y;
+            int tm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_top_margin);
+            int bm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_bottom_margin);
+            mTopMargin = l / 4 * tm / (tm + bm);
+            mBottomMargin = l / 4 - mTopMargin;
+        }
+        mCameraControls.setMargins(mTopMargin, mBottomMargin);
     }
 
     public void updatePreviewThumbnail() {
@@ -345,33 +344,76 @@ public class PhotoUI implements PieListener,
             mAspectRatioResize = true;
             mAspectRatio = ratio;
         }
-
-        mSurfaceView.requestLayout();
+        mCameraControls.setPreviewRatio(mAspectRatio);
+        layoutPreview(ratio);
     }
 
-    public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
-        mSurfaceTextureSizeListener = listener;
-    }
-
-    private void setTransformMatrix(int width, int height) {
-        mMatrix = mSurfaceView.getMatrix();
-
+    public void layoutPreview(float ratio) {
+        FrameLayout.LayoutParams lp;
         float scaledTextureWidth, scaledTextureHeight;
-        if (mOrientationResize) {
-            scaledTextureWidth = height * mAspectRatio;
-            if (scaledTextureWidth > width) {
-                scaledTextureWidth = width;
-                scaledTextureHeight = scaledTextureWidth / mAspectRatio;
-            } else {
-                scaledTextureHeight = height;
+        int rotation = CameraUtil.getDisplayRotation(mActivity);
+        if (mScreenRatio == CameraUtil.RATIO_16_9
+                && CameraUtil.determineRatio(ratio) == CameraUtil.RATIO_4_3) {
+            int l = (mTopMargin + mBottomMargin) * 4;
+            int s = l * 9 / 16;
+            switch (rotation) {
+                case 90:
+                    lp = new FrameLayout.LayoutParams(l * 3 / 4, s);
+                    lp.setMargins(mTopMargin, 0, mBottomMargin, 0);
+                    scaledTextureWidth = l * 3 / 4;
+                    scaledTextureHeight = s;
+                    break;
+                case 180:
+                    lp = new FrameLayout.LayoutParams(s, l * 3 / 4);
+                    lp.setMargins(0, mBottomMargin, 0, mTopMargin);
+                    scaledTextureWidth = s;
+                    scaledTextureHeight = l * 3 / 4;
+                    break;
+                case 270:
+                    lp = new FrameLayout.LayoutParams(l * 3 / 4, s);
+                    lp.setMargins(mBottomMargin, 0, mTopMargin, 0);
+                    scaledTextureWidth = l * 3 / 4;
+                    scaledTextureHeight = s;
+                    break;
+                default:
+                    lp = new FrameLayout.LayoutParams(s, l * 3 / 4);
+                    lp.setMargins(0, mTopMargin, 0, mBottomMargin);
+                    scaledTextureWidth = s;
+                    scaledTextureHeight = l * 3 / 4;
+                    break;
             }
         } else {
-            if (width > height) {
-                scaledTextureWidth = Math.max(width, height * mAspectRatio);
-                scaledTextureHeight = Math.max(height, width / mAspectRatio);
+            float width = mOriginalPreviewWidth, height = mOriginalPreviewHeight;
+            if (mOrientationResize) {
+                scaledTextureWidth = height * mAspectRatio;
+                if (scaledTextureWidth > width) {
+                    scaledTextureWidth = width;
+                    scaledTextureHeight = scaledTextureWidth / mAspectRatio;
+                } else {
+                    scaledTextureHeight = height;
+                }
             } else {
-                scaledTextureWidth = Math.max(width, height / mAspectRatio);
-                scaledTextureHeight = Math.max(height, width * mAspectRatio);
+                if (width > height) {
+                    scaledTextureWidth = Math.max(width, height * mAspectRatio);
+                    scaledTextureHeight = Math.max(height, width / mAspectRatio);
+                } else {
+                    scaledTextureWidth = Math.max(width, height / mAspectRatio);
+                    scaledTextureHeight = Math.max(height, width * mAspectRatio);
+                }
+            }
+
+            Log.v(TAG, "setTransformMatrix: scaledTextureWidth = " + scaledTextureWidth
+                    + ", scaledTextureHeight = " + scaledTextureHeight);
+
+            int orientation = mActivity.getResources().getConfiguration().orientation;
+            if (((rotation == 0 || rotation == 180) && scaledTextureWidth > scaledTextureHeight)
+                    || ((rotation == 90 || rotation == 270)
+                        && scaledTextureWidth < scaledTextureHeight)) {
+                lp = new FrameLayout.LayoutParams((int) scaledTextureHeight,
+                        (int) scaledTextureWidth, Gravity.CENTER);
+            } else {
+                lp = new FrameLayout.LayoutParams((int) scaledTextureWidth,
+                        (int) scaledTextureHeight, Gravity.CENTER);
             }
         }
 
@@ -383,14 +425,23 @@ public class PhotoUI implements PieListener,
                 mSurfaceTextureSizeListener.onSurfaceTextureSizeChanged(
                         (int) mSurfaceTextureUncroppedWidth,
                         (int) mSurfaceTextureUncroppedHeight);
+                Log.d(TAG, "mSurfaceTextureUncroppedWidth=" + mSurfaceTextureUncroppedWidth
+                        + "mSurfaceTextureUncroppedHeight=" + mSurfaceTextureUncroppedHeight);
             }
         }
 
-        Log.v(TAG, "setTransformMatrix: scaledTextureWidth = " + scaledTextureWidth
-                + ", scaledTextureHeight = " + scaledTextureHeight);
-        mTempWidth = (int) scaledTextureWidth;
-        mTempHeight = (int) scaledTextureHeight;
-        mSurfaceViewUpdateHandler.post(updateSurfaceView);
+        mSurfaceView.setLayoutParams(lp);
+        if (mFaceView != null) {
+            mFaceView.setLayoutParams(lp);
+        }
+    }
+
+    public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
+        mSurfaceTextureSizeListener = listener;
+    }
+
+    private void setTransformMatrix(int width, int height) {
+        mMatrix = mSurfaceView.getMatrix();
 
         // Calculate the new preview rectangle.
         RectF previewRect = new RectF(0, 0, width, height);
