@@ -358,6 +358,7 @@ public class PhotoModule
     private boolean mAnimateCapture = true;
 
     private int mJpegFileSizeEstimation = 0;
+    private int mRemainingPhotos = -1;
 
     private MediaSaveService.OnMediaSavedListener mOnMediaSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
@@ -1351,7 +1352,7 @@ public class PhotoModule
                     // the mean time and fill it, but that could have happened between the
                     // shutter press and saving the JPEG too.
                     mActivity.updateStorageSpaceAndHint();
-                    updateRemainingPhotos();
+                    mUI.updateRemainingPhotos(--mRemainingPhotos);
                     long now = System.currentTimeMillis();
                     mJpegCallbackFinishTime = now - mJpegPictureCallbackTime;
                     Log.v(TAG, "mJpegCallbackFinishTime = "
@@ -2240,11 +2241,12 @@ public class PhotoModule
 
     private void updateRemainingPhotos() {
         if (mJpegFileSizeEstimation != 0) {
-            mUI.updateRemainingPhotos((int) (mActivity.getStorageSpaceBytes()
-                    / mJpegFileSizeEstimation));
+            mRemainingPhotos = (int) (mActivity.getStorageSpaceBytes()
+                    / mJpegFileSizeEstimation);
         } else {
-            mUI.updateRemainingPhotos(-1);
+            mRemainingPhotos = -1;
         }
+        mUI.updateRemainingPhotos(mRemainingPhotos);
     }
 
     private void onResumeTasks() {
@@ -2844,7 +2846,11 @@ public class PhotoModule
                 //mUnsupportedJpegQuality = true;
             }else {
                 mParameters.setJpegQuality(JpegEncodingQualityMappings.getQualityNumber(jpegQuality));
-                setJpegFileSizeEstimation(pic_size, jpegQuality);
+                int jpegFileSize = estimateJpegFileSize(pic_size, jpegQuality);
+                if (jpegFileSize != mJpegFileSizeEstimation) {
+                    mJpegFileSizeEstimation = jpegFileSize;
+                    updateRemainingPhotos();
+                }
             }
         }
 
@@ -3242,7 +3248,7 @@ public class PhotoModule
         }
     }
 
-    private void setJpegFileSizeEstimation(final Size size, final String quality) {
+    private int estimateJpegFileSize(final Size size, final String quality) {
         int[] ratios = mActivity.getResources().getIntArray(R.array.jpegquality_compression_ratio);
         String[] qualities = mActivity.getResources().getStringArray(
                 R.array.pref_camera_jpegquality_entryvalues);
@@ -3255,9 +3261,9 @@ public class PhotoModule
         }
 
         if (ratio == 0) {
-            mJpegFileSizeEstimation = 0;
+            return 0;
         } else {
-            mJpegFileSizeEstimation = size.width * size.height * 3 / ratio;
+            return size.width * size.height * 3 / ratio;
         }
     }
 
