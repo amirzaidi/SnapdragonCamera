@@ -646,6 +646,7 @@ public class VideoModule implements CameraModule,
                 mUI.animateCapture();
             }
         }
+        mUI.showUIafterRecording();
     }
 
     public void onVideoSaved() {
@@ -687,10 +688,8 @@ public class VideoModule implements CameraModule,
 
         if (stop) {
             onStopVideoRecording();
-            mUI.showUIafterRecording();
         } else {
             startVideoRecording();
-            mUI.hideUIwhileRecording();
         }
         mUI.enableShutter(false);
 
@@ -1597,6 +1596,7 @@ public class VideoModule implements CameraModule,
         mStartRecPending = true;
         mUI.cancelAnimations();
         mUI.setSwipingEnabled(false);
+        mUI.hideUIwhileRecording();
 
         mActivity.updateStorageSpaceAndHint();
         if (mActivity.getStorageSpaceBytes() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
