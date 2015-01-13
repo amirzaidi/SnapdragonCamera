@@ -441,6 +441,14 @@ public class WideAnglePanoramaUI implements
     private void setViews(Resources appRes) {
         int weight = appRes.getInteger(R.integer.SRI_pano_layout_weight);
 
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) mPreviewLayout.getLayoutParams();
+        lp.weight = weight;
+        mPreviewLayout.setLayoutParams(lp);
+
+        lp = (LinearLayout.LayoutParams) mReview.getLayoutParams();
+        lp.weight = weight;
+        mPreviewLayout.setLayoutParams(lp);
+
         mSavingProgressBar = (PanoProgressBar) mRootView.findViewById(R.id.pano_saving_progress_bar);
         mSavingProgressBar.setIndicatorWidth(0);
         mSavingProgressBar.setMaxProgress(100);
