@@ -83,13 +83,10 @@ public class MosaicPreviewRenderer {
             mInputSurfaceTexture.updateTexImage();
             mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
 
-            // Call setPreviewBackground to render high-res RGB textures to full screen.
-            MosaicRenderer.setPreviewBackground(true);
-            MosaicRenderer.preprocess(mTransformMatrix);
-            MosaicRenderer.step();
-            MosaicRenderer.setPreviewBackground(false);
-
             MosaicRenderer.setWarping(true);
+            // Call preprocess to render it to low-res and high-res RGB textures.
+            MosaicRenderer.preprocess(mTransformMatrix);
+            // Now, transfer the textures from GPU to CPU memory for processing
             MosaicRenderer.transferGPUtoCPU();
             MosaicRenderer.updateMatrix();
             MosaicRenderer.step();

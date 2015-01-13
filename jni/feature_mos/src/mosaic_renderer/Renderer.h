@@ -18,7 +18,7 @@ class Renderer {
     virtual bool InitializeGLProgram() = 0;
 
     bool SetupGraphics(FrameBuffer* buffer);
-    bool SetupGraphics(int x, int y, int width, int height);
+    bool SetupGraphics(int width, int height);
 
     bool Clear(float r, float g, float b, float a);
 
@@ -59,8 +59,6 @@ class Renderer {
 
     int mSurfaceWidth;      // Width of target surface.
     int mSurfaceHeight;     // Height of target surface.
-    int mSurfaceXOffset;      // X Offset target surface.
-    int mSurfaceYOffset;     // Y Offset of target surface.
 
     FrameBuffer *mFrameBuffer;
 };
