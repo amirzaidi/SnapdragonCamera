@@ -1073,18 +1073,10 @@ public class CameraUtil {
     }
 
     public static int determineRatio(int width, int height) {
-        int s = width, l = height;
-        if (width > height) {
-            l = width;
-            s = height;
+        if (height != 0) {
+            return determineRatio(((float) width) / height);
         }
-        if (l * 3 == s * 4) {
-            return RATIO_4_3;
-        } else if (l * 9 == s * 16) {
-            return RATIO_16_9;
-        } else {
-            return RATIO_UNKNOWN;
-        }
+        return RATIO_UNKNOWN;
     }
 
     public static int determineRatio(float ratio) {
