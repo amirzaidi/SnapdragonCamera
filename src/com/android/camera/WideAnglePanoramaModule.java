@@ -44,7 +44,6 @@ import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.Display;
 import android.widget.Toast;
 import com.android.camera.PhotoModule;
 import com.android.camera.CameraManager.CameraProxy;
@@ -110,8 +109,6 @@ public class WideAnglePanoramaModule
     private boolean mUsingFrontCamera;
     private int mCameraPreviewWidth;
     private int mCameraPreviewHeight;
-    private int mScreenWidth;
-    private int mScreenHeight;
     private int mCameraState;
     private int mCaptureState;
     private PowerManager.WakeLock mPartialWakeLock;
@@ -372,21 +369,19 @@ public class WideAnglePanoramaModule
         return true;
     }
 
-    private boolean findBestPreviewSize(List<Size> supportedSizes, boolean need4To3, boolean need16To9,
+    private boolean findBestPreviewSize(List<Size> supportedSizes, boolean need4To3,
             boolean needSmaller) {
         int pixelsDiff = DEFAULT_CAPTURE_PIXELS;
         boolean hasFound = false;
         for (Size size : supportedSizes) {
             int h = size.height;
             int w = size.width;
+            // we only want 4:3 format.
             int d = DEFAULT_CAPTURE_PIXELS - h * w;
             if (needSmaller && d < 0) { // no bigger preview than 960x720.
                 continue;
             }
             if (need4To3 && (h * 4 != w * 3)) {
-                continue;
-            }
-            if (need16To9 && (h * 16 != w * 9)) {
                 continue;
             }
             d = Math.abs(d);
@@ -401,26 +396,12 @@ public class WideAnglePanoramaModule
     }
 
     private void setupCaptureParams(Parameters parameters) {
-        boolean need4To3 = false;
-        boolean need16To9 = false;
         List<Size> supportedSizes = parameters.getSupportedPreviewSizes();
-        Display mDisplay = mActivity.getWindowManager().getDefaultDisplay();
-        mScreenWidth  = mDisplay.getWidth();
-        mScreenHeight = mDisplay.getHeight();
-
-        if(mScreenHeight * 4 == mScreenWidth * 3) {
-            need4To3 = true;
-        }
-
-        if(mScreenHeight * 16 == mScreenWidth * 9) {
-            need16To9 = true;
-        }
-
-        if (!findBestPreviewSize(supportedSizes, need4To3, need16To9, true)) {
-            Log.w(TAG, "No preview size supported matching the screen aspect ratio");
-            if (!findBestPreviewSize(supportedSizes, false, false, true)) {
+        if (!findBestPreviewSize(supportedSizes, true, true)) {
+            Log.w(TAG, "No 4:3 ratio preview size supported.");
+            if (!findBestPreviewSize(supportedSizes, false, true)) {
                 Log.w(TAG, "Can't find a supported preview size smaller than 960x720.");
-                findBestPreviewSize(supportedSizes, false, false, false);
+                findBestPreviewSize(supportedSizes, false, false);
             }
         }
         Log.d(TAG, "camera preview h = "
@@ -511,9 +492,6 @@ public class WideAnglePanoramaModule
         }
         mPreviewUIWidth = r - l;
         mPreviewUIHeight = b - t;
-        Parameters parameters = mCameraDevice.getParameters();
-        setupCaptureParams(parameters);
-        configureCamera(parameters);
         configMosaicPreview();
         if (capturePending == true){
             mMainHandler.post(new Runnable() {
