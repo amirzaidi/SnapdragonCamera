@@ -122,6 +122,9 @@ public class CameraActivity extends Activity
     // panorama. If the extra is not set, it is in the normal camera mode.
     public static final String SECURE_CAMERA_EXTRA = "secure_camera";
 
+    // This string is used for judge start activity from screenoff or not
+    public static final String GESTURE_CAMERA_NAME = "com.android.camera.CameraGestureActivity";
+
     /**
      * Request code from an activity we started that indicated that we do not
      * want to reset the view to the preview in onResume.
@@ -1158,9 +1161,6 @@ public class CameraActivity extends Activity
 
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.camera_filmstrip);
-        int flags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
-        getWindow().addFlags(flags);
 
         mActionBar = getActionBar();
         mActionBar.addOnMenuVisibilityListener(this);
@@ -1174,7 +1174,8 @@ public class CameraActivity extends Activity
         Intent intent = getIntent();
         String action = intent.getAction();
         if (INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)
-                || ACTION_IMAGE_CAPTURE_SECURE.equals(action)) {
+                || ACTION_IMAGE_CAPTURE_SECURE.equals(action)
+                || intent.getComponent().getClassName().equals(GESTURE_CAMERA_NAME)) {
             mSecureCamera = true;
         } else {
             mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
@@ -1185,6 +1186,9 @@ public class CameraActivity extends Activity
             Window win = getWindow();
             WindowManager.LayoutParams params = win.getAttributes();
             params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+            if (intent.getComponent().getClassName().equals(GESTURE_CAMERA_NAME)) {
+                params.flags |= WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
+            }
             win.setAttributes(params);
 
             // Filter for screen off so that we can finish secure camera activity

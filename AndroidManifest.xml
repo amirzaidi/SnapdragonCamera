@@ -97,7 +97,7 @@
             android:name="com.android.camera.CameraGestureActivity"
             android:icon="@mipmap/ic_launcher_camera"
             android:label="@string/camera_gesture_title"
-            android:targetActivity="com.android.camera.CameraActivity">
+            android:targetActivity="com.android.camera.SecureCameraActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
