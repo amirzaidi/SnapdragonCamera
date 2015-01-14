@@ -2177,7 +2177,8 @@ public class PhotoModule
 
     private void updateRemainingPhotos() {
         if (mJpegFileSizeEstimation != 0) {
-            mRemainingPhotos = (int) (mActivity.getStorageSpaceBytes()
+            mRemainingPhotos = (int) 
+                    ((mActivity.getStorageSpaceBytes() - Storage.LOW_STORAGE_THRESHOLD_BYTES)
                     / mJpegFileSizeEstimation);
         } else {
             mRemainingPhotos = -1;
