@@ -553,7 +553,9 @@ public class PhotoUI implements PieListener,
         mMenuButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                mMenu.openFirstLevel();
+                if(mMenu != null){
+                    mMenu.openFirstLevel();
+                }
             }
         });
         if (mController.isImageCaptureIntent()) {
@@ -917,8 +919,11 @@ public class PhotoUI implements PieListener,
     }
 
     public boolean sendTouchToMenu(MotionEvent ev) {
-        View v = mMenuLayout.getChildAt(0);
-        return v.dispatchTouchEvent(ev);
+        if (mMenuLayout != null) {
+            View v = mMenuLayout.getChildAt(0);
+            return v.dispatchTouchEvent(ev);
+        }
+        return false;
     }
 
     public void dismissSceneModeMenu() {
