@@ -525,7 +525,7 @@ public class PhotoModule
         mPreferences.setLocalId(mActivity, mCameraId);
         CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
 
-        if (mOpenCameraThread == null && !mActivity.mIsModuleSwitchInProgress) {
+        if (mOpenCameraThread == null) {
             mOpenCameraThread = new OpenCameraThread();
             mOpenCameraThread.start();
         }
