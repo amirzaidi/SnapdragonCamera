@@ -54,14 +54,14 @@
 
     <com.android.camera.ShutterButton
         android:id="@+id/shutter_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/shutter_size"
+        android:layout_height="@dimen/shutter_size"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="@dimen/shutter_offset"
         android:clickable="true"
         android:contentDescription="@string/accessibility_shutter_button"
         android:focusable="true"
-        android:scaleType="center"
+        android:scaleType="fitCenter"
         android:src="@drawable/btn_new_shutter" />
 
     <com.android.camera.ui.RotateImageView
@@ -109,12 +109,26 @@
             android:layout_gravity="center" />
     </com.android.camera.ui.RotatableLayout>
 
-    <TextView
+    <LinearLayout
         android:id="@+id/remaining_photos"
-        android:background="@android:color/transparent"
-        android:textColor="@android:color/white"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone" />
+        android:background="@android:color/transparent"
+        android:orientation="horizontal"
+        android:visibility="gone" >
+
+        <TextView
+            android:id="@+id/remaining_photos_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:textColor="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/remaining_photos_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/remaining_sheets" />
+    </LinearLayout>
 
 </com.android.camera.ui.CameraControls>
