@@ -4130,6 +4130,12 @@ public class PhotoModule
             return;
         }
 
+        if (CameraSettings.KEY_CAMERA_SAVEPATH.equals(pref.getKey())) {
+            Storage.setSaveSDCard(
+                    mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
+            mActivity.updateStorageSpaceAndHint();
+        }
+
         //call generic onSharedPreferenceChanged
         onSharedPreferenceChanged();
     }
@@ -4177,8 +4183,6 @@ public class PhotoModule
                 disableSkinToneSeekBar();
             }
         }
-        Storage.setSaveSDCard(
-            mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
     }
 
     @Override
