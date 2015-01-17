@@ -2098,10 +2098,12 @@ public class PhotoModule
         }
 
          //Need to disable focus for ZSL mode
-        if(mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL) {
-            mFocusManager.setZslEnable(true);
-        } else {
-            mFocusManager.setZslEnable(false);
+        if (mFocusManager != null) {
+            if (mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL) {
+                mFocusManager.setZslEnable(true);
+            } else {
+                mFocusManager.setZslEnable(false);
+            }
         }
 
         // If the user wants to do a snapshot while the previous one is still
@@ -2109,7 +2111,8 @@ public class PhotoModule
         // one and re-start the preview. Snapshot in progress also includes the
         // state that autofocus is focusing and a picture will be taken when
         // focus callback arrives.
-        if ((mFocusManager.isFocusingSnapOnFinish() || mCameraState == SNAPSHOT_IN_PROGRESS)
+        if ((((mFocusManager != null) && mFocusManager.isFocusingSnapOnFinish())
+                || mCameraState == SNAPSHOT_IN_PROGRESS)
                 && !mIsImageCaptureIntent) {
             mSnapshotOnIdle = true;
             return;

@@ -684,8 +684,11 @@ public class PhotoMenu extends MenuController
             @Override
             public void onClick(View v) {
                 addSceneMode();
-                View view = mUI.getPreviewMenuLayout().getChildAt(0);
-                animateSlideIn(view, previewMenuSize, false);
+                ViewGroup menuLayout = mUI.getPreviewMenuLayout();
+                if (menuLayout != null) {
+                    View view = menuLayout.getChildAt(0);
+                    animateSlideIn(view, previewMenuSize, false);
+                }
             }
         });
     }
@@ -833,8 +836,11 @@ public class PhotoMenu extends MenuController
             @Override
             public void onClick(View v) {
                 addFilterMode();
-                View view = mUI.getPreviewMenuLayout().getChildAt(0);
-                animateSlideIn(view, previewMenuSize, false);
+                ViewGroup menuLayout = mUI.getPreviewMenuLayout();
+                if (menuLayout != null) {
+                    View view = mUI.getPreviewMenuLayout().getChildAt(0);
+                    animateSlideIn(view, previewMenuSize, false);
+                }
             }
         });
     }
