@@ -2276,6 +2276,11 @@ public class VideoModule implements CameraModule,
             mParameters.setVideoRotation(videoRotation);
         }
 
+        //set low-power mode if supported
+        String lpmSupported = mParameters.get("low-power-mode-supported");
+        if ("true".equals(lpmSupported)) {
+            mParameters.set("low-power-mode", 1);
+        }
     }
     @SuppressWarnings("deprecation")
     private void setCameraParameters() {
