@@ -35,7 +35,9 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.media.AudioManager;
 import android.media.CameraProfile;
+import android.media.SoundPool;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -192,6 +194,7 @@ public class PhotoModule
     private boolean mTouchAfAecFlag;
     private boolean mLongshotSave = false;
     private boolean mRefocus = false;
+    private boolean mLastPhotoTakenWithRefocus = false;
 
     // The degrees of the device rotated clockwise from its natural orientation.
     private int mOrientation = OrientationEventListener.ORIENTATION_UNKNOWN;
@@ -252,6 +255,9 @@ public class PhotoModule
     // We use a queue to generated names of the images to be used later
     // when the image is ready to be saved.
     private NamedImages mNamedImages;
+
+    private SoundPool mSoundPool;
+    private int mRefocusSound;
 
     private Runnable mDoSnapRunnable = new Runnable() {
         @Override
@@ -559,6 +565,8 @@ public class PhotoModule
         mAm.getMemoryInfo(memInfo);
         SECONDARY_SERVER_MEM = memInfo.secondaryServerThreshold;
 
+        mSoundPool = new SoundPool(1, AudioManager.STREAM_NOTIFICATION, 0);
+        mRefocusSound = mSoundPool.load(mActivity, R.raw.camera_click_x5, 1);
     }
 
     private void initializeControlByIntent() {
@@ -1029,6 +1037,9 @@ public class PhotoModule
                     }
                 });
             }
+            if (mRefocus) {
+                mSoundPool.play(mRefocusSound, 1.0f, 1.0f, 0, 0, 1.0f);
+            }
         }
     }
     private final class StatsCallback
@@ -1244,7 +1255,20 @@ public class PhotoModule
                 }
                 startFaceDetection();
             }
-            if ((mRefocus) && (mReceivedSnapNum == 6)) {
+
+            mLastPhotoTakenWithRefocus = mRefocus;
+            if (mRefocus) {
+                final String[] NAMES = { "00.jpg", "01.jpg", "02.jpg", "03.jpg",
+                    "04.jpg", "DepthMapImage.y", "AllFocusImage.jpg" };
+                try {
+                    FileOutputStream out = mActivity.openFileOutput(NAMES[mReceivedSnapNum - 1],
+                            Context.MODE_PRIVATE);
+                    out.write(jpegData, 0, jpegData.length);
+                    out.close();
+                } catch (Exception e) {
+                }
+            }
+            if (mRefocus && (mReceivedSnapNum == 7)) {
                 Size s = mParameters.getPictureSize();
                 mNamedImages.nameNewImage(mCaptureStartTime, mRefocus);
                 NamedEntity name = mNamedImages.getNextNameEntity();
@@ -1260,9 +1284,9 @@ public class PhotoModule
                 }
                 mActivity.getMediaSaveService().addImage(
                         jpegData, title, date, mLocation, s.width, s.height,
-                        0, null, mOnMediaSavedListener, mContentResolver, ".jpeg");
-
-            } else {
+                        0, null, mOnMediaSavedListener, mContentResolver, PIXEL_FORMAT_JPEG);
+                mUI.showRefocusToast(mRefocus);
+            } else if (!mRefocus) {
                 ExifInterface exif = Exif.getExif(jpegData);
                 int orientation = Exif.getOrientation(exif);
                 if (!mIsImageCaptureIntent) {
@@ -1605,6 +1629,7 @@ public class PhotoModule
                         new JpegPictureCallback(loc));
             }
         } else {
+            mCameraDevice.enableShutterSound(!mRefocus);
             mCameraDevice.takePicture(mHandler,
                     new ShutterCallback(!animateBefore),
                     mRawPictureCallback, mPostViewPictureCallback,
@@ -1764,9 +1789,7 @@ public class PhotoModule
         } else {
             mUI.overrideSettings(CameraSettings.KEY_PICTURE_FORMAT, null);
         }
-        if ((ubiFocus != null && ubiFocus.equals(ubiFocusOn)) ||
-                (multiTouchFocus != null && multiTouchFocus.equals(multiTouchFocusOn)) ||
-                (reFocus != null && reFocus.equals(reFocusOn)) ||
+        if ((multiTouchFocus != null && multiTouchFocus.equals(multiTouchFocusOn)) ||
                 (chromaFlash != null && chromaFlash.equals(chromaFlashOn)) ||
                 (optiZoom != null && optiZoom.equals(optiZoomOn)) ||
                 (fssr != null && fssr.equals(fssrOn)) ||
@@ -3481,6 +3504,10 @@ public class PhotoModule
                         mActivity.getString(R.string.pref_camera_scenemode_default));
             }
         }
+
+        String refocusOn = mActivity.getString(R.string
+                .pref_camera_advanced_feature_value_refocus_on);
+
         if (CameraUtil.isSupported(mSceneMode, mParameters.getSupportedSceneModes())) {
             if (!mParameters.getSceneMode().equals(mSceneMode)) {
                 mParameters.setSceneMode(mSceneMode);
@@ -3492,9 +3519,16 @@ public class PhotoModule
                 mParameters = mCameraDevice.getParameters();
             }
         } else {
-            mSceneMode = mParameters.getSceneMode();
-            if (mSceneMode == null) {
-                mSceneMode = Parameters.SCENE_MODE_AUTO;
+            if (refocusOn.equals(mSceneMode)) {
+                try {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
+                } catch (NullPointerException e) {
+                }
+            } else {
+                mSceneMode = mParameters.getSceneMode();
+                if (mSceneMode == null) {
+                    mSceneMode = Parameters.SCENE_MODE_AUTO;
+                }
             }
         }
 
@@ -4436,6 +4470,10 @@ public class PhotoModule
             }
         }
     }
+
+    public boolean isRefocus() {
+        return mLastPhotoTakenWithRefocus;
+    }
 }
 
 /* Below is no longer needed, except to get rid of compile error
@@ -4613,5 +4651,4 @@ class DrawAutoHDR extends View{
     public void setPhotoModuleObject (PhotoModule photoModule) {
         mPhotoModule = photoModule;
     }
-
 }

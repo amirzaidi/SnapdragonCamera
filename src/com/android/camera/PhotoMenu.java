@@ -1103,6 +1103,17 @@ public class PhotoMenu extends MenuController
             }
         }
 
+        String refocusOn = mActivity.getString(R.string
+                .pref_camera_advanced_feature_value_refocus_on);
+        if (notSame(pref, CameraSettings.KEY_SCENE_MODE, refocusOn)) {
+            ListPreference lp = mPreferenceGroup
+                    .findPreference(CameraSettings.KEY_ADVANCED_FEATURES);
+            if (lp != null && refocusOn.equals(lp.getValue())) {
+                setPreference(CameraSettings.KEY_ADVANCED_FEATURES,
+                        mActivity.getString(R.string.pref_camera_advanced_feature_default));
+            }
+        }
+
         if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
             buttonSetEnabled(mFilterModeSwitcher, false);
         } else {

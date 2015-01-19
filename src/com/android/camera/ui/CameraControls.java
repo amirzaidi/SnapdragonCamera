@@ -19,13 +19,18 @@ package com.android.camera.ui;
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.content.Context;
-import android.util.Log;
+import android.graphics.Canvas;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -50,6 +55,8 @@ public class CameraControls extends RotatableLayout {
     private View mPreview;
     private View mSceneModeSwitcher;
     private View mFilterModeSwitcher;
+    private ArrowTextView mRefocusToast;
+
     private int mSize;
     private static final int WIDTH_GRID = 5;
     private static final int HEIGHT_GRID = 7;
@@ -152,8 +159,15 @@ public class CameraControls extends RotatableLayout {
 
     public CameraControls(Context context, AttributeSet attrs) {
         super(context, attrs);
+
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         setWillNotDraw(false);
+
+        mRefocusToast = new ArrowTextView(context);
+        addView(mRefocusToast);
+        setClipChildren(false);
+
+        setMeasureAllChildren(true);
     }
 
     public CameraControls(Context context) {
@@ -291,6 +305,46 @@ public class CameraControls extends RotatableLayout {
         toIndex(mHdrSwitcher, w, h, rotation, 3, 0, HDR_INDEX);
         toIndex(mFilterModeSwitcher, w, h, rotation, 1, 0, FILTER_MODE_INDEX);
         toIndex(mSceneModeSwitcher, w, h, rotation, 0, 0, SCENE_MODE_INDEX);
+        layoutToast(mRefocusToast, w, h, rotation);
+    }
+
+    private void layoutToast(final View v, int w, int h, int rotation) {
+        int tw = v.getMeasuredWidth();
+        int th = v.getMeasuredHeight();
+        int l, t, r, b, c;
+        switch (rotation) {
+            case 90:
+                c = (int) (h / WIDTH_GRID * (WIDTH_GRID - 0.5));
+                t = c - th / 2;
+                b = c + th / 2;
+                r = (int) (w / HEIGHT_GRID * (HEIGHT_GRID - 1.25));
+                l = r - tw;
+                mRefocusToast.setArrow(tw, th / 2, tw + th / 2, th, tw, th);
+                break;
+            case 180:
+                t = (int) (h / HEIGHT_GRID * 1.25);
+                b = t + th;
+                r = (int) (w / WIDTH_GRID * (WIDTH_GRID - 0.25));
+                l = r - tw;
+                mRefocusToast.setArrow(tw - th / 2, 0, tw, 0, tw, - th / 2);
+                break;
+            case 270:
+                c = (int) (h / WIDTH_GRID * 0.5);
+                t = c - th / 2;
+                b = c + th / 2;
+                l = (int) (w / HEIGHT_GRID * 1.25);
+                r = l + tw;
+                mRefocusToast.setArrow(0, 0, 0, th / 2, - th / 2, 0);
+                break;
+            default:
+                l = w / WIDTH_GRID / 4;
+                b = (int) (h / HEIGHT_GRID * (HEIGHT_GRID - 1.25));
+                r = l + tw;
+                t = b - th;
+                mRefocusToast.setArrow(0, th, th / 2, th, 0, th * 3 / 2);
+                break;
+        }
+        mRefocusToast.layout(l, t, r, b);
     }
 
     private void center(View v, int l, int t, int r, int b, int orientation, int rotation,
@@ -430,6 +484,7 @@ public class CameraControls extends RotatableLayout {
                 break;
         }
         mRemainingPhotos.setVisibility(View.INVISIBLE);
+        mRefocusToast.setVisibility(View.GONE);
     }
 
     public void showUI() {
@@ -520,6 +575,7 @@ public class CameraControls extends RotatableLayout {
         if (mRemainingPhotos.getVisibility() == View.INVISIBLE) {
             mRemainingPhotos.setVisibility(View.VISIBLE);
         }
+        mRefocusToast.setVisibility(View.GONE);
     }
 
     private void center(View v, Rect other, int rotation) {
@@ -764,5 +820,53 @@ public class CameraControls extends RotatableLayout {
             mPaint.setColor(getResources().getColor(R.color.camera_control_bg_transparent));
         }
         invalidate();
+    }
+
+    public void showRefocusToast(boolean show) {
+        mRefocusToast.setVisibility(show ? View.VISIBLE : View.GONE);
+        mRemainingPhotos.setVisibility(show ? View.GONE : View.VISIBLE);
+    }
+
+    private class ArrowTextView extends TextView {
+        private static final int TEXT_SIZE = 14;
+        private static final int PADDING_SIZE = 18;
+        private static final int BACKGROUND = 0x80000000;
+
+        private Paint mPaint;
+        private Path mPath;
+
+        public ArrowTextView(Context context) {
+            super(context);
+
+            setText(context.getString(R.string.refocus_toast));
+            setBackgroundColor(BACKGROUND);
+            setVisibility(View.GONE);
+            setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
+            setTextSize(TEXT_SIZE);
+            setPadding(PADDING_SIZE, PADDING_SIZE, PADDING_SIZE, PADDING_SIZE);
+
+            mPaint = new Paint();
+            mPaint.setStyle(Paint.Style.FILL);
+            mPaint.setColor(BACKGROUND);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            if (mPath != null) {
+                canvas.drawPath(mPath, mPaint);
+            }
+        }
+
+        public void setArrow(float x1, float y1, float x2, float y2, float x3, float y3) {
+            mPath = new Path();
+            mPath.reset();
+            mPath.moveTo(x1, y1);
+            mPath.lineTo(x2, y2);
+            mPath.lineTo(x3, y3);
+            mPath.lineTo(x1, y1);
+        }
     }
 }
