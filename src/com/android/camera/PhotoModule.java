@@ -2875,7 +2875,12 @@ public class PhotoModule
                 int jpegFileSize = estimateJpegFileSize(pic_size, jpegQuality);
                 if (jpegFileSize != mJpegFileSizeEstimation) {
                     mJpegFileSizeEstimation = jpegFileSize;
-                    updateRemainingPhotos();
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateRemainingPhotos();
+                        }
+                    });
                 }
             }
         }
