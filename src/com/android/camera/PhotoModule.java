@@ -633,6 +633,14 @@ public class PhotoModule
         if (mCameraDevice == null) {
             return;
         }
+        try {
+            if (mOpenCameraThread != null) {
+                mOpenCameraThread.join();
+                mOpenCameraThread = null;
+            }
+        } catch (InterruptedException ex) {
+            // ignore
+        }
         mCameraDevice.setPreviewDisplay(null);
         stopPreview();
     }
