@@ -398,7 +398,7 @@
     <string-array name="pref_camera_scenemode_entries" translatable="false">
         <item>@string/pref_camera_scenemode_entry_auto</item>
         <item>@string/pref_camera_scenemode_entry_refocus</item>
-        <!-- <item>@string/pref_camera_scenemode_entry_portrait</item> -->
+        <item>@string/pref_camera_scenemode_entry_portrait</item>
         <item>@string/pref_camera_scenemode_entry_landscape</item>
         <item>@string/pref_camera_scenemode_entry_sports</item>
         <item>@string/pref_camera_scenemode_entry_flowers</item>
@@ -413,7 +413,8 @@
     <array name="scenemode_thumbnails" translatable="false">
         <item>@drawable/ic_scene_mode_auto</item>
         <item>@drawable/ic_scene_mode_refocus</item>
-        <!-- <item>@drawable/ic_scene_mode_portrait</item> -->
+        <item>@drawable/ic_scene_mode_portrait</item>
+        <item>@drawable/ic_scene_mode_portrait</item>
         <item>@drawable/ic_scene_mode_landscape</item>
         <item>@drawable/ic_scene_mode_sports</item>
         <item>@drawable/ic_scene_mode_flower</item>
@@ -443,8 +444,9 @@
 
     <string-array name="pref_camera_scenemode_entryvalues" translatable="false">
         <item>auto</item>
+
         <item>@string/pref_camera_advanced_feature_value_refocus_on</item>
-        <!-- <item>portrait</item> -->
+        <item>portrait</item>
         <item>landscape</item>
         <item>sports</item>
         <item>flowers</item>
