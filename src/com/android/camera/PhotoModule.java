@@ -1268,25 +1268,7 @@ public class PhotoModule
                 } catch (Exception e) {
                 }
             }
-            if (mRefocus && (mReceivedSnapNum == 7)) {
-                Size s = mParameters.getPictureSize();
-                mNamedImages.nameNewImage(mCaptureStartTime, mRefocus);
-                NamedEntity name = mNamedImages.getNextNameEntity();
-                String title = (name == null) ? null : name.title;
-                long date = (name == null) ? -1 : name.date;
-                if (title == null) {
-                    Log.e(TAG, "Unbalanced name/data pair");
-                    return;
-                }
-                if (date == -1) {
-                    Log.e(TAG, "Invalid filename date");
-                    return;
-                }
-                mActivity.getMediaSaveService().addImage(
-                        jpegData, title, date, mLocation, s.width, s.height,
-                        0, null, mOnMediaSavedListener, mContentResolver, PIXEL_FORMAT_JPEG);
-                mUI.showRefocusToast(mRefocus);
-            } else if (!mRefocus) {
+            if (!mRefocus || (mRefocus && mReceivedSnapNum == 7)) {
                 ExifInterface exif = Exif.getExif(jpegData);
                 int orientation = Exif.getOrientation(exif);
                 if (!mIsImageCaptureIntent) {
@@ -1350,6 +1332,9 @@ public class PhotoModule
                                     jpegData, title, date, mLocation, width, height,
                                     orientation, exif, mOnMediaSavedListener,
                                     mContentResolver, mPictureFormat);
+                            if (mRefocus && mReceivedSnapNum == 7) {
+                                 mUI.showRefocusToast(mRefocus);
+                            }
                         }
                         // Animate capture with real jpeg data instead of a preview frame.
                         if (mCameraState != LONGSHOT) {
