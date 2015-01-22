@@ -528,6 +528,7 @@ public class PhotoMenu extends MenuController
 
         ListPreference pref = mPreferenceGroup.findPreference(
                 CameraSettings.KEY_SCENE_MODE);
+        updateFilterModeIcon(pref, mPreferenceGroup.findPreference(CameraSettings.KEY_CAMERA_HDR));
         String sceneMode = (pref != null) ? pref.getValue() : null;
         pref = mPreferenceGroup.findPreference(CameraSettings.KEY_FACE_DETECTION);
         String faceDetection = (pref != null) ? pref.getValue() : null;
@@ -616,17 +617,18 @@ public class PhotoMenu extends MenuController
             }
         }
 
-        pref = mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
-        if (pref != null) {
-            if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
-                buttonSetEnabled(mFilterModeSwitcher, false);
-            } else {
-                buttonSetEnabled(mFilterModeSwitcher, true);
-            }
-        }
-
         if (mListener != null) {
             mListener.onSharedPreferenceChanged();
+        }
+    }
+
+    private void updateFilterModeIcon(ListPreference scenePref, ListPreference hdrPref) {
+        if (scenePref == null || hdrPref == null) return;
+        if ((notSame(scenePref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO))
+                || (notSame(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff))) {
+            buttonSetEnabled(mFilterModeSwitcher, false);
+        } else {
+            buttonSetEnabled(mFilterModeSwitcher, true);
         }
     }
 
@@ -1060,6 +1062,7 @@ public class PhotoMenu extends MenuController
                 Toast.makeText(mActivity, R.string.hdr_enable_message, Toast.LENGTH_LONG).show();
             }
             setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
+            updateSceneModeIcon((IconListPreference) scenePref);
         } else if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
             ListPreference hdrPref =
                     mPreferenceGroup.findPreference(CameraSettings.KEY_CAMERA_HDR);
@@ -1113,12 +1116,7 @@ public class PhotoMenu extends MenuController
                         mActivity.getString(R.string.pref_camera_advanced_feature_default));
             }
         }
-
-        if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
-            buttonSetEnabled(mFilterModeSwitcher, false);
-        } else {
-            buttonSetEnabled(mFilterModeSwitcher, true);
-        }
+        updateFilterModeIcon(pref, pref);
         super.onSettingChanged(pref);
     }
 
