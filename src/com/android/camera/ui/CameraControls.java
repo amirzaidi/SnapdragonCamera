@@ -33,6 +33,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.util.ArrayList;
 
@@ -77,7 +78,8 @@ public class CameraControls extends RotatableLayout {
     private boolean[] mTempEnabled = new boolean[9];
     private boolean mLocSet = false;
 
-    private TextView mRemainingPhotos;
+    private LinearLayout mRemainingPhotos;
+    private TextView mRemainingPhotosText;
 
     private int mPreviewRatio;
     private static int mTopMargin = 0;
@@ -231,7 +233,8 @@ public class CameraControls extends RotatableLayout {
         mPreview = findViewById(R.id.preview_thumb);
         mSceneModeSwitcher = findViewById(R.id.scene_mode_switcher);
         mFilterModeSwitcher = findViewById(R.id.filter_mode_switcher);
-        mRemainingPhotos = (TextView) findViewById(R.id.remaining_photos);
+        mRemainingPhotos = (LinearLayout) findViewById(R.id.remaining_photos);
+        mRemainingPhotosText = (TextView) findViewById(R.id.remaining_photos_text);
     }
 
     @Override
@@ -801,8 +804,7 @@ public class CameraControls extends RotatableLayout {
             mRemainingPhotos.setVisibility(View.GONE);
         } else {
             mRemainingPhotos.setVisibility(View.VISIBLE);
-            mRemainingPhotos.setText(String.format(
-                    getResources().getString(R.string.remaining_photos_format), remaining));
+            mRemainingPhotosText.setText(remaining + " ");
         }
     }
 

@@ -98,7 +98,7 @@
     <dimen name="toggle_outer_size">60dp</dimen>
     <dimen name="face_circle_stroke">2dip</dimen>
     <dimen name="zoom_font_size">14pt</dimen>
-    <dimen name="shutter_offset">5dp</dimen>
+    <dimen name="shutter_offset">11dp</dimen>
     <dimen name="size_thumbnail">200dip</dimen>
     <dimen name="size_preview">400dip</dimen>
     <dimen name="navigation_bar_height">48dip</dimen>
@@ -109,6 +109,7 @@
     <dimen name="capture_margin_top">16dip</dimen>
     <dimen name="camera_controls_size">0dip</dimen>
     <dimen name="camera_film_strip_gap">32dip</dimen>
+    <dimen name="shutter_size">80dp</dimen>
 
     <dimen name="appwidget_width">180dp</dimen>
     <dimen name="appwidget_height">180dp</dimen>

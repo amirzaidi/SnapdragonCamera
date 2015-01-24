@@ -297,7 +297,7 @@ public class WideAnglePanoramaUI implements
     }
 
     public void reset() {
-        mShutterButton.setImageResource(R.drawable.btn_new_shutter);
+        mShutterButton.setImageResource(R.drawable.btn_new_shutter_panorama);
         mReviewLayout.setVisibility(View.GONE);
         mCaptureProgressBar.setVisibility(View.INVISIBLE);
     }
