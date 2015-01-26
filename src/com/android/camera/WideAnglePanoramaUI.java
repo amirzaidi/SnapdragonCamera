@@ -16,6 +16,8 @@
 
 package com.android.camera;
 
+import java.lang.reflect.Method;
+
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -30,7 +32,9 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.TextureView;
 import android.view.View;
@@ -45,6 +49,7 @@ import com.android.camera.CameraActivity.UpdatePreviewThumbnail;
 import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CameraRootView;
 import com.android.camera.ui.ModuleSwitcher;
+import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
 import org.codeaurora.snapcam.R;
 
@@ -94,6 +99,8 @@ public class WideAnglePanoramaUI implements
     private SurfaceTexture mSurfaceTexture;
     private View mPreviewCover;
 
+    private int mOrientation;
+
     /** Constructor. */
     public WideAnglePanoramaUI(
             CameraActivity activity,
@@ -120,6 +127,7 @@ public class WideAnglePanoramaUI implements
             @Override
             public void onClick(View v) {
                 mSwitcher.showPopup();
+                mSwitcher.setOrientation(mOrientation, false);
             }
         });
     }
@@ -582,4 +590,94 @@ public class WideAnglePanoramaUI implements
         }
         return false;
    }
+
+    public void setOrientation(int orientation, boolean animation) {
+        mOrientation = orientation;
+        // '---------`
+        // |    0    |
+        // |---------| =t
+        // | |     | |
+        // |1|     |2|
+        // | |     | |
+        // |---------| =b1
+        // |    3    |
+        // `---------' =b2
+        //          =r
+        int t = mPreviewLayout.getTop();
+        int b1 = mPreviewLayout.getBottom();
+        int r = mPreviewLayout.getRight();
+        int b2 = mCaptureLayout.getBottom();
+
+        final FrameLayout progressLayout = (FrameLayout)
+                mRootView.findViewById(R.id.pano_progress_layout);
+        int pivotY = ((ViewGroup) progressLayout).getPaddingTop()
+                + progressLayout.getChildAt(0).getHeight() / 2;
+
+        int[] x = { r / 2, r / 10, r * 9 / 10, r / 2 };
+        int[] y = { t / 2, (t + b1) / 2, (t + b1) / 2, b1 + pivotY };
+
+        int idx1, idx2;
+        int g;
+        switch (orientation) {
+            case 90:
+                idx1 = 1;
+                idx2 = 2;
+                g = Gravity.TOP | Gravity.RIGHT;
+                break;
+            case 180:
+                idx1 = 3;
+                idx2 = 0;
+                g = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
+                break;
+            case 270:
+                idx1 = 2;
+                idx2 = 1;
+                g = Gravity.TOP | Gravity.RIGHT;
+                break;
+            default:
+                idx1 = 0;
+                idx2 = 3;
+                g = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
+                break;
+        }
+
+        final View[] views1 = {
+            (View) mCaptureIndicator.getParent(),
+            mRootView.findViewById(R.id.pano_review_indicator)
+        };
+        for (final View v : views1) {
+            v.setTranslationX(x[idx1] - x[0]);
+            v.setTranslationY(y[idx1]- y[0]);
+            // use relection here to build on Kitkat
+            if (Build.VERSION.SDK_INT >= 21) {
+                try {
+                    final Class cls = Class.forName("android.view.View");
+                    final Method method = cls.getMethod("setTranslationZ", float.class);
+                    method.invoke(v, 1);
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+            v.setRotation(-orientation);
+        }
+
+        final View[] views2 = { progressLayout, mReviewControl };
+        for (final View v : views2) {
+            v.setPivotX(r / 2);
+            v.setPivotY(pivotY);
+            v.setTranslationX(x[idx2] - x[3]);
+            v.setTranslationY(y[idx2] - y[3]);
+            v.setRotation(-orientation);
+        }
+
+        final View button = mReviewControl.findViewById(R.id.pano_review_cancel_button);
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) button.getLayoutParams();
+        lp.gravity = g;
+        button.setLayoutParams(lp);
+
+        mReview.setRotation(-orientation);
+        mTooFastPrompt.setRotation(-orientation);
+        mCameraControls.setOrientation(orientation, animation);
+        RotateTextToast.setOrientation(orientation);
+    }
 }

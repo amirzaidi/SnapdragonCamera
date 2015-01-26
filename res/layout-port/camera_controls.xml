@@ -33,17 +33,11 @@
         android:layout_marginRight="-8dip"
         layout="@layout/menu_indicators" />
 
-    <com.android.camera.ui.RotatableLayout
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/menu"
-        style="@style/MenuButtonOuter"
-        android:layout_marginRight="2dip" >
-
-        <ImageView
-            style="@style/MenuButton"
-            android:layout_gravity="center"
-            android:contentDescription="@string/accessibility_menu_button"
-            android:src="@drawable/ic_settings" />
-    </com.android.camera.ui.RotatableLayout>
+        style="@style/MenuButton"
+        android:contentDescription="@string/accessibility_menu_button"
+        android:src="@drawable/ic_settings" />
 
     <com.android.camera.ui.ModuleSwitcher
         android:id="@+id/camera_switcher"
@@ -73,41 +67,21 @@
         android:contentDescription="@string/switch_photo_filmstrip"
         android:scaleType="fitCenter" />
 
-    <com.android.camera.ui.RotatableLayout
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/front_back_switcher"
-        style="@style/ToggleButtonOuter" >
+        style="@style/ToggleButton" />
 
-        <com.android.camera.ui.RotateImageView
-            style="@style/ToggleButton"
-            android:layout_gravity="center" />
-    </com.android.camera.ui.RotatableLayout>
-
-    <com.android.camera.ui.RotatableLayout
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/hdr_switcher"
-        style="@style/ToggleButtonOuter" >
+        style="@style/ToggleButton" />
 
-        <com.android.camera.ui.RotateImageView
-            style="@style/ToggleButton"
-            android:layout_gravity="center" />
-    </com.android.camera.ui.RotatableLayout>
-
-    <com.android.camera.ui.RotatableLayout
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/scene_mode_switcher"
-        style="@style/ToggleButtonOuter" >
+        style="@style/ToggleButton" />
 
-        <com.android.camera.ui.RotateImageView
-            style="@style/ToggleButton"
-            android:layout_gravity="center" />
-    </com.android.camera.ui.RotatableLayout>
-
-    <com.android.camera.ui.RotatableLayout
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/filter_mode_switcher"
-        style="@style/ToggleButtonOuter" >
-
-        <com.android.camera.ui.RotateImageView
-            style="@style/ToggleButton"
-            android:layout_gravity="center" />
-    </com.android.camera.ui.RotatableLayout>
+        style="@style/ToggleButton" />
 
     <LinearLayout
         android:id="@+id/remaining_photos"
@@ -122,13 +96,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:visibility="gone" />
 
         <ImageView
             android:id="@+id/remaining_photos_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/remaining_sheets" />
+            android:src="@drawable/remaining_sheets"
+            android:visibility="gone" />
     </LinearLayout>
 
 </com.android.camera.ui.CameraControls>

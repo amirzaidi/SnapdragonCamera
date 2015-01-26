@@ -118,7 +118,7 @@ public class CameraRootView extends FrameLayout {
             .unregisterDisplayListener((DisplayListener) mDisplayListener);
         }
     }
-
+/*
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int rotation = CameraUtil.getDisplayRotation((Activity) getContext());
@@ -191,4 +191,5 @@ public class CameraRootView extends FrameLayout {
             }
         }
     }
+*/
 }

@@ -178,7 +178,6 @@ public class CameraActivity extends Activity
     private Intent mResultDataForTesting;
     private OnScreenHint mStorageHint;
     private long mStorageSpaceBytes = Storage.LOW_STORAGE_THRESHOLD_BYTES;
-    private boolean mAutoRotateScreen;
     private boolean mSecureCamera;
     // This is a hack to speed up the start of SecureCamera.
     private static boolean sFirstStartAfterScreenOn = true;
@@ -1417,16 +1416,6 @@ public class CameraActivity extends Activity
     public void onResume() {
         if (mShutterVol >= 0 && mShutterVol <= 100)
             mAudioManager.setMasterVolume(mShutterVol,0);
-        // TODO: Handle this in OrientationManager.
-        // Auto-rotate off
-        if (Settings.System.getInt(getContentResolver(),
-                Settings.System.ACCELEROMETER_ROTATION, 0) == 0) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-            mAutoRotateScreen = false;
-        } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
-            mAutoRotateScreen = true;
-        }
 
         UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
                 UsageStatistics.ACTION_FOREGROUNDED, this.getClass().getSimpleName());
@@ -1537,10 +1526,6 @@ public class CameraActivity extends Activity
 
     public void setPreviewGestures(PreviewGestures previewGestures) {
         mFilmStripView.setPreviewGestures(previewGestures);
-    }
-
-    public boolean isAutoRotateScreen() {
-        return mAutoRotateScreen;
     }
 
     protected void updateStorageSpace() {

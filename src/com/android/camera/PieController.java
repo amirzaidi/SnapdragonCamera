@@ -26,6 +26,7 @@ import com.android.camera.drawable.TextDrawable;
 import com.android.camera.ui.PieItem;
 import com.android.camera.ui.PieItem.OnClickListener;
 import com.android.camera.ui.PieRenderer;
+import com.android.camera.ui.RotateTextToast;
 import org.codeaurora.snapcam.R;
 
 import java.util.ArrayList;
@@ -172,7 +173,7 @@ public class PieController {
                     // when enable HDR,inform to disable Continuous Shot
                     if (index == 1 && prefKey == CameraSettings.KEY_CAMERA_HDR)
                     {
-                        Toast.makeText(mActivity, R.string.HDR_disable_continuous_shot,
+                        RotateTextToast.makeText(mActivity, R.string.HDR_disable_continuous_shot,
                                 Toast.LENGTH_LONG).show();
                     }
                     fitem.setLabel(pref.getLabels()[index]);

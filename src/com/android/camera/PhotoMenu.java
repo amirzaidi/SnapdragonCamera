@@ -46,7 +46,9 @@ import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CountdownTimerPopup;
 import com.android.camera.ui.ListSubMenu;
 import com.android.camera.ui.ListMenu;
+import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateImageView;
+import com.android.camera.ui.RotateTextToast;
 import org.codeaurora.snapcam.R;
 import android.widget.HorizontalScrollView;
 import android.view.ViewGroup;
@@ -280,7 +282,20 @@ public class PhotoMenu extends MenuController
         mPopupStatus = POPUP_IN_ANIMATION_SLIDE;
 
         ViewPropertyAnimator vp = v.animate();
-        vp.translationX(v.getX() - v.getWidth()).setDuration(ANIMATION_DURATION);
+        switch (mUI.getOrientation()) {
+            case 0:
+                vp.translationXBy(-v.getWidth());
+                break;
+            case 90:
+                vp.translationYBy(2 * v.getHeight());
+                break;
+            case 180:
+                vp.translationXBy(2 * v.getWidth());
+                break;
+            case 270:
+                vp.translationYBy(-v.getHeight());
+                break;
+        }
         vp.setListener(new AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -320,7 +335,7 @@ public class PhotoMenu extends MenuController
 
             }
         });
-        vp.start();
+        vp.setDuration(ANIMATION_DURATION).start();
     }
 
     public void animateFadeIn(final ListView v) {
@@ -329,27 +344,36 @@ public class PhotoMenu extends MenuController
         vp.start();
     }
 
-    public void animateSlideIn(final View v, int delta, boolean settingMenu) {
-        int rotation = CameraUtil.getDisplayRotation(mActivity);
-        boolean mIsDefaultToPortrait = CameraUtil.isDefaultToPortrait(mActivity);
-        if (!mIsDefaultToPortrait) {
-            rotation = (rotation + 90) % 360;
-        }
-        boolean portrait = (rotation == 0) || (rotation == 180);
-        if (settingMenu)
-            portrait = true;
+    public void animateSlideIn(final View v, int delta, boolean forcePortrait) {
+        int orientation = mUI.getOrientation();
+        if (!forcePortrait)
+            orientation = 0;
+
         ViewPropertyAnimator vp = v.animate();
-        if (portrait) {
-            float dest = v.getX();
-            v.setX(dest - delta);
-            vp.translationX(dest).setDuration(ANIMATION_DURATION);
+        float dest;
+        switch (orientation) {
+            case 0:
+                dest = v.getX();
+                v.setX(dest - delta);
+                vp.translationX(dest);
+                break;
+            case 90:
+                dest = v.getY();
+                v.setY(dest + delta);
+                vp.translationY(dest);
+                break;
+            case 180:
+                dest = v.getX();
+                v.setX(dest + delta);
+                vp.translationX(dest);
+                break;
+            case 270:
+                dest = v.getY();
+                v.setY(dest - delta);
+                vp.translationY(dest);
+                break;
         }
-        else {
-            float dest = v.getY();
-            v.setY(dest + delta);
-            vp.translationY(dest).setDuration(ANIMATION_DURATION);
-        }
-        vp.start();
+        vp.setDuration(ANIMATION_DURATION).start();
     }
 
     public void animateSlideOutPreviewMenu() {
@@ -362,20 +386,9 @@ public class PhotoMenu extends MenuController
         if (v == null || mPreviewMenuStatus == PREVIEW_MENU_IN_ANIMATION)
             return;
         mPreviewMenuStatus = PREVIEW_MENU_IN_ANIMATION;
-        int rotation = CameraUtil.getDisplayRotation(mActivity);
-        boolean mIsDefaultToPortrait = CameraUtil.isDefaultToPortrait(mActivity);
-        if (!mIsDefaultToPortrait) {
-            rotation = (rotation + 90) % 360;
-        }
-        boolean portrait = (rotation == 0) || (rotation == 180);
+
         ViewPropertyAnimator vp = v.animate();
-        if (portrait) {
-            vp.translationX(v.getX() - v.getWidth()).setDuration(ANIMATION_DURATION);
-
-        } else {
-            vp.translationY(v.getY() + v.getHeight()).setDuration(ANIMATION_DURATION);
-
-        }
+        vp.translationXBy(-v.getWidth()).setDuration(ANIMATION_DURATION);
         vp.setListener(new AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -646,8 +659,7 @@ public class PhotoMenu extends MenuController
             // The preference only has a single icon to represent it.
             resid = pref.getSingleIcon();
         }
-        ImageView iv = (ImageView) ((FrameLayout) switcher).getChildAt(0);
-        iv.setImageResource(resid);
+        ((ImageView) switcher).setImageResource(resid);
         switcher.setVisibility(View.VISIBLE);
         mPreferences.add(pref);
         mPreferenceMap.put(pref, switcher);
@@ -662,8 +674,8 @@ public class PhotoMenu extends MenuController
                 CharSequence[] values = pref.getEntryValues();
                 index = (index + 1) % values.length;
                 pref.setValueIndex(index);
-                ImageView iv = (ImageView) ((FrameLayout) v).getChildAt(0);
-                iv.setImageResource(((IconListPreference) pref).getLargeIconIds()[index]);
+                ((ImageView) v).setImageResource(
+                        ((IconListPreference) pref).getLargeIconIds()[index]);
                 if (prefKey.equals(CameraSettings.KEY_CAMERA_ID))
                     mListener.onCameraPickerClicked(index);
                 reloadPreference(pref);
@@ -687,6 +699,7 @@ public class PhotoMenu extends MenuController
                 ViewGroup menuLayout = mUI.getPreviewMenuLayout();
                 if (menuLayout != null) {
                     View view = menuLayout.getChildAt(0);
+                    mUI.adjustOrientation();
                     animateSlideIn(view, previewMenuSize, false);
                 }
             }
@@ -766,7 +779,7 @@ public class PhotoMenu extends MenuController
         final View[] views = new View[entries.length];
         int init = pref.getCurrentIndex();
         for (int i = 0; i < entries.length; i++) {
-            LinearLayout layout2 = (LinearLayout) inflater.inflate(
+            RotateLayout layout2 = (RotateLayout) inflater.inflate(
                     R.layout.scene_mode_view, null, false);
 
             ImageView imageView = (ImageView) layout2.findViewById(R.id.image);
@@ -810,12 +823,11 @@ public class PhotoMenu extends MenuController
     }
 
     public void updateSceneModeIcon(IconListPreference pref) {
-        ImageView iv = (ImageView) ((FrameLayout) mSceneModeSwitcher).getChildAt(0);
         int[] thumbnails = pref.getThumbnailIds();
         int ind = pref.getCurrentIndex();
         if (ind == -1)
             ind = 0;
-        iv.setImageResource(thumbnails[ind]);
+        ((ImageView) mSceneModeSwitcher).setImageResource(thumbnails[ind]);
     }
 
     public void initFilterModeButton(View button) {
@@ -829,8 +841,7 @@ public class PhotoMenu extends MenuController
         int resid = -1;
         // The preference only has a single icon to represent it.
         resid = pref.getSingleIcon();
-        ImageView iv = (ImageView) ((FrameLayout) button).getChildAt(0);
-        iv.setImageResource(resid);
+        ((ImageView) button).setImageResource(resid);
         button.setVisibility(View.VISIBLE);
         button.setOnClickListener(new OnClickListener() {
             @Override
@@ -839,6 +850,7 @@ public class PhotoMenu extends MenuController
                 ViewGroup menuLayout = mUI.getPreviewMenuLayout();
                 if (menuLayout != null) {
                     View view = mUI.getPreviewMenuLayout().getChildAt(0);
+                    mUI.adjustOrientation();
                     animateSlideIn(view, previewMenuSize, false);
                 }
             }
@@ -907,7 +919,7 @@ public class PhotoMenu extends MenuController
         final View[] views = new View[entries.length];
         int init = pref.getCurrentIndex();
         for (int i = 0; i < entries.length; i++) {
-            LinearLayout layout2 = (LinearLayout) inflater.inflate(
+            RotateLayout layout2 = (RotateLayout) inflater.inflate(
                     R.layout.filter_mode_view, null, false);
             ImageView imageView = (ImageView) layout2.findViewById(R.id.image);
             final int j = i;
@@ -987,9 +999,8 @@ public class PhotoMenu extends MenuController
                     SharedPreferences prefs = PreferenceManager
                             .getDefaultSharedPreferences(mActivity);
                     prefs.edit().putBoolean(CameraSettings.KEY_DEVELOPER_MENU, true).apply();
-                    Toast toast = Toast.makeText(mActivity,
-                            "Camera developer option is enabled now", Toast.LENGTH_SHORT);
-                    toast.show();
+                    RotateTextToast.makeText(mActivity,
+                            "Camera developer option is enabled now", Toast.LENGTH_SHORT).show();
                 }
             } else {
                 privateCounter = 0;
@@ -1057,25 +1068,27 @@ public class PhotoMenu extends MenuController
                     mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
             if (scenePref != null && notSame(scenePref, CameraSettings.KEY_SCENE_MODE,
                     Parameters.SCENE_MODE_AUTO)) {
-                Toast.makeText(mActivity, R.string.hdr_enable_message, Toast.LENGTH_LONG).show();
+                RotateTextToast.makeText(mActivity, R.string.hdr_enable_message,
+                        Toast.LENGTH_LONG).show();
             }
             setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
         } else if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
             ListPreference hdrPref =
                     mPreferenceGroup.findPreference(CameraSettings.KEY_CAMERA_HDR);
             if (hdrPref != null && notSame(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)) {
-                Toast.makeText(mActivity, R.string.scene_enable_message, Toast.LENGTH_LONG).show();
+                RotateTextToast.makeText(mActivity, R.string.scene_enable_message,
+                        Toast.LENGTH_LONG).show();
             }
             setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
         } else if (notSame(pref,CameraSettings.KEY_AE_BRACKET_HDR,"Off")) {
-            Toast.makeText(mActivity,
+            RotateTextToast.makeText(mActivity,
                            R.string.flash_aebracket_message,Toast.LENGTH_SHORT).show();
             setPreference(CameraSettings.KEY_FLASH_MODE,Parameters.FLASH_MODE_OFF);
         } else if (notSame(pref,CameraSettings.KEY_FLASH_MODE,"Off")) {
             ListPreference aePref =
                       mPreferenceGroup.findPreference(CameraSettings.KEY_AE_BRACKET_HDR);
             if (notSame(aePref,CameraSettings.KEY_AE_BRACKET_HDR,"Off")) {
-               Toast.makeText(mActivity,
+               RotateTextToast.makeText(mActivity,
                               R.string.flash_aebracket_message,Toast.LENGTH_SHORT).show();
             }
         } else if (notSame(pref, CameraSettings.KEY_LONGSHOT, mSettingOff)) {
@@ -1084,7 +1097,7 @@ public class PhotoMenu extends MenuController
             if (advancefeaturePref != null) {
                 if (notSame(advancefeaturePref, CameraSettings.KEY_ADVANCED_FEATURES,
                         mActivity.getString(R.string.pref_camera_advanced_feature_default))) {
-                    Toast.makeText(mActivity, R.string.longshot_enable_message,
+                    RotateTextToast.makeText(mActivity, R.string.longshot_enable_message,
                             Toast.LENGTH_LONG).show();
                 }
                 setPreference(CameraSettings.KEY_ADVANCED_FEATURES,
@@ -1096,7 +1109,7 @@ public class PhotoMenu extends MenuController
                     mPreferenceGroup.findPreference(CameraSettings.KEY_LONGSHOT);
             if (longshotPref != null ) {
                 if (notSame(longshotPref, CameraSettings.KEY_LONGSHOT, mSettingOff)) {
-                    Toast.makeText(mActivity, R.string.advance_feature_enable_msg,
+                    RotateTextToast.makeText(mActivity, R.string.advance_feature_enable_msg,
                             Toast.LENGTH_LONG).show();
                 }
                 setPreference(CameraSettings.KEY_LONGSHOT, mSettingOff);
@@ -1122,4 +1135,7 @@ public class PhotoMenu extends MenuController
         super.onSettingChanged(pref);
     }
 
+    public int getOrientation() {
+        return mUI == null ? 0 : mUI.getOrientation();
+    }
 }
