@@ -475,7 +475,7 @@ public class PhotoUI implements PieListener,
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.v(TAG, "surfaceDestroyed");
         mSurfaceHolder = null;
-        mController.stopPreview();
+        mController.onPreviewUIDestroyed();
     }
 
     public View getRootView() {
