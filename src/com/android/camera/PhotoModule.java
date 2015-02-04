@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2012-2015 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4053,10 +4053,13 @@ public class PhotoModule
         //filter off unsupported settings
         final String settingOff = mActivity.getString(R.string.setting_off_value);
         if (!CameraSettings.isZSLHDRSupported(mParameters)) {
-            if (notSame(pref, CameraSettings.KEY_CAMERA_HDR, settingOff)) {
+            //HDR internally uses AE-bracketing. Disable both if not supported.
+            if (notSame(pref, CameraSettings.KEY_CAMERA_HDR, settingOff) ||
+                notSame(pref, CameraSettings.KEY_AE_BRACKET_HDR, settingOff)) {
                 mUI.setPreference(CameraSettings.KEY_ZSL,settingOff);
             } else if (notSame(pref,CameraSettings.KEY_ZSL,settingOff)) {
                 mUI.setPreference(CameraSettings.KEY_CAMERA_HDR, settingOff);
+                mUI.setPreference(CameraSettings.KEY_AE_BRACKET_HDR, settingOff);
             }
         }
 
