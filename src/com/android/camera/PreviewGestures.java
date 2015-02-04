@@ -89,31 +89,35 @@ public class PreviewGestures
             if (mZoomOnly || mMode == MODE_ZOOM) return false;
             int deltaX = (int) (e1.getX() - e2.getX());
             int deltaY = (int) (e1.getY() - e2.getY());
-            if (deltaY > 2 * deltaX && deltaY > -2 * deltaX) {
-                // Open pie on swipe up
-                if (mPie != null && !mPie.showsItems()) {
-                    openPie();
-                    return true;
-                }
-            }
 
-            if (deltaX < 0 && Math.abs(deltaX) > 2 * Math.abs(deltaY)) {
-                // Open menu on swipe left
+            int orientation = 0;
+            if (mPhotoMenu != null)
+                orientation = mPhotoMenu.getOrientation();
+            else if (mVideoMenu != null)
+                orientation = mVideoMenu.getOrientation();
+
+            if (isLeftSwipe(orientation, deltaX, deltaY)) {
                 waitUntilNextDown = true;
-                if (mPhotoMenu != null) {
-                    if (!mPhotoMenu.isMenuBeingShown()) {
-                        mPhotoMenu.openFirstLevel();
-                    }
-                }
-
-                if (mVideoMenu != null) {
-                    if (!mVideoMenu.isMenuBeingShown()) {
-                        mVideoMenu.openFirstLevel();
-                    }
-                }
+                if (mPhotoMenu != null && !mPhotoMenu.isMenuBeingShown())
+                    mPhotoMenu.openFirstLevel();
+                else if (mVideoMenu != null && !mVideoMenu.isMenuBeingShown())
+                    mVideoMenu.openFirstLevel();
                 return true;
             }
             return false;
+        }
+
+        private boolean isLeftSwipe(int orientation, int deltaX, int deltaY) {
+            switch (orientation) {
+                case 90:
+                    return deltaY > 0 && Math.abs(deltaY) > 2 * Math.abs(deltaX);
+                case 180:
+                    return deltaX > 0 && Math.abs(deltaX) > 2 * Math.abs(deltaY);
+                case 270:
+                    return deltaY < 0 && Math.abs(deltaY) > 2 * Math.abs(deltaX);
+                default:
+                    return deltaX < 0 && Math.abs(deltaX) > 2 * Math.abs(deltaY);
+            }
         }
     };
 

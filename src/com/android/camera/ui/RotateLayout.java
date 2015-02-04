@@ -22,6 +22,8 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.FrameLayout;
+
 // A RotateLayout is designed to display a single item and provides the
 // capabilities to rotate the item.
 public class RotateLayout extends ViewGroup implements Rotatable {
@@ -42,9 +44,25 @@ public class RotateLayout extends ViewGroup implements Rotatable {
 
     @Override
     protected void onFinishInflate() {
-        mChild = getChildAt(0);
-        mChild.setPivotX(0);
-        mChild.setPivotY(0);
+        setupChild(getChildAt(0));
+    }
+
+    private void setupChild(View child) {
+        if (child != null) {
+            mChild = child;
+            child.setPivotX(0);
+            child.setPivotY(0);
+        }
+    }
+
+    public void addView(View child) {
+        super.addView(child);
+        setupChild(child);
+    }
+
+    public void removeView(View v) {
+        super.removeView(v);
+        mOrientation = 0;
     }
 
     @Override
@@ -52,21 +70,22 @@ public class RotateLayout extends ViewGroup implements Rotatable {
             boolean change, int left, int top, int right, int bottom) {
         int width = right - left;
         int height = bottom - top;
+        int p = getPaddingTop();
         switch (mOrientation) {
             case 0:
             case 180:
-                mChild.layout(0, 0, width, height);
+                mChild.layout(p, p, width - p, height - p);
                 break;
             case 90:
             case 270:
-                mChild.layout(0, 0, height, width);
+                mChild.layout(p, p, height - p, width - p);
                 break;
         }
     }
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
-        int w = 0, h = 0;
+        int w = 0, h = 0, p = getPaddingTop();
         switch(mOrientation) {
             case 0:
             case 180:
@@ -81,7 +100,7 @@ public class RotateLayout extends ViewGroup implements Rotatable {
                 h = mChild.getMeasuredWidth();
                 break;
         }
-        setMeasuredDimension(w, h);
+        setMeasuredDimension(w + 2 * p, h + 2 * p);
 
         switch (mOrientation) {
             case 0:
@@ -109,13 +128,25 @@ public class RotateLayout extends ViewGroup implements Rotatable {
         return false;
     }
 
-    // Rotate the view counter-clockwise
     @Override
     public void setOrientation(int orientation, boolean animation) {
         orientation = orientation % 360;
         if (mOrientation == orientation) return;
+
+        if (getParent() instanceof FrameLayout) {
+            int diff = (orientation - mOrientation + 360) % 360;
+            if (diff == 90) {
+                RotatableLayout.rotateCounterClockwise(this);
+            } else if (diff == 180) {
+                RotatableLayout.rotateClockwise(this);
+                RotatableLayout.rotateClockwise(this);
+            } else if (diff == 270) {
+                RotatableLayout.rotateClockwise(this);
+            }
+        }
         mOrientation = orientation;
-        requestLayout();
+        if (mChild != null)
+            requestLayout();
     }
 
     public int getOrientation() {

@@ -787,7 +787,7 @@ public class PhotoModule
     @Override
     public void onSwitchSavePath() {
         mUI.setPreference(CameraSettings.KEY_CAMERA_SAVEPATH, "1");
-        Toast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
+        RotateTextToast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
                 Toast.LENGTH_SHORT).show();
     }
 
@@ -934,7 +934,7 @@ public class PhotoModule
             remainMemory <= LONGSHOT_CANCEL_THRESHOLD) {
             Log.d(TAG, "memory used up, need cancel longshot.");
             mLongshotActive = false;
-            Toast.makeText(mActivity,R.string.msg_cancel_longshot_for_limited_memory,
+            RotateTextToast.makeText(mActivity,R.string.msg_cancel_longshot_for_limited_memory,
                 Toast.LENGTH_SHORT).show();
             return true;
         }
@@ -1492,14 +1492,7 @@ public class PhotoModule
         }
 
         // Set rotation and gps data.
-        int orientation;
-        // We need to be consistent with the framework orientation (i.e. the
-        // orientation of the UI.) when the auto-rotate screen setting is on.
-        if (mActivity.isAutoRotateScreen()) {
-            orientation = (360 - mDisplayRotation) % 360;
-        } else {
-            orientation = mOrientation;
-        }
+        int orientation = mOrientation;
         mJpegRotation = CameraUtil.getJpegRotation(mCameraId, orientation);
         mParameters.setRotation(mJpegRotation);
         String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
@@ -1726,7 +1719,7 @@ public class PhotoModule
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
             disableLongShot = true;
-            Toast.makeText(mActivity, R.string.advanced_capture_disable_continuous_shot,
+            RotateTextToast.makeText(mActivity, R.string.advanced_capture_disable_continuous_shot,
                     Toast.LENGTH_LONG).show();
         }
 
@@ -1857,6 +1850,7 @@ public class PhotoModule
                 setFlipValue();
                 mCameraDevice.setParameters(mParameters);
             }
+            mUI.setOrientation(mOrientation, true);
         }
 
         // Show the toast after getting the first orientation changed.
@@ -3106,13 +3100,13 @@ public class PhotoModule
                 mFocusManager.overrideFocusMode(mFocusManager.getFocusMode());
             }
 
-            if(!pictureFormat.equals(PIXEL_FORMAT_JPEG)) {
-                     mActivity.runOnUiThread(new Runnable() {
-                     public void run() {
-                Toast.makeText(mActivity, R.string.error_app_unsupported_raw,
-                    Toast.LENGTH_SHORT).show();
-                         }
-                    });
+            if (!pictureFormat.equals(PIXEL_FORMAT_JPEG)) {
+                mActivity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_raw,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         } else if(zsl.equals("off")) {
             mSnapshotMode = CameraInfo.CAMERA_SUPPORT_MODE_NONZSL;
@@ -3702,7 +3696,7 @@ public class PhotoModule
                     if (focusStr.length() > 0) {
                         focuspos = Double.parseDouble(focusStr);
                     } else {
-                        Toast.makeText(mActivity, "Invalid focus position",
+                        RotateTextToast.makeText(mActivity, "Invalid focus position",
                                 Toast.LENGTH_SHORT).show();
                         return;
                     }
@@ -3716,7 +3710,7 @@ public class PhotoModule
                         updateCommonManual3ASettings();
                         onSharedPreferenceChanged();
                     } else {
-                        Toast.makeText(mActivity, "Invalid focus position",
+                        RotateTextToast.makeText(mActivity, "Invalid focus position",
                                 Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -3793,7 +3787,8 @@ public class PhotoModule
                         updateCommonManual3ASettings();
                         onSharedPreferenceChanged();
                     } else {
-                        Toast.makeText(mActivity, "Invalid CCT", Toast.LENGTH_SHORT).show();
+                        RotateTextToast.makeText(mActivity, "Invalid CCT", Toast.LENGTH_SHORT)
+                                .show();
                     }
                 }
             });
@@ -3855,11 +3850,11 @@ public class PhotoModule
                             updateCommonManual3ASettings();
                             onSharedPreferenceChanged();
                         } else {
-                            Toast.makeText(mActivity, "Invalid RGB gains",
+                            RotateTextToast.makeText(mActivity, "Invalid RGB gains",
                                     Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(mActivity, "Invalid RGB gains",
+                        RotateTextToast.makeText(mActivity, "Invalid RGB gains",
                                     Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -3947,7 +3942,7 @@ public class PhotoModule
                         updateCommonManual3ASettings();
                         onSharedPreferenceChanged();
                     } else {
-                        Toast.makeText(mActivity, "Invalid ISO", Toast.LENGTH_SHORT).show();
+                        RotateTextToast.makeText(mActivity, "Invalid ISO", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -3978,7 +3973,7 @@ public class PhotoModule
                         updateCommonManual3ASettings();
                         onSharedPreferenceChanged();
                     } else {
-                        Toast.makeText(mActivity, "Invalid exposure time",
+                        RotateTextToast.makeText(mActivity, "Invalid exposure time",
                                 Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -4025,7 +4020,8 @@ public class PhotoModule
                         updateCommonManual3ASettings();
                         onSharedPreferenceChanged();
                     } else {
-                        Toast.makeText(mActivity, "Invalid input", Toast.LENGTH_SHORT).show();
+                        RotateTextToast.makeText(mActivity, "Invalid input", Toast.LENGTH_SHORT)
+                                .show();
                     }
                 }
             });

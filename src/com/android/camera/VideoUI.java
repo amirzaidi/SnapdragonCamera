@@ -51,10 +51,12 @@ import com.android.camera.CameraPreference.OnPreferenceChangedListener;
 import com.android.camera.ui.AbstractSettingPopup;
 import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CameraRootView;
+import com.android.camera.ui.ListSubMenu;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.RenderOverlay;
 import com.android.camera.ui.RotateLayout;
+import com.android.camera.ui.RotateTextToast;
 import com.android.camera.ui.ZoomRenderer;
 import com.android.camera.util.CameraUtil;
 import org.codeaurora.snapcam.R;
@@ -101,8 +103,8 @@ public class VideoUI implements PieRenderer.PieListener,
     private boolean mOrientationResize;
     private boolean mPrevOrientationResize;
     private boolean mIsTimeLapse = false;
-    private LinearLayout mMenuLayout;
-    private LinearLayout mSubMenuLayout;
+    private RotateLayout mMenuLayout;
+    private RotateLayout mSubMenuLayout;
     private LinearLayout mPreviewMenuLayout;
 
     private View mPreviewCover;
@@ -117,6 +119,7 @@ public class VideoUI implements PieRenderer.PieListener,
     private final AnimationManager mAnimationManager;
     private boolean mUIhidden = false;
     private int mPreviewOrientation = -1;
+    private int mOrientation;
 
     // temporary variables for updating SurfaceView
     private int mTempWidth;
@@ -243,6 +246,7 @@ public class VideoUI implements PieRenderer.PieListener,
             @Override
             public void onClick(View v) {
                 mSwitcher.showPopup();
+                mSwitcher.setOrientation(mOrientation, false);
             }
         });
 
@@ -532,7 +536,6 @@ public class VideoUI implements PieRenderer.PieListener,
                 mLabelsLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
             }
         }
-        mRecordingTimeRect.setOrientation(0, animation);
     }
 
     public SurfaceHolder getSurfaceHolder() {
@@ -731,29 +734,46 @@ public class VideoUI implements PieRenderer.PieListener,
         popup.setVisibility(View.VISIBLE);
         if (level == 1) {
             if (mMenuLayout == null) {
-                mMenuLayout = new LinearLayout(mActivity);
-                ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
-                        CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT);
+                mMenuLayout = new RotateLayout(mActivity, null);
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                        CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT,
+                        Gravity.LEFT | Gravity.TOP);
                 mMenuLayout.setLayoutParams(params);
                 ((ViewGroup) mRootView).addView(mMenuLayout);
             }
+            mMenuLayout.setOrientation(mOrientation, true);
             mMenuLayout.addView(popup);
         }
         if (level == 2) {
             if (mSubMenuLayout == null) {
-                mSubMenuLayout = new LinearLayout(mActivity);
+                mSubMenuLayout = new RotateLayout(mActivity, null);
                 ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
                         CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT);
                 mSubMenuLayout.setLayoutParams(params);
 
                 ((ViewGroup) mRootView).addView(mSubMenuLayout);
             }
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT,
+                    Gravity.LEFT | Gravity.TOP);
+
+            int screenHeight = (mOrientation == 0 || mOrientation == 180)
+                    ? mRootView.getHeight() : mRootView.getWidth();
+            int height = ((ListSubMenu) popup).getPreCalculatedHeight();
+            int yBase = ((ListSubMenu) popup).getYBase();
+            int y = Math.max(0, yBase);
+            if (yBase + height > screenHeight)
+                y = Math.max(0, screenHeight - height);
+            params.setMargins(0, y, 0, 0);
+            params.setMarginStart(CameraActivity.SETTING_LIST_WIDTH_1);
+
+            mSubMenuLayout.setLayoutParams(params);
             mSubMenuLayout.addView(popup);
-            mSubMenuLayout.setX(CameraActivity.SETTING_LIST_WIDTH_1);
+            mSubMenuLayout.setOrientation(mOrientation, true);
         }
         if (animate) {
             if (level == 1)
-                mVideoMenu.animateSlideIn(popup, CameraActivity.SETTING_LIST_WIDTH_1, true);
+                mVideoMenu.animateSlideIn(mMenuLayout, CameraActivity.SETTING_LIST_WIDTH_1, true);
             if (level == 2)
                 mVideoMenu.animateFadeIn(popup);
         }
@@ -1050,5 +1070,43 @@ public class VideoUI implements PieRenderer.PieListener,
             return true;
         }
         return false;
+    }
+
+    public void setOrientation(int orientation, boolean animation) {
+        mCameraControls.setOrientation(orientation, animation);
+        if (mMenuLayout != null)
+            mMenuLayout.setOrientation(orientation, animation);
+        if (mSubMenuLayout != null)
+            mSubMenuLayout.setOrientation(orientation, animation);
+        if (mRecordingTimeRect != null) {
+            if (orientation == 180) {
+                mRecordingTimeRect.setOrientation(0, false);
+                mRecordingTimeView.setRotation(180);
+            } else {
+                mRecordingTimeView.setRotation(0);
+                mRecordingTimeRect.setOrientation(orientation, false);
+            }
+        }
+        if (mPreviewMenuLayout != null) {
+            ViewGroup vg = (ViewGroup) mPreviewMenuLayout.getChildAt(0);
+            if (vg != null)
+                vg = (ViewGroup) vg.getChildAt(0);
+            if (vg != null) {
+                for (int i = vg.getChildCount() - 1; i >= 0; --i) {
+                    RotateLayout l = (RotateLayout) vg.getChildAt(i);
+                    l.setOrientation(orientation, animation);
+                }
+            }
+        }
+        RotateTextToast.setOrientation(orientation);
+        mOrientation = orientation;
+    }
+
+    public int getOrientation() {
+        return mOrientation;
+    }
+
+    public void adjustOrientation() {
+        setOrientation(mOrientation, false);
     }
 }

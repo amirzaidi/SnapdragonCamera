@@ -39,6 +39,7 @@ import java.util.ArrayList;
 
 import org.codeaurora.snapcam.R;
 import com.android.camera.ui.ModuleSwitcher;
+import com.android.camera.ui.RotateImageView;
 import com.android.camera.ShutterButton;
 import com.android.camera.util.CameraUtil;
 
@@ -80,6 +81,7 @@ public class CameraControls extends RotatableLayout {
 
     private LinearLayout mRemainingPhotos;
     private TextView mRemainingPhotosText;
+    private int mOrientation;
 
     private int mPreviewRatio;
     private static int mTopMargin = 0;
@@ -776,34 +778,22 @@ public class CameraControls extends RotatableLayout {
         int h = mRemainingPhotos.getMeasuredHeight();
         int m = getResources().getDimensionPixelSize(R.dimen.remaining_photos_margin);
 
-        int hc, vc;
-        int rotation = getUnifiedRotation();
-        switch (rotation) {
-            case 90:
-                hc = (rl + rr) / 2 - m;
-                vc = (rt + rb) / 2;
-                break;
-            case 180:
-                hc = (rl + rr) / 2;
-                vc = (rt + rb) / 2 + m;
-                break;
-            case 270:
-                hc = (rl + rr) / 2 + m;
-                vc = (rt + rb) / 2;
-                break;
-            default:
-                hc = (rl + rr) / 2;
-                vc = (rt + rb) / 2 - m;
-                break;
+        int hc = (rl + rr) / 2;
+        int vc = (rt + rb) / 2 - m;
+        if (mOrientation == 90 || mOrientation == 270) {
+            vc -= w / 2;
         }
         mRemainingPhotos.layout(hc - w / 2, vc - h / 2, hc + w / 2, vc + h / 2);
+        mRemainingPhotos.setRotation(-mOrientation);
     }
 
     public void updateRemainingPhotos(int remaining) {
         if (remaining < 0) {
             mRemainingPhotos.setVisibility(View.GONE);
         } else {
-            mRemainingPhotos.setVisibility(View.VISIBLE);
+            for (int i = mRemainingPhotos.getChildCount() - 1; i >= 0; --i) {
+                mRemainingPhotos.getChildAt(i).setVisibility(View.VISIBLE);
+            }
             mRemainingPhotosText.setText(remaining + " ");
         }
     }
@@ -827,6 +817,18 @@ public class CameraControls extends RotatableLayout {
     public void showRefocusToast(boolean show) {
         mRefocusToast.setVisibility(show ? View.VISIBLE : View.GONE);
         mRemainingPhotos.setVisibility(show ? View.GONE : View.VISIBLE);
+    }
+
+    public void setOrientation(int orientation, boolean animation) {
+        mOrientation = orientation;
+        View[] views = {
+            mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
+            mHdrSwitcher, mMenu, mShutter, mPreview, mSwitcher
+        };
+        for (View v : views) {
+            ((RotateImageView) v).setOrientation(orientation, animation);
+        }
+        layoutRemaingPhotos();
     }
 
     private class ArrowTextView extends TextView {

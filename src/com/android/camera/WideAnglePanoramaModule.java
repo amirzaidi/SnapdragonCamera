@@ -50,6 +50,7 @@ import com.android.camera.CameraManager.CameraProxy;
 import com.android.camera.app.OrientationManager;
 import com.android.camera.data.LocalData;
 import com.android.camera.exif.ExifInterface;
+import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.UsageStatistics;
 import org.codeaurora.snapcam.R;
@@ -134,6 +135,7 @@ public class WideAnglePanoramaModule
     private int mDeviceOrientationAtCapture;
     private int mCameraOrientation;
     private int mOrientationCompensation;
+    private boolean mOrientationLocked;
 
     private SoundClips.Player mSoundPlayer;
 
@@ -192,6 +194,7 @@ public class WideAnglePanoramaModule
             // the camera then point the camera to floor or sky, we still have
             // the correct orientation.
             if (orientation == ORIENTATION_UNKNOWN) return;
+            int oldOrientation = mDeviceOrientation;
             mDeviceOrientation = CameraUtil.roundOrientation(orientation, mDeviceOrientation);
             // When the screen is unlocked, display rotation may change. Always
             // calculate the up-to-date orientationCompensation.
@@ -199,6 +202,11 @@ public class WideAnglePanoramaModule
                     + CameraUtil.getDisplayRotation(mActivity) % 360;
             if (mOrientationCompensation != orientationCompensation) {
                 mOrientationCompensation = orientationCompensation;
+            }
+            if (oldOrientation != mDeviceOrientation
+                    && oldOrientation != OrientationEventListener.ORIENTATION_UNKNOWN) {
+                if (!mOrientationLocked)
+                    mUI.setOrientation(mDeviceOrientation, true);
             }
         }
     }
@@ -555,8 +563,7 @@ public class WideAnglePanoramaModule
         mUI.showCaptureProgress();
         mDeviceOrientationAtCapture = mDeviceOrientation;
         keepScreenOn();
-        // TODO: mActivity.getOrientationManager().lockOrientation();
-        mOrientationManager.lockOrientation();
+        mOrientationLocked = true;
         int degrees = CameraUtil.getDisplayRotation(mActivity);
         int cameraId = CameraHolder.instance().getBackCameraId();
         int orientation = CameraUtil.getDisplayOrientation(degrees, cameraId);
@@ -744,7 +751,8 @@ public class WideAnglePanoramaModule
     private void reset() {
         mCaptureState = CAPTURE_STATE_VIEWFINDER;
 
-        mOrientationManager.unlockOrientation();
+        mOrientationLocked = false;
+        mUI.setOrientation(mDeviceOrientation, true);
         mUI.reset();
         mActivity.setSwipingEnabled(true);
         // Orientation change will trigger onLayoutChange->configMosaicPreview->
@@ -901,7 +909,7 @@ public class WideAnglePanoramaModule
     @Override
     public void onSwitchSavePath() {
         mPreferences.edit().putString(CameraSettings.KEY_CAMERA_SAVEPATH, "1").apply();
-        Toast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
+        RotateTextToast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
                 Toast.LENGTH_SHORT).show();
     }
 

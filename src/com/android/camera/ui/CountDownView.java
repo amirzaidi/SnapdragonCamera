@@ -147,4 +147,13 @@ public class CountDownView extends FrameLayout {
             }
         }
     }
+
+    public void setOrientation(int orientation) {
+        mRemainingSecondsView.setRotation(-orientation);
+        if (orientation == 0) {
+            mCountDownTitle.setVisibility(View.VISIBLE);
+        } else {
+            mCountDownTitle.setVisibility(View.GONE);
+        }
+    }
 }

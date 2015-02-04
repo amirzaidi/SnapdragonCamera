@@ -104,8 +104,7 @@ public class MenuController {
                 return;
             }
         }
-        ImageView iv = (ImageView) ((FrameLayout) switcher).getChildAt(0);
-        iv.setImageResource(pref.getLargeIconIds()[index]);
+        ((ImageView) switcher).setImageResource(pref.getLargeIconIds()[index]);
 
     }
 

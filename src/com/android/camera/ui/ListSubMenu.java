@@ -80,16 +80,6 @@ public class ListSubMenu extends ListView implements
         }
     }
 
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int screenHeight = ((LinearLayout) getParent()).getHeight();
-        super.onLayout(changed, l, t, r, b);
-        setY(Math.max(0, mY));
-        if (mY + (b - t) > screenHeight) {
-            setY(Math.max(0, mY - (mY + (b - t) - screenHeight)));
-        }
-    }
-
     public void initialize(ListPreference preference, int y) {
         mPreference = preference;
         Context context = getContext();
@@ -153,5 +143,15 @@ public class ListSubMenu extends ListView implements
     @Override
     protected void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
+    }
+
+    public int getPreCalculatedHeight() {
+        int count = getAdapter().getCount();
+        return count * (int) getContext().getResources().getDimension(R.dimen.setting_row_height)
+                + (count - 1) * getDividerHeight();
+    }
+
+    public int getYBase() {
+        return mY;
     }
 }

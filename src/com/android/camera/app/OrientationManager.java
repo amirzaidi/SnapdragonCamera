@@ -36,12 +36,6 @@ public class OrientationManager {
 
     private Activity mActivity;
     private MyOrientationEventListener mOrientationListener;
-    // If the framework orientation is locked.
-    private boolean mOrientationLocked = false;
-
-    // This is true if "Settings -> Display -> Rotation Lock" is checked. We
-    // don't allow the orientation to be unlocked if the value is true.
-    private boolean mRotationLockedSetting = false;
 
     public OrientationManager(Activity activity) {
         mActivity = activity;
@@ -50,47 +44,11 @@ public class OrientationManager {
 
     public void resume() {
         ContentResolver resolver = mActivity.getContentResolver();
-        mRotationLockedSetting = Settings.System.getInt(
-                resolver, Settings.System.ACCELEROMETER_ROTATION, 0) != 1;
         mOrientationListener.enable();
     }
 
     public void pause() {
         mOrientationListener.disable();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    //  Orientation handling
-    //
-    //  We can choose to lock the framework orientation or not. If we lock the
-    //  framework orientation, we calculate a a compensation value according to
-    //  current device orientation and send it to listeners. If we don't lock
-    //  the framework orientation, we always set the compensation value to 0.
-    ////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Lock the framework orientation to the current device orientation
-     * rotates. No effect if the system setting of auto-rotation is off.
-     */
-    public void lockOrientation() {
-        if (mOrientationLocked || mRotationLockedSetting) return;
-        mOrientationLocked = true;
-        if (ApiHelper.HAS_ORIENTATION_LOCK) {
-            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
-        } else {
-            mActivity.setRequestedOrientation(calculateCurrentScreenOrientation());
-        }
-    }
-
-    /**
-     * Unlock the framework orientation, so it can change when the device
-     * rotates. No effect if the system setting of auto-rotation is off.
-     */
-    public void unlockOrientation() {
-        if (!mOrientationLocked || mRotationLockedSetting) return;
-        mOrientationLocked = false;
-        Log.d(TAG, "unlock orientation");
-        mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
     }
 
     private int calculateCurrentScreenOrientation() {

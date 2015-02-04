@@ -26,32 +26,36 @@
      OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
      IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="@dimen/filter_mode_width"
-    android:layout_height="@dimen/filter_mode_height"
-    android:layout_gravity="center"
-    android:orientation="vertical"
-    android:padding="@dimen/filter_mode_padding" >
+<com.android.camera.ui.RotateLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/filter_mode_padding">
 
-    <ImageView
-        android:id="@+id/image"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:padding="2dp" />
+    <LinearLayout
+        android:layout_width="@dimen/filter_mode_width"
+        android:layout_height="@dimen/filter_mode_height"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:shadowColor="@android:color/black"
-        android:shadowDx="1"
-        android:shadowDy="1"
-        android:shadowRadius="2"
-        android:singleLine="true"
-        android:textColor="@android:color/white"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:padding="2dp" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:shadowColor="@android:color/black"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2"
+            android:singleLine="true"
+            android:textColor="@android:color/white"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</com.android.camera.ui.RotateLayout>

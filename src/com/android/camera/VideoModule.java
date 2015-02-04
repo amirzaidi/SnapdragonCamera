@@ -387,8 +387,9 @@ public class VideoModule implements CameraModule,
             if (action.equals(Intent.ACTION_MEDIA_EJECT)) {
                 stopVideoRecording();
             } else if (action.equals(Intent.ACTION_MEDIA_SCANNER_STARTED)) {
-                Toast.makeText(mActivity,
-                        mActivity.getResources().getString(R.string.wait), Toast.LENGTH_LONG).show();
+                RotateTextToast.makeText(mActivity,
+                        mActivity.getResources().getString(R.string.wait), Toast.LENGTH_LONG)
+                        .show();
             }
         }
     }
@@ -573,6 +574,7 @@ public class VideoModule implements CameraModule,
                 setFlipValue();
                 mCameraDevice.setParameters(mParameters);
             }
+            mUI.setOrientation(newOrientation, true);
         }
 
         // Show the toast after getting the first orientation changed.
@@ -955,7 +957,7 @@ public class VideoModule implements CameraModule,
     @Override
     public void onSwitchSavePath() {
         mUI.setPreference(CameraSettings.KEY_CAMERA_SAVEPATH, "1");
-        Toast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
+        RotateTextToast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
                 Toast.LENGTH_SHORT).show();
     }
 
@@ -1315,8 +1317,8 @@ public class VideoModule implements CameraModule,
                             "mMaxFrameWidth = " + videoEncoder.mMaxFrameWidth + " , " +
                             "mMaxFrameHeight = " + videoEncoder.mMaxFrameHeight);
                     mUnsupportedResolution = true;
-                    Toast.makeText(mActivity, R.string.error_app_unsupported,
-                    Toast.LENGTH_LONG).show();
+                    RotateTextToast.makeText(mActivity, R.string.error_app_unsupported,
+                            Toast.LENGTH_LONG).show();
                     return;
                 }
                 break;
@@ -1568,7 +1570,7 @@ public class VideoModule implements CameraModule,
             if (mMediaRecorderRecording) onStopVideoRecording();
 
             // Show the toast.
-            Toast.makeText(mActivity, R.string.video_reach_size_limit,
+            RotateTextToast.makeText(mActivity, R.string.video_reach_size_limit,
                     Toast.LENGTH_LONG).show();
         }
     }
@@ -1607,22 +1609,24 @@ public class VideoModule implements CameraModule,
 
         if( mUnsupportedHFRVideoSize == true) {
             Log.e(TAG, "Unsupported HFR and video size combinations");
-            Toast.makeText(mActivity,R.string.error_app_unsupported_hfr, Toast.LENGTH_SHORT).show();
+            RotateTextToast.makeText(mActivity,R.string.error_app_unsupported_hfr,
+                    Toast.LENGTH_SHORT).show();
             mStartRecPending = false;
             return;
         }
 
         if (mUnsupportedHSRVideoSize == true) {
             Log.e(TAG, "Unsupported HSR and video size combinations");
-            Toast.makeText(mActivity,R.string.error_app_unsupported_hsr, Toast.LENGTH_SHORT).show();
+            RotateTextToast.makeText(mActivity,R.string.error_app_unsupported_hsr,
+                    Toast.LENGTH_SHORT).show();
             mStartRecPending = false;
             return;
         }
 
         if( mUnsupportedHFRVideoCodec == true) {
             Log.e(TAG, "Unsupported HFR and video codec combinations");
-            Toast.makeText(mActivity, R.string.error_app_unsupported_hfr_codec,
-            Toast.LENGTH_SHORT).show();
+            RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_hfr_codec,
+                    Toast.LENGTH_SHORT).show();
             mStartRecPending = false;
             return;
         }
@@ -1674,7 +1678,6 @@ public class VideoModule implements CameraModule,
         mMediaRecorderRecording = true;
         mMediaRecorderPausing = false;
         mUI.resetPauseButton();
-        mOrientationManager.lockOrientation();
         mRecordingTotalTime = 0L;
         mRecordingStartTime = SystemClock.uptimeMillis();
         mUI.showRecordingUI(true);
@@ -1772,8 +1775,6 @@ public class VideoModule implements CameraModule,
             //flag here so that we can take liveshots in the next recording session.
             mSnapshotInProgress = false;
             showVideoSnapshotUI(false);
-
-            mOrientationManager.unlockOrientation();
 
             // If the activity is paused, this means activity is interrupted
             // during recording. Release the camera as soon as possible because
@@ -2017,7 +2018,7 @@ public class VideoModule implements CameraModule,
                         mActivity.getString(R.string.pref_camera_dis_value_disable));
                 mUI.overrideSettings(CameraSettings.KEY_DIS,
                         mActivity.getString(R.string.pref_camera_dis_value_disable));
-                Toast.makeText(mActivity, R.string.video_quality_4k_disable_IS,
+                RotateTextToast.makeText(mActivity, R.string.video_quality_4k_disable_IS,
                         Toast.LENGTH_LONG).show();
             } else {
                 Log.e(TAG, "Not supported IS mode = " +
@@ -2247,7 +2248,7 @@ public class VideoModule implements CameraModule,
                   (disMode.equals("enable")) ||
                   ((hdr != null) && (!hdr.equals("off"))) ) {
                 Log.v(TAG,"HDR/DIS/Time Lapse ON for HFR/HSR selection, turning HFR/HSR off");
-                Toast.makeText(mActivity, R.string.error_app_unsupported_hfr_selection,
+                RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_hfr_selection,
                           Toast.LENGTH_LONG).show();
                 mParameters.setVideoHighFrameRate("off");
                 mParameters.set(CameraSettings.KEY_VIDEO_HSR, "off");
@@ -2262,7 +2263,7 @@ public class VideoModule implements CameraModule,
         if (biggestSize.width <= videoWidth || biggestSize.height <= videoHeight) {
             if (disMode.equals("enable")) {
                 Log.v(TAG,"DIS is not supported for this video quality");
-                Toast.makeText(mActivity, R.string.error_app_unsupported_dis,
+                RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_dis,
                                Toast.LENGTH_LONG).show();
                 mParameters.set(CameraSettings.KEY_QC_DIS_MODE, "disable");
                 mUI.overrideSettings(CameraSettings.KEY_DIS,"disable");
@@ -2631,8 +2632,7 @@ public class VideoModule implements CameraModule,
     }
 
     private void showTapToSnapshotToast() {
-        new RotateTextToast(mActivity, R.string.video_snapshot_hint, 0)
-                .show();
+        new RotateTextToast(mActivity, R.string.video_snapshot_hint, 0).show();
         // Clear the preference.
         Editor editor = mPreferences.edit();
         editor.putBoolean(CameraSettings.KEY_VIDEO_FIRST_USE_HINT_SHOWN, false);

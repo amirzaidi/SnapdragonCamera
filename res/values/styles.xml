@@ -248,22 +248,14 @@
         <item name="android:background">@drawable/bg_pressed_exit_fading</item>
     </style>
     <style name="MenuButton">
-        <item name="android:layout_width">@dimen/menu_size</item>
-        <item name="android:layout_height">@dimen/menu_size</item>
-    </style>
-    <style name="MenuButtonOuter">
         <item name="android:layout_width">@dimen/menu_outer_size</item>
         <item name="android:layout_height">@dimen/menu_outer_size</item>
-        <item name="android:background">@drawable/bg_pressed_exit_fading</item>
+        <item name="android:scaleType">center</item>
     </style>
     <style name="ToggleButton">
-        <item name="android:layout_width">@dimen/toggle_size</item>
-        <item name="android:layout_height">@dimen/toggle_size</item>
-    </style>
-    <style name="ToggleButtonOuter">
         <item name="android:layout_width">@dimen/toggle_outer_size</item>
         <item name="android:layout_height">@dimen/toggle_outer_size</item>
-        <item name="android:background">@drawable/bg_pressed_exit_fading</item>
+        <item name="android:scaleType">center</item>
     </style>
     <style name="MenuIndicator">
         <item name="android:layout_width">wrap_content</item>
@@ -308,7 +300,6 @@
         <item name="android:background">@drawable/bg_pressed</item>
     </style>
     <style name="PanoViewHorizontalBar">
-        <item name="android:background">#000000</item>
-        <item name="android:alpha">1.0</item>
+        <item name="android:background">@android:color/transparent</item>
     </style>
 </resources>
