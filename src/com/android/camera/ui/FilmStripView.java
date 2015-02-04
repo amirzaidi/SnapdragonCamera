@@ -1735,7 +1735,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
         mDataAdapter.setListener(new DataAdapter.Listener() {
             @Override
             public void onDataLoaded() {
-                mActivity.updatePreviewThumbnail();
+                mActivity.updateThumbnail(false);
                 if (!mIsLoaded)
                     reload();
                 mIsLoaded = true;
@@ -1754,7 +1754,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
                     return;
                 }
                 updateInsertion(dataID);
-                mActivity.updatePreviewThumbnailForVideo();
+                mActivity.updateThumbnail(true);
             }
 
             @Override
