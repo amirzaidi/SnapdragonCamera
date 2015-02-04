@@ -743,10 +743,6 @@ public class WideAnglePanoramaModule
         }
     }
 
-    public void updatePreviewThumbnail() {
-        mUI.updatePreviewThumbnail();
-    }
-
     // This function will be called upon the first camera frame is available.
     private void reset() {
         mCaptureState = CAPTURE_STATE_VIEWFINDER;

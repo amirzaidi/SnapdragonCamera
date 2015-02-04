@@ -36,7 +36,18 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapRegionDecoder;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.media.ThumbnailUtils;
 import android.nfc.NfcAdapter;
@@ -84,6 +95,7 @@ import com.android.camera.data.LocalDataAdapter;
 import com.android.camera.data.LocalMediaObserver;
 import com.android.camera.data.MediaDetails;
 import com.android.camera.data.SimpleViewData;
+import com.android.camera.exif.ExifInterface;
 import com.android.camera.tinyplanet.TinyPlanetFragment;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.DetailsDialog;
@@ -99,6 +111,7 @@ import com.android.camera.util.UsageStatistics;
 import org.codeaurora.snapcam.R;
 
 import java.io.File;
+import java.io.IOException;
 
 import static com.android.camera.CameraManager.CameraOpenErrorCallback;
 
@@ -212,7 +225,12 @@ public class CameraActivity extends Activity
     private Intent mImageShareIntent;
     public static int SETTING_LIST_WIDTH_1 = 250;
     public static int SETTING_LIST_WIDTH_2 = 250;
-    private Bitmap mPreviewThumbnailBitmap;
+
+    private ImageView mThumbnail;
+    private CircularDrawable mThumbnailDrawable;
+    // FilmStripView.setDataAdapter fires 2 onDataLoaded calls before any data is actually loaded
+    // Keep track of data request here to avoid creating useless UpdateThumbnailTask.
+    private boolean mDataRequested;
 
     private AudioManager mAudioManager;
     private int mShutterVol;
@@ -647,48 +665,47 @@ public class CameraActivity extends Activity
         return s;
     }
 
-    public void setPreviewThumbnailBitmap(Bitmap bitmap) {
-        mPreviewThumbnailBitmap = bitmap;
+    public void updateThumbnail(final byte[] jpegData) {
+        (new UpdateThumbnailTask(jpegData, false)).execute();
     }
 
-    public Bitmap getPreviewThumbBitmap() {
-        return mPreviewThumbnailBitmap;
-    }
-
-    public void updatePreviewThumbnail() {
-        if (mCurrentModule != null) {
-            if (mCurrentModule instanceof VideoModule) {
-                ((VideoModule) mCurrentModule).updatePreviewThumbnail();
-            }
-            else if (mCurrentModule instanceof WideAnglePanoramaModule) {
-                ((WideAnglePanoramaModule) mCurrentModule).updatePreviewThumbnail();
-            }
-            else if (mCurrentModule instanceof PhotoModule) {
-                ((PhotoModule) mCurrentModule).updatePreviewThumbnail();
-            }
+    public void updateThumbnail(final Bitmap bitmap) {
+        mThumbnailDrawable = new CircularDrawable(bitmap);
+        if (mThumbnail != null) {
+            mThumbnail.setImageDrawable(mThumbnailDrawable);
+            mThumbnail.setVisibility(View.VISIBLE);
         }
     }
 
-    public void updatePreviewThumbnailForVideo() {
-        if (mCurrentModule != null) {
-            if (mCurrentModule instanceof VideoModule) {
-                ((VideoModule) mCurrentModule).updatePreviewThumbnail();
-            }
+    public void updateThumbnail(ImageView thumbnail) {
+        mThumbnail = thumbnail;
+        if (mThumbnailDrawable != null) {
+            mThumbnail.setImageDrawable(mThumbnailDrawable);
+            mThumbnail.setVisibility(View.VISIBLE);
         }
     }
 
-    public class UpdatePreviewThumbnail extends AsyncTask<Void, Void, Bitmap> {
-        private ImageView imgView;
-        private Bitmap imgBitmap = null;
+    public void updateThumbnail(boolean videoOnly) {
+        // Only handle OnDataInserted if it's video.
+        // Photo and Panorama have their own way of updating thumbnail.
+        if (!videoOnly || (mCurrentModule instanceof VideoModule)) {
+            (new UpdateThumbnailTask(null, true)).execute();
+        }
+    }
 
-        public UpdatePreviewThumbnail(ImageView view) {
-            imgView = view;
+    private class UpdateThumbnailTask extends AsyncTask<Void, Void, Bitmap> {
+        private final byte[] mJpegData;
+        private final boolean mCheckOrientation;
+
+        public UpdateThumbnailTask(final byte[] jpegData, boolean checkOrientation) {
+            mJpegData = jpegData;
+            mCheckOrientation = checkOrientation;
         }
 
         @Override
         protected Bitmap doInBackground(Void... params) {
-            if (imgBitmap != null)
-                return imgBitmap;
+            if (mJpegData != null)
+                return decodeImageCenter(null);
 
             LocalDataAdapter adapter = getDataAdapter();
             ImageData img = adapter.getImageData(1);
@@ -702,22 +719,146 @@ public class CameraActivity extends Activity
             }
             else {
                 if (img.isPhoto()) {
-                    BitmapFactory.Options opt = new BitmapFactory.Options();
-                    opt.inSampleSize = 4;
-                    return BitmapFactory.decodeFile(path, opt);
+                    return decodeImageCenter(path);
                 } else {
                     return ThumbnailUtils
-                            .createVideoThumbnail(path, MediaStore.Video.Thumbnails.MICRO_KIND);
+                            .createVideoThumbnail(path, MediaStore.Video.Thumbnails.MINI_KIND);
                 }
             }
         }
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            if (imgView == null)
-                return;
-            imgView.setImageBitmap(bitmap);
-            setPreviewThumbnailBitmap(bitmap);
+            if (bitmap == null) {
+                if (mThumbnail != null) {
+                    mThumbnail.setVisibility(View.GONE);
+                }
+            } else {
+                updateThumbnail(bitmap);
+            }
+        }
+
+        private Bitmap decodeImageCenter(final String path) {
+            // Check photo orientation for Panorama. This is necessary during app launch because
+            // Panorama module generates thumbnail bitmap with orientation adjustment but only
+            // saves jpeg with orientation tag set.
+            int orientation = 0;
+            if (mCheckOrientation) {
+                ExifInterface exif = new ExifInterface();
+                try {
+                    if (mJpegData != null) {
+                        exif.readExif(mJpegData);
+                    } else {
+                        exif.readExif(path);
+                    }
+                    orientation = Exif.getOrientation(exif);
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+
+            final BitmapFactory.Options opt = new BitmapFactory.Options();
+            opt.inJustDecodeBounds = true;
+            if (mJpegData != null) {
+                BitmapFactory.decodeByteArray(mJpegData, 0, mJpegData.length, opt);
+            } else {
+                BitmapFactory.decodeFile(path, opt);
+            }
+
+            int w = opt.outWidth;
+            int h = opt.outHeight;
+            int d = w > h ? h : w;
+            final Rect rect = w > h ? new Rect((w - h) / 2, 0, (w + h) / 2, h)
+                    : new Rect(0, (h - w) / 2, w, (h + w) / 2);
+
+            final int target = getResources().getDimensionPixelSize(R.dimen.capture_size);
+            int sample = 1;
+            if (d > target) {
+                while (d / sample / 2 > target) {
+                    sample *= 2;
+                }
+            }
+
+            opt.inJustDecodeBounds = false;
+            opt.inSampleSize = sample;
+            final BitmapRegionDecoder decoder;
+            try {
+                if (mJpegData == null) {
+                    decoder = BitmapRegionDecoder.newInstance(path, true);
+                } else {
+                    decoder = BitmapRegionDecoder.newInstance(mJpegData, 0, mJpegData.length, true);
+                }
+            } catch (IOException e) {
+                return null;
+            }
+            Bitmap bitmap = decoder.decodeRegion(rect, opt);
+            if (orientation != 0) {
+                Matrix matrix = new Matrix();
+                matrix.setRotate(orientation);
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0,
+                        bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+            }
+            return bitmap;
+        }
+    }
+
+    private class CircularDrawable extends Drawable {
+        private final BitmapShader mBitmapShader;
+        private final Paint mPaint;
+        private Rect mRect;
+        private int mLength;
+
+        public CircularDrawable(Bitmap bitmap) {
+            int w = bitmap.getWidth();
+            int h = bitmap.getHeight();
+            if (w > h) {
+                mLength = h;
+                bitmap = Bitmap.createBitmap(bitmap, (w - h) / 2, 0, h, h);
+            } else if (w < h) {
+                mLength = w;
+                bitmap = Bitmap.createBitmap(bitmap, 0, (h - w) / 2, w, w);
+            }
+
+            mBitmapShader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mPaint.setShader(mBitmapShader);
+        }
+
+        @Override
+        protected void onBoundsChange(Rect bounds) {
+            super.onBoundsChange(bounds);
+            mRect = bounds;
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            canvas.drawRoundRect(new RectF(mRect), (mRect.right - mRect.left) / 2,
+                    (mRect.bottom - mRect.top) / 2, mPaint);
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            mPaint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter filter) {
+            mPaint.setColorFilter(filter);
+        }
+
+        @Override
+        public int getIntrinsicWidth() {
+            return mLength;
+        }
+
+        @Override
+        public int getIntrinsicHeight() {
+            return mLength;
         }
     }
 
@@ -1298,6 +1439,7 @@ public class CameraActivity extends Activity
             mFilmStripView.setDataAdapter(mDataAdapter);
             if (!isCaptureIntent()) {
                 mDataAdapter.requestLoad(getContentResolver());
+                mDataRequested = true;
             }
         } else {
             // Put a lock placeholder as the last image by setting its date to
@@ -1447,7 +1589,7 @@ public class CameraActivity extends Activity
                 // If it's secure camera, requestLoad() should not be called
                 // as it will load all the data.
                 mDataAdapter.requestLoad(getContentResolver());
-                setPreviewThumbnailBitmap(null);
+                mThumbnailDrawable = null;
             }
         }
         mLocalImagesObserver.setActivityPaused(false);
