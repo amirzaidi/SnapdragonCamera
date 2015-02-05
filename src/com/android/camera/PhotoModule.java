@@ -1975,9 +1975,14 @@ public class PhotoModule
 
     @Override
     public void onShutterButtonFocus(boolean pressed) {
-        if (mPaused || mUI.collapseCameraControls()
+        if (mCameraDevice == null
+                || mPaused || mUI.collapseCameraControls()
                 || (mCameraState == SNAPSHOT_IN_PROGRESS)
-                || (mCameraState == PREVIEW_STOPPED)) return;
+                || (mCameraState == PREVIEW_STOPPED)) {
+            Log.v(TAG, "onShutterButtonFocus error case mCameraState = " + mCameraState
+                + "mCameraDevice = " + mCameraDevice + "mPaused =" + mPaused);
+            return;
+        }
 
         synchronized(mCameraDevice) {
            if (mCameraState == LONGSHOT) {
