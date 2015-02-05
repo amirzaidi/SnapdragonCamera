@@ -533,6 +533,7 @@ public class PhotoModule
     }
 
     private void onPreviewStarted() {
+        mUI.hidePreviewCover();
         setCameraState(IDLE);
         mFocusManager.onPreviewStarted();
         startFaceDetection();
