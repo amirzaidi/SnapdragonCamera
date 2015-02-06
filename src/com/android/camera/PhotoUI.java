@@ -390,6 +390,8 @@ public class PhotoUI implements PieListener,
             }
         } else {
             float width = mOriginalPreviewWidth, height = mOriginalPreviewHeight;
+            if (width == 0 || height == 0) return;
+
             if (mOrientationResize) {
                 scaledTextureWidth = height * mAspectRatio;
                 if (scaledTextureWidth > width) {
