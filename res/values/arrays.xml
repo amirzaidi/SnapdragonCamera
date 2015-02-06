@@ -414,7 +414,6 @@
         <item>@drawable/ic_scene_mode_auto</item>
         <item>@drawable/ic_scene_mode_refocus</item>
         <item>@drawable/ic_scene_mode_portrait</item>
-        <item>@drawable/ic_scene_mode_portrait</item>
         <item>@drawable/ic_scene_mode_landscape</item>
         <item>@drawable/ic_scene_mode_sports</item>
         <item>@drawable/ic_scene_mode_flower</item>
