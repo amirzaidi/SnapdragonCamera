@@ -421,6 +421,7 @@ public class CameraActivity extends Activity
                     if(!arePreviewControlsVisible()) {
                         setPreviewControlsVisibility(true);
                         CameraActivity.this.setSystemBarsVisibility(false);
+                        mFilmStripView.getController().goToFullScreen();
                     }
                 }
 
