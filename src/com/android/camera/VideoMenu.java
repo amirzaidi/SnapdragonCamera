@@ -699,7 +699,11 @@ public class VideoMenu extends MenuController
 
     public void showUI() {
         mFrontBackSwitcher.setVisibility(View.VISIBLE);
-        mFilterModeSwitcher.setVisibility(View.VISIBLE);
+        final IconListPreference pref = (IconListPreference) mPreferenceGroup
+                .findPreference(CameraSettings.KEY_COLOR_EFFECT);
+        if (pref != null) {
+            mFilterModeSwitcher.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
