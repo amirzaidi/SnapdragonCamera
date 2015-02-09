@@ -4076,6 +4076,7 @@ public class PhotoModule
             Storage.setSaveSDCard(
                     mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
             mActivity.updateStorageSpaceAndHint();
+            updateRemainingPhotos();
         }
 
         //call generic onSharedPreferenceChanged
