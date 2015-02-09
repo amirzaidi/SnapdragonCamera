@@ -996,6 +996,10 @@ public class CameraActivity extends Activity
     public void notifyNewMedia(Uri uri) {
         ContentResolver cr = getContentResolver();
         String mimeType = cr.getType(uri);
+        if (mimeType == null) {
+            Log.e(TAG, "mimeType is NULL");
+            return;
+        }
         if (mimeType.startsWith("video/")) {
             sendBroadcast(new Intent(CameraUtil.ACTION_NEW_VIDEO, uri));
             mDataAdapter.addNewVideo(cr, uri);
