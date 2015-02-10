@@ -49,6 +49,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
@@ -217,6 +219,7 @@ public class CameraActivity extends Activity
     private AudioManager mAudioManager;
     private int mShutterVol;
     private int mOriginalMasterVol;
+    private WakeLock mWakeLock;
 
     private class MyOrientationEventListener
             extends OrientationEventListener {
@@ -1176,6 +1179,43 @@ public class CameraActivity extends Activity
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        // Check if this is in the secure camera mode.
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        if (INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)
+                || ACTION_IMAGE_CAPTURE_SECURE.equals(action)
+                || intent.getComponent().getClassName().equals(GESTURE_CAMERA_NAME)) {
+            mSecureCamera = true;
+        } else {
+            mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
+        }
+
+        if (mSecureCamera) {
+            // Change the window flags so that secure camera can show when locked
+            Window win = getWindow();
+            WindowManager.LayoutParams params = win.getAttributes();
+            params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+            if (intent.getComponent().getClassName().equals(GESTURE_CAMERA_NAME)) {
+                params.flags |= WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
+                PowerManager pm = ((PowerManager) getSystemService(POWER_SERVICE));
+                mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+                mWakeLock.acquire();
+                Log.d(TAG, "acquire wake lock");
+            }
+            win.setAttributes(params);
+
+            // Filter for screen off so that we can finish secure camera activity
+            // when screen is off.
+            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+            registerReceiver(mScreenOffReceiver, filter);
+            // TODO: This static screen off event receiver is a workaround to the
+            // double onResume() invocation (onResume->onPause->onResume). We should
+            // find a better solution to this.
+            if (sScreenOffReceiver == null) {
+                sScreenOffReceiver = new ScreenOffReceiver();
+                registerReceiver(sScreenOffReceiver, filter);
+            }
+        }
         GcamHelper.init(getContentResolver());
 
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -1195,39 +1235,7 @@ public class CameraActivity extends Activity
         }
 
         mMainHandler = new MainHandler(getMainLooper());
-        // Check if this is in the secure camera mode.
-        Intent intent = getIntent();
-        String action = intent.getAction();
-        if (INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)
-                || ACTION_IMAGE_CAPTURE_SECURE.equals(action)
-                || intent.getComponent().getClassName().equals(GESTURE_CAMERA_NAME)) {
-            mSecureCamera = true;
-        } else {
-            mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
-        }
 
-        if (mSecureCamera) {
-            // Change the window flags so that secure camera can show when locked
-            Window win = getWindow();
-            WindowManager.LayoutParams params = win.getAttributes();
-            params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
-            if (intent.getComponent().getClassName().equals(GESTURE_CAMERA_NAME)) {
-                params.flags |= WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
-            }
-            win.setAttributes(params);
-
-            // Filter for screen off so that we can finish secure camera activity
-            // when screen is off.
-            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-            registerReceiver(mScreenOffReceiver, filter);
-            // TODO: This static screen off event receiver is a workaround to the
-            // double onResume() invocation (onResume->onPause->onResume). We should
-            // find a better solution to this.
-            if (sScreenOffReceiver == null) {
-                sScreenOffReceiver = new ScreenOffReceiver();
-                registerReceiver(sScreenOffReceiver, filter);
-            }
-        }
         mAboveFilmstripControlLayout =
                 (FrameLayout) findViewById(R.id.camera_above_filmstrip_layout);
         mAboveFilmstripControlLayout.setFitsSystemWindows(true);
@@ -1478,6 +1486,10 @@ public class CameraActivity extends Activity
 
     @Override
     public void onDestroy() {
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            mWakeLock.release();
+            Log.d(TAG, "wake lock release");
+        }
         if (mShutterVol >= 0 && mShutterVol <= 100)
             mAudioManager.setMasterVolume(mOriginalMasterVol,0);
         if (mSecureCamera) {
