@@ -1851,6 +1851,9 @@ public class PhotoModule
                 mCameraDevice.setParameters(mParameters);
             }
             mUI.setOrientation(mOrientation, true);
+            if (mGraphView != null) {
+                mGraphView.setRotation(-mOrientation);
+            }
         }
 
         // Show the toast after getting the first orientation changed.
