@@ -20,8 +20,8 @@ import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.AnimationDrawable;
-import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Paint;
@@ -803,13 +803,17 @@ public class CameraControls extends RotatableLayout {
         mBottomMargin = bottom;
     }
 
-    public void setPreviewRatio(float ratio) {
-        int r = CameraUtil.determineRatio(ratio);
-        mPreviewRatio = r;
-        if (mPreviewRatio == CameraUtil.RATIO_4_3 && mTopMargin != 0) {
-            mPaint.setColor(getResources().getColor(R.color.camera_control_bg_opaque));
+    public void setPreviewRatio(float ratio, boolean panorama) {
+        if (panorama) {
+            mPaint.setColor(Color.TRANSPARENT);
         } else {
-            mPaint.setColor(getResources().getColor(R.color.camera_control_bg_transparent));
+            int r = CameraUtil.determineRatio(ratio);
+            mPreviewRatio = r;
+            if (mPreviewRatio == CameraUtil.RATIO_4_3 && mTopMargin != 0) {
+                mPaint.setColor(getResources().getColor(R.color.camera_control_bg_opaque));
+            } else {
+                mPaint.setColor(getResources().getColor(R.color.camera_control_bg_transparent));
+            }
         }
         invalidate();
     }

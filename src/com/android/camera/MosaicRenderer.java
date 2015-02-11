@@ -35,7 +35,7 @@ public class MosaicRenderer
       * @return textureID the texture ID of the newly generated texture to
       *          be assigned to the SurfaceTexture object.
       */
-     public static native int init();
+     public static native int init(boolean mEnableWarpedPanoPreview);
 
      /**
       * Pass the drawing surface's width and height to initialize the
@@ -44,8 +44,10 @@ public class MosaicRenderer
       * @param width width of the drawing surface in pixels.
       * @param height height of the drawing surface in pixels.
       * @param isLandscapeOrientation is the orientation of the activity layout in landscape.
+      * @param oientation is the orientation value in integer.
       */
-     public static native void reset(int width, int height, boolean isLandscapeOrientation);
+     public static native void reset(int width, int height,
+            boolean isLandscapeOrientation, int orientation);
 
      /**
       * Calling this function will render the SurfaceTexture to a new 2D texture
@@ -86,4 +88,14 @@ public class MosaicRenderer
       * @param flag boolean flag to set the warping to true or false.
       */
      public static native void setWarping(boolean flag);
+     /**
+      * This function allows toggling between drawing the background full
+      * screen preview image data to screen and drawing the warped smaller
+      * preview on top of it. To render the full screen background preview,
+      * we set the falsg to true and to render the warped image on top of this
+      * we set the flag to false and flag in setWarping to true.
+      *
+      * @param flag boolean flag to set the warping to true or false.
+      */
+     public static native void setPreviewBackground(boolean flag);
 }

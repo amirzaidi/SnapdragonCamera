@@ -20,7 +20,7 @@ class WarpRenderer: public Renderer {
 
     void SetViewportMatrix(int w, int h, int W, int H);
     void SetScalingMatrix(float xscale, float yscale);
-
+    void SetRotation(int degree);
     bool DrawTexture(GLfloat *affine);
 
  private:
@@ -38,9 +38,11 @@ class WarpRenderer: public Renderer {
     GLint  mViewporttransLoc;
     GLint  mScalingtransLoc;
     GLint  mTexCoordLoc;
+    GLint  mRotationtransLoc;
 
     GLfloat mViewportMatrix[16];
     GLfloat mScalingMatrix[16];
+    GLfloat mRotationMatrix[16];
 
     // Sampler location
     GLint mSamplerLoc;

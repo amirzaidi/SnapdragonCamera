@@ -151,6 +151,7 @@ public class WideAnglePanoramaModule
     private ComboPreferences mPreferences;
     private boolean mMosaicPreviewConfigured;
     private boolean mPreviewFocused = true;
+    private boolean mPreviewLayoutChanged = false;
 
     @Override
     public void onPreviewUIReady() {
@@ -205,6 +206,7 @@ public class WideAnglePanoramaModule
             }
             if (oldOrientation != mDeviceOrientation
                     && oldOrientation != OrientationEventListener.ORIENTATION_UNKNOWN) {
+                mPreviewLayoutChanged = true;
                 if (!mOrientationLocked)
                     mUI.setOrientation(mDeviceOrientation, true);
             }
@@ -250,6 +252,12 @@ public class WideAnglePanoramaModule
                     mRootView.setVisibility(View.VISIBLE);
                 } else {
                     if (mCaptureState == CAPTURE_STATE_VIEWFINDER) {
+                        if (mPreviewLayoutChanged) {
+                            boolean isLandscape = (mDeviceOrientation / 90) % 2 == 1;
+                            renderer.previewReset(mPreviewUIWidth, mPreviewUIHeight,
+                                    isLandscape, mDeviceOrientation);
+                            mPreviewLayoutChanged = false;
+                        }
                         renderer.showPreviewFrame();
                     } else {
                         renderer.alignFrameSync();
@@ -467,13 +475,13 @@ public class WideAnglePanoramaModule
             }
             mMosaicPreviewRenderer = null;
         }
-        final boolean isLandscape =
-                (mActivity.getResources().getConfiguration().orientation ==
-                        Configuration.ORIENTATION_LANDSCAPE);
+        final boolean isLandscape = (mDeviceOrientation / 90) % 2 == 1;
+        final boolean enableWarpedPanoPreview =
+                mActivity.getResources().getBoolean(R.bool.enable_warped_pano_preview);
         mUI.flipPreviewIfNeeded();
         MosaicPreviewRenderer renderer = new MosaicPreviewRenderer(
-                mUI.getSurfaceTexture(),
-                mPreviewUIWidth, mPreviewUIHeight, isLandscape);
+                mUI.getSurfaceTexture(), mPreviewUIWidth, mPreviewUIHeight,
+                isLandscape, mDeviceOrientation, enableWarpedPanoPreview);
         synchronized (mRendererLock) {
             mMosaicPreviewRenderer = renderer;
             mCameraTexture = mMosaicPreviewRenderer.getInputSurfaceTexture();
