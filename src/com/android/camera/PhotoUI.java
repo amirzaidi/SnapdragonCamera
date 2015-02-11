@@ -461,10 +461,6 @@ public class PhotoUI implements PieListener,
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.v(TAG, "surfaceChanged: width =" + width + ", height = " + height);
-        // Make sure preview cover is hidden if preview data is available.
-        if (mPreviewCover.getVisibility() != View.GONE) {
-            mPreviewCover.setVisibility(View.GONE);
-        }
     }
 
     @Override
@@ -1143,6 +1139,13 @@ public class PhotoUI implements PieListener,
 
     public void showPreviewCover() {
         mPreviewCover.setVisibility(View.VISIBLE);
+    }
+
+    public void hidePreviewCover() {
+        // Hide the preview cover if need.
+        if (mPreviewCover.getVisibility() != View.GONE) {
+            mPreviewCover.setVisibility(View.GONE);
+        }
     }
 
     public void onPause() {
