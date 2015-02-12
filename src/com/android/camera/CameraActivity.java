@@ -542,8 +542,20 @@ public class CameraActivity extends Activity
                 return;
             }
         }
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        startActivity(intent);
+        try {
+            Intent intent = IntentHelper.getGalleryIntent(this);
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.setData(uri);
+            startActivity(intent);
+        } catch (ActivityNotFoundException ex) {
+            try {
+                Log.w(TAG, "Gallery not found");
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "No Activity could be found to open image or video");
+            }
+        }
     }
 
     /**
