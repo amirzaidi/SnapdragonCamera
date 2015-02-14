@@ -196,6 +196,10 @@ public class VideoModule implements CameraModule,
     private boolean mIsVideoCDSUpdated = false;
     private boolean mOverrideCDS = false;
 
+    //settings, which if enabled, need to turn off low power mode
+    private boolean mIsFlipEnabled = false;
+    private boolean mIsDISEnabled = false;
+
     // The preview window is on focus
     private boolean mPreviewFocused = false;
 
@@ -572,6 +576,7 @@ public class VideoModule implements CameraModule,
             if ((mCameraDevice != null) && (mParameters != null)
                     && (true == mPreviewing) && !mMediaRecorderRecording){
                 setFlipValue();
+                updatePowerMode();
                 mCameraDevice.setParameters(mParameters);
             }
             mUI.setOrientation(newOrientation, true);
@@ -1993,7 +1998,11 @@ public class VideoModule implements CameraModule,
             mParameters.set(CameraSettings.KEY_QC_SNAPSHOT_PICTURE_FLIP, picture_flip);
         }
 
-
+        if ((preview_flip_value != 0) || (video_flip_value != 0) || (picture_flip_value != 0)) {
+            mIsFlipEnabled = true;
+        } else {
+            mIsFlipEnabled = false;
+        }
     }
 
      private void qcomSetCameraParameters(){
@@ -2011,6 +2020,7 @@ public class VideoModule implements CameraModule,
                 CameraSettings.KEY_DIS,
                 mActivity.getString(R.string.pref_camera_dis_default));
         Log.v(TAG, "DIS value =" + disMode);
+        mIsDISEnabled = disMode.equals("enable");
 
         if (is4KEnabled()) {
             if (isSupported(mActivity.getString(R.string.pref_camera_dis_value_disable),
@@ -2268,6 +2278,7 @@ public class VideoModule implements CameraModule,
                                Toast.LENGTH_LONG).show();
                 mParameters.set(CameraSettings.KEY_QC_DIS_MODE, "disable");
                 mUI.overrideSettings(CameraSettings.KEY_DIS,"disable");
+                mIsDISEnabled = false;
             }
         }
         //setting video rotation
@@ -2278,12 +2289,10 @@ public class VideoModule implements CameraModule,
             mParameters.setVideoRotation(videoRotation);
         }
 
-        //set low-power mode if supported
-        String lpmSupported = mParameters.get("low-power-mode-supported");
-        if ("true".equals(lpmSupported)) {
-            mParameters.set("low-power-mode", 1);
-        }
+        //set power mode settings
+        updatePowerMode();
     }
+
     @SuppressWarnings("deprecation")
     private void setCameraParameters() {
         Log.d(TAG,"Preview dimension in App->"+mDesiredPreviewWidth+"X"+mDesiredPreviewHeight);
@@ -2689,6 +2698,17 @@ public class VideoModule implements CameraModule,
     @Override
     public void onButtonContinue() {
         resumeVideoRecording();
+    }
+
+    private void updatePowerMode() {
+        String lpmSupported = mParameters.get("low-power-mode-supported");
+        if ((lpmSupported != null) && "true".equals(lpmSupported)) {
+            if (!mIsDISEnabled && !mIsFlipEnabled) {
+                mParameters.set("low-power-mode", "enable");
+            } else {
+                mParameters.set("low-power-mode", "disable");
+            }
+        }
     }
 
 }
