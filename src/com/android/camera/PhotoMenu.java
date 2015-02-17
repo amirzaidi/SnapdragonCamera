@@ -63,6 +63,7 @@ public class PhotoMenu extends MenuController
     private static String TAG = "PhotoMenu";
 
     private final String mSettingOff;
+    private final String mSettingOn;
 
     private String[] mOtherKeys1;
     private String[] mOtherKeys2;
@@ -101,6 +102,7 @@ public class PhotoMenu extends MenuController
         super(activity);
         mUI = ui;
         mSettingOff = activity.getString(R.string.setting_off_value);
+        mSettingOn = activity.getString(R.string.setting_on_value);
         mActivity = activity;
         mFrontBackSwitcher = ui.getRootView().findViewById(R.id.front_back_switcher);
         mHdrSwitcher = ui.getRootView().findViewById(R.id.hdr_switcher);
@@ -1053,6 +1055,11 @@ public class PhotoMenu extends MenuController
         return (key.equals(pref.getKey()) && !value.equals(pref.getValue()));
     }
 
+    // Return true if the preference has the specified key and the value.
+    private static boolean same(ListPreference pref, String key, String value) {
+        return (key.equals(pref.getKey()) && value.equals(pref.getValue()));
+    }
+
     public void setPreference(String key, String value) {
         ListPreference pref = mPreferenceGroup.findPreference(key);
         if (pref != null && !value.equals(pref.getValue())) {
@@ -1065,25 +1072,33 @@ public class PhotoMenu extends MenuController
     public void onSettingChanged(ListPreference pref) {
         // Reset the scene mode if HDR is set to on. Reset HDR if scene mode is
         // set to non-auto.
-        if (notSame(pref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)) {
-            ListPreference scenePref =
-                    mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
-            if (scenePref != null && notSame(scenePref, CameraSettings.KEY_SCENE_MODE,
-                    Parameters.SCENE_MODE_AUTO)) {
-                RotateTextToast.makeText(mActivity, R.string.hdr_enable_message,
-                        Toast.LENGTH_LONG).show();
+        if (same(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_HDR)) {
+            ListPreference hdrPref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_CAMERA_HDR);
+            if (hdrPref != null && same(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)) {
+                setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOn);
             }
-            setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
-            updateSceneModeIcon((IconListPreference) scenePref);
-        } else if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
+        } else if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_HDR)) {
             ListPreference hdrPref =
                     mPreferenceGroup.findPreference(CameraSettings.KEY_CAMERA_HDR);
             if (hdrPref != null && notSame(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)) {
-                RotateTextToast.makeText(mActivity, R.string.scene_enable_message,
-                        Toast.LENGTH_LONG).show();
+                setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
             }
-            setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
-        } else if (notSame(pref,CameraSettings.KEY_AE_BRACKET_HDR,"Off")) {
+        } else if (same(pref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)) {
+            ListPreference scenePref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
+            if (scenePref != null && notSame(scenePref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
+                setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
+            }
+            updateSceneModeIcon((IconListPreference) scenePref);
+	} else if (same(pref, CameraSettings.KEY_CAMERA_HDR, mSettingOn)) {
+            ListPreference scenePref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
+            if (scenePref != null && notSame(scenePref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_HDR)) {
+                setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_HDR);
+            }
+            updateSceneModeIcon((IconListPreference) scenePref);
+	} else if (notSame(pref,CameraSettings.KEY_AE_BRACKET_HDR,"Off")) {
             RotateTextToast.makeText(mActivity,
                            R.string.flash_aebracket_message,Toast.LENGTH_SHORT).show();
             setPreference(CameraSettings.KEY_FLASH_MODE,Parameters.FLASH_MODE_OFF);
