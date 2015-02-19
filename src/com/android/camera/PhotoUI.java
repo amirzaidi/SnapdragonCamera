@@ -54,7 +54,6 @@ import android.widget.PopupWindow;
 import android.widget.Toast;
 import android.graphics.drawable.AnimationDrawable;
 
-import com.android.camera.CameraActivity.UpdatePreviewThumbnail;
 import com.android.camera.CameraPreference.OnPreferenceChangedListener;
 import com.android.camera.FocusOverlayManager.FocusUI;
 import com.android.camera.ui.AbstractSettingPopup;
@@ -130,7 +129,7 @@ public class PhotoUI implements PieListener,
     private float mSurfaceTextureUncroppedWidth;
     private float mSurfaceTextureUncroppedHeight;
 
-    private ImageView mPreviewThumb;
+    private ImageView mThumbnail;
     private View mFlashOverlay;
 
     private SurfaceTextureSizeChangedListener mSurfaceTextureSizeListener;
@@ -229,8 +228,6 @@ public class PhotoUI implements PieListener,
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            mPreviewThumb.setImageBitmap(bitmap);
-            updatePreviewThumbnail(bitmap);
         }
     }
 
@@ -307,24 +304,6 @@ public class PhotoUI implements PieListener,
             mBottomMargin = l / 4 - mTopMargin;
         }
         mCameraControls.setMargins(mTopMargin, mBottomMargin);
-    }
-
-    public void updatePreviewThumbnail() {
-        mPreviewThumb.setVisibility(View.VISIBLE);
-        Bitmap bitmap = mActivity.getPreviewThumbBitmap();
-        if (bitmap != null) {
-            mPreviewThumb.setImageBitmap(bitmap);
-        }
-        else {
-            UpdatePreviewThumbnail task = mActivity.new UpdatePreviewThumbnail(mPreviewThumb);
-            task.execute();
-        }
-    }
-
-    public void updatePreviewThumbnail(Bitmap bitmap) {
-        mPreviewThumb.setVisibility(View.VISIBLE);
-        mPreviewThumb.setImageBitmap(bitmap);
-        mActivity.setPreviewThumbnailBitmap(bitmap);
     }
 
     public void setDownFactor(int factor) {
@@ -472,7 +451,7 @@ public class PhotoUI implements PieListener,
             // Re-apply transform matrix for new surface texture
             setTransformMatrix(mPreviewWidth, mPreviewHeight);
         }
-        updatePreviewThumbnail();
+        mActivity.updateThumbnail(mThumbnail);
     }
 
     @Override
@@ -529,8 +508,7 @@ public class PhotoUI implements PieListener,
 
     public void animateCapture(final byte[] jpegData, int orientation, boolean mirror) {
         // Decode jpeg byte array and then animate the jpeg
-        DecodeTask task = new DecodeTask(jpegData, orientation, mirror);
-        task.execute();
+        mActivity.updateThumbnail(jpegData);
     }
 
     public void showRefocusToast(boolean show) {
@@ -549,8 +527,8 @@ public class PhotoUI implements PieListener,
     }
 
     public void initializeControlByIntent() {
-        mPreviewThumb = (ImageView) mRootView.findViewById(R.id.preview_thumb);
-        mPreviewThumb.setOnClickListener(new OnClickListener() {
+        mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+        mThumbnail.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!CameraControls.isAnimating())
