@@ -63,7 +63,7 @@
         android:layout_width="@dimen/capture_size"
         android:layout_height="@dimen/capture_size"
         android:layout_gravity="top|right"
-        android:background="@android:color/black"
+        android:background="@android:color/transparent"
         android:contentDescription="@string/switch_photo_filmstrip"
         android:scaleType="fitCenter" />
 
