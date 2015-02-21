@@ -120,36 +120,13 @@ public class VideoUI implements PieRenderer.PieListener,
     private int mPreviewOrientation = -1;
     private int mOrientation;
 
+    private int mScreenRatio = CameraUtil.RATIO_UNKNOWN;
+    private int mTopMargin = 0;
+    private int mBottomMargin = 0;
+
     // temporary variables for updating SurfaceView
     private int mTempWidth;
     private int mTempHeight;
-
-    private final Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case UPDATE_TRANSFORM_MATRIX:
-                    setTransformMatrix(mPreviewWidth, mPreviewHeight);
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
-
-    private final Handler mSurfaceViewUpdateHandler = new Handler();
-
-    private Runnable updateSurfaceView = new Runnable() {
-
-        @Override
-        public void run() {
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) mSurfaceView
-                    .getLayoutParams();
-            params.width = mTempWidth;
-            params.height = mTempHeight;
-            mSurfaceView.setLayoutParams(params);
-        }
-    };
 
     private OnLayoutChangeListener mLayoutListener = new OnLayoutChangeListener() {
         @Override
@@ -180,7 +157,7 @@ public class VideoUI implements PieRenderer.PieListener,
                 if (mOriginalPreviewHeight == 0) mOriginalPreviewHeight = height;
                 mPreviewWidth = width;
                 mPreviewHeight = height;
-                setTransformMatrix(mOriginalPreviewWidth, mOriginalPreviewHeight);
+                setTransformMatrix(mPreviewWidth, mPreviewHeight);
                 mAspectRatioResize = false;
             }
             mVideoMenu.tryToCloseSubList();
@@ -259,11 +236,18 @@ public class VideoUI implements PieRenderer.PieListener,
 
         Point size = new Point();
         mActivity.getWindowManager().getDefaultDisplay().getSize(size);
-        int l = size.x > size.y ? size.x : size.y;
-        int tm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_top_margin);
-        int bm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_bottom_margin);
-        int topMargin = l / 4 * tm / (tm + bm);
-        mCameraControls.setMargins(topMargin, l / 4 - topMargin);
+        mScreenRatio = CameraUtil.determineRatio(size.x, size.y);
+        if (mScreenRatio == CameraUtil.RATIO_16_9) {
+            int l = size.x > size.y ? size.x : size.y;
+            int tm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_top_margin);
+            int bm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_bottom_margin);
+            mTopMargin = l / 4 * tm / (tm + bm);
+            mBottomMargin = l / 4 - mTopMargin;
+        }
+        mCameraControls.setMargins(mTopMargin, mBottomMargin);
+
+        mOriginalPreviewWidth = size.x;
+        mOriginalPreviewHeight = size.y;
     }
 
     public void cameraOrientationPreviewResize(boolean orientation){
@@ -347,11 +331,8 @@ public class VideoUI implements PieRenderer.PieListener,
             mAspectRatio = ratio;
         }
 
-        if (mPreviewWidth > 0 && mPreviewHeight > 0) {
-            mHandler.sendEmptyMessage(UPDATE_TRANSFORM_MATRIX);
-        }
-        // ensure a semi-transparent background for now
-        mCameraControls.setPreviewRatio(1.0f, false);
+        mCameraControls.setPreviewRatio(mAspectRatio, false);
+        layoutPreview((float)ratio);
     }
 
     public int getPreviewWidth() {
@@ -362,33 +343,89 @@ public class VideoUI implements PieRenderer.PieListener,
         return mPreviewHeight;
     }
 
-    private void setTransformMatrix(int width, int height) {
-            mMatrix = mSurfaceView.getMatrix();
+    private void layoutPreview(float ratio) {
+        FrameLayout.LayoutParams lp;
 
         float scaledTextureWidth, scaledTextureHeight;
-        if (mOrientationResize) {
-            scaledTextureWidth = height * mAspectRatio;
-            if (scaledTextureWidth > width) {
-                scaledTextureWidth = width;
-                scaledTextureHeight = scaledTextureWidth / mAspectRatio;
-            } else {
-                scaledTextureHeight = height;
+        int rotation = CameraUtil.getDisplayRotation(mActivity);
+        if (mScreenRatio == CameraUtil.RATIO_16_9
+                && CameraUtil.determinCloseRatio(ratio) == CameraUtil.RATIO_4_3) {
+            int l = (mTopMargin + mBottomMargin) * 4;
+            int s = l * 9 / 16;
+            switch (rotation) {
+                case 90:
+                    lp = new FrameLayout.LayoutParams(l * 3 / 4, s);
+                    lp.setMargins(mTopMargin, 0, mBottomMargin, 0);
+                    scaledTextureWidth = l * 3 / 4;
+                    scaledTextureHeight = s;
+                    break;
+                case 180:
+                    lp = new FrameLayout.LayoutParams(s, l * 3 / 4);
+                    lp.setMargins(0, mBottomMargin, 0, mTopMargin);
+                    scaledTextureWidth = s;
+                    scaledTextureHeight = l * 3 / 4;
+                    break;
+                case 270:
+                    lp = new FrameLayout.LayoutParams(l * 3 / 4, s);
+                    lp.setMargins(mBottomMargin, 0, mTopMargin, 0);
+                    scaledTextureWidth = l * 3 / 4;
+                    scaledTextureHeight = s;
+                    break;
+                default:
+                    lp = new FrameLayout.LayoutParams(s, l * 3 / 4);
+                    lp.setMargins(0, mTopMargin, 0, mBottomMargin);
+                    scaledTextureWidth = s;
+                    scaledTextureHeight = l * 3 / 4;
+                    break;
             }
         } else {
-            if (width > height) {
-                scaledTextureWidth = Math.max(width, height * mAspectRatio);
-                scaledTextureHeight = Math.max(height, width / mAspectRatio);
+            float width = mOriginalPreviewWidth, height = mOriginalPreviewHeight;
+            if (mOrientationResize) {
+                scaledTextureWidth = height * mAspectRatio;
+                if (scaledTextureWidth > width) {
+                    scaledTextureWidth = width;
+                    scaledTextureHeight = scaledTextureWidth / mAspectRatio;
+                } else {
+                    scaledTextureHeight = height;
+                }
             } else {
-                scaledTextureWidth = Math.max(width, height / mAspectRatio);
-                scaledTextureHeight = Math.max(height, width * mAspectRatio);
+                if (width > height) {
+                    scaledTextureWidth = Math.max(width, height * mAspectRatio);
+                    scaledTextureHeight = Math.max(height, width / mAspectRatio);
+                } else {
+                    scaledTextureWidth = Math.max(width, height / mAspectRatio);
+                    scaledTextureHeight = Math.max(height, width * mAspectRatio);
+                }
+            }
+
+            Log.v(TAG, "setTransformMatrix: scaledTextureWidth = " + scaledTextureWidth
+                    + ", scaledTextureHeight = " + scaledTextureHeight);
+
+            int orientation = mActivity.getResources().getConfiguration().orientation;
+            if (((rotation == 0 || rotation == 180) && scaledTextureWidth > scaledTextureHeight)
+                    || ((rotation == 90 || rotation == 270)
+                        && scaledTextureWidth < scaledTextureHeight)) {
+                lp = new FrameLayout.LayoutParams((int) scaledTextureHeight,
+                        (int) scaledTextureWidth, Gravity.CENTER);
+            } else {
+                lp = new FrameLayout.LayoutParams((int) scaledTextureWidth,
+                        (int) scaledTextureHeight, Gravity.CENTER);
             }
         }
+        mSurfaceView.setLayoutParams(lp);
+    }
 
-        Log.v(TAG, "setTransformMatrix: scaledTextureWidth = " + scaledTextureWidth
-                + ", scaledTextureHeight = " + scaledTextureHeight);
-        mTempWidth = (int) scaledTextureWidth;
-        mTempHeight = (int) scaledTextureHeight;
-        mHandler.post(updateSurfaceView);
+    private void setTransformMatrix(int width, int height) {
+        if (width == 0 || height == 0) return;
+        mMatrix = mSurfaceView.getMatrix();
+
+        mTempWidth = (int) width;
+        mTempHeight = (int) height;
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) mSurfaceView
+                .getLayoutParams();
+        params.width = mTempWidth;
+        params.height = mTempHeight;
+        mSurfaceView.setLayoutParams(params);
     }
 
     /**
@@ -617,11 +654,8 @@ public class VideoUI implements PieRenderer.PieListener,
             mAspectRatio = (float)ratio;
         }
 
-            mSurfaceView.requestLayout();
-
-        if (mPreviewWidth > 0 && mPreviewHeight > 0) {
-            mHandler.sendEmptyMessage(UPDATE_TRANSFORM_MATRIX);
-        }
+        mCameraControls.setPreviewRatio(mAspectRatio, false);
+        layoutPreview((float)ratio);
     }
 
     public void showTimeLapseUI(boolean enable) {
