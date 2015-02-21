@@ -338,7 +338,7 @@ public class PhotoUI implements PieListener,
         float scaledTextureWidth, scaledTextureHeight;
         int rotation = CameraUtil.getDisplayRotation(mActivity);
         if (mScreenRatio == CameraUtil.RATIO_16_9
-                && CameraUtil.determineRatio(ratio) == CameraUtil.RATIO_4_3) {
+                && CameraUtil.determinCloseRatio(ratio) == CameraUtil.RATIO_4_3) {
             int l = (mTopMargin + mBottomMargin) * 4;
             int s = l * 9 / 16;
             switch (rotation) {
