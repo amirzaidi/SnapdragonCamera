@@ -1492,6 +1492,10 @@ public class PhotoModule
             animateAfterShutter();
         }
 
+        if (mCameraState == LONGSHOT) {
+            mCameraDevice.setLongshot(true);
+        }
+
         // Set rotation and gps data.
         int orientation = mOrientation;
         mJpegRotation = CameraUtil.getJpegRotation(mCameraId, orientation);
@@ -2109,7 +2113,6 @@ public class PhotoModule
                     return;
                 }
                 mLongshotActive = true;
-                mCameraDevice.setLongshot(true);
                 setCameraState(PhotoController.LONGSHOT);
                 mFocusManager.doSnap();
             }
