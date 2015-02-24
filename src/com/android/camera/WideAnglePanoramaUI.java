@@ -49,6 +49,7 @@ import android.widget.TextView;
 import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CameraRootView;
 import com.android.camera.ui.ModuleSwitcher;
+import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
 import org.codeaurora.snapcam.R;
@@ -101,6 +102,7 @@ public class WideAnglePanoramaUI implements
 
     private int mOrientation;
     private int mPreviewYOffset;
+    private RotateLayout mWaitingDialog;
 
     /** Constructor. */
     public WideAnglePanoramaUI(
@@ -459,6 +461,7 @@ public class WideAnglePanoramaUI implements
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
         setPanoramaPreviewView();
 
+        mWaitingDialog = (RotateLayout) mRootView.findViewById(R.id.waitingDialog);
         mDialogHelper = new DialogHelper();
         setViews(appRes);
     }
@@ -533,11 +536,9 @@ public class WideAnglePanoramaUI implements
     }
 
     private class DialogHelper {
-        private ProgressDialog mProgressDialog;
         private AlertDialog mAlertDialog;
 
         DialogHelper() {
-            mProgressDialog = null;
             mAlertDialog = null;
         }
 
@@ -546,9 +547,8 @@ public class WideAnglePanoramaUI implements
                 mAlertDialog.dismiss();
                 mAlertDialog = null;
             }
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-                mProgressDialog = null;
+            if (mWaitingDialog != null) {
+                mWaitingDialog.setVisibility(View.INVISIBLE);
             }
         }
 
@@ -570,7 +570,7 @@ public class WideAnglePanoramaUI implements
 
         public void showWaitingDialog(CharSequence message) {
             dismissAll();
-            mProgressDialog = ProgressDialog.show(mActivity, null, message, true, false);
+            mWaitingDialog.setVisibility(View.VISIBLE);
         }
     }
 
@@ -683,7 +683,7 @@ public class WideAnglePanoramaUI implements
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) button.getLayoutParams();
         lp.gravity = g;
         button.setLayoutParams(lp);
-
+        mWaitingDialog.setRotation(-orientation);
         mReview.setRotation(-orientation);
         mTooFastPrompt.setRotation(-orientation);
         mCameraControls.setOrientation(orientation, animation);
