@@ -134,6 +134,9 @@ public class CameraActivity extends Activity
             "com.android.camera.action.TRIM";
     public static final String MEDIA_ITEM_PATH = "media-item-path";
 
+    // Used to show whether Gallery was launched from Snapcam
+    private static final String KEY_FROM_SNAPCAM = "from-snapcam";
+
     // The intent extra for camera from secure lock screen. True if the gallery
     // should only show newly captured pictures. sSecureAlbumId does not
     // increment. This is used when switching between camera, camcorder, and
@@ -567,12 +570,14 @@ public class CameraActivity extends Activity
             Intent intent = IntentHelper.getGalleryIntent(this);
             intent.setAction(Intent.ACTION_VIEW);
             intent.setData(uri);
+            intent.putExtra(KEY_FROM_SNAPCAM, true);
             startActivity(intent);
         } catch (ActivityNotFoundException ex) {
             try {
                 Log.w(TAG, "Gallery not found");
                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                 startActivity(intent);
+                intent.putExtra(KEY_FROM_SNAPCAM, true);
             } catch (ActivityNotFoundException e) {
                 Log.w(TAG, "No Activity could be found to open image or video");
             }
