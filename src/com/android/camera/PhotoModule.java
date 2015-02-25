@@ -2631,6 +2631,10 @@ public class PhotoModule
             stopPreview();
         }
 
+        if (!mSnapshotOnIdle) {
+            mFocusManager.setAeAwbLock(false); // Unlock AE and AWB.
+        }
+
         setCameraParameters(UPDATE_PARAM_ALL);
 
         mCameraDevice.startPreview();
@@ -2644,7 +2648,6 @@ public class PhotoModule
             if (CameraUtil.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mFocusManager.getFocusMode())) {
                 mCameraDevice.cancelAutoFocus();
             }
-            mFocusManager.setAeAwbLock(false); // Unlock AE and AWB.
         } else {
             mHandler.post(mDoSnapRunnable);
         }
