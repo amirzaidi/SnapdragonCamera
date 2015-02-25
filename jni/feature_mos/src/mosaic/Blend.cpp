@@ -874,7 +874,7 @@ void Blend::ComputeMask(CSite *csite, BlendRect &vcrect, BlendRect &brect, Mosai
             {
                 double d1 = hypotSq(m_AllSites[ce->second].getVCenter().x - si,
                         m_AllSites[ce->second].getVCenter().y - sj);
-                if (d1 < dself)
+                if (d1 - dself < -1e-5)
                 {
                     break;
                 }
