@@ -1040,7 +1040,7 @@ public class PhotoModule
         @Override
         public void onCameraMetaData (byte[] data, android.hardware.Camera camera) {
             int metadata[] = new int[3];
-            if (data.length <= 12) {
+            if (data.length >= 12) {
                 for (int i =0;i<3;i++) {
                     metadata[i] = byteToInt( (byte []) data, i*4);
                 }
