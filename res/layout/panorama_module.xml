@@ -25,6 +25,35 @@
         android:layout_height="match_parent"
         android:background="@android:color/black"
         android:visibility="gone" />
+
+    <com.android.camera.ui.RotateLayout
+        android:id="@+id/waitingDialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/pano_progress_empty"
+            android:orientation="horizontal"
+            android:padding="10dp" >
+
+            <ProgressBar
+                style="@android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginRight="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="@string/pano_dialog_prepare_preview" />
+        </LinearLayout>
+    </com.android.camera.ui.RotateLayout>
+
     <include layout="@layout/pano_module_review" />
     <include layout="@layout/camera_controls"
              android:layout_gravity="center"
