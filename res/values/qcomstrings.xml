@@ -328,6 +328,9 @@
      <!-- The message is shown in dialog when the app encounters an unsupported video resolution-->
      <string name="error_app_unsupported">Unsupported video resolution for this encoder type</string>
 
+     <!-- The message is shown in dialog when the app encounters an unsupported video profile-->
+     <string name="error_app_unsupported_profile">Unsupported video profile</string>
+
     <!--The message is shown in dialog when the raw snapshot is selected in zsl mode-->
     <string name="error_app_unsupported_raw">Raw picture format is not supported
         in zsl mode, change to JPEG

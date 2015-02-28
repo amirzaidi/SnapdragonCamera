@@ -317,6 +317,7 @@ public class VideoModule implements CameraModule,
     private boolean mUnsupportedHSRVideoSize = false;
     private boolean mUnsupportedHFRVideoCodec = false;
     private String mDefaultAntibanding = null;
+    boolean mUnsupportedProfile = false;
 
     // This Handler is used to post message back onto the main thread of the
     // application
@@ -824,6 +825,12 @@ public class VideoModule implements CameraModule,
         mCaptureTimeLapse = (mTimeBetweenTimeLapseFrameCaptureMs != 0);
         // TODO: This should be checked instead directly +1000.
         if (mCaptureTimeLapse) quality += 1000;
+        mUnsupportedProfile = false;
+        boolean hasProfile = CamcorderProfile.hasProfile(quality);
+        if (!hasProfile) {
+            mUnsupportedProfile = true;
+            return;
+        }
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
         qcomReadVideoPreferences();
@@ -1628,6 +1635,13 @@ public class VideoModule implements CameraModule,
         if( mUnsupportedHFRVideoCodec == true) {
             Log.e(TAG, "Unsupported HFR and video codec combinations");
             RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_hfr_codec,
+                    Toast.LENGTH_SHORT).show();
+            mStartRecPending = false;
+            return;
+        }
+        if (mUnsupportedProfile == true) {
+            Log.e(TAG, "Unsupported video profile");
+            RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_profile,
                     Toast.LENGTH_SHORT).show();
             mStartRecPending = false;
             return;
