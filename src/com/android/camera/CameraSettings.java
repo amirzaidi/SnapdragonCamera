@@ -289,15 +289,12 @@ public class CameraSettings {
         return group;
     }
 
-    public static String getSupportedHighestVideoQuality(int cameraId,
-            String defaultQuality,Parameters parameters) {
+    public static String getSupportedHighestVideoQuality(
+            int cameraId, Parameters parameters) {
         // When launching the camera app first time, we will set the video quality
         // to the first one (i.e. highest quality) in the supported list
         List<String> supported = getSupportedVideoQualities(cameraId,parameters);
-        if (supported == null) {
-            Log.e(TAG, "No supported video quality is found");
-            return defaultQuality;
-        }
+        assert (supported != null) : "No supported video quality is found";
         return supported.get(0);
     }
 
