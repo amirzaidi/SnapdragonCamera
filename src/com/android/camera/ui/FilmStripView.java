@@ -1273,12 +1273,8 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
             return;
         }
 
-        // If the layout changed, we need to adjust the current position so
-        // that if an item is centered before the change, it's still centered.
-        if (layoutChanged) {
-            mViewItem[mCurrentItem].setLeftPosition(
-                    mCenterX - mViewItem[mCurrentItem].getView().getMeasuredWidth() / 2);
-        }
+        mViewItem[mCurrentItem].setLeftPosition(
+                mCenterX - mViewItem[mCurrentItem].getView().getMeasuredWidth() / 2);
 
         if (mController.isZoomStarted()) {
             return;
