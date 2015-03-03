@@ -795,7 +795,13 @@ public class PhotoModule
 
     @Override
     public void onSwitchSavePath() {
-        mUI.setPreference(CameraSettings.KEY_CAMERA_SAVEPATH, "1");
+        if (mUI.mMenuInitialized) {
+            mUI.setPreference(CameraSettings.KEY_CAMERA_SAVEPATH, "1");
+        } else {
+            mPreferences.edit()
+                    .putString(CameraSettings.KEY_CAMERA_SAVEPATH, "1")
+                    .apply();
+        }
         RotateTextToast.makeText(mActivity, R.string.on_switch_save_path_to_sdcard,
                 Toast.LENGTH_SHORT).show();
     }
