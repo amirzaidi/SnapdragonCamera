@@ -107,6 +107,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
     private boolean mSendToMenu;
     private boolean mReset;
     private boolean mIsLoaded = false;
+    private boolean initialClampX = false;
 
     /**
      * Common interface for all images in the filmstrip.
@@ -994,7 +995,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
         }
 
         boolean stopScroll = false;
-        if (curr.getId() == 0 && mCenterX < curr.getCenterX()
+        if (curr.getId() == 0 && (mCenterX < curr.getCenterX() || initialClampX)
                 && mDataIdOnUserScrolling <= 1) {
             // Stop at the first ViewItem.
             stopScroll = true;
@@ -1786,7 +1787,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
         if (!inFullScreen() || mController.isScrolling()) {
             return true;
         }
-
+        initialClampX = false;
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
             mCheckToIntercept = true;
             mDown = MotionEvent.obtain(ev);
@@ -2076,7 +2077,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
         // center of the display upon a reload.
         mCenterX = -1;
         mScale = FULL_SCREEN_SCALE;
-
+        initialClampX = true;
         adjustChildZOrder();
         invalidate();
 
