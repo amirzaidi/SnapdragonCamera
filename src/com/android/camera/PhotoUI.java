@@ -799,15 +799,22 @@ public class PhotoUI implements PieListener,
     }
 
     public void showPopup(ListView popup, int level, boolean animate) {
+        FrameLayout.LayoutParams params;
         hideUI();
 
         popup.setVisibility(View.VISIBLE);
         if (level == 1) {
             if (mMenuLayout == null) {
                 mMenuLayout = new RotateLayout(mActivity, null);
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                        CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT,
-                        Gravity.LEFT | Gravity.TOP);
+                if (mRootView.getLayoutDirection() != View.LAYOUT_DIRECTION_RTL) {
+                    params = new FrameLayout.LayoutParams(
+                            CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT,
+                            Gravity.LEFT | Gravity.TOP);
+                } else {
+                    params = new FrameLayout.LayoutParams(
+                            CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT,
+                            Gravity.RIGHT | Gravity.TOP);
+                }
                 mMenuLayout.setLayoutParams(params);
                 ((ViewGroup) mRootView).addView(mMenuLayout);
             }
@@ -819,10 +826,15 @@ public class PhotoUI implements PieListener,
                 mSubMenuLayout = new RotateLayout(mActivity, null);
                 ((ViewGroup) mRootView).addView(mSubMenuLayout);
             }
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                    CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT,
-                    Gravity.LEFT | Gravity.TOP);
-
+            if (mRootView.getLayoutDirection() != View.LAYOUT_DIRECTION_RTL) {
+                params = new FrameLayout.LayoutParams(
+                        CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT,
+                        Gravity.LEFT | Gravity.TOP);
+            } else {
+                params = new FrameLayout.LayoutParams(
+                        CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT,
+                        Gravity.RIGHT | Gravity.TOP);
+            }
             int screenHeight = (mOrientation == 0 || mOrientation == 180)
                 ? mRootView.getHeight() : mRootView.getWidth();
             int height = ((ListSubMenu) popup).getPreCalculatedHeight();
