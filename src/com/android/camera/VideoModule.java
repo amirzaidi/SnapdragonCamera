@@ -2067,9 +2067,20 @@ public class VideoModule implements CameraModule,
                 CameraSettings.KEY_SEE_MORE,
                 mActivity.getString(R.string.pref_camera_see_more_default));
         Log.v(TAG, "See More value =" + seeMoreMode);
+
         if (isSupported(seeMoreMode,
-                        CameraSettings.getSupportedSeeMoreModes(mParameters))) {
-            mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE, seeMoreMode);
+                CameraSettings.getSupportedSeeMoreModes(mParameters))) {
+            if (is4KEnabled() && seeMoreMode.equals(mActivity.getString(R.string.
+                    pref_camera_see_more_value_on))) {
+                mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE,
+                        mActivity.getString(R.string.pref_camera_see_more_value_off));
+                mUI.overrideSettings(CameraSettings.KEY_SEE_MORE,
+                        mActivity.getString(R.string.pref_camera_see_more_value_off));
+                Toast.makeText(mActivity, R.string.video_quality_4k_disable_SeeMore,
+                        Toast.LENGTH_LONG).show();
+            } else {
+               mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE, seeMoreMode);
+            }
         }
 
         mUnsupportedHFRVideoSize = false;
