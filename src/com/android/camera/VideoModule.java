@@ -2063,26 +2063,6 @@ public class VideoModule implements CameraModule,
         }
         Log.d(TAG, "antiBanding value = " + mParameters.getAntibanding());
 
-        String seeMoreMode = mPreferences.getString(
-                CameraSettings.KEY_SEE_MORE,
-                mActivity.getString(R.string.pref_camera_see_more_default));
-        Log.v(TAG, "See More value =" + seeMoreMode);
-
-        if (isSupported(seeMoreMode,
-                CameraSettings.getSupportedSeeMoreModes(mParameters))) {
-            if (is4KEnabled() && seeMoreMode.equals(mActivity.getString(R.string.
-                    pref_camera_see_more_value_on))) {
-                mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE,
-                        mActivity.getString(R.string.pref_camera_see_more_value_off));
-                mUI.overrideSettings(CameraSettings.KEY_SEE_MORE,
-                        mActivity.getString(R.string.pref_camera_see_more_value_off));
-                Toast.makeText(mActivity, R.string.video_quality_4k_disable_SeeMore,
-                        Toast.LENGTH_LONG).show();
-            } else {
-               mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE, seeMoreMode);
-            }
-        }
-
         mUnsupportedHFRVideoSize = false;
         mUnsupportedHFRVideoCodec = false;
         mUnsupportedHSRVideoSize = false;
@@ -2245,6 +2225,54 @@ public class VideoModule implements CameraModule,
             }
             mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
             mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
+        }
+
+        String seeMoreMode = mPreferences.getString(
+                CameraSettings.KEY_SEE_MORE,
+                mActivity.getString(R.string.pref_camera_see_more_default));
+        Log.v(TAG, "See More value =" + seeMoreMode);
+
+        if (isSupported(seeMoreMode,
+                CameraSettings.getSupportedSeeMoreModes(mParameters))) {
+            if (is4KEnabled() && seeMoreMode.equals(mActivity.getString(R.string.
+                    pref_camera_see_more_value_on))) {
+                /* Disable SeeMore during 4K resolution */
+                mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE,
+                        mActivity.getString(R.string.pref_camera_see_more_value_off));
+                mUI.overrideSettings(CameraSettings.KEY_SEE_MORE,
+                        mActivity.getString(R.string.pref_camera_see_more_value_off));
+                Toast.makeText(mActivity, R.string.video_quality_4k_disable_SeeMore,
+                        Toast.LENGTH_LONG).show();
+            } else {
+                /* Disable CDS */
+                if (seeMoreMode.equals(
+                        mActivity.getString(R.string.pref_camera_see_more_value_on)) &&
+                        video_cds.equals(mActivity.getString(R.string.
+                        pref_camera_video_cds_value_on))) {
+                    mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
+                    mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
+                    Toast.makeText(mActivity, R.string.disable_CDS_during_SeeMore,
+                        Toast.LENGTH_LONG).show();
+                }
+
+                /* Disable TNR */
+                if (seeMoreMode.equals(
+                        mActivity.getString(R.string.pref_camera_see_more_value_on)) &&
+                        video_tnr.equals(mActivity.getString(R.string.
+                        pref_camera_video_tnr_value_on))) {
+                    mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
+                        mActivity.getString(R.string.pref_camera_video_tnr_value_off));
+                    mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
+                        mActivity.getString(R.string.pref_camera_video_tnr_value_off));
+                    Toast.makeText(mActivity, R.string.disable_TNR_during_SeeMore,
+                        Toast.LENGTH_LONG).show();
+                }
+
+                /* Set SeeMore mode */
+                mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE, seeMoreMode);
+            }
         }
 
         // Set Video HDR.

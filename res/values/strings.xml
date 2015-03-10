@@ -435,6 +435,12 @@
     <!-- Toast after 2k4k video is enabled to inform SeeMore has been disabled -->
     <string name="video_quality_4k_disable_SeeMore">SeeMore cannot be enabled during 4k video.</string>
 
+    <!-- Toast after SeeMore has been enabled to show CDS is disabled -->
+    <string name="disable_CDS_during_SeeMore">SeeMore will disable CDS.</string>
+
+    <!-- Toast after SeeMore has been enabled to show TNR is disabled -->
+    <string name="disable_TNR_during_SeeMore">SeeMore will disable TNR.</string>
+
     <!-- Exposure settings in preference -->
     <string name="pref_exposure_title">Exposure</string>
     <string name="pref_exposure_default" translatable="false">0</string>
