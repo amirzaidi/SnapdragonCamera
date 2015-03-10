@@ -1258,6 +1258,9 @@ public class PhotoUI implements PieListener,
         if (mCountDownView != null)
             mCountDownView.setOrientation(orientation);
         RotateTextToast.setOrientation(orientation);
+        if (mFaceView != null) {
+            mFaceView.setDisplayRotation(orientation);
+        }
     }
 
     public int getOrientation() {

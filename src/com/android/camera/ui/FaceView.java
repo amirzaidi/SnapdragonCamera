@@ -72,6 +72,7 @@ public class FaceView extends View
 
     private static final int MSG_SWITCH_FACES = 1;
     private static final int SWITCH_DELAY = 70;
+    private int mDisplayRotation = 0;
     private boolean mStateSwitchPending = false;
     private Handler mHandler = new Handler() {
         @Override
@@ -194,6 +195,9 @@ public class FaceView extends View
         mBlocked = block;
     }
 
+    public void setDisplayRotation(int orientation) {
+        mDisplayRotation = orientation;
+    }
     @Override
     protected void onDraw(Canvas canvas) {
         if (!mBlocked && (mFaces != null) && (mFaces.length > 0)) {
@@ -236,8 +240,8 @@ public class FaceView extends View
                     Log.e(TAG, "blink: (" + face.getLeftEyeBlinkDegree()+ ", " +
                         face.getRightEyeBlinkDegree() + ")");
                     if (face.leftEye != null) {
-                        if ((mDisplayOrientation == 90) ||
-                                (mDisplayOrientation == 270)) {
+                        if ((mDisplayRotation == 0) ||
+                                (mDisplayRotation == 180)) {
                             point[0] = face.leftEye.x;
                             point[1] = face.leftEye.y - delta_y / 2;
                             point[2] = face.leftEye.x;
@@ -256,8 +260,8 @@ public class FaceView extends View
                         }
                     }
                     if (face.rightEye != null) {
-                        if ((mDisplayOrientation == 90) ||
-                                (mDisplayOrientation == 270)) {
+                        if ((mDisplayRotation == 0) ||
+                                (mDisplayRotation == 180)) {
                             point[0] = face.rightEye.x;
                             point[1] = face.rightEye.y - delta_y / 2;
                             point[2] = face.rightEye.x;
@@ -306,8 +310,8 @@ public class FaceView extends View
                                 (-length) + 0.5);
 
                         if (face.getLeftEyeBlinkDegree() < blink_threshold) {
-                            if ((mDisplayOrientation == 90) ||
-                                    (mDisplayOrientation == 270)) {
+                            if ((mDisplayRotation == 90) ||
+                                    (mDisplayRotation == 270)) {
                                 point[0] = face.leftEye.x;
                                 point[1] = face.leftEye.y;
                                 point[2] = face.leftEye.x + gazeRollX;
@@ -324,8 +328,8 @@ public class FaceView extends View
                         }
 
                         if (face.getRightEyeBlinkDegree() < blink_threshold) {
-                            if ((mDisplayOrientation == 90) ||
-                                    (mDisplayOrientation == 270)) {
+                            if ((mDisplayRotation == 90) ||
+                                    (mDisplayRotation == 270)) {
                                 point[0] = face.rightEye.x;
                                 point[1] = face.rightEye.y;
                                 point[2] = face.rightEye.x + gazeRollX;
@@ -347,17 +351,17 @@ public class FaceView extends View
                         Log.e(TAG, "smile: " + face.getSmileDegree() + "," +
                             face.getSmileScore());
                         if (face.getSmileDegree() < smile_threashold_no_smile) {
-                           if ((mDisplayOrientation == 90) ||
-                                (mDisplayOrientation == 270)) {
-                                point[0] = face.mouth.x;
-                                point[1] = face.mouth.y - delta_y + dy;
-                                point[2] = face.mouth.x;
-                                point[3] = face.mouth.y + delta_y + dy;
-                            } else {
+                            if ((mDisplayRotation == 90) ||
+                                (mDisplayRotation == 270)) {
                                 point[0] = face.mouth.x + dx - delta_x;
                                 point[1] = face.mouth.y;
-                                point[2] = face.mouth.x + dx + delta_x ;
+                                point[2] = face.mouth.x + dx + delta_x;
                                 point[3] = face.mouth.y;
+                            } else {
+                                point[0] = face.mouth.x;
+                                point[1] = face.mouth.y + dy - delta_y;
+                                point[2] = face.mouth.x ;
+                                point[3] = face.mouth.y + dy + delta_y;
                             }
                             Matrix faceMatrix = new Matrix(mMatrix);
                             faceMatrix.preRotate(face.getRollDirection(),
@@ -368,12 +372,7 @@ public class FaceView extends View
 
                         } else if (face.getSmileDegree() <
                             smile_threashold_small_smile) {
-                            int rotation_mouth = mDisplayOrientation -
-                                    face.getRollDirection();
-                            if (0 > rotation_mouth) {
-                                rotation_mouth = 360 + rotation_mouth;
-                            }
-
+                            int rotation_mouth = 360 - mDisplayRotation;
                             mRect.set(face.mouth.x-delta_x,
                                 face.mouth.y-delta_y, face.mouth.x+delta_x,
                                 face.mouth.y+delta_y);
