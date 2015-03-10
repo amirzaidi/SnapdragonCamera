@@ -66,6 +66,7 @@ import com.android.camera.CameraManager.CameraPictureCallback;
 import com.android.camera.CameraManager.CameraProxy;
 import com.android.camera.CameraManager.CameraShutterCallback;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
+import com.android.camera.TsMakeupManager.MakeupLevelListener;
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.exif.ExifTag;
 import com.android.camera.exif.Rational;
@@ -82,6 +83,7 @@ import android.widget.EditText;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.text.InputType;
+import android.text.TextUtils;
 
 import com.android.internal.util.MemInfoReader;
 import android.app.ActivityManager;
@@ -110,7 +112,7 @@ public class PhotoModule
         ShutterButton.OnShutterButtonListener,
         MediaSaveService.Listener,
         OnCountDownFinishedListener,
-        SensorEventListener {
+        SensorEventListener, MakeupLevelListener {
 
     private static final String TAG = "CAM_PhotoModule";
 
@@ -688,7 +690,7 @@ public class PhotoModule
     private void openCameraCommon() {
         loadCameraPreferences();
 
-        mUI.onCameraOpened(mPreferenceGroup, mPreferences, mParameters, this);
+        mUI.onCameraOpened(mPreferenceGroup, mPreferences, mParameters, this, this);
         if (mIsImageCaptureIntent) {
             mUI.overrideSettings(CameraSettings.KEY_CAMERA_HDR_PLUS,
                     mActivity.getString(R.string.setting_off_value));
@@ -3564,6 +3566,21 @@ public class PhotoModule
         if (mContinuousFocusSupported && ApiHelper.HAS_AUTO_FOCUS_MOVE_CALLBACK) {
             updateAutoFocusMoveCallback();
         }
+
+        String makeupParamValue = mPreferences.getString(CameraSettings.KEY_TS_MAKEUP_UILABLE,
+                mActivity.getString(R.string.pref_camera_tsmakeup_default));
+        mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM, makeupParamValue);
+        Log.v(TAG,"updateCameraParametersPreference(): TSMakeup " + CameraSettings.KEY_TS_MAKEUP_PARAM +" value = " + makeupParamValue);
+
+        if(TsMakeupManager.MAKEUP_ON.equals(makeupParamValue)) {
+            String makeupWhitenValue = mPreferences.getString(CameraSettings.KEY_TS_MAKEUP_LEVEL_WHITEN,
+                    mActivity.getString(R.string.pref_camera_tsmakeup_level_default));
+            String makeupCleanValue = mPreferences.getString(CameraSettings.KEY_TS_MAKEUP_LEVEL_CLEAN,
+                    mActivity.getString(R.string.pref_camera_tsmakeup_level_default));
+            mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_WHITEN, makeupWhitenValue);
+            mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_CLEAN, makeupCleanValue);
+        }
+
         //QCom related parameters updated here.
         qcomUpdateCameraParametersPreference();
         return doGcamModeSwitch;
@@ -4351,6 +4368,73 @@ public class PhotoModule
 
     public boolean isRefocus() {
         return mLastPhotoTakenWithRefocus;
+    }
+
+    @Override
+    public void onMakeupLevel(String key, String value) {
+        Log.d(TAG, "PhotoModule.onMakeupLevel(): key is " + key + ", value is " + value);
+
+        if(TextUtils.isEmpty(value)) {
+            return;
+        }
+
+        String prefValue = TsMakeupManager.MAKEUP_ON;
+        if(TsMakeupManager.MAKEUP_OFF.equals(value)) {
+            prefValue = TsMakeupManager.MAKEUP_OFF;
+        }
+
+        Log.d(TAG, "onMakeupLevel(): prefValue is " + prefValue);
+        mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM, prefValue);
+
+        if(!TextUtils.isDigitsOnly(value)) {
+            if(TsMakeupManager.MAKEUP_NONE.equals(value)) {
+                ListPreference pref = mPreferenceGroup.findPreference(CameraSettings.KEY_TS_MAKEUP_LEVEL_WHITEN);
+                if(pref != null) {
+                    String whitenValue = pref.getValue();
+                    if(TextUtils.isEmpty(whitenValue)) {
+                        whitenValue = mActivity.getString(R.string.pref_camera_tsmakeup_level_default);
+                    }
+                    pref.setMakeupSeekBarValue(whitenValue);
+                    mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_WHITEN, Integer.parseInt(whitenValue));
+                }
+
+                pref = mPreferenceGroup.findPreference(CameraSettings.KEY_TS_MAKEUP_LEVEL_CLEAN);
+                if(pref != null) {
+                    String cleanValue = pref.getValue();
+                    if(TextUtils.isEmpty(cleanValue)) {
+                        cleanValue = mActivity.getString(R.string.pref_camera_tsmakeup_level_default);
+                    }
+                    pref.setMakeupSeekBarValue(cleanValue);
+                    mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_CLEAN, Integer.parseInt(cleanValue));
+                }
+            }
+        } else {
+            if(CameraSettings.KEY_TS_MAKEUP_LEVEL.equals(key)) {
+                if(mParameters != null) {
+                    mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_WHITEN, Integer.parseInt(value));
+                    mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_CLEAN, Integer.parseInt(value));
+                }
+                ListPreference pref = mPreferenceGroup.findPreference(CameraSettings.KEY_TS_MAKEUP_LEVEL_WHITEN);
+                if(pref != null) {
+                    pref.setMakeupSeekBarValue(value);
+                }
+                pref = mPreferenceGroup.findPreference(CameraSettings.KEY_TS_MAKEUP_LEVEL_CLEAN);
+                if(pref != null) {
+                    pref.setMakeupSeekBarValue(value);
+                }
+            } else if(CameraSettings.KEY_TS_MAKEUP_LEVEL_WHITEN.equals(key)) {
+                if(mParameters != null) {
+                    mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_WHITEN, Integer.parseInt(value));
+                }
+            } else if(CameraSettings.KEY_TS_MAKEUP_LEVEL_CLEAN.equals(key)) {
+                if(mParameters != null) {
+                    mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_CLEAN, Integer.parseInt(value));
+                }
+            }
+        }
+
+        mCameraDevice.setParameters(mParameters);
+        mParameters = mCameraDevice.getParameters();
     }
 }
 

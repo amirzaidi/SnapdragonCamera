@@ -231,6 +231,14 @@ public class CameraSettings {
     public static final String KEY_QC_SUPPORTED_MANUAL_EXPOSURE_MODES = "manual-exposure-modes";
     public static final String KEY_QC_SUPPORTED_MANUAL_WB_MODES = "manual-wb-modes";
 
+    public static final String KEY_TS_MAKEUP_UILABLE       = "pref_camera_tsmakeup_key";
+    public static final String KEY_TS_MAKEUP_PARAM         = "tsmakeup"; // on/of
+    public static final String KEY_TS_MAKEUP_PARAM_WHITEN  = "tsmakeup_whiten"; // 0~100
+    public static final String KEY_TS_MAKEUP_PARAM_CLEAN   = "tsmakeup_clean";  // 0~100
+    public static final String KEY_TS_MAKEUP_LEVEL         = "pref_camera_tsmakeup_level_key";
+    public static final String KEY_TS_MAKEUP_LEVEL_WHITEN  = "pref_camera_tsmakeup_whiten";
+    public static final String KEY_TS_MAKEUP_LEVEL_CLEAN   = "pref_camera_tsmakeup_clean";
+
     public static final String EXPOSURE_DEFAULT_VALUE = "0";
 
     public static final int CURRENT_VERSION = 5;

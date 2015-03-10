@@ -529,4 +529,15 @@
     <string name="camera_gesture_title">打开相机</string>
 
     <string name="remaining_photos_format">剩余 %d 张</string>
+    <string name="pref_camera_tsmakeup_title">美颜</string>
+    <string name="pref_camera_tsmakeup_entry_on">开</string>
+    <string name="pref_camera_tsmakeup_entry_off">关</string>
+    <string name="pref_camera_tsmakeup_custom">自定义</string>
+    <string name="pref_camera_tsmakeup_level_whiten">美白</string>
+    <string name="pref_camera_tsmakeup_level_clean">磨皮</string>
+    <string name="text_tsmakeup_alert_title">警告</string>
+    <string name="text_tsmakeup_alert_msg">实时美颜需要开启人脸检测功能，是否开启？</string>
+    <string name="text_tsmakeup_alert_continue">继续</string>
+    <string name="text_tsmakeup_alert_quit">退出</string>
+
 </resources>
