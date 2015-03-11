@@ -41,6 +41,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -103,6 +104,8 @@ public class WideAnglePanoramaUI implements
     private int mOrientation;
     private int mPreviewYOffset;
     private RotateLayout mWaitingDialog;
+    private RotateLayout mPanoFailedDialog;
+    private Button mPanoFailedButton;
 
     /** Constructor. */
     public WideAnglePanoramaUI(
@@ -462,6 +465,8 @@ public class WideAnglePanoramaUI implements
         setPanoramaPreviewView();
 
         mWaitingDialog = (RotateLayout) mRootView.findViewById(R.id.waitingDialog);
+        mPanoFailedDialog = (RotateLayout) mRootView.findViewById(R.id.pano_dialog_layout);
+        mPanoFailedButton = (Button) mRootView.findViewById(R.id.pano_dialog_button1);
         mDialogHelper = new DialogHelper();
         setViews(appRes);
     }
@@ -536,16 +541,13 @@ public class WideAnglePanoramaUI implements
     }
 
     private class DialogHelper {
-        private AlertDialog mAlertDialog;
 
         DialogHelper() {
-            mAlertDialog = null;
         }
 
         public void dismissAll() {
-            if (mAlertDialog != null) {
-                mAlertDialog.dismiss();
-                mAlertDialog = null;
+            if (mPanoFailedDialog != null) {
+                mPanoFailedDialog.setVisibility(View.INVISIBLE);
             }
             if (mWaitingDialog != null) {
                 mWaitingDialog.setVisibility(View.INVISIBLE);
@@ -556,16 +558,14 @@ public class WideAnglePanoramaUI implements
                 CharSequence title, CharSequence message,
                 CharSequence buttonMessage, final Runnable buttonRunnable) {
             dismissAll();
-            mAlertDialog = (new AlertDialog.Builder(mActivity))
-                    .setTitle(title)
-                    .setMessage(message)
-                    .setNeutralButton(buttonMessage, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            buttonRunnable.run();
-                        }
-                    })
-                    .show();
+            mPanoFailedButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    buttonRunnable.run();
+                    mPanoFailedDialog.setVisibility(View.INVISIBLE);
+                }
+            });
+            mPanoFailedDialog.setVisibility(View.VISIBLE);
         }
 
         public void showWaitingDialog(CharSequence message) {
@@ -684,6 +684,7 @@ public class WideAnglePanoramaUI implements
         lp.gravity = g;
         button.setLayoutParams(lp);
         mWaitingDialog.setRotation(-orientation);
+        mPanoFailedDialog.setRotation(-orientation);
         mReview.setRotation(-orientation);
         mTooFastPrompt.setRotation(-orientation);
         mCameraControls.setOrientation(orientation, animation);
