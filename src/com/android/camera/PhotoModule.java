@@ -250,6 +250,9 @@ public class PhotoModule
     private SoundPool mSoundPool;
     private int mRefocusSound;
 
+    private byte[] mLastJpegData;
+    private int mLastJpegOrientation = 0;
+
     private Runnable mDoSnapRunnable = new Runnable() {
         @Override
         public void run() {
@@ -1311,7 +1314,14 @@ public class PhotoModule
                             if (mAnimateCapture) {
                                 mUI.animateCapture(jpegData, orientation, mMirror);
                             }
+                        } else {
+                            // In long shot mode, we do not want to update the preview thumbnail
+                            // for each snapshot, instead, keep the last jpeg data and orientation,
+                            // use it to show the final one at the end of long shot.
+                            mLastJpegData = jpegData;
+                            mLastJpegOrientation = orientation;
                         }
+
                     } else {
                         mJpegImageData = jpegData;
                         if (!mQuickCapture) {
@@ -2001,6 +2011,7 @@ public class PhotoModule
            if (mCameraState == LONGSHOT) {
                mLongshotActive = false;
                mCameraDevice.setLongshot(false);
+               mUI.animateCapture(mLastJpegData, mLastJpegOrientation, mMirror);
                if (!mFocusManager.isZslEnabled()) {
                    setupPreview();
                } else {
