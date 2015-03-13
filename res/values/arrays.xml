@@ -209,7 +209,7 @@
          size to the first one in the list that is also supported by the
          driver -->
     <string-array name="pref_camera_picturesize_entryvalues" translatable="false">
-        <item>5248x3936</item>
+        <item>5344x4016</item>
         <item>4608x3456</item>
         <item>4160x3120</item>
         <item>4000x3000</item>
