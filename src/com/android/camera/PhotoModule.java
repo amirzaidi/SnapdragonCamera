@@ -584,12 +584,14 @@ public class PhotoModule
         if (mCameraState == PREVIEW_STOPPED) {
             startPreview();
         } else {
-            SurfaceHolder sh = mUI.getSurfaceHolder();
-            if (sh == null) {
-                Log.w(TAG, "startPreview: holder for preview are not ready.");
-                return;
+            synchronized (mCameraDevice) {
+                SurfaceHolder sh = mUI.getSurfaceHolder();
+                if (sh == null) {
+                    Log.w(TAG, "startPreview: holder for preview are not ready.");
+                    return;
+                }
+                mCameraDevice.setPreviewDisplay(sh);
             }
-            mCameraDevice.setPreviewDisplay(sh);
         }
     }
 
@@ -2617,15 +2619,16 @@ public class PhotoModule
             return;
         }
 
-        SurfaceHolder sh = null;
-        Log.v(TAG, "startPreview: SurfaceHolder (MDP path)");
-        if (mUI != null) {
-            sh = mUI.getSurfaceHolder();
-        }
+        synchronized (mCameraDevice) {
+            SurfaceHolder sh = null;
+            Log.v(TAG, "startPreview: SurfaceHolder (MDP path)");
+            if (mUI != null) {
+                sh = mUI.getSurfaceHolder();
+            }
 
-        setCameraParameters(UPDATE_PARAM_ALL);
-        // Let UI set its expected aspect ratio
-        mCameraDevice.setPreviewDisplay(sh);
+            // Let UI set its expected aspect ratio
+            mCameraDevice.setPreviewDisplay(sh);
+        }
 
         if (!mCameraPreviewParamsReady) {
             Log.w(TAG, "startPreview: parameters for preview are not ready.");
