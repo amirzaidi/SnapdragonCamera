@@ -132,6 +132,7 @@ public class CameraSettings {
     private static final String KEY_QC_SUPPORTED_FACE_RECOGNITION_MODES = "face-recognition-values";
     private static final String KEY_QC_SUPPORTED_DIS_MODES = "dis-values";
     private static final String KEY_QC_SUPPORTED_SEE_MORE_MODES = "see-more-values";
+    private static final String KEY_QC_SUPPORTED_STILL_MORE_MODES = "still-more-values";
     private static final String KEY_QC_SUPPORTED_CDS_MODES = "cds-mode-values";
     private static final String KEY_QC_SUPPORTED_VIDEO_CDS_MODES = "video-cds-mode-values";
     private static final String KEY_QC_SUPPORTED_TNR_MODES = "tnr-mode-values";
@@ -148,6 +149,7 @@ public class CameraSettings {
     public static final String KEY_QC_FSSR = "FSSR";
     public static final String KEY_QC_TP = "true-portrait";
     public static final String KEY_QC_MULTI_TOUCH_FOCUS = "multi-touch-focus";
+    public static final String KEY_QC_STILL_MORE = "still-more";
     public static final String KEY_QC_FACE_RECOGNITION = "face-recognition";
     public static final String KEY_QC_DIS_MODE = "dis";
     public static final String KEY_QC_CDS_MODE = "cds-mode";
@@ -436,6 +438,7 @@ public class CameraSettings {
         str += ',' + params.get(KEY_QC_SUPPORTED_MTF_MODES);
         str += ',' + mContext.getString(R.string.pref_camera_advanced_feature_default);
         str += ',' + params.get(KEY_QC_SUPPORTED_RE_FOCUS_MODES);
+        str += ',' + params.get(KEY_QC_SUPPORTED_STILL_MORE_MODES);
         return split(str);
     }
 
@@ -489,6 +492,14 @@ public class CameraSettings {
 
     public static List<String> getSupportedMultiTouchFocusModes(Parameters params) {
         String str = params.get(KEY_QC_SUPPORTED_MTF_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedStillMoreModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_STILL_MORE_MODES);
         if (str == null) {
             return null;
         }
