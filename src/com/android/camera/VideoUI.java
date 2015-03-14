@@ -745,16 +745,23 @@ public class VideoUI implements PieRenderer.PieListener,
     }
 
     public void showPopup(ListView popup, int level, boolean animate) {
+        FrameLayout.LayoutParams layoutParams;
         hideUI();
 
         popup.setVisibility(View.VISIBLE);
         if (level == 1) {
             if (mMenuLayout == null) {
                 mMenuLayout = new RotateLayout(mActivity, null);
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                        CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT,
-                        Gravity.LEFT | Gravity.TOP);
-                mMenuLayout.setLayoutParams(params);
+                if (mRootView.getLayoutDirection() != View.LAYOUT_DIRECTION_RTL) {
+                    layoutParams = new FrameLayout.LayoutParams(
+                            CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT,
+                            Gravity.LEFT | Gravity.TOP);
+                } else {
+                    layoutParams = new FrameLayout.LayoutParams(
+                            CameraActivity.SETTING_LIST_WIDTH_1, LayoutParams.WRAP_CONTENT,
+                            Gravity.RIGHT | Gravity.TOP);
+                }
+                mMenuLayout.setLayoutParams(layoutParams);
                 ((ViewGroup) mRootView).addView(mMenuLayout);
             }
             mMenuLayout.setOrientation(mOrientation, true);
@@ -769,9 +776,15 @@ public class VideoUI implements PieRenderer.PieListener,
 
                 ((ViewGroup) mRootView).addView(mSubMenuLayout);
             }
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                    CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT,
-                    Gravity.LEFT | Gravity.TOP);
+            if (mRootView.getLayoutDirection() != View.LAYOUT_DIRECTION_RTL) {
+                layoutParams = new FrameLayout.LayoutParams(
+                        CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT,
+                        Gravity.LEFT | Gravity.TOP);
+            } else {
+                layoutParams = new FrameLayout.LayoutParams(
+                        CameraActivity.SETTING_LIST_WIDTH_2, LayoutParams.WRAP_CONTENT,
+                        Gravity.RIGHT | Gravity.TOP);
+            }
 
             int screenHeight = (mOrientation == 0 || mOrientation == 180)
                     ? mRootView.getHeight() : mRootView.getWidth();
@@ -780,10 +793,10 @@ public class VideoUI implements PieRenderer.PieListener,
             int y = Math.max(0, yBase);
             if (yBase + height > screenHeight)
                 y = Math.max(0, screenHeight - height);
-            params.setMargins(0, y, 0, 0);
-            params.setMarginStart(CameraActivity.SETTING_LIST_WIDTH_1);
+            layoutParams.setMargins(0, y, 0, 0);
+            layoutParams.setMarginStart(CameraActivity.SETTING_LIST_WIDTH_1);
 
-            mSubMenuLayout.setLayoutParams(params);
+            mSubMenuLayout.setLayoutParams(layoutParams);
             mSubMenuLayout.addView(popup);
             mSubMenuLayout.setOrientation(mOrientation, true);
         }
