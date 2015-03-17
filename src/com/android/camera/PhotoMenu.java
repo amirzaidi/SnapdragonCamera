@@ -132,6 +132,7 @@ public class PhotoMenu extends MenuController
         }
 
         mOtherKeys1 = new String[] {
+                CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_RECORD_LOCATION,
                 CameraSettings.KEY_PICTURE_SIZE,
                 CameraSettings.KEY_JPEG_QUALITY,
@@ -142,12 +143,12 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_ISO,
                 CameraSettings.KEY_EXPOSURE,
                 CameraSettings.KEY_WHITE_BALANCE,
-                CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_FOCUS_MODE,
                 CameraSettings.KEY_REDEYE_REDUCTION
         };
 
         mOtherKeys2 = new String[] {
+                CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_RECORD_LOCATION,
                 CameraSettings.KEY_PICTURE_SIZE,
                 CameraSettings.KEY_JPEG_QUALITY,
@@ -158,7 +159,6 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_ISO,
                 CameraSettings.KEY_EXPOSURE,
                 CameraSettings.KEY_WHITE_BALANCE,
-                CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_FOCUS_MODE,
                 CameraSettings.KEY_REDEYE_REDUCTION,
                 CameraSettings.KEY_AUTO_HDR,
