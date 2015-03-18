@@ -1743,10 +1743,10 @@ public class PhotoModule
                     Toast.LENGTH_LONG).show();
         }
 
-        // If scene mode is set, for flash mode, white balance and focus mode
+        // If scene mode is set, for  white balance and focus mode
         // read settings from preferences so we retain user preferences.
         if (!Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
-            flashMode = mParameters.getFlashMode();
+            flashMode = mParameters.FLASH_MODE_OFF;
             String whiteBalance = Parameters.WHITE_BALANCE_AUTO;
             focusMode = mFocusManager.getFocusMode();
             colorEffect = mParameters.getColorEffect();
@@ -3540,10 +3540,9 @@ public class PhotoModule
             }
         } else {
             mFocusManager.overrideFocusMode(mParameters.getFocusMode());
-            if (hdrOn)
+            if (CameraUtil.isSupported(Parameters.FLASH_MODE_OFF,
+                    mParameters.getSupportedFlashModes())) {
                 mParameters.setFlashMode(Parameters.FLASH_MODE_OFF);
-            else {
-                mParameters.setFlashMode(Parameters.FLASH_MODE_AUTO);
             }
             if (CameraUtil.isSupported(Parameters.WHITE_BALANCE_AUTO,
                     mParameters.getSupportedWhiteBalance())) {
