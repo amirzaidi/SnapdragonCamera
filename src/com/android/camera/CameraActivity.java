@@ -309,6 +309,24 @@ public class CameraActivity extends Activity
                 }
             };
 
+    // update the status of storage space when SD card status changed.
+    private BroadcastReceiver mSDcardMountedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "SDcard status changed, update storage space");
+            updateStorageSpaceAndHint();
+        }
+    };
+
+    private void registerSDcardMountedReceiver() {
+        // filter for SDcard status
+        IntentFilter filter = new IntentFilter(Intent.ACTION_MEDIA_MOUNTED);
+        filter.addAction(Intent.ACTION_MEDIA_SHARED);
+        filter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        filter.addDataScheme("file");
+        registerReceiver(mSDcardMountedReceiver, filter);
+    }
+
     // close activity when screen turns off
     private BroadcastReceiver mScreenOffReceiver = new BroadcastReceiver() {
         @Override
@@ -1523,6 +1541,7 @@ public class CameraActivity extends Activity
         int offset = lower * 10 / 100;
         SETTING_LIST_WIDTH_1 = lower / 2 + offset;
         SETTING_LIST_WIDTH_2 = lower / 2 - offset;
+        registerSDcardMountedReceiver();
     }
 
     private void setRotationAnimation() {
@@ -1659,6 +1678,7 @@ public class CameraActivity extends Activity
         }
         getContentResolver().unregisterContentObserver(mLocalImagesObserver);
         getContentResolver().unregisterContentObserver(mLocalVideosObserver);
+        unregisterReceiver(mSDcardMountedReceiver);
 
         super.onDestroy();
     }
