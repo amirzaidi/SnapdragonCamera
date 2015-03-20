@@ -1038,7 +1038,7 @@ public class WideAnglePanoramaModule
             // UI is not ready.
             return;
         }
-
+        mErrorCallback.setActivity(mActivity);
         mCameraDevice.setErrorCallback(mErrorCallback);
 
         // This works around a driver issue. startPreview may fail if
