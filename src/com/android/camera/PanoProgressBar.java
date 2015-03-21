@@ -44,6 +44,8 @@ class PanoProgressBar extends ImageView {
     private RectF mDrawBounds;
     private OnDirectionChangeListener mListener = null;
 
+    private int mOldProgress = 0;
+
     public interface OnDirectionChangeListener {
         public void onDirectionChange(int direction);
     }
@@ -137,6 +139,12 @@ class PanoProgressBar extends ImageView {
                 setRightIncreasing(false);
             }
         }
+        // When user move to the opposite direction more than 10 degrees,
+        // change the direction and stop the capture progress in PanoramaModule.
+        if (Math.abs(mOldProgress) - Math.abs(progress) > 10) {
+            mListener.onDirectionChange(mDirection/2 + 1);
+            return;
+        }
         // mDirection might be modified by setRightIncreasing() above. Need to check again.
         if (mDirection != DIRECTION_NONE) {
             mProgress = progress * mWidth / mMaxProgress + mProgressOffset;
@@ -152,11 +160,15 @@ class PanoProgressBar extends ImageView {
             }
             invalidate();
         }
+        if (Math.abs(mOldProgress) < Math.abs(progress)) {
+            mOldProgress = progress;
+        }
     }
 
     public void reset() {
         mProgress = 0;
         mProgressOffset = 0;
+        mOldProgress = 0;
         setDirection(DIRECTION_NONE);
         invalidate();
     }

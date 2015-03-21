@@ -153,6 +153,8 @@ public class WideAnglePanoramaModule
     private boolean mPreviewFocused = true;
     private boolean mPreviewLayoutChanged = false;
 
+    private boolean mDirectionChanged = false;
+
     @Override
     public void onPreviewUIReady() {
         configMosaicPreview();
@@ -225,8 +227,15 @@ public class WideAnglePanoramaModule
                 new PanoProgressBar.OnDirectionChangeListener() {
                     @Override
                     public void onDirectionChange(int direction) {
+                        if (mDirectionChanged) {
+                            stopCapture(false);
+                            return;
+                        }
                         if (mCaptureState == CAPTURE_STATE_MOSAIC) {
                             mUI.showDirectionIndicators(direction);
+                        }
+                        if (direction != PanoProgressBar.DIRECTION_NONE) {
+                            mDirectionChanged = true;
                         }
                     }
                 });
@@ -583,6 +592,7 @@ public class WideAnglePanoramaModule
     }
 
     private void stopCapture(boolean aborted) {
+        mDirectionChanged = false;
         mCaptureState = CAPTURE_STATE_VIEWFINDER;
         mUI.onStopCapture();
         Parameters parameters = mCameraDevice.getParameters();
@@ -758,6 +768,7 @@ public class WideAnglePanoramaModule
     // This function will be called upon the first camera frame is available.
     private void reset() {
         mCaptureState = CAPTURE_STATE_VIEWFINDER;
+        mDirectionChanged = false;
 
         mOrientationLocked = false;
         mUI.setOrientation(mDeviceOrientation, true);
