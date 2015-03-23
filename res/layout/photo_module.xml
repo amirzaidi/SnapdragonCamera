@@ -99,4 +99,10 @@
     <include layout="@layout/camera_controls"
         android:layout_gravity="center"
         style="@style/CameraControls"/>
+
+    <RelativeLayout
+        android:id="@+id/id_tsmakeup_level_layout_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 </merge>

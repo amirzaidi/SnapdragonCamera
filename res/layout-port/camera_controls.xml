@@ -83,6 +83,10 @@
         android:id="@+id/filter_mode_switcher"
         style="@style/ToggleButton" />
 
+    <com.android.camera.ui.RotateImageView
+        android:id="@+id/ts_makeup_switcher"
+        style="@style/ToggleButton" />
+
     <LinearLayout
         android:id="@+id/remaining_photos"
         android:layout_width="wrap_content"

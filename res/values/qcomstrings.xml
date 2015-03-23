@@ -872,6 +872,18 @@
 
     <!-- The alas of CameraActivity for gesture operation -->
     <string name="camera_gesture_title">Launch camera</string>
+     <string name="pref_camera_tsmakeup_title">Beautification</string>
+     <string name="pref_camera_tsmakeup_entry_on">On</string>
+     <string name="pref_camera_tsmakeup_entry_off">Off</string>
+     <string name="pref_camera_tsmakeup_default" translatable="false">Off</string>
+     <string name="pref_camera_tsmakeup_level_default" translatable="false">60</string>
+     <string name="pref_camera_tsmakeup_custom">Custom</string>
+     <string name="pref_camera_tsmakeup_level_whiten">Whiten</string>
+     <string name="pref_camera_tsmakeup_level_clean">Soften</string>
+     <string name="text_tsmakeup_alert_title">Warning</string>
+     <string name="text_tsmakeup_alert_msg">The beautification must turn on Face Detection, Continue or Quit?</string>
+     <string name="text_tsmakeup_alert_continue">Continue</string>
+     <string name="text_tsmakeup_alert_quit">Quit</string>
 
     <string name="all_in_focus">All in Focus</string>
 </resources>
