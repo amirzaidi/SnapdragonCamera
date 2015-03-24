@@ -533,7 +533,8 @@ public class PhotoUI implements PieListener,
         mThumbnail.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!CameraControls.isAnimating())
+                if (!CameraControls.isAnimating()
+                        && mController.getCameraState() != PhotoController.SNAPSHOT_IN_PROGRESS)
                     mActivity.gotoGallery();
             }
         });
