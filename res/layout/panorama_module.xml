@@ -55,6 +55,79 @@
     </com.android.camera.ui.RotateLayout>
 
     <include layout="@layout/pano_module_review" />
+
+    <com.android.camera.ui.RotateLayout
+        android:id="@+id/pano_dialog_layout"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:background="@color/popup_background"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <LinearLayout android:id="@+id/pano_dialog_title_layout"
+                          android:orientation="vertical"
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content">
+
+                <TextView android:id="@+id/pano_dialog_title"
+                          style="@style/TextAppearance.DialogWindowTitle"
+                          android:gravity="center_vertical"
+                          android:layout_marginLeft="16dip"
+                          android:layout_marginRight="16dip"
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:text="@string/pano_dialog_title"
+                          android:minHeight="64dp"/>
+                <View style="@style/PopupTitleSeparator" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:background="@color/popup_background"
+                android:padding="9dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TextAppearance.Medium"
+                    android:id="@+id/pano_dialog_text"
+                    android:layout_gravity="center_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pano_dialog_panorama_failed" />
+            </LinearLayout>
+
+            <ImageView android:background="@drawable/list_divider"
+                       android:layout_width="match_parent"
+                       android:layout_height="wrap_content" />
+
+            <LinearLayout android:id="@+id/pano_dialog_button_layout"
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:gravity="center"
+                          android:minHeight="48dp"
+                          android:orientation="horizontal">
+
+                <Button android:id="@+id/pano_dialog_button1"
+                        style="@style/Widget.Button.Borderless"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:minHeight="48dp"
+                        android:textSize="14sp"
+                        android:text="@string/dialog_ok"
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.android.camera.ui.RotateLayout>
+
     <include layout="@layout/camera_controls"
              android:layout_gravity="center"
              style="@style/CameraControls"/>
