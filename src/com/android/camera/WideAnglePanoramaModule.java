@@ -291,7 +291,7 @@ public class WideAnglePanoramaModule
         mDialogWaitingPreviousString = appRes.getString(R.string.pano_dialog_waiting_previous);
 
         mPreferences = new ComboPreferences(mActivity);
-        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal());
+        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), activity);
         mLocationManager = new LocationManager(mActivity, null);
 
         mMainHandler = new Handler() {
