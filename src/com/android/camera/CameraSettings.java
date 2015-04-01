@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Locale;
 import android.os.Build;
 import java.util.StringTokenizer;
+import android.os.SystemProperties;
 
 /**
  *  Provides utilities and keys for Camera settings.
@@ -836,6 +837,30 @@ public class CameraSettings {
                 !GcamHelper.hasGcamCapture() || isFrontCamera)) {
             removePreference(group, cameraHdrPlus.getKey());
         }
+
+        if (SystemProperties.getBoolean("persist.env.camera.saveinsd", false)) {
+            final String CAMERA_SAVEPATH_SDCARD = "1";
+            final int CAMERA_SAVEPATH_SDCARD_IDX = 1;
+            final int CAMERA_SAVEPATH_PHONE_IDX = 0;
+            ListPreference savePath = group.findPreference(KEY_CAMERA_SAVEPATH);
+            SharedPreferences pref = group.getSharedPreferences();
+            String savePathValue = null;
+            if (pref != null) {
+                savePathValue = pref.getString(KEY_CAMERA_SAVEPATH, CAMERA_SAVEPATH_SDCARD);
+            }
+            if (savePath != null && CAMERA_SAVEPATH_SDCARD.equals(savePathValue)) {
+                // If sdCard is present, set sdCard as default save path.
+                // Only for the first time when camera start.
+                if (SDCard.instance().isWriteable()) {
+                    Log.d(TAG, "set Sdcard as save path.");
+                    savePath.setValueIndex(CAMERA_SAVEPATH_SDCARD_IDX);
+                } else {
+                    Log.d(TAG, "set Phone as save path when sdCard is unavailable.");
+                    savePath.setValueIndex(CAMERA_SAVEPATH_PHONE_IDX);
+                }
+           }
+        }
+
         qcomInitPreferences(group);
     }
 
