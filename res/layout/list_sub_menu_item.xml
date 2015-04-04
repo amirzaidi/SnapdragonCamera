@@ -42,7 +42,7 @@
     <TextView
         android:id="@+id/text"
         style="@style/CustomSettingItemTitle"
-        android:shadowColor="@android:color/black"
+        android:shadowColor="@android:color/transparent"
         android:shadowDx="1"
         android:shadowDy="1"
         android:shadowRadius="2"
