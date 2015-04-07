@@ -1520,28 +1520,31 @@ public class PhotoModule
         // Set rotation and gps data.
         int orientation = mOrientation;
         mJpegRotation = CameraUtil.getJpegRotation(mCameraId, orientation);
-        mParameters.setRotation(mJpegRotation);
         String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
         Location loc = getLocationAccordPictureFormat(pictureFormat);
-        CameraUtil.setGpsParameters(mParameters, loc);
 
-        if (mRefocus) {
-            mParameters.set(CameraSettings.KEY_QC_LEGACY_BURST,
-                    CameraSettings.KEY_QC_RE_FOCUS_COUNT);
-        } else {
-            mParameters.remove(CameraSettings.KEY_QC_LEGACY_BURST);
+        synchronized (mCameraDevice) {
+            mParameters.setRotation(mJpegRotation);
+            CameraUtil.setGpsParameters(mParameters, loc);
+
+            if (mRefocus) {
+                mParameters.set(CameraSettings.KEY_QC_LEGACY_BURST,
+                        CameraSettings.KEY_QC_RE_FOCUS_COUNT);
+            } else {
+                mParameters.remove(CameraSettings.KEY_QC_LEGACY_BURST);
+            }
+
+            // Unlock AE&AWB, if they continue
+            // to be locked during snapshot, then
+            // side effects could be triggered w.r.t.
+            // flash.
+            mFocusManager.setAeAwbLock(false);
+            setAutoExposureLockIfSupported();
+            setAutoWhiteBalanceLockIfSupported();
+
+            mCameraDevice.setParameters(mParameters);
+            mParameters = mCameraDevice.getParameters();
         }
-
-        // Unlock AE&AWB, if they continue
-        // to be locked during snapshot, then
-        // side effects could be triggered w.r.t.
-        // flash.
-        mFocusManager.setAeAwbLock(false);
-        setAutoExposureLockIfSupported();
-        setAutoWhiteBalanceLockIfSupported();
-
-        mCameraDevice.setParameters(mParameters);
-        mParameters = mCameraDevice.getParameters();
 
         mBurstSnapNum = mParameters.getInt("num-snaps-per-shutter");
         mReceivedSnapNum = 0;
@@ -1885,8 +1888,10 @@ public class PhotoModule
         if (oldOrientation != mOrientation) {
             if (mParameters != null && mCameraDevice != null && mCameraState == IDLE) {
                 Log.v(TAG, "onOrientationChanged, update parameters");
-                setFlipValue();
-                mCameraDevice.setParameters(mParameters);
+                synchronized (mCameraDevice) {
+                    setFlipValue();
+                    mCameraDevice.setParameters(mParameters);
+                }
             }
             mUI.setOrientation(mOrientation, true);
             if (mGraphView != null) {
@@ -4285,10 +4290,12 @@ public class PhotoModule
         mZoomValue = index;
         if (mParameters == null || mCameraDevice == null) return index;
         // Set zoom parameters asynchronously
-        mParameters.setZoom(mZoomValue);
-        mCameraDevice.setParameters(mParameters);
-        Parameters p = mCameraDevice.getParameters();
-        if (p != null) return p.getZoom();
+        synchronized (mCameraDevice) {
+            mParameters.setZoom(mZoomValue);
+            mCameraDevice.setParameters(mParameters);
+            Parameters p = mCameraDevice.getParameters();
+            if (p != null) return p.getZoom();
+        }
         return index;
     }
 
@@ -4382,6 +4389,12 @@ public class PhotoModule
 
     @Override
     public void onMakeupLevel(String key, String value) {
+        synchronized (mCameraDevice) {
+            onMakeupLevelSync(key, value);
+        }
+    }
+
+    public void onMakeupLevelSync(String key, String value) {
         Log.d(TAG, "PhotoModule.onMakeupLevel(): key is " + key + ", value is " + value);
 
         if(TextUtils.isEmpty(value)) {
