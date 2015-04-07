@@ -1073,7 +1073,7 @@ public class VideoModule implements CameraModule,
             mStartPrevPending = false;
             return;
         }
-
+        mErrorCallback.setActivity(mActivity);
         mCameraDevice.setErrorCallback(mErrorCallback);
         if (mPreviewing == true) {
             stopPreview();

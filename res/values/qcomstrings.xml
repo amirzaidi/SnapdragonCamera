@@ -886,5 +886,9 @@
      <string name="text_tsmakeup_alert_quit">Quit</string>
 
     <string name="all_in_focus">All in Focus</string>
+
+    <string name="camera_thermal_shutdown">Phone overheated, closing camera.</string>
+    <string name="camera_server_died">Media server died, closing camera.</string>
+    <string name="camera_unknown_error">Unknown error, closing camera.</string>
 </resources>
 
