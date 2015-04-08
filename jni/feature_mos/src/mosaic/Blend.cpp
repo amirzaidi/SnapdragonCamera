@@ -304,6 +304,7 @@ int Blend::runBlend(MosaicFrame **oframes, MosaicFrame **rframes,
         mosaicHeight = Mheight;
     }
 
+    free(imgMos);
     return ret;
 }
 
