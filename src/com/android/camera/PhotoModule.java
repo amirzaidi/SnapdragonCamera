@@ -1876,10 +1876,9 @@ public class PhotoModule
         if (orientation == OrientationEventListener.ORIENTATION_UNKNOWN) return;
         int oldOrientation = mOrientation;
         mOrientation = CameraUtil.roundOrientation(orientation, mOrientation);
-        if (oldOrientation != mOrientation &&
-            oldOrientation != OrientationEventListener.ORIENTATION_UNKNOWN) {
-            Log.v(TAG, "onOrientationChanged, update parameters");
-            if (mParameters != null && mCameraDevice != null) {
+        if (oldOrientation != mOrientation) {
+            if (mParameters != null && mCameraDevice != null && mCameraState == IDLE) {
+                Log.v(TAG, "onOrientationChanged, update parameters");
                 setFlipValue();
                 mCameraDevice.setParameters(mParameters);
             }
