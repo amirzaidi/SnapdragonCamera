@@ -62,6 +62,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.Display;
 import com.android.camera.util.CameraUtil;
+import java.util.Locale;
 
 public class PhotoMenu extends MenuController
         implements ListMenu.Listener,
@@ -341,19 +342,37 @@ public class PhotoMenu extends MenuController
         mPopupStatus = POPUP_IN_ANIMATION_SLIDE;
 
         ViewPropertyAnimator vp = v.animate();
-        switch (mUI.getOrientation()) {
-            case 0:
-                vp.translationXBy(-v.getWidth());
-                break;
-            case 90:
-                vp.translationYBy(2 * v.getHeight());
-                break;
-            case 180:
-                vp.translationXBy(2 * v.getWidth());
-                break;
-            case 270:
-                vp.translationYBy(-v.getHeight());
-                break;
+        if (View.LAYOUT_DIRECTION_RTL == TextUtils
+                .getLayoutDirectionFromLocale(Locale.getDefault())) {
+            switch (mUI.getOrientation()) {
+                case 0:
+                    vp.translationXBy(v.getWidth());
+                    break;
+                case 90:
+                    vp.translationYBy(-2 * v.getHeight());
+                    break;
+                case 180:
+                    vp.translationXBy(-2 * v.getWidth());
+                    break;
+                case 270:
+                    vp.translationYBy(v.getHeight());
+                    break;
+            }
+        } else {
+            switch (mUI.getOrientation()) {
+                case 0:
+                    vp.translationXBy(-v.getWidth());
+                    break;
+                case 90:
+                    vp.translationYBy(2 * v.getHeight());
+                    break;
+                case 180:
+                    vp.translationXBy(2 * v.getWidth());
+                    break;
+                case 270:
+                    vp.translationYBy(-v.getHeight());
+                    break;
+            }
         }
         vp.setListener(new AnimatorListener() {
             @Override
@@ -410,27 +429,53 @@ public class PhotoMenu extends MenuController
 
         ViewPropertyAnimator vp = v.animate();
         float dest;
-        switch (orientation) {
-            case 0:
-                dest = v.getX();
-                v.setX(dest - delta);
-                vp.translationX(dest);
-                break;
-            case 90:
-                dest = v.getY();
-                v.setY(dest + delta);
-                vp.translationY(dest);
-                break;
-            case 180:
-                dest = v.getX();
-                v.setX(dest + delta);
-                vp.translationX(dest);
-                break;
-            case 270:
-                dest = v.getY();
-                v.setY(dest - delta);
-                vp.translationY(dest);
-                break;
+        if (View.LAYOUT_DIRECTION_RTL == TextUtils
+                .getLayoutDirectionFromLocale(Locale.getDefault())) {
+            switch (orientation) {
+                case 0:
+                    dest = v.getX();
+                    v.setX(-(dest - delta));
+                    vp.translationX(dest);
+                    break;
+                case 90:
+                    dest = v.getY();
+                    v.setY(-(dest + delta));
+                    vp.translationY(dest);
+                    break;
+                case 180:
+                    dest = v.getX();
+                    v.setX(-(dest + delta));
+                    vp.translationX(dest);
+                    break;
+                case 270:
+                    dest = v.getY();
+                    v.setY(-(dest - delta));
+                    vp.translationY(dest);
+                    break;
+            }
+        } else {
+            switch (orientation) {
+                case 0:
+                    dest = v.getX();
+                    v.setX(dest - delta);
+                    vp.translationX(dest);
+                    break;
+                case 90:
+                    dest = v.getY();
+                    v.setY(dest + delta);
+                    vp.translationY(dest);
+                    break;
+                case 180:
+                    dest = v.getX();
+                    v.setX(dest + delta);
+                    vp.translationX(dest);
+                    break;
+                case 270:
+                    dest = v.getY();
+                    v.setY(dest - delta);
+                    vp.translationY(dest);
+                    break;
+            }
         }
         vp.setDuration(ANIMATION_DURATION).start();
     }
@@ -454,7 +499,12 @@ public class PhotoMenu extends MenuController
         mPreviewMenuStatus = PREVIEW_MENU_IN_ANIMATION;
 
         ViewPropertyAnimator vp = v.animate();
-        vp.translationXBy(-v.getWidth()).setDuration(ANIMATION_DURATION);
+        if (View.LAYOUT_DIRECTION_RTL == TextUtils
+                .getLayoutDirectionFromLocale(Locale.getDefault())) {
+            vp.translationXBy(v.getWidth()).setDuration(ANIMATION_DURATION);
+        } else {
+            vp.translationXBy(-v.getWidth()).setDuration(ANIMATION_DURATION);
+        }
         vp.setListener(new AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {

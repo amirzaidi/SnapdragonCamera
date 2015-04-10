@@ -793,8 +793,11 @@ public class VideoUI implements PieRenderer.PieListener,
             int y = Math.max(0, yBase);
             if (yBase + height > screenHeight)
                 y = Math.max(0, screenHeight - height);
-            layoutParams.setMargins(0, y, 0, 0);
-            layoutParams.setMarginStart(CameraActivity.SETTING_LIST_WIDTH_1);
+            if (mRootView.getLayoutDirection() != View.LAYOUT_DIRECTION_RTL) {
+                layoutParams.setMargins(CameraActivity.SETTING_LIST_WIDTH_1, y, 0, 0);
+            } else {
+                layoutParams.setMargins(0, y, CameraActivity.SETTING_LIST_WIDTH_1, 0);
+            }
 
             mSubMenuLayout.setLayoutParams(layoutParams);
             mSubMenuLayout.addView(popup);
