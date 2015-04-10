@@ -41,6 +41,7 @@ import android.media.SoundPool;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -238,11 +239,8 @@ public class PhotoModule
     // Used for check memory status for longshot mode
     // Currently, this cancel threshold selection is based on test experiments,
     // we can change it based on memory status or other requirements.
-    private static final int LONGSHOT_CANCEL_THRESHOLD = 40;
-    private MemInfoReader mMemInfoReader = new MemInfoReader();
-    private ActivityManager mAm;
+    private static final int LONGSHOT_CANCEL_THRESHOLD = 40 * 1024 * 1024;
     private long SECONDARY_SERVER_MEM;
-    private long mMB = 1024 * 1024;
     private boolean mLongshotActive = false;
 
     // We use a queue to generated names of the images to be used later
@@ -489,7 +487,6 @@ public class PhotoModule
         mCameraId = getPreferredCameraId(mPreferences);
 
         mContentResolver = mActivity.getContentResolver();
-        mAm = (ActivityManager)(mActivity.getSystemService(Context.ACTIVITY_SERVICE));
 
         // Surface texture is from camera screen nail and startPreview needs it.
         // This must be done before startPreview.
@@ -521,10 +518,6 @@ public class PhotoModule
         brightnessProgressBar.setVisibility(View.INVISIBLE);
         Storage.setSaveSDCard(
             mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
-
-        ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
-        mAm.getMemoryInfo(memInfo);
-        SECONDARY_SERVER_MEM = memInfo.secondaryServerThreshold;
 
         mSoundPool = new SoundPool(1, AudioManager.STREAM_NOTIFICATION, 0);
         mRefocusSound = mSoundPool.load(mActivity, R.raw.camera_click_x5, 1);
@@ -928,20 +921,29 @@ public class PhotoModule
         }
     }
 
+    // TODO: need to check cached background apps memory and longshot ION memory
     private boolean isLongshotNeedCancel() {
+        if (SECONDARY_SERVER_MEM == 0) {
+            ActivityManager am = (ActivityManager) mActivity.getSystemService(
+                    Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(memInfo);
+            SECONDARY_SERVER_MEM = memInfo.secondaryServerThreshold;
+        }
 
-        long totalMemory = Runtime.getRuntime().totalMemory() / mMB;
-        long maxMemory = Runtime.getRuntime().maxMemory() / mMB;
+        long totalMemory = Runtime.getRuntime().totalMemory();
+        long maxMemory = Runtime.getRuntime().maxMemory();
         long remainMemory = maxMemory - totalMemory;
 
-        mMemInfoReader.readMemInfo();
-        long availMem = mMemInfoReader.getFreeSize() + mMemInfoReader.getCachedSize()
-            - SECONDARY_SERVER_MEM;
-        availMem = availMem/ mMB;
+        MemInfoReader reader = new MemInfoReader();
+        reader.readMemInfo();
+        long[] info = reader.getRawInfo();
+        long availMem = (info[Debug.MEMINFO_FREE] + info[Debug.MEMINFO_CACHED]) * 1024;
 
-        if(availMem <= 0 ||
-            remainMemory <= LONGSHOT_CANCEL_THRESHOLD) {
-            Log.d(TAG, "memory used up, need cancel longshot.");
+        if (availMem <= SECONDARY_SERVER_MEM || remainMemory <= LONGSHOT_CANCEL_THRESHOLD) {
+            Log.e(TAG, "cancel longshot: free=" + info[Debug.MEMINFO_FREE] * 1024
+                    + " cached=" + info[Debug.MEMINFO_CACHED] * 1024
+                    + " threshold=" + SECONDARY_SERVER_MEM);
             mLongshotActive = false;
             RotateTextToast.makeText(mActivity,R.string.msg_cancel_longshot_for_limited_memory,
                 Toast.LENGTH_SHORT).show();
