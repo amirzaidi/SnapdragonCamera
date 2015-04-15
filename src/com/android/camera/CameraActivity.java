@@ -133,6 +133,7 @@ public class CameraActivity extends Activity
     public static final String ACTION_TRIM_VIDEO =
             "com.android.camera.action.TRIM";
     public static final String MEDIA_ITEM_PATH = "media-item-path";
+    public static final String KEY_TOTAL_NUMBER = "total-number";
 
     // Used to show whether Gallery was launched from Snapcam
     private static final String KEY_FROM_SNAPCAM = "from-snapcam";
@@ -590,6 +591,7 @@ public class CameraActivity extends Activity
             intent.setAction(Intent.ACTION_VIEW);
             intent.setData(uri);
             intent.putExtra(KEY_FROM_SNAPCAM, true);
+            intent.putExtra(KEY_TOTAL_NUMBER, (adapter.getTotalNumber() -1));
             startActivity(intent);
         } catch (ActivityNotFoundException ex) {
             try {
