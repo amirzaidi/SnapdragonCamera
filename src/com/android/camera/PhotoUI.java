@@ -849,8 +849,11 @@ public class PhotoUI implements PieListener,
             int y = Math.max(0, yBase);
             if (yBase + height > screenHeight)
                 y = Math.max(0, screenHeight - height);
-            params.setMargins(0, y, 0, 0);
-            params.setMarginStart(CameraActivity.SETTING_LIST_WIDTH_1);
+            if (mRootView.getLayoutDirection() != View.LAYOUT_DIRECTION_RTL) {
+                params.setMargins(CameraActivity.SETTING_LIST_WIDTH_1, y, 0, 0);
+            } else {
+                params.setMargins(0, y, CameraActivity.SETTING_LIST_WIDTH_1, 0);
+            }
 
             mSubMenuLayout.setLayoutParams(params);
 
