@@ -693,11 +693,11 @@ public class VideoMenu extends MenuController
 
     @Override
     public void overrideSettings(final String... keyvalues) {
-        overrideCDSMode();
         super.overrideSettings(keyvalues);
-        if (((mListMenu == null)) || mPopupStatus != POPUP_FIRST_LEVEL) {
-            mPopupStatus = POPUP_FIRST_LEVEL;
+        if (mListMenu == null) {
             initializePopup();
+        } else {
+            overrideCDSMode();
         }
         mListMenu.overrideSettings(keyvalues);
 
