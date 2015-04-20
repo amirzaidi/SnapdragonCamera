@@ -824,10 +824,10 @@ public class VideoModule implements CameraModule,
         // TODO: This should be checked instead directly +1000.
         if (mCaptureTimeLapse) quality += 1000;
         mUnsupportedProfile = false;
-        boolean hasProfile = CamcorderProfile.hasProfile(quality);
+        boolean hasProfile = CamcorderProfile.hasProfile(mCameraId, quality);
         if (!hasProfile) {
-            mUnsupportedProfile = true;
-            return;
+          mUnsupportedProfile = true;
+          return;
         }
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
