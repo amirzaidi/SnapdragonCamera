@@ -435,6 +435,7 @@
           <item>@string/pref_camera_hfr_entry_2x</item>
           <item>@string/pref_camera_hfr_entry_3x</item>
           <item>@string/pref_camera_hfr_entry_4x</item>
+          <item>@string/pref_camera_hfr_entry_8x</item>
           <item>@string/pref_camera_hfr_entry_hsr_60</item>
           <item>@string/pref_camera_hfr_entry_hsr_90</item>
           <item>@string/pref_camera_hfr_entry_hsr_120</item>
@@ -446,6 +447,7 @@
           <item>@string/pref_camera_hfr_value_2x</item>
           <item>@string/pref_camera_hfr_value_3x</item>
           <item>@string/pref_camera_hfr_value_4x</item>
+          <item>@string/pref_camera_hfr_value_8x</item>
           <item>@string/pref_camera_hfr_value_hsr_60</item>
           <item>@string/pref_camera_hfr_value_hsr_90</item>
           <item>@string/pref_camera_hfr_value_hsr_120</item>
