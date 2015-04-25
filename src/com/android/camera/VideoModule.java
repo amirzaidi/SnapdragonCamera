@@ -2306,12 +2306,9 @@ public class VideoModule implements CameraModule,
                   (disMode.equals("enable")) ||
                   ((hdr != null) && (!hdr.equals("off"))) ) {
                 Log.v(TAG,"HDR/DIS/Time Lapse ON for HFR/HSR selection, turning HFR/HSR off");
-                RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_hfr_selection,
-                          Toast.LENGTH_LONG).show();
                 mParameters.setVideoHighFrameRate("off");
                 mParameters.set(CameraSettings.KEY_VIDEO_HSR, "off");
                 mUI.overrideSettings(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE, "off");
-                mUI.initializePopup(mPreferenceGroup);
              }
         }
 

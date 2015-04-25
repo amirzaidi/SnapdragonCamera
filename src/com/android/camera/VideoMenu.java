@@ -42,8 +42,10 @@ import com.android.camera.ui.ListSubMenu;
 import com.android.camera.ui.ListMenu;
 import com.android.camera.ui.TimeIntervalPopup;
 import com.android.camera.ui.RotateImageView;
+import com.android.camera.ui.RotateTextToast;
 import org.codeaurora.snapcam.R;
 import android.widget.HorizontalScrollView;
+import android.widget.Toast;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.Display;
@@ -704,12 +706,12 @@ public class VideoMenu extends MenuController
     @Override
     // Hit when an item in the second-level popup gets selected
     public void onListPrefChanged(ListPreference pref) {
+        onSettingChanged(pref);
         if (mPopupStatus == POPUP_SECOND_LEVEL) {
             mListMenu.reloadPreference();
             animateFadeOut(mListSubMenu, 2);
+            ((ListMenu) mListMenu).resetHighlight();
         }
-        super.onSettingChanged(pref);
-        ((ListMenu) mListMenu).resetHighlight();
     }
 
     protected void initializePopup() {
@@ -809,8 +811,35 @@ public class VideoMenu extends MenuController
             animateSlideOut(mListMenu, 1);
     }
 
+    // Return true if the preference has the specified key but not the value.
+    private static boolean notSame(ListPreference pref, String key, String value) {
+        return (key.equals(pref.getKey()) && !value.equals(pref.getValue()));
+    }
+
     @Override
     public void onSettingChanged(ListPreference pref) {
+
+        if (notSame(pref, CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
+                mActivity.getString(R.string.pref_video_time_lapse_frame_interval_default))) {
+            ListPreference hfrPref =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE);
+            if (hfrPref != null && !"off".equals(hfrPref.getValue())) {
+                RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_hfr_selection,
+                        Toast.LENGTH_LONG).show();
+            }
+            setPreference(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE, "off");
+        }
+        if (notSame(pref, CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE, "off")) {
+            String defaultValue =
+                    mActivity.getString(R.string.pref_video_time_lapse_frame_interval_default);
+            ListPreference lapsePref = mPreferenceGroup
+                    .findPreference(CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL);
+            if (lapsePref != null && !defaultValue.equals(lapsePref.getValue())) {
+                RotateTextToast.makeText(mActivity, R.string.error_app_unsupported_hfr_selection,
+                        Toast.LENGTH_LONG).show();
+            }
+            setPreference(CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL, defaultValue);
+        }
         super.onSettingChanged(pref);
     }
 
