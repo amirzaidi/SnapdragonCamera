@@ -173,4 +173,10 @@
     <!-- Margins for 4:3 preview on 16:9 screen with 640dp height -->
     <dimen name="preview_top_margin">57dp</dimen>
     <dimen name="preview_bottom_margin">103dp</dimen>
+
+    <dimen name="refocus_circle_diameter_1">113dp</dimen>
+    <dimen name="refocus_circle_diameter_2">81dp</dimen>
+    <dimen name="refocus_circle_diameter_3">95dp</dimen>
+    <dimen name="refocus_cross_length">19dp</dimen>
+    <dimen name="refocus_stroke_width">2dp</dimen>
 </resources>

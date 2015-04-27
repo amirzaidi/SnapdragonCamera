@@ -76,4 +76,7 @@
 
     <color name="camera_control_bg_opaque">#ff191919</color>
     <color name="camera_control_bg_transparent">#4d191919</color>
+
+    <color name="refocus_indicator_1">#a0ffffff</color>
+    <color name="refocus_indicator_2">#ff29b6f6</color>
 </resources>

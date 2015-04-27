@@ -65,4 +65,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true" />
     </RelativeLayout>
+
+    <view class="com.android.camera.RefocusActivity$Indicator"
+        android:id="@+id/refocus_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>

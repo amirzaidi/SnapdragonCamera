@@ -541,4 +541,8 @@
     <string name="text_tsmakeup_alert_continue">继续</string>
     <string name="text_tsmakeup_alert_quit">退出</string>
 
+    <string name="all_in_focus">全焦</string>
+    <string name="refocus_toast">点击此处可重新对焦照片</string>
+    <string name="refocus_prompt_title">Macro+</string>
+    <string name="refocus_prompt_message">开启Macro+模式后，相机会连续拍摄5张照片并将其合成一张全焦照片。您还可以事后重新对焦。</string>
 </resources>

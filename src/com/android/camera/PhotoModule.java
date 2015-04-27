@@ -3496,6 +3496,7 @@ public class PhotoModule
             if (refocusOn.equals(mSceneMode)) {
                 try {
                     mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
+                    mUI.showRefocusDialog();
                 } catch (NullPointerException e) {
                 }
             } else {

@@ -32,19 +32,29 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 
+import android.animation.Animator;
+import android.animation.Keyframe;
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Build;
+import android.util.AttributeSet;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.FrameLayout;
 
 import org.codeaurora.snapcam.R;
 
@@ -59,6 +69,7 @@ public class RefocusActivity extends Activity {
     private ImageView mImageView;
     private int mWidth;
     private int mHeight;
+    private Indicator mIndicator;
 
     private DepthMap mDepthMap;
     private int mCurrentImage = -1;
@@ -79,6 +90,8 @@ public class RefocusActivity extends Activity {
         setResult(RESULT_CANCELED, new Intent());
 
         setContentView(R.layout.refocus_editor);
+        mIndicator = (Indicator) findViewById(R.id.refocus_indicator);
+
         mImageView = (ImageView) findViewById(R.id.refocus_image);
         mImageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -89,6 +102,8 @@ public class RefocusActivity extends Activity {
                         float y = event.getY();
                         int w = v.getWidth();
                         int h = v.getHeight();
+                        mIndicator.startAnimation(x + mImageView.getLeft(),
+                                y + mImageView.getTop());
                         if (mDepthMap != null) {
                             int depth = mDepthMap.getDepth(x / (float) w, y / (float) h);
                             setCurrentImage(depth);
@@ -244,6 +259,95 @@ public class RefocusActivity extends Activity {
                 result += mData[offset + i] & 0xff;
             }
             return result;
+        }
+    }
+
+    public static class Indicator extends FrameLayout {
+        private float mX;
+        private float mY;
+        private ValueAnimator mAnimator;
+        private Paint mPaint;
+        private float mCrossLength;
+        private float mStrokeWidth;
+        private int mColor1;
+        private int mColor2;
+
+        public Indicator(Context context, AttributeSet attr) {
+            super(context, attr);
+            final Resources res = context.getResources();
+
+            float r1 = res.getDimensionPixelSize(R.dimen.refocus_circle_diameter_1) / 2;
+            float r2 = res.getDimensionPixelSize(R.dimen.refocus_circle_diameter_2) / 2;
+            float r3 = res.getDimensionPixelSize(R.dimen.refocus_circle_diameter_3) / 2;
+            mCrossLength = res.getDimensionPixelSize(R.dimen.refocus_cross_length) / 2;
+            mStrokeWidth = res.getDimensionPixelSize(R.dimen.refocus_stroke_width) / 2;
+            mColor1 = res.getColor(R.color.refocus_indicator_1);
+            mColor2 = res.getColor(R.color.refocus_indicator_2);
+
+            Keyframe k0 = Keyframe.ofFloat(0f, r1);
+            Keyframe k1 = Keyframe.ofFloat(5f / 12f, r2);
+            Keyframe k2 = Keyframe.ofFloat(0.5f, r2);
+            Keyframe k3 = Keyframe.ofFloat(0.75f, r3);
+            Keyframe k4 = Keyframe.ofFloat(1f, r2);
+            PropertyValuesHolder holder = PropertyValuesHolder.ofKeyframe(
+                    "radius", k0, k1, k2, k3, k4);
+            mAnimator = ValueAnimator.ofPropertyValuesHolder(holder);
+
+            mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mPaint.setStrokeCap(Paint.Cap.BUTT);
+            mPaint.setStrokeWidth(res.getDimensionPixelSize(R.dimen.refocus_stroke_width));
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            if (mAnimator != null && mAnimator.isStarted()) {
+                mPaint.setColor(mAnimator.getAnimatedFraction() < 0.5f ? mColor1 : mColor2);
+
+                mPaint.setStyle(Paint.Style.STROKE);
+                canvas.drawCircle(mX, mY, (Float) mAnimator.getAnimatedValue(), mPaint);
+                canvas.drawLine(mX - mCrossLength, mY, mX + mCrossLength, mY, mPaint);
+                canvas.drawLine(mX, mY - mCrossLength, mX, mY + mCrossLength, mPaint);
+            }
+        }
+
+        public void startAnimation(float x, float y) {
+            mX = x;
+            mY = y;
+
+            if (mAnimator != null) {
+                mAnimator.cancel();
+            }
+
+            mAnimator.setDuration(720);
+            mAnimator.removeAllUpdateListeners();
+            mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    invalidate();
+                }
+            });
+            mAnimator.removeAllListeners();
+            mAnimator.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    setWillNotDraw(false);
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    setWillNotDraw(true);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    setWillNotDraw(true);
+                }
+            });
+            mAnimator.start();
         }
     }
 }
