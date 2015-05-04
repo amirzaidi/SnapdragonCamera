@@ -43,6 +43,7 @@ import android.hardware.Camera.CameraDataCallback;
 import android.hardware.Camera.CameraMetaDataCallback;
 import com.android.camera.util.ApiHelper;
 import android.os.ConditionVariable;
+import java.lang.reflect.Method;
 
 /**
  * A class to implement {@link CameraManager} of the Android camera framework.
@@ -96,6 +97,10 @@ class AndroidCameraManagerImpl implements CameraManager {
     //LONGSHOT
     private static final int SET_LONGSHOT = 701;
     private static final int SET_AUTO_HDR_MODE = 801;
+
+    //HAL1 version code
+    private static final int CAMERA_HAL_API_VERSION_1_0 = 0x100;
+
     private CameraHandler mCameraHandler;
     private android.hardware.Camera mCamera;
 
@@ -202,13 +207,17 @@ class AndroidCameraManagerImpl implements CameraManager {
                 switch (msg.what) {
                     case OPEN_CAMERA:
                         try {
-                            mCamera = android.hardware.Camera.openLegacy(msg.arg1,
-                                    android.hardware.Camera.CAMERA_HAL_API_VERSION_1_0);
-                        } catch (RuntimeException e) {
-                            /* Retry with open if openLegacy fails */
-                            Log.v(TAG, "openLegacy failed. Using open instead");
+                            Method openMethod = Class.forName("android.hardware.Camera").getMethod(
+                                    "openLegacy", int.class, int.class);
+                            mCamera = (android.hardware.Camera) openMethod.invoke(
+                                    null, msg.arg1, CAMERA_HAL_API_VERSION_1_0);
+                        } catch (Exception e) {
+                            /* Retry with open if openLegacy doesn't exist/fails */
+                            Log.v(TAG, "openLegacy failed due to " + e.getMessage()
+                                    + ", using open instead");
                             mCamera = android.hardware.Camera.open(msg.arg1);
                         }
+
                         if (mCamera != null) {
                             mParametersIsDirty = true;
 
