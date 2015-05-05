@@ -862,6 +862,20 @@
     <string name="pref_camera_video_rotation_entry_180">180</string>
     <string name="pref_camera_video_rotation_entry_270">270</string>
 
+    <!-- Settings screen, Partial UI recording default value -->
+    <string name="pref_camera_video_partial_ui_default">@string/pref_video_partial_ui_value_false</string>
+
+    <!-- Settings screen, partial ui recording title -->
+    <string name="pref_camera_video_partial_ui_title">Partial UI Recording</string>
+
+    <!-- Settings screen, partial ui recording radio button choices -->
+    <string name="pref_camera_video_partial_ui_entry_false">@string/setting_off</string>
+    <string name="pref_camera_video_partial_ui_entry_true">@string/setting_on</string>
+
+    <!-- Partial ui recording values. Do not translate. -->
+    <string name="pref_video_partial_ui_value_false">false</string>
+    <string name="pref_video_partial_ui_value_true">true</string>
+
     <!-- The message is shown in toast when click showOnMap Menu and there is no map app -->
     <string name="map_activity_not_found_err">There is no map app for show location.</string>
 
