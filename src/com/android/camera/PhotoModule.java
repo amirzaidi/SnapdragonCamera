@@ -196,6 +196,9 @@ public class PhotoModule
     private boolean mRefocus = false;
     private boolean mLastPhotoTakenWithRefocus = false;
 
+    private int mLongShotCaptureCount;
+    private int mLongShotCaptureCountLimit;
+
     // The degrees of the device rotated clockwise from its natural orientation.
     private int mOrientation = OrientationEventListener.ORIENTATION_UNKNOWN;
     private ComboPreferences mPreferences;
@@ -964,9 +967,16 @@ public class PhotoModule
                     return;
                 }
 
+                if(mLongShotCaptureCount == mLongShotCaptureCountLimit) {
+                    mLongshotActive = false;
+                    return;
+                }
+
                 mUI.doShutterAnimation();
 
                 Location loc = getLocationAccordPictureFormat(mParameters.get(KEY_PICTURE_FORMAT));
+
+                mLongShotCaptureCount++;
                 if (mLongshotSave) {
                     mCameraDevice.takePicture(mHandler,
                             new LongshotShutterCallback(),
@@ -1554,6 +1564,9 @@ public class PhotoModule
         }
 
         if (mCameraState == LONGSHOT) {
+            mLongShotCaptureCountLimit = SystemProperties.getInt(
+                                    "persist.camera.longshot.shotnum", 0);
+            mLongShotCaptureCount = 1;
             if(mLongshotSave) {
                 mCameraDevice.takePicture(mHandler,
                         new LongshotShutterCallback(),
