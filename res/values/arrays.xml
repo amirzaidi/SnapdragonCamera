@@ -409,6 +409,7 @@
         <item>@string/pref_camera_scenemode_entry_night</item>
         <item>@string/pref_camera_scenemode_entry_beach</item>
         <item>@string/pref_camera_scenemode_entry_snow</item>
+        <item>@string/pref_camera_scenemode_entry_asd</item>
     </string-array>
 
     <array name="scenemode_thumbnails" translatable="false">
@@ -425,6 +426,7 @@
         <item>@drawable/ic_scene_mode_night</item>
         <item>@drawable/ic_scene_mode_beach</item>
         <item>@drawable/ic_scene_mode_snow</item>
+        <item>@drawable/ic_scene_mode_smartauto</item>
     </array>
 
     <string-array name="pref_camera_scenemode_labels">
@@ -457,6 +459,7 @@
         <item>night</item>
         <item>beach</item>
         <item>snow</item>
+        <item>asd</item>
     </string-array>
 
     <array name="camera_id_entries" translatable="false">
