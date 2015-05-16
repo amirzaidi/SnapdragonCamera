@@ -2133,6 +2133,10 @@ public class PhotoModule
                 boolean enable = SystemProperties.getBoolean(PERSIST_LONG_SAVE, false);
                 mLongshotSave = enable;
 
+                //Cancel the previous countdown when long press shutter button for longshot.
+                if (mUI.isCountingDown()) {
+                    mUI.cancelCountDown();
+                }
                 //check whether current memory is enough for longshot.
                 if(isLongshotNeedCancel()) {
                     return;
