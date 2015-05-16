@@ -18,7 +18,6 @@ package com.android.camera;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -205,7 +204,6 @@ public class PhotoModule
 
     private static final String sTempCropFilename = "crop-temp";
 
-    private ContentProviderClient mMediaProviderClient;
     private boolean mFaceDetectionStarted = false;
 
     private static final String PERSIST_LONG_ENABLE = "persist.camera.longshot.enable";
@@ -801,16 +799,6 @@ public class PhotoModule
                 Toast.LENGTH_SHORT).show();
     }
 
-    private void keepMediaProviderInstance() {
-        // We want to keep a reference to MediaProvider in camera's lifecycle.
-        // TODO: Utilize mMediaProviderClient instance to replace
-        // ContentResolver calls.
-        if (mMediaProviderClient == null) {
-            mMediaProviderClient = mContentResolver
-                    .acquireContentProviderClient(MediaStore.AUTHORITY);
-        }
-    }
-
     // Snapshots can only be taken after this is called. It should be called
     // once only. We could have done these things in onCreate() but we want to
     // make preview screen appear as soon as possible.
@@ -823,8 +811,6 @@ public class PhotoModule
         boolean recordLocation = RecordLocationPreference.get(
                 mPreferences, mContentResolver);
         mLocationManager.recordLocation(recordLocation);
-
-        keepMediaProviderInstance();
 
         mUI.initializeFirstTime();
         MediaSaveService s = mActivity.getMediaSaveService();
@@ -866,7 +852,6 @@ public class PhotoModule
             mUI.showSwitcher();
         }
         mUI.initializeSecondTime(mParameters);
-        keepMediaProviderInstance();
     }
 
     private void showTapToFocusToastIfNeeded() {
@@ -1919,12 +1904,7 @@ public class PhotoModule
     }
 
     @Override
-    public void onStop() {
-        if (mMediaProviderClient != null) {
-            mMediaProviderClient.release();
-            mMediaProviderClient = null;
-        }
-    }
+    public void onStop() {}
 
     @Override
     public void onCaptureCancelled() {
