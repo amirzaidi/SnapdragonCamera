@@ -16,55 +16,48 @@
 
 package com.android.camera;
 
+import android.content.Context;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
+
+import com.android.camera.WideAnglePanoramaModule.INotifier;
 
 /**
  * A singleton to handle the processing of each frame by {@link Mosaic}.
  */
 public class MosaicFrameProcessor {
     private static final String TAG = "MosaicFrameProcessor";
-    private static final int NUM_FRAMES_IN_BUFFER = 2;
-    private static final int MAX_NUMBER_OF_FRAMES = 100;
-    private static final int MOSAIC_RET_CODE_INDEX = 10;
-    private static final int FRAME_COUNT_INDEX = 9;
-    private static final int X_COORD_INDEX = 2;
-    private static final int Y_COORD_INDEX = 5;
-    private static final int HR_TO_LR_DOWNSAMPLE_FACTOR = 4;
-    private static final int WINDOW_SIZE = 3;
 
-    private Mosaic mMosaicer;
-    private boolean mIsMosaicMemoryAllocated = false;
-    private float mTranslationLastX;
-    private float mTranslationLastY;
-
-    private int mFillIn = 0;
-    private int mTotalFrameCount = 0;
-    private int mLastProcessFrameIdx = -1;
-    private int mCurrProcessFrameIdx = -1;
-    private boolean mFirstRun;
-
-    // Panning rate is in unit of percentage of image content translation per
-    // frame. Use moving average to calculate the panning rate.
-    private float mPanningRateX;
-    private float mPanningRateY;
-
-    private float[] mDeltaX = new float[WINDOW_SIZE];
-    private float[] mDeltaY = new float[WINDOW_SIZE];
-    private int mOldestIdx = 0;
-    private float mTotalTranslationX = 0f;
-    private float mTotalTranslationY = 0f;
-
-    private ProgressListener mProgressListener;
+    public static final int MAX_HORIZONAL_ANGLE = 180;
+    public static final int MAX_VERTICAL_ANGLE = 180;
+    public static final int MSG_PANORAMA_TIP = 0x0001;
+    public static final int MSG_CAPTURE_SUCCESS = 0x0002;
+    public static final int MSG_CAPTURE_FAILED = 0x0003;
+    public static final int MSG_UPDATE_UI = 0x0004;
+    /** Panorama direction unknown. */
+    public final static int DIRECTION_UNKNOW = 0x00000000;
+    /** Panorama direction left to right. */
+    public final static int DIRECTION_LEFTTORIGHT = 0x00000001;
+    /** Panorama direction right to left. */
+    public final static int DIRECTION_RIGHTTOLEFT = 0x00000002;
+    /** Panorama direction up to down. */
+    public final static int DIRECTION_UPTODOWN = 0x00000004;
+    /** Panorama direction down to up. */
+    public final static int DIRECTION_DOWMTOUP = 0x00000008;
 
     private int mPreviewWidth;
     private int mPreviewHeight;
-    private int mPreviewBufferSize;
 
+    private Handler mThreadHandler = null;
+    private long mHandler = 0;
+    private boolean mIsActive = false;
+
+    private INotifier mPanoNotifier;
     private static MosaicFrameProcessor sMosaicFrameProcessor; // singleton
 
-    public interface ProgressListener {
-        public void onProgress(boolean isFinished, float panningRateX, float panningRateY,
-                float progressX, float progressY);
+    static {
+        System.loadLibrary("jni_snapcammosaic");
     }
 
     public static MosaicFrameProcessor getInstance() {
@@ -74,164 +67,87 @@ public class MosaicFrameProcessor {
         return sMosaicFrameProcessor;
     }
 
-    private MosaicFrameProcessor() {
-        mMosaicer = new Mosaic();
+    public synchronized boolean IsInited() {
+        return (mHandler != 0 && mIsActive);
     }
 
-    public void setProgressListener(ProgressListener listener) {
-        mProgressListener = listener;
-    }
+    public synchronized int Init(Context context, int maxFrameCount, int width, int height,
+            INotifier notifier) {
+        Log.v(TAG, "Init <----");
+        Uninit();
+        mPanoNotifier = notifier;
+        mThreadHandler = new Handler(context.getMainLooper(), new Handler.Callback() {
 
-    public int reportProgress(boolean hires, boolean cancel) {
-        return mMosaicer.reportProgress(hires, cancel);
-    }
-
-    public void initialize(int previewWidth, int previewHeight, int bufSize) {
-        mPreviewWidth = previewWidth;
-        mPreviewHeight = previewHeight;
-        mPreviewBufferSize = bufSize;
-        setupMosaicer(mPreviewWidth, mPreviewHeight, mPreviewBufferSize);
-        setStripType(Mosaic.STRIPTYPE_WIDE);
-        // no need to call reset() here. reset() should be called by the client
-        // after this initialization before calling other methods of this object.
-    }
-
-    public void clear() {
-        if (mIsMosaicMemoryAllocated) {
-            mMosaicer.freeMosaicMemory();
-            mIsMosaicMemoryAllocated = false;
-        }
-        synchronized (this) {
-            notify();
-        }
-    }
-
-    public boolean isMosaicMemoryAllocated() {
-        return mIsMosaicMemoryAllocated;
-    }
-
-    public void setStripType(int type) {
-        mMosaicer.setStripType(type);
-    }
-
-    private void setupMosaicer(int previewWidth, int previewHeight, int bufSize) {
-        Log.v(TAG, "setupMosaicer w, h=" + previewWidth + ',' + previewHeight + ',' + bufSize);
-
-        if (mIsMosaicMemoryAllocated) throw new RuntimeException("MosaicFrameProcessor in use!");
-        mIsMosaicMemoryAllocated = true;
-        mMosaicer.allocateMosaicMemory(previewWidth, previewHeight);
-    }
-
-    public void reset() {
-        // reset() can be called even if MosaicFrameProcessor is not initialized.
-        // Only counters will be changed.
-        mFirstRun = true;
-        mTotalFrameCount = 0;
-        mFillIn = 0;
-        mTotalTranslationX = 0;
-        mTranslationLastX = 0;
-        mTotalTranslationY = 0;
-        mTranslationLastY = 0;
-        mPanningRateX = 0;
-        mPanningRateY = 0;
-        mLastProcessFrameIdx = -1;
-        mCurrProcessFrameIdx = -1;
-        for (int i = 0; i < WINDOW_SIZE; ++i) {
-            mDeltaX[i] = 0f;
-            mDeltaY[i] = 0f;
-        }
-        mMosaicer.reset();
-    }
-
-    public int createMosaic(boolean highRes) {
-        return mMosaicer.createMosaic(highRes);
-    }
-
-    public byte[] getFinalMosaicNV21() {
-        return mMosaicer.getFinalMosaicNV21();
-    }
-
-    // Processes the last filled image frame through the mosaicer and
-    // updates the UI to show progress.
-    // When done, processes and displays the final mosaic.
-    public void processFrame() {
-        if (!mIsMosaicMemoryAllocated) {
-            // clear() is called and buffers are cleared, stop computation.
-            // This can happen when the onPause() is called in the activity, but still some frames
-            // are not processed yet and thus the callback may be invoked.
-            return;
-        }
-
-        mCurrProcessFrameIdx = mFillIn;
-        mFillIn = ((mFillIn + 1) % NUM_FRAMES_IN_BUFFER);
-
-        // Check that we are trying to process a frame different from the
-        // last one processed (useful if this class was running asynchronously)
-        if (mCurrProcessFrameIdx != mLastProcessFrameIdx) {
-            mLastProcessFrameIdx = mCurrProcessFrameIdx;
-
-            // TODO: make the termination condition regarding reaching
-            // MAX_NUMBER_OF_FRAMES solely determined in the library.
-            if (mTotalFrameCount < MAX_NUMBER_OF_FRAMES) {
-                // If we are still collecting new frames for the current mosaic,
-                // process the new frame.
-                calculateTranslationRate();
-
-                // Publish progress of the ongoing processing
-                if (mProgressListener != null) {
-                    mProgressListener.onProgress(false, mPanningRateX, mPanningRateY,
-                            mTranslationLastX * HR_TO_LR_DOWNSAMPLE_FACTOR / mPreviewWidth,
-                            mTranslationLastY * HR_TO_LR_DOWNSAMPLE_FACTOR / mPreviewHeight);
+            @Override
+            public boolean handleMessage(Message msg) {
+                if (mPanoNotifier != null) {
+                    mPanoNotifier.onNotify(msg.what, msg.obj);
                 }
-            } else {
-                if (mProgressListener != null) {
-                    mProgressListener.onProgress(true, mPanningRateX, mPanningRateY,
-                            mTranslationLastX * HR_TO_LR_DOWNSAMPLE_FACTOR / mPreviewWidth,
-                            mTranslationLastY * HR_TO_LR_DOWNSAMPLE_FACTOR / mPreviewHeight);
-                }
+                return true;
             }
+
+        });
+        mPreviewWidth = width;
+        mPreviewHeight = height;
+        mHandler = _InitMosaic(context, this, maxFrameCount, width, height);
+        mIsActive = (mHandler != 0);
+        Log.v(TAG, "Init mHandler: " + mHandler + " ---->");
+        return mIsActive ? 0 : -1;
+    }
+
+    public synchronized void Uninit() {
+        if (mHandler != 0) {
+            Log.v(TAG, "Unint <----");
+            mIsActive = false;
+            mThreadHandler = null;
+            _UninitMosaic(mHandler);
+            mHandler = 0;
+            Log.v(TAG, "Unint ---->");
         }
     }
 
-    public void calculateTranslationRate() {
-        float[] frameData = mMosaicer.setSourceImageFromGPU();
-        int ret_code = (int) frameData[MOSAIC_RET_CODE_INDEX];
-        mTotalFrameCount  = (int) frameData[FRAME_COUNT_INDEX];
-        float translationCurrX = frameData[X_COORD_INDEX];
-        float translationCurrY = frameData[Y_COORD_INDEX];
-
-        if (mFirstRun) {
-            // First time: no need to update delta values.
-            mTranslationLastX = translationCurrX;
-            mTranslationLastY = translationCurrY;
-            mFirstRun = false;
-            return;
+    public synchronized int Process(byte[] data, int width, int height) {
+        int res = -1;
+        if (IsInited() && data != null && mPreviewWidth == width && mPreviewHeight == height) {
+            Log.v(TAG, "Process <----");
+            res = _ProcessMosaic(mHandler, data, width, height);
+            Log.v(TAG, "Process res " + res + " ---->");
         }
-
-        // Moving average: remove the oldest translation/deltaTime and
-        // add the newest translation/deltaTime in
-        int idx = mOldestIdx;
-        mTotalTranslationX -= mDeltaX[idx];
-        mTotalTranslationY -= mDeltaY[idx];
-        mDeltaX[idx] = Math.abs(translationCurrX - mTranslationLastX);
-        mDeltaY[idx] = Math.abs(translationCurrY - mTranslationLastY);
-        mTotalTranslationX += mDeltaX[idx];
-        mTotalTranslationY += mDeltaY[idx];
-
-        // The panning rate is measured as the rate of the translation percentage in
-        // image width/height. Take the horizontal panning rate for example, the image width
-        // used in finding the translation is (PreviewWidth / HR_TO_LR_DOWNSAMPLE_FACTOR).
-        // To get the horizontal translation percentage, the horizontal translation,
-        // (translationCurrX - mTranslationLastX), is divided by the
-        // image width. We then get the rate by dividing the translation percentage with the
-        // number of frames.
-        mPanningRateX = mTotalTranslationX /
-                (mPreviewWidth / HR_TO_LR_DOWNSAMPLE_FACTOR) / WINDOW_SIZE;
-        mPanningRateY = mTotalTranslationY /
-                (mPreviewHeight / HR_TO_LR_DOWNSAMPLE_FACTOR) / WINDOW_SIZE;
-
-        mTranslationLastX = translationCurrX;
-        mTranslationLastY = translationCurrY;
-        mOldestIdx = (mOldestIdx + 1) % WINDOW_SIZE;
+        else {
+            Log.v(TAG, "Process Error " + " mWidth " + mPreviewWidth + " mHeight " + mPreviewHeight
+                    + " width " + width + " height " + height + " data " + (data != null));
+        }
+        return res;
     }
+
+    public synchronized int StopProcessing() {
+        int res = -1;
+        if (IsInited()) {
+            Log.v(TAG, "StopProcessing <----");
+            mIsActive = false;
+            res = _StopProcessMosaic(mHandler);
+            Log.v(TAG, "StopProcessing res " + res + " ---->");
+        }
+        return res;
+    }
+
+    public int onNotify(int key, Object obj) {
+        if (mThreadHandler != null && mHandler != 0) {
+            Message msg = new Message();
+            msg.what = key;
+            msg.obj = obj;
+            mThreadHandler.sendMessage(msg);
+        }
+        return 0;
+    }
+
+    public native long _InitMosaic(Context context, Object thiz, int maxFrameCount, int width,
+            int height);
+
+    public native int _UninitMosaic(long handler);
+
+    public native int _StopProcessMosaic(long handler);
+
+    public native int _ProcessMosaic(long handler, byte[] data, int width, int height);
+
 }
