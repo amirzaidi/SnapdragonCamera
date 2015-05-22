@@ -23,7 +23,7 @@ import org.codeaurora.snapcam.R;
 
 public class CountDownTimerPreference extends IconListPreference {
     private static final int[] DURATIONS = {
-        0, 1, 2, 3, 4, 5, 10, 15, 20, 30, 60
+        0, 2, 5, 10
     };
     public CountDownTimerPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -39,7 +39,7 @@ public class CountDownTimerPreference extends IconListPreference {
                 entries[0] = context.getString(R.string.setting_off); // Off
             } else {
                 entries[i] = context.getResources()
-                        .getQuantityString(R.plurals.pref_camera_timer_entry, i,
+                        .getQuantityString(R.plurals.pref_camera_timer_entry, DURATIONS[i],
                         DURATIONS[i]);
             }
         }
