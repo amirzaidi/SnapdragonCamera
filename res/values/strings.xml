@@ -725,6 +725,4 @@ CHAR LIMIT = NONE] -->
     <string name="pref_camera_video_rotation_label_270">270</string>
 
     <string name="remaining_photos_format">%d left</string>
-
-    <string name="refocus_toast">To re-focus last photo, tap here</string>
  </resources>

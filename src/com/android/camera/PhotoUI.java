@@ -22,6 +22,7 @@ import java.util.List;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -32,6 +33,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.Face;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Surface;
@@ -1312,5 +1314,25 @@ public class PhotoUI implements PieListener,
 
     public void adjustOrientation() {
         setOrientation(mOrientation, true);
+    }
+
+    public void showRefocusDialog() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+        int prompt = prefs.getInt(CameraSettings.KEY_REFOCUS_PROMPT, 1);
+        if (prompt == 1) {
+            AlertDialog dialog = new AlertDialog.Builder(mActivity)
+                .setTitle(R.string.refocus_prompt_title)
+                .setMessage(R.string.refocus_prompt_message)
+                .setPositiveButton(R.string.dialog_ok,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int arg1) {
+                                SharedPreferences.Editor editor = prefs.edit();
+                                editor.putInt(CameraSettings.KEY_REFOCUS_PROMPT, 0);
+                                editor.apply();
+                            }
+                        })
+                .show();
+        }
     }
 }
