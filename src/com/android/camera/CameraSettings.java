@@ -740,6 +740,7 @@ public class CameraSettings {
         ListPreference timeLapseInterval = group.findPreference(KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL);
         ListPreference pictureSize = group.findPreference(KEY_PICTURE_SIZE);
         ListPreference whiteBalance =  group.findPreference(KEY_WHITE_BALANCE);
+        ListPreference chromaFlash = group.findPreference(KEY_QC_CHROMA_FLASH);
         ListPreference sceneMode = group.findPreference(KEY_SCENE_MODE);
         ListPreference flashMode = group.findPreference(KEY_FLASH_MODE);
         ListPreference focusMode = group.findPreference(KEY_FOCUS_MODE);
@@ -789,6 +790,17 @@ public class CameraSettings {
                     whiteBalance, mParameters.getSupportedWhiteBalance());
         }
 
+        if (chromaFlash != null) {
+            List<String> supportedAdvancedFeatures =
+                    getSupportedAdvancedFeatures(mParameters);
+            if (!CameraUtil.isSupported(
+                        mContext.getString(R.string
+                            .pref_camera_advanced_feature_value_chromaflash_on),
+                        supportedAdvancedFeatures)) {
+                removePreference(group, chromaFlash.getKey());
+            }
+        }
+
         if (sceneMode != null) {
             List<String> supportedSceneModes = mParameters.getSupportedSceneModes();
             List<String> supportedAdvancedFeatures =
@@ -799,6 +811,13 @@ public class CameraSettings {
                         supportedAdvancedFeatures)) {
                 supportedSceneModes.add(mContext.getString(R.string
                             .pref_camera_advanced_feature_value_refocus_on));
+            }
+            if (CameraUtil.isSupported(
+                        mContext.getString(R.string
+                                .pref_camera_advanced_feature_value_optizoom_on),
+                        supportedAdvancedFeatures)) {
+                supportedSceneModes.add(mContext.getString(R.string
+                            .pref_camera_advanced_feature_value_optizoom_on));
             }
             filterUnsupportedOptions(group, sceneMode, supportedSceneModes);
         }

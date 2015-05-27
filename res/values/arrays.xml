@@ -394,11 +394,22 @@
         <item>@drawable/ic_indicator_wb_cloudy</item>
     </array>
 
+    <string-array name="pref_camera_chromaflash_entries" translatable="false">
+        <item>@string/setting_off</item>
+        <item>@string/setting_on</item>
+    </string-array>
+
+    <array name="pref_camera_chromaflash_entryvalues" translatable="false">
+        <item>@string/pref_camera_advanced_feature_value_chromaflash_off</item>
+        <item>@string/pref_camera_advanced_feature_value_chromaflash_on</item>
+    </array>
+
     <!-- Camera Preferences Scene Mode dialog box entries -->
     <string-array name="pref_camera_scenemode_entries" translatable="false">
         <item>@string/pref_camera_scenemode_entry_auto</item>
         <item>@string/pref_camera_scenemode_entry_hdr</item>
         <item>@string/pref_camera_scenemode_entry_refocus</item>
+        <item>@string/pref_camera_scenemode_entry_optizoom</item>
         <item>@string/pref_camera_scenemode_entry_portrait</item>
         <item>@string/pref_camera_scenemode_entry_landscape</item>
         <item>@string/pref_camera_scenemode_entry_sports</item>
@@ -415,6 +426,7 @@
         <item>@drawable/ic_scene_mode_auto</item>
         <item>@drawable/ic_scene_mode_hdr</item>
         <item>@drawable/ic_scene_mode_refocus</item>
+        <item>@drawable/ic_scene_mode_optizoom</item>
         <item>@drawable/ic_scene_mode_portrait</item>
         <item>@drawable/ic_scene_mode_landscape</item>
         <item>@drawable/ic_scene_mode_sports</item>
@@ -447,6 +459,7 @@
         <item>auto</item>
         <item>hdr</item>
         <item>@string/pref_camera_advanced_feature_value_refocus_on</item>
+        <item>@string/pref_camera_advanced_feature_value_optizoom_on</item>
         <item>portrait</item>
         <item>landscape</item>
         <item>sports</item>
