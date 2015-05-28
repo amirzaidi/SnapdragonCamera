@@ -3113,6 +3113,40 @@ public class PhotoModule
                                            stillMoreOff);
             }
         }
+
+        if (mActivity.getString(R.string.pref_camera_advanced_feature_value_trueportrait_on)
+                .equals(advancedFeature)) {
+            // face detection must always be on for truePortrait
+            if (CameraUtil.isSupported(Parameters.FACE_DETECTION_ON, mParameters.getSupportedFaceDetectionModes())) {
+                mUI.overrideSettings(CameraSettings.KEY_FACE_DETECTION, Parameters.FACE_DETECTION_ON);
+                mParameters.setFaceDetectionMode(Parameters.FACE_DETECTION_ON);
+                if(mFaceDetectionEnabled == false) {
+                    mFaceDetectionEnabled = true;
+                    startFaceDetection();
+                }
+            }
+        } else {
+            // Set face detetction parameter.
+            // clear override to re-enable setting if true portrait is off.
+            mUI.overrideSettings(CameraSettings.KEY_FACE_DETECTION, null);
+
+            String faceDetection = mPreferences.getString(
+                CameraSettings.KEY_FACE_DETECTION,
+                mActivity.getString(R.string.pref_camera_facedetection_default));
+
+            if (CameraUtil.isSupported(faceDetection, mParameters.getSupportedFaceDetectionModes())) {
+                mParameters.setFaceDetectionMode(faceDetection);
+                if(faceDetection.equals("on") && mFaceDetectionEnabled == false) {
+                    mFaceDetectionEnabled = true;
+                    startFaceDetection();
+                }
+                if(faceDetection.equals("off") && mFaceDetectionEnabled == true) {
+                    stopFaceDetection();
+                    mFaceDetectionEnabled = false;
+                }
+            }
+        }
+
         // Set auto exposure parameter.
         String autoExposure = mPreferences.getString(
                 CameraSettings.KEY_AUTOEXPOSURE,
@@ -3197,22 +3231,6 @@ public class PhotoModule
             if ((mManual3AEnabled & MANUAL_FOCUS) == 0) {
                 mFocusManager.overrideFocusMode(null);
                 mParameters.setFocusMode(mFocusManager.getFocusMode());
-            }
-        }
-        // Set face detetction parameter.
-        String faceDetection = mPreferences.getString(
-            CameraSettings.KEY_FACE_DETECTION,
-            mActivity.getString(R.string.pref_camera_facedetection_default));
-
-        if (CameraUtil.isSupported(faceDetection, mParameters.getSupportedFaceDetectionModes())) {
-            mParameters.setFaceDetectionMode(faceDetection);
-            if(faceDetection.equals("on") && mFaceDetectionEnabled == false) {
-                mFaceDetectionEnabled = true;
-                startFaceDetection();
-            }
-            if(faceDetection.equals("off") && mFaceDetectionEnabled == true) {
-                stopFaceDetection();
-                mFaceDetectionEnabled = false;
             }
         }
 
