@@ -3126,7 +3126,7 @@ public class PhotoModule
         String auto_hdr = mPreferences.getString(CameraSettings.KEY_AUTO_HDR,
                                        mActivity.getString(R.string.pref_camera_hdr_default));
         if (CameraUtil.isAutoHDRSupported(mParameters)) {
-            mParameters.setAutoHDRMode(auto_hdr);
+            mParameters.set("auto-hdr-enable",auto_hdr);
             if (auto_hdr.equals("enable")) {
                 mActivity.runOnUiThread(new Runnable() {
                     public void run() {
