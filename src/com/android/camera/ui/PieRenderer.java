@@ -56,16 +56,16 @@ public class PieRenderer extends OverlayRenderer
     // These states are used to make sure the animation is run for at least some
     // time.
     private volatile int mState;
-    private ScaleAnimation mAnimation = new ScaleAnimation();
+    private ValueAnimator mAnimator;
     private static final int STATE_IDLE = 0;
     private static final int STATE_FOCUSING = 1;
     private static final int STATE_FINISHING = 2;
     private static final int STATE_PIE = 8;
+    private static final int FPS = 30;
 
     private static final float MATH_PI_2 = (float)(Math.PI / 2);
 
     private Runnable mDisappear = new Disappear();
-    private Animation.AnimationListener mEndAction = new EndAction();
     private static final int SCALING_UP_TIME = 600;
     private static final int SCALING_DOWN_TIME = 100;
     private static final int DISAPPEAR_TIMEOUT = 200;
@@ -1022,8 +1022,8 @@ public class PieRenderer extends OverlayRenderer
     private void cancelFocus() {
         mFocusCancelled = true;
         mOverlay.removeCallbacks(mDisappear);
-        if (mAnimation != null && !mAnimation.hasEnded()) {
-            mAnimation.cancel();
+        if (mAnimator != null && mAnimator.isStarted()) {
+            mAnimator.cancel();
         }
         mFocusCancelled = false;
         mFocused = false;
@@ -1059,33 +1059,51 @@ public class PieRenderer extends OverlayRenderer
                 toScale);
     }
 
-    private void startAnimation(long duration, boolean timeout,
+    private void startAnimation(long duration, final boolean timeout,
             float fromScale, float toScale) {
         setVisible(true);
-        mAnimation.reset();
-        mAnimation.setDuration(duration);
-        mAnimation.setScale(fromScale, toScale);
-        mAnimation.setAnimationListener(timeout ? mEndAction : null);
-        mOverlay.startAnimation(mAnimation);
-        update();
-    }
 
-    private class EndAction implements Animation.AnimationListener {
-        @Override
-        public void onAnimationEnd(Animation animation) {
-            // Keep the focus indicator for some time.
-            if (!mFocusCancelled) {
-                mOverlay.postDelayed(mDisappear, DISAPPEAR_TIMEOUT);
+        if (mAnimator != null) mAnimator.cancel();
+
+        mAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+        mAnimator.setDuration(duration);
+        mAnimator.setInterpolator(null);
+        mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            private long frames;
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                long now = animation.getCurrentPlayTime();
+                if (frames < animation.getCurrentPlayTime() * FPS / 1000) {
+                    update();
+                    ++frames;
+                    mDialAngle = Math.round((Float) animation.getAnimatedValue());
+                }
             }
-        }
+        });
+        mAnimator.addListener(new AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+            }
 
-        @Override
-        public void onAnimationRepeat(Animation animation) {
-        }
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (timeout && !mFocusCancelled) {
+                    mOverlay.postDelayed(mDisappear, DISAPPEAR_TIMEOUT);
+                }
+            }
 
-        @Override
-        public void onAnimationStart(Animation animation) {
-        }
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+            }
+
+            @Override
+            public void onAnimationCancel(Animator arg0) {
+            }
+        });
+        mAnimator.start();
+
+        update();
     }
 
     private class Disappear implements Runnable {
@@ -1100,24 +1118,4 @@ public class PieRenderer extends OverlayRenderer
             mFocused = false;
         }
     }
-
-    private class ScaleAnimation extends Animation {
-        private float mFrom = 1f;
-        private float mTo = 1f;
-
-        public ScaleAnimation() {
-            setFillAfter(true);
-        }
-
-        public void setScale(float from, float to) {
-            mFrom = from;
-            mTo = to;
-        }
-
-        @Override
-        protected void applyTransformation(float interpolatedTime, Transformation t) {
-            mDialAngle = (int)(mFrom + (mTo - mFrom) * interpolatedTime);
-        }
-    }
-
 }

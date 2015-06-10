@@ -162,13 +162,8 @@ public class RenderOverlay extends FrameLayout {
         public void draw(Canvas canvas) {
             super.draw(canvas);
             if (mClients == null) return;
-            boolean redraw = false;
             for (Renderer renderer : mClients) {
                 renderer.draw(canvas);
-                redraw = redraw || ((OverlayRenderer) renderer).isVisible();
-            }
-            if (redraw) {
-                invalidate();
             }
         }
     }
