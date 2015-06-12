@@ -1396,4 +1396,18 @@ public class PhotoMenu extends MenuController
     public int getOrientation() {
         return mUI == null ? 0 : mUI.getOrientation();
     }
+
+    public void hideTopMenu(boolean hide) {
+        if (hide) {
+            mSceneModeSwitcher.setVisibility(View.GONE);
+            mFilterModeSwitcher.setVisibility(View.GONE);
+            mFrontBackSwitcher.setVisibility(View.GONE);
+            mTsMakeupSwitcher.setVisibility(View.GONE);
+        } else {
+            mSceneModeSwitcher.setVisibility(View.VISIBLE);
+            mFilterModeSwitcher.setVisibility(View.VISIBLE);
+            mFrontBackSwitcher.setVisibility(View.VISIBLE);
+            mTsMakeupSwitcher.setVisibility(View.VISIBLE);
+        }
+    }
 }
