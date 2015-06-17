@@ -224,7 +224,8 @@ public class CameraActivity extends Activity
     private LocalMediaObserver mLocalImagesObserver;
     private LocalMediaObserver mLocalVideosObserver;
 
-    private final int DEFAULT_SYSTEM_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+    private final int DEFAULT_SYSTEM_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                                   | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 
     private boolean mPendingDeletion = false;
 
@@ -637,12 +638,16 @@ public class CameraActivity extends Activity
     private void setSystemBarsVisibility(boolean visible, boolean hideLater) {
         mMainHandler.removeMessages(HIDE_ACTION_BAR);
 
-        int currentSystemUIVisibility = mAboveFilmstripControlLayout.getSystemUiVisibility();
+        View decorView = getWindow().getDecorView();
+        int currentSystemUIVisibility = decorView.getSystemUiVisibility();
         int newSystemUIVisibility = DEFAULT_SYSTEM_UI_VISIBILITY
-                | (visible ? View.SYSTEM_UI_FLAG_VISIBLE : View.SYSTEM_UI_FLAG_LOW_PROFILE
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN);
+                | (visible ? View.SYSTEM_UI_FLAG_VISIBLE :
+                    View.SYSTEM_UI_FLAG_LOW_PROFILE
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         if (newSystemUIVisibility != currentSystemUIVisibility) {
-            mAboveFilmstripControlLayout.setSystemUiVisibility(newSystemUIVisibility);
+            decorView.setSystemUiVisibility(newSystemUIVisibility);
         }
 
         boolean currentActionBarVisibility = mActionBar.isShowing();
