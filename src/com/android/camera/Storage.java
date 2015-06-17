@@ -117,6 +117,11 @@ public class Storage {
 
         String path = generateFilepath(title, mimeType);
         int size = writeFile(path, jpeg, exif, mimeType);
+        // Try to get the real image size after add exif.
+        File f = new File(path);
+        if (f.exists() && f.isFile()) {
+            size = (int) f.length();
+        }
         return addImage(resolver, title, date, location, orientation,
                 size, path, width, height, mimeType);
     }
