@@ -48,6 +48,7 @@ public class ZoomRenderer extends OverlayRenderer
     private int mZoomSig;
     private int mZoomFraction;
     private Rect mTextBounds;
+    private int mOrientation;
 
     public interface OnZoomChangedListener {
         void onZoomStart();
@@ -109,6 +110,7 @@ public class ZoomRenderer extends OverlayRenderer
 
     @Override
     public void onDraw(Canvas canvas) {
+        canvas.rotate(mOrientation, mCenterX, mCenterY);
         mPaint.setStrokeWidth(mInnerStroke);
         canvas.drawCircle(mCenterX, mCenterY, mMinCircle, mPaint);
         canvas.drawCircle(mCenterX, mCenterY, mMaxCircle, mPaint);
@@ -153,6 +155,12 @@ public class ZoomRenderer extends OverlayRenderer
         if (mListener != null) {
             mListener.onZoomEnd();
         }
+    }
+
+    public void setOrientation(int orientation) {
+        mOrientation = orientation;
+        if (mOrientation == 90) mOrientation = 270;
+        else if (mOrientation == 270) mOrientation = 90;
     }
 
 }
