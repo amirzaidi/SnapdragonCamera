@@ -124,6 +124,7 @@ public class CameraUtil {
     public static final int RATIO_UNKNOWN = 0;
     public static final int RATIO_16_9 = 1;
     public static final int RATIO_4_3 = 2;
+    public static final int RATIO_3_2 = 3;
 
     public static boolean isSupported(String value, List<String> supported) {
         return supported == null ? false : supported.indexOf(value) >= 0;
@@ -1089,6 +1090,8 @@ public class CameraUtil {
             return RATIO_4_3;
         } else if (ratio > 1.77f && ratio < 1.78f) {
             return RATIO_16_9;
+        } else if (ratio > 1.49f && ratio < 1.51f) {
+            return RATIO_3_2;
         } else {
             return RATIO_UNKNOWN;
         }
@@ -1109,11 +1112,23 @@ public class CameraUtil {
             diffFrom_16_9 = 1 / diffFrom_16_9;
         }
 
-        if (diffFrom_4_3 < diffFrom_16_9) {
-            return RATIO_4_3;
-        } else {
-            return RATIO_16_9;
+        float diffFrom_3_2 = ((float) 3 / 2) / ratio;
+        if (diffFrom_3_2 < 1) {
+            diffFrom_3_2 = 1 / diffFrom_3_2;
         }
+        int retRatio = RATIO_UNKNOWN;
+        float minDiffRatio = diffFrom_3_2;
+        if (diffFrom_3_2 < diffFrom_4_3) {
+            retRatio = RATIO_3_2;
+            minDiffRatio = diffFrom_3_2;
+        } else {
+            retRatio = RATIO_4_3;
+            minDiffRatio = diffFrom_4_3;
+        }
+        if (minDiffRatio > diffFrom_16_9) {
+            retRatio = RATIO_16_9;
+        }
+        return retRatio;
     }
 
 }
