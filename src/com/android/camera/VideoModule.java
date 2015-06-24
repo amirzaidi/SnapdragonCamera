@@ -37,6 +37,7 @@ import android.location.Location;
 import android.media.CamcorderProfile;
 import android.media.CameraProfile;
 import android.media.MediaRecorder;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -1490,19 +1491,6 @@ public class VideoModule implements CameraModule,
 
     private void saveVideo() {
         if (mVideoFileDescriptor == null) {
-            long duration = 0L;
-            if (mMediaRecorderPausing == false)
-                duration = SystemClock.uptimeMillis() - mRecordingStartTime + mRecordingTotalTime;
-            else
-                duration = mRecordingTotalTime;
-            if (duration > 0) {
-                if (mCaptureTimeLapse) {
-                    duration = getTimeLapseVideoLength(duration);
-                }
-            } else {
-                Log.w(TAG, "Video duration <= 0 : " + duration);
-            }
-
             File origFile = new File(mCurrentVideoFilename);
             if (!origFile.exists() || origFile.length() <= 0) {
                 Log.e(TAG, "Invalid file");
@@ -1510,20 +1498,16 @@ public class VideoModule implements CameraModule,
                 return;
             }
 
-            /* Change the duration as per HFR selection */
-            String hfr = mParameters.getVideoHighFrameRate();
-            int defaultFps = 30;
-            int hfrRatio = 1;
-            if (!("off".equals(hfr))) {
-                try {
-                   int hfrFps = Integer.parseInt(hfr);
-                   hfrRatio = hfrFps / defaultFps;
-                } catch(NumberFormatException ex) {
-                   //Default value will be used
-                   Log.e(TAG,"Invalid hfr values:"+hfr);
-                }
+            long duration = 0L;
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(mCurrentVideoFilename);
+            try {
+                duration = Long.valueOf(retriever.extractMetadata(
+                            MediaMetadataRetriever.METADATA_KEY_DURATION));
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "cannot retrieve duration metadata");
             }
-            duration = duration * hfrRatio;
+            retriever.release();
 
             mActivity.getMediaSaveService().addVideo(mCurrentVideoFilename,
                     duration, mCurrentVideoValues,
