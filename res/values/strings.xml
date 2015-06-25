@@ -276,6 +276,8 @@
     <string name="pref_camera_picturesize_entry_20mp">20M pixels</string>
     <!-- Settings screen, dialog choice for 16 megapixels picture size [CHAR LIMIT=20] -->
     <string name="pref_camera_picturesize_entry_16mp">16M pixels</string>
+    <!-- Settings screen, dialog choice for 16 megapixels wide picture size [CHAR LIMIT=20] -->
+    <string name="pref_camera_picturesize_entry_16mp_wide">16M pixels (16:9)</string>
     <!-- Settings screen, dialog choice for 13 megapixels picture size [CHAR LIMIT=20] -->
     <string name="pref_camera_picturesize_entry_13mp">13M pixels</string>
     <!-- Settings screen, dialog choice for 12 megapixels picture size [CHAR LIMIT=20] -->
