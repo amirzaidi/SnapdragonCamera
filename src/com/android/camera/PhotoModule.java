@@ -2986,6 +2986,9 @@ public class PhotoModule
             mParameters.set(CameraSettings.KEY_SNAPCAM_HDR_NEED_1X, hdrNeed1x);
         }
 
+        String zsl = mPreferences.getString(CameraSettings.KEY_ZSL,
+                                  mActivity.getString(R.string.pref_camera_zsl_default));
+
         // Set Advanced features.
         String advancedFeature = mPreferences.getString(
                 CameraSettings.KEY_ADVANCED_FEATURES,
@@ -3011,96 +3014,110 @@ public class PhotoModule
              String stillMoreOff = mActivity.getString(R.string.
                  pref_camera_advanced_feature_value_stillmore_off);
 
-             if (advancedFeature.equals(mActivity.getString(R.string.
-                 pref_camera_advanced_feature_value_ubifocus_on))) {
-                 qcomUpdateAdvancedFeatures(advancedFeature,
-                                           chromaFlashOff,
-                                           reFocusOff,
-                                           optiZoomOff,
-                                           fssrOff,
-                                           truePortraitOff,
-                                           multiTouchFocusOff,
-                                           stillMoreOff);
-            } else if (advancedFeature.equals(mActivity.getString(R.string.
-                 pref_camera_advanced_feature_value_chromaflash_on))) {
-                 qcomUpdateAdvancedFeatures(ubiFocusOff,
-                                           advancedFeature,
-                                           reFocusOff,
-                                           optiZoomOff,
-                                           fssrOff,
-                                           truePortraitOff,
-                                           multiTouchFocusOff,
-                                           stillMoreOff);
-            } else if (advancedFeature.equals(mActivity.getString(R.string.
-                 pref_camera_advanced_feature_value_refocus_on))) {
+             if (zsl.equals("off")) {
                  qcomUpdateAdvancedFeatures(ubiFocusOff,
                                            chromaFlashOff,
-                                           advancedFeature,
                                            optiZoomOff,
+                                           reFocusOff,
                                            fssrOff,
                                            truePortraitOff,
                                            multiTouchFocusOff,
                                            stillMoreOff);
-                 mRefocus = true;
-            } else if (advancedFeature.equals(mActivity.getString(R.string.
-                pref_camera_advanced_feature_value_optizoom_on))) {
-                qcomUpdateAdvancedFeatures(ubiFocusOff,
-                                           chromaFlashOff,
-                                           reFocusOff,
-                                           advancedFeature,
-                                           fssrOff,
-                                           truePortraitOff,
-                                           multiTouchFocusOff,
-                                           stillMoreOff);
-            } else if (advancedFeature.equals(mActivity.getString(R.string.
-                pref_camera_advanced_feature_value_FSSR_on))) {
-                 qcomUpdateAdvancedFeatures(ubiFocusOff,
-                                           chromaFlashOff,
-                                           reFocusOff,
-                                           optiZoomOff,
-                                           advancedFeature,
-                                           truePortraitOff,
-                                           multiTouchFocusOff,
-                                           stillMoreOff);
-            } else if (advancedFeature.equals(mActivity.getString(R.string.
-                pref_camera_advanced_feature_value_trueportrait_on))) {
-                qcomUpdateAdvancedFeatures(ubiFocusOff,
-                                           chromaFlashOff,
-                                           reFocusOff,
-                                           optiZoomOff,
-                                           fssrOff,
-                                           advancedFeature,
-                                           multiTouchFocusOff,
-                                           stillMoreOff);
-            } else if (advancedFeature.equals(mActivity.getString(R.string.
-                pref_camera_advanced_feature_value_multi_touch_focus_on))) {
-                qcomUpdateAdvancedFeatures(ubiFocusOff,
-                                           chromaFlashOff,
-                                           reFocusOff,
-                                           optiZoomOff,
-                                           fssrOff,
-                                           truePortraitOff,
-                                           advancedFeature,
-                                           stillMoreOff);
-            } else if (advancedFeature.equals(mActivity.getString(R.string.
-                pref_camera_advanced_feature_value_stillmore_on))) {
-                qcomUpdateAdvancedFeatures(ubiFocusOff,
-                                           chromaFlashOff,
-                                           reFocusOff,
-                                           optiZoomOff,
-                                           fssrOff,
-                                           truePortraitOff,
-                                           multiTouchFocusOff,
-                                           advancedFeature);
-            } else {
-                qcomUpdateAdvancedFeatures(ubiFocusOff,
-                                           chromaFlashOff,
-                                           reFocusOff,
-                                           optiZoomOff,
-                                           fssrOff,
-                                           truePortraitOff,
-                                           multiTouchFocusOff,
-                                           stillMoreOff);
+                 mUI.overrideSettings(CameraSettings.KEY_ADVANCED_FEATURES,
+                         mActivity.getString(R.string.pref_camera_advanced_feature_default));
+             } else {
+                 mUI.overrideSettings(CameraSettings.KEY_ADVANCED_FEATURES, null);
+                 if (advancedFeature.equals(mActivity.getString(R.string.
+                     pref_camera_advanced_feature_value_ubifocus_on))) {
+                     qcomUpdateAdvancedFeatures(advancedFeature,
+                                               chromaFlashOff,
+                                               reFocusOff,
+                                               optiZoomOff,
+                                               fssrOff,
+                                               truePortraitOff,
+                                               multiTouchFocusOff,
+                                               stillMoreOff);
+                 } else if (advancedFeature.equals(mActivity.getString(R.string.
+                      pref_camera_advanced_feature_value_chromaflash_on))) {
+                      qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                advancedFeature,
+                                                reFocusOff,
+                                                optiZoomOff,
+                                                fssrOff,
+                                                truePortraitOff,
+                                                multiTouchFocusOff,
+                                                stillMoreOff);
+                 } else if (advancedFeature.equals(mActivity.getString(R.string.
+                      pref_camera_advanced_feature_value_refocus_on))) {
+                      qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                chromaFlashOff,
+                                                advancedFeature,
+                                                optiZoomOff,
+                                                fssrOff,
+                                                truePortraitOff,
+                                                multiTouchFocusOff,
+                                                stillMoreOff);
+                      mRefocus = true;
+                 } else if (advancedFeature.equals(mActivity.getString(R.string.
+                     pref_camera_advanced_feature_value_optizoom_on))) {
+                     qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                chromaFlashOff,
+                                                reFocusOff,
+                                                advancedFeature,
+                                                fssrOff,
+                                                truePortraitOff,
+                                                multiTouchFocusOff,
+                                                stillMoreOff);
+                 } else if (advancedFeature.equals(mActivity.getString(R.string.
+                     pref_camera_advanced_feature_value_FSSR_on))) {
+                      qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                chromaFlashOff,
+                                                reFocusOff,
+                                                optiZoomOff,
+                                                advancedFeature,
+                                                truePortraitOff,
+                                                multiTouchFocusOff,
+                                                stillMoreOff);
+                 } else if (advancedFeature.equals(mActivity.getString(R.string.
+                     pref_camera_advanced_feature_value_trueportrait_on))) {
+                     qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                chromaFlashOff,
+                                                reFocusOff,
+                                                optiZoomOff,
+                                                fssrOff,
+                                                advancedFeature,
+                                                multiTouchFocusOff,
+                                                stillMoreOff);
+                 } else if (advancedFeature.equals(mActivity.getString(R.string.
+                     pref_camera_advanced_feature_value_multi_touch_focus_on))) {
+                     qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                chromaFlashOff,
+                                                reFocusOff,
+                                                optiZoomOff,
+                                                fssrOff,
+                                                truePortraitOff,
+                                                advancedFeature,
+                                                stillMoreOff);
+                 } else if (advancedFeature.equals(mActivity.getString(R.string.
+                     pref_camera_advanced_feature_value_stillmore_on))) {
+                     qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                chromaFlashOff,
+                                                reFocusOff,
+                                                optiZoomOff,
+                                                fssrOff,
+                                                truePortraitOff,
+                                                multiTouchFocusOff,
+                                                advancedFeature);
+                 } else {
+                     qcomUpdateAdvancedFeatures(ubiFocusOff,
+                                                chromaFlashOff,
+                                                reFocusOff,
+                                                optiZoomOff,
+                                                fssrOff,
+                                                truePortraitOff,
+                                                multiTouchFocusOff,
+                                                stillMoreOff);
+                 }
             }
         }
         // Set auto exposure parameter.
@@ -3121,8 +3138,6 @@ public class PhotoModule
             mParameters.setAntibanding(antiBanding);
         }
 
-        String zsl = mPreferences.getString(CameraSettings.KEY_ZSL,
-                                  mActivity.getString(R.string.pref_camera_zsl_default));
         String auto_hdr = mPreferences.getString(CameraSettings.KEY_AUTO_HDR,
                                        mActivity.getString(R.string.pref_camera_hdr_default));
         if (CameraUtil.isAutoHDRSupported(mParameters)) {
