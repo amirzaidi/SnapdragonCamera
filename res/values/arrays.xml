@@ -177,6 +177,7 @@
     <string-array name="pref_camera_picturesize_entries" translatable="false">
         <item>@string/pref_camera_picturesize_entry_20mp</item>
         <item>@string/pref_camera_picturesize_entry_16mp</item>
+        <item>@string/pref_camera_picturesize_entry_16mp_wide</item>
         <item>@string/pref_camera_picturesize_entry_13mp</item>
         <item>@string/pref_camera_picturesize_entry_12mp</item>
         <item>@string/pref_camera_picturesize_entry_8mp</item>
@@ -211,6 +212,7 @@
     <string-array name="pref_camera_picturesize_entryvalues" translatable="false">
         <item>5344x4016</item>
         <item>4608x3456</item>
+        <item>5312x2988</item>
         <item>4160x3120</item>
         <item>4000x3000</item>
         <item>3840x2160</item>
