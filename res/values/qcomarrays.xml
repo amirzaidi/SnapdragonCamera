@@ -785,9 +785,9 @@
     <!-- Camera Preferences Color effect dialog box entries -->
     <string-array name="pref_camera_tsmakeup_level_entries" translatable="false">
         <item>@string/pref_camera_tsmakeup_entry_off</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
+        <item>Low</item>
+        <item>Mid</item>
+        <item>High</item>
         <item>@string/pref_camera_tsmakeup_custom</item>
     </string-array>
 
