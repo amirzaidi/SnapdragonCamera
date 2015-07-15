@@ -2,10 +2,13 @@ package com.android.camera;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import org.codeaurora.snapcam.R;
 
 /**
@@ -148,17 +151,28 @@ public class PermissionsActivity extends Activity {
     }
 
     private void handlePermissionsSuccess() {
-        setResult(RESULT_CODE_OK, null);
+        Intent intent = new Intent(this, CameraActivity.class);
+        startActivity(intent);
         finish();
     }
 
     private void handlePermissionsFailure() {
         new AlertDialog.Builder(this).setTitle(getResources().getString(R.string.camera_error_title))
                 .setMessage(getResources().getString(R.string.error_permissions))
-                .setPositiveButton(getResources().getString(R.string.dialog_dismiss), new DialogInterface.OnClickListener() {
+                .setCancelable(false)
+                .setOnKeyListener(new Dialog.OnKeyListener() {
+                    @Override
+                    public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                        if (keyCode == KeyEvent.KEYCODE_BACK) {
+                            finish();
+                        }
+                        return true;
+                    }
+                })
+                .setPositiveButton(getResources().getString(R.string.dialog_dismiss),
+                        new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        setResult(RESULT_CODE_FAILED, null);
                         finish();
                     }
                 })
