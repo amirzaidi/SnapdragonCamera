@@ -23,11 +23,7 @@
         <item>@string/pref_video_quality_entry_1080p</item>
         <item>@string/pref_video_quality_entry_720p</item>
         <item>@string/pref_video_quality_entry_480p</item>
-        <item>@string/pref_video_quality_entry_fwvga</item>
-        <item>@string/pref_video_quality_entry_wvga</item>
         <item>@string/pref_video_quality_entry_vga</item>
-        <item>@string/pref_video_quality_entry_hvga</item>
-        <item>@string/pref_video_quality_entry_wqvga</item>
         <item>@string/pref_video_quality_entry_cif</item>
         <item>@string/pref_video_quality_entry_qvga</item>
         <item>@string/pref_video_quality_entry_qcif</item>
@@ -38,11 +34,7 @@
         <item>1920x1080</item>
         <item>1280x720</item>
         <item>720x480</item>
-        <item>864x480</item>
-        <item>800x480</item>
         <item>640x480</item>
-        <item>480x360</item>
-        <item>400x240</item>
         <item>352x288</item>
         <item>320x240</item>
         <item>176x144</item>

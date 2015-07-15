@@ -34,7 +34,7 @@ import android.view.View;
 import com.android.camera.PhotoUI;
 import com.android.camera.util.CameraUtil;
 import org.codeaurora.snapcam.R;
-import org.codeaurora.camera.ExtendedFace;
+//import org.codeaurora.camera.ExtendedFace;
 
 public class FaceView extends View
     implements FocusIndicator, Rotatable,
@@ -232,6 +232,7 @@ public class FaceView extends View
                 mPaint.setColor(mColor);
                 mRect.offset(dx, dy);
                 canvas.drawOval(mRect, mPaint);
+/*
                 if (mFaces[i] instanceof ExtendedFace) {
                     ExtendedFace face = (ExtendedFace)mFaces[i];
                     float[] point = new float[4];
@@ -390,6 +391,7 @@ public class FaceView extends View
                         }
                     }
                 }
+*/
             }
             canvas.restore();
         }

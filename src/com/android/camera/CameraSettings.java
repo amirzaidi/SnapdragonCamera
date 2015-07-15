@@ -267,20 +267,16 @@ public class CameraSettings {
         //video encoders
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H263, "h263");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H264, "h264");
-        VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H265, "h265");
+        //VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H265, "h265");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.MPEG_4_SP, "m4v");
 
         //video qualities
-        VIDEO_QUALITY_TABLE.put("4096x2160", CamcorderProfile.QUALITY_4kDCI);
+//        VIDEO_QUALITY_TABLE.put("4096x2160", CamcorderProfile.QUALITY_4kDCI);
         VIDEO_QUALITY_TABLE.put("3840x2160", CamcorderProfile.QUALITY_2160P);
         VIDEO_QUALITY_TABLE.put("1920x1080", CamcorderProfile.QUALITY_1080P);
         VIDEO_QUALITY_TABLE.put("1280x720",  CamcorderProfile.QUALITY_720P);
         VIDEO_QUALITY_TABLE.put("720x480",   CamcorderProfile.QUALITY_480P);
-        VIDEO_QUALITY_TABLE.put("864x480",   CamcorderProfile.QUALITY_FWVGA);
-        VIDEO_QUALITY_TABLE.put("800x480",   CamcorderProfile.QUALITY_WVGA);
-        VIDEO_QUALITY_TABLE.put("640x480",   CamcorderProfile.QUALITY_VGA);
-        VIDEO_QUALITY_TABLE.put("480x360",   CamcorderProfile.QUALITY_HVGA);
-        VIDEO_QUALITY_TABLE.put("400x240",   CamcorderProfile.QUALITY_WQVGA);
+//        VIDEO_QUALITY_TABLE.put("640x480",   CamcorderProfile.QUALITY_VGA);
         VIDEO_QUALITY_TABLE.put("352x288",   CamcorderProfile.QUALITY_CIF);
         VIDEO_QUALITY_TABLE.put("320x240",   CamcorderProfile.QUALITY_QVGA);
         VIDEO_QUALITY_TABLE.put("176x144",   CamcorderProfile.QUALITY_QCIF);
@@ -1184,11 +1180,13 @@ public class CameraSettings {
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     private static void getFineResolutionQuality(ArrayList<String> supported,
                                                  int cameraId,Parameters parameters) {
+/*
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_4kDCI)) {
            if (checkSupportedVideoQuality(parameters,4096,2160)) {
               supported.add(Integer.toString(CamcorderProfile.QUALITY_4kDCI));
            }
         }
+*/
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_2160P)) {
            if (checkSupportedVideoQuality(parameters,3840,2160)) {
               supported.add(Integer.toString(CamcorderProfile.QUALITY_2160P));
@@ -1209,21 +1207,13 @@ public class CameraSettings {
               supported.add(Integer.toString(CamcorderProfile.QUALITY_480P));
            }
         }
-        if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_FWVGA)) {
-           if (checkSupportedVideoQuality(parameters,864,480)){
-              supported.add(Integer.toString(CamcorderProfile.QUALITY_FWVGA));
-           }
-        }
-        if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_WVGA)) {
-           if (checkSupportedVideoQuality(parameters,800,480)){
-              supported.add(Integer.toString(CamcorderProfile.QUALITY_WVGA));
-           }
-        }
+/*
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_VGA)) {
            if (checkSupportedVideoQuality(parameters,640,480)){
               supported.add(Integer.toString(CamcorderProfile.QUALITY_VGA));
            }
         }
+*/
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_CIF)) {
            if (checkSupportedVideoQuality(parameters,352,288)){
               supported.add(Integer.toString(CamcorderProfile.QUALITY_CIF));
