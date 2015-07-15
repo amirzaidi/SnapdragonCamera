@@ -44,7 +44,7 @@ public:
   ///// Settings for feature-based alignment
   // Number of features to use from corner detection
   static const int DEFAULT_NR_CORNERS=750;
-  static const double DEFAULT_MAX_DISPARITY=0.1;//0.4;
+  static const double DEFAULT_MAX_DISPARITY;
   // Type of homography to model
   static const int DEFAULT_MOTION_MODEL=DB_HOMOGRAPHY_TYPE_R_T;
 // static const int DEFAULT_MOTION_MODEL=DB_HOMOGRAPHY_TYPE_PROJECTIVE;
