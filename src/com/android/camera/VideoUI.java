@@ -168,6 +168,12 @@ public class VideoUI implements PieRenderer.PieListener,
         mPreviewCover.setVisibility(View.VISIBLE);
     }
 
+    public void hidePreviewCover() {
+        if (mPreviewCover != null && mPreviewCover.getVisibility() != View.GONE) {
+            mPreviewCover.setVisibility(View.GONE);
+        }
+    }
+
     private class SettingsPopup extends PopupWindow {
         public SettingsPopup(View popup) {
             super(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
@@ -1049,9 +1055,7 @@ public class VideoUI implements PieRenderer.PieListener,
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.v(TAG, "surfaceChanged: width = " + width + ", height = " + height);
         // Make sure preview cover is hidden if preview data is available.
-        if (mPreviewCover.getVisibility() != View.GONE) {
-            mPreviewCover.setVisibility(View.GONE);
-        }
+        hidePreviewCover();
     }
 
     @Override
