@@ -332,7 +332,22 @@ public class CameraActivity extends Activity
     private BroadcastReceiver mScreenOffReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            finish();
+            String action = intent.getAction();
+
+            if (action.equals(Intent.ACTION_SCREEN_ON)) {
+                mCurrentModule.onResumeBeforeSuper();
+                mCurrentModule.onResumeAfterSuper();
+            }
+
+            if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+                if (mSecureCamera) {
+                    finish();
+                } else {
+                    mCurrentModule.onPauseBeforeSuper();
+                    mCurrentModule.onPauseAfterSuper();
+                }
+            }
+
         }
     };
 
@@ -1383,6 +1398,19 @@ public class CameraActivity extends Activity
             mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
         }
 
+        // Filter for screen off so that we can finish secure camera activity
+        // when screen is off.
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(mScreenOffReceiver, filter);
+        // TODO: This static screen off event receiver is a workaround to the
+        // double onResume() invocation (onResume->onPause->onResume). We should
+        // find a better solution to this.
+        if (sScreenOffReceiver == null) {
+            sScreenOffReceiver = new ScreenOffReceiver();
+            registerReceiver(sScreenOffReceiver, filter);
+        }
+
         if (mSecureCamera) {
             // Change the window flags so that secure camera can show when locked
             Window win = getWindow();
@@ -1397,17 +1425,7 @@ public class CameraActivity extends Activity
             }
             win.setAttributes(params);
 
-            // Filter for screen off so that we can finish secure camera activity
-            // when screen is off.
-            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-            registerReceiver(mScreenOffReceiver, filter);
-            // TODO: This static screen off event receiver is a workaround to the
-            // double onResume() invocation (onResume->onPause->onResume). We should
-            // find a better solution to this.
-            if (sScreenOffReceiver == null) {
-                sScreenOffReceiver = new ScreenOffReceiver();
-                registerReceiver(sScreenOffReceiver, filter);
-            }
+
         }
         GcamHelper.init(getContentResolver());
 
@@ -1689,9 +1707,11 @@ public class CameraActivity extends Activity
         }
         if (mShutterVol >= 0 && mShutterVol <= 100)
             mAudioManager.setMasterVolume(mOriginalMasterVol,0);
-        if (mSecureCamera) {
+
+        if (mScreenOffReceiver != null) {
             unregisterReceiver(mScreenOffReceiver);
         }
+
         getContentResolver().unregisterContentObserver(mLocalImagesObserver);
         getContentResolver().unregisterContentObserver(mLocalVideosObserver);
         unregisterReceiver(mSDcardMountedReceiver);
