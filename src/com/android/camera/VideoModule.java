@@ -806,16 +806,6 @@ public class VideoModule implements CameraModule,
             }
         }
 
-        // Set video duration limit. The limit is read from the preference,
-        // unless it is specified in the intent.
-        if (intent.hasExtra(MediaStore.EXTRA_DURATION_LIMIT)) {
-            int seconds =
-                    intent.getIntExtra(MediaStore.EXTRA_DURATION_LIMIT, 0);
-            mMaxVideoDurationInMs = 1000 * seconds;
-        } else {
-            mMaxVideoDurationInMs = CameraSettings.getMaxVideoDuration(mActivity);
-        }
-
         // Read time lapse recording interval.
         String frameIntervalStr = mPreferences.getString(
                 CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
@@ -833,6 +823,14 @@ public class VideoModule implements CameraModule,
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
         qcomReadVideoPreferences();
+
+        // Set video duration limit. The limit is read from the preference,
+        // unless it is specified in the intent.
+        if (intent.hasExtra(MediaStore.EXTRA_DURATION_LIMIT)) {
+            int seconds =
+                    intent.getIntExtra(MediaStore.EXTRA_DURATION_LIMIT, 0);
+            mMaxVideoDurationInMs = 1000 * seconds;
+        }
         mPreferenceRead = true;
     }
 
