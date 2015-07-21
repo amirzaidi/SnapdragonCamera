@@ -96,7 +96,7 @@ public class SDCard {
         try {
             mMountService = IMountService.Stub.asInterface(ServiceManager
                                                            .getService("mount"));
-            final StorageVolume[] volumes = mMountService.getVolumeList(UserHandle.myUserId());
+            final StorageVolume[] volumes = mMountService.getVolumeList(UserHandle.myUserId(), "com.android.camera");
             if (volumes.length > VOLUME_SDCARD_INDEX) {
                 mVolume = volumes[VOLUME_SDCARD_INDEX];
             }
