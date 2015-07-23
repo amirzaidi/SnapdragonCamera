@@ -545,4 +545,21 @@
     <string name="refocus_toast">点击此处可重新对焦照片</string>
     <string name="refocus_prompt_title">Macro+</string>
     <string name="refocus_prompt_message">开启Macro+模式后，相机会连续拍摄5张照片并将其合成一张全焦照片。您还可以事后重新对焦。</string>
+
+    <!-- Settings menu, setting title text for Manual white balance -->
+    <string name="pref_camera_manual_wb_title">手动白平衡</string>
+    <!-- Settings menu, setting title text for Manual exposure -->
+    <string name="pref_camera_manual_exp_title">手动曝光</string>
+    <!-- Settings menu, setting title text for Manual Focus -->
+    <string name="pref_camera_manual_focus_title">手动对焦</string>
+    <!-- Settings menu, setting title text for cds mode -->
+    <string name="pref_camera_cds_title">CDS模式</string>
+    <!-- Settings menu, setting title text for video cds mode -->
+    <string name="pref_camera_video_cds_title">视频CDS模式</string>
+    <!-- Settings menu, setting title text for tnr mode -->
+    <string name="pref_camera_tnr_title">TNR模式</string>
+    <!-- Settings menu, setting title text for video tnr mode -->
+    <string name="pref_camera_video_tnr_title">视频TNR模式</string>
+    <!-- Settings menu, setting title text for video rotation title -->
+    <string name="pref_camera_video_rotation_title">视频旋转</string>
 </resources>
