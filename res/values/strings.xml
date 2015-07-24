@@ -200,7 +200,7 @@
     <string name="pref_camera_id_entry_front">Front</string>
 
     <!-- Settings screen, setting title text -->
-    <string name="pref_camera_recordlocation_title">Store location</string>
+    <string name="pref_camera_recordlocation_title">GPS location</string>
 
     <string name="pref_camera_recordlocation_default" translatable="false">none</string>
 
@@ -221,7 +221,7 @@
     <string name="pref_camera_timer_sound_title">Beep during countdown</string>
 
     <!-- Entry of camera save path -->
-    <string name="pref_camera_savepath_title">Storage Position</string>
+    <string name="pref_camera_savepath_title">Storage</string>
     <string name="pref_camera_savepath_default">0</string>
     <string name="pref_camera_savepath_entry_0">Phone</string>
     <string name="pref_camera_savepath_entry_1">SD Card</string>
@@ -329,9 +329,7 @@
     <string name="pref_camera_flashmode_no_flash" translatable="false">no_flash</string>
 
     <!-- Settings screen, Flash mode title -->
-    <string name="pref_camera_flashmode_title">Flash mode</string>
-        <!-- flash label [CHAR LIMIT=50] -->
-    <string name="pref_camera_flashmode_label">FLASH MODE</string>
+    <string name="pref_camera_flashmode_title">Flash</string>
 
     <!-- Settings screen, Flash mode 'auto'. [CHAR LIMIT=12] -->
     <string name="pref_camera_flashmode_entry_auto">Auto</string>

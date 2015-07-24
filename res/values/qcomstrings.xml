@@ -419,7 +419,7 @@
      <string name="pref_camera_iso_default">auto</string>
 
      <!-- Settings screen, Select Iso title -->
-     <string name="pref_camera_iso_title">Select ISO</string>
+     <string name="pref_camera_iso_title">ISO</string>
 
      <!-- Settings screen, ISO dialog radio button choices -->
      <string name="pref_camera_iso_entry_auto">Auto</string>
