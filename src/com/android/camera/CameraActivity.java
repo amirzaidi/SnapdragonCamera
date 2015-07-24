@@ -852,6 +852,20 @@ public class CameraActivity extends Activity
         public CircularDrawable(Bitmap bitmap) {
             int w = bitmap.getWidth();
             int h = bitmap.getHeight();
+            int targetSize = getResources().getDimensionPixelSize(R.dimen.capture_size);
+            if (Math.min(w, h) < targetSize) {
+                Matrix matrix = new Matrix();
+                float scale = 1.0f;
+                if (w > h) {
+                    scale = (float) targetSize / (float) h;
+                } else {
+                    scale = (float) targetSize / (float) w;
+                }
+                matrix.postScale(scale, scale);
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, w, h, matrix, true);
+                w = (int) (w * scale);
+                h = (int) (h * scale);
+            }
             if (w > h) {
                 mLength = h;
                 bitmap = Bitmap.createBitmap(bitmap, (w - h) / 2, 0, h, h);
