@@ -53,7 +53,7 @@ public class Storage {
     public static final long UNAVAILABLE = -1L;
     public static final long PREPARING = -2L;
     public static final long UNKNOWN_SIZE = -3L;
-    public static final long LOW_STORAGE_THRESHOLD_BYTES = 50000000;
+    public static final long LOW_STORAGE_THRESHOLD_BYTES = 60 * 1024 * 1024;
 
     private static boolean sSaveSDCard = false;
 
