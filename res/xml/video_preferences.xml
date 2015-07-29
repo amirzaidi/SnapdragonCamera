@@ -133,6 +133,12 @@
             camera:entries="@array/pref_camera_hfr_entries"
             camera:entryValues="@array/pref_camera_hfr_entryvalues"/>
     <ListPreference
+            camera:key="pref_camera_noise_reduction_key"
+            camera:defaultValue="@string/pref_camera_noise_reduction_default"
+            camera:title="@string/pref_camera_noise_reduction_title"
+            camera:entries="@array/pref_camera_noise_reduction_entries"
+            camera:entryValues="@array/pref_camera_noise_reduction_entryvalues"/>
+    <ListPreference
             camera:key="pref_camera_see_more_key"
             camera:defaultValue="@string/pref_camera_see_more_default"
             camera:title="@string/pref_camera_see_more_title"

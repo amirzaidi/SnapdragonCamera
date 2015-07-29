@@ -393,6 +393,22 @@
      <string name="pref_camera_hfr_value_hsr_90">hsr90</string>
      <string name="pref_camera_hfr_value_hsr_120">hsr120</string>
 
+     <!-- Default noise reduction setting. Do not translate. -->
+     <string name="pref_camera_noise_reduction_default">off</string>
+
+     <!-- Settings screen, Select See More title -->
+     <string name="pref_camera_noise_reduction_title">Noise Reduction</string>
+
+     <!-- Settings screen, see more radio button choices -->
+     <string name="pref_camera_noise_reduction_entry_off">Off</string>
+     <string name="pref_camera_noise_reduction_entry_fast">Fast</string>
+     <string name="pref_camera_noise_reduction_entry_high_quality">High Quality</string>
+
+     <!-- see more entry values. Do not translate. -->
+     <string name="pref_camera_noise_reduction_value_off">off</string>
+     <string name="pref_camera_noise_reduction_value_fast">fast</string>
+     <string name="pref_camera_noise_reduction_value_high_quality">high-quality</string>
+
      <!-- Default see more setting. Do not translate. -->
      <string name="pref_camera_see_more_default">off</string>
 
