@@ -825,13 +825,34 @@ public class VideoModule implements CameraModule,
                 mActivity.getString(R.string.pref_video_time_lapse_frame_interval_default));
         mTimeBetweenTimeLapseFrameCaptureMs = Integer.parseInt(frameIntervalStr);
         mCaptureTimeLapse = (mTimeBetweenTimeLapseFrameCaptureMs != 0);
-        // TODO: This should be checked instead directly +1000.
-        if (mCaptureTimeLapse) quality += 1000;
-        mUnsupportedProfile = false;
-        boolean hasProfile = CamcorderProfile.hasProfile(mCameraId, quality);
-        if (!hasProfile) {
-          mUnsupportedProfile = true;
-          return;
+
+        int hfrRate = 0;
+        String highFrameRate = mPreferences.getString(
+            CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
+            mActivity. getString(R.string.pref_camera_hfr_default));
+        if (("hfr".equals(highFrameRate.substring(0,3))) ||
+                ("hsr".equals(highFrameRate.substring(0,3)))) {
+            String rate = highFrameRate.substring(3);
+            Log.i(TAG,"HFR :"  + highFrameRate + " : rate = " + rate);
+            try {
+                hfrRate = Integer.parseInt(rate);
+            } catch (NumberFormatException nfe) {
+                Log.e(TAG, "Invalid hfr rate " + rate);
+            }
+        }
+
+        int mappedQuality = quality;
+        if (mCaptureTimeLapse) {
+            mappedQuality = CameraSettings.getTimeLapseQualityFor(quality);
+        } else if (hfrRate > 0) {
+            mappedQuality = CameraSettings.getHighSpeedQualityFor(quality);
+            Log.i(TAG,"NOTE: HighSpeed quality (" + mappedQuality + ") for (" + quality + ")");
+        }
+
+        if (CamcorderProfile.hasProfile(mCameraId, mappedQuality)) {
+            quality = mappedQuality;
+        } else {
+            Log.e(TAG,"NOTE: Quality " + mappedQuality + " is not supported ! Will use " + quality);
         }
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
@@ -848,8 +869,8 @@ public class VideoModule implements CameraModule,
     }
 
     private boolean is4KEnabled() {
-       if (mProfile.quality == CamcorderProfile.QUALITY_2160P /*||
-           mProfile.quality == CamcorderProfile.QUALITY_4kDCI*/) {
+       if (mProfile.quality == CamcorderProfile.QUALITY_2160P ||
+           mProfile.quality == CamcorderProfile.QUALITY_4KDCI) {
            return true;
        } else {
            return false;
@@ -911,6 +932,8 @@ public class VideoModule implements CameraModule,
             boolean supported = false;
             List<VideoEncoderCap> videoEncoders = EncoderCapabilities.getVideoEncoders();
             for (VideoEncoderCap videoEncoder: videoEncoders) {
+                // TODO: Use Codec capabilities OR use max high-speed profile
+                supported = true;
 //TODO: How to handle HFRFrameWidth and HFRFrameHeight
 /*                if (videoEncoder.mCodec == mVideoEncoder) {
                     int maxBitrate = (videoEncoder.mMaxHFRFrameWidth *
@@ -1380,12 +1403,12 @@ public class VideoModule implements CameraModule,
         mCameraDevice.unlock();
         mMediaRecorder.setCamera(mCameraDevice.getCamera());
         String hfr = mParameters.getVideoHighFrameRate();
-        if (!mCaptureTimeLapse && ((hfr == null) || ("off".equals(hfr)))) {
+        //if (!mCaptureTimeLapse && ((hfr == null) || ("off".equals(hfr)))) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             mProfile.audioCodec = mAudioEncoder;
-        } else {
-            mProfile.audioCodec = -1; //not set
-        }
+        //} else {
+        //    mProfile.audioCodec = -1; //not set
+        //}
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
@@ -1398,6 +1421,36 @@ public class VideoModule implements CameraModule,
         if (mCaptureTimeLapse) {
             double fps = 1000 / (double) mTimeBetweenTimeLapseFrameCaptureMs;
             setCaptureRate(mMediaRecorder, fps);
+        }
+
+        String hsr =  mParameters.get(CameraSettings.KEY_VIDEO_HSR);
+        Log.i(TAG,"NOTE: hfr = " + hfr + " : hsr = " + hsr);
+
+        int captureRate = 0;
+        boolean isHFR = (hfr != null && !hfr.equals("off"));
+        boolean isHSR = (hsr != null && !hsr.equals("off"));
+
+        try {
+            captureRate = isHFR ? Integer.parseInt(hfr) :
+                    isHSR ? Integer.parseInt(hsr) : 0;
+        } catch (NumberFormatException nfe) {
+            Log.e(TAG, "Invalid hfr(" + hfr + ") or hsr(" + hsr + ")");
+        }
+
+        if (captureRate > 0) {
+            mMediaRecorder.setCaptureRate(captureRate);
+            Log.i(TAG, "NOTE: Setting capture-rate = " + captureRate);
+            // for HFR, encoder's target-framerate = capture-rate
+            if (isHSR) {
+                Log.i(TAG, "NOTE: Setting fps = " + captureRate + " for HSR");
+                mMediaRecorder.setVideoFrameRate(captureRate);
+            }
+            // for HFR, encoder's taget-framerate = 30fps (from profile)
+            if (isHFR) {
+                Log.i(TAG, "NOTE: Setting fps = 30 for HFR");
+                mMediaRecorder.setVideoFrameRate(30);
+            }
+            // TODO : bitrate correction..check with google
         }
 
         setRecordLocation();
@@ -2024,6 +2077,7 @@ public class VideoModule implements CameraModule,
      private void qcomSetCameraParameters(){
         // add QCOM Parameters here
         // Set color effect parameter.
+        Log.i(TAG,"NOTE: qcomSetCameraParameters " + videoWidth + " x " + videoHeight);
         String colorEffect = mPreferences.getString(
             CameraSettings.KEY_COLOR_EFFECT,
             mActivity.getString(R.string.pref_camera_coloreffect_default));
@@ -2382,6 +2436,8 @@ public class VideoModule implements CameraModule,
         forceFlashOffIfSupported(!mPreviewFocused);
         videoWidth = mProfile.videoFrameWidth;
         videoHeight = mProfile.videoFrameHeight;
+
+        Log.i(TAG,"NOTE: SetCameraParameters " + videoWidth + " x " + videoHeight);
         String recordSize = videoWidth + "x" + videoHeight;
         Log.e(TAG,"Video dimension in App->"+recordSize);
         mParameters.set("video-size", recordSize);
