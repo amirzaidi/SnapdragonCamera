@@ -1819,7 +1819,6 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        mGestureRecognizer.onTouchEvent(ev);
         return true;
     }
 

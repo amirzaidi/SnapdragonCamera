@@ -29,21 +29,26 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Display;
 import android.view.LayoutInflater;
-import android.view.TextureView;
+import android.view.SurfaceView;
+import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -59,7 +64,7 @@ import org.codeaurora.snapcam.R;
  * The UI of {@link WideAnglePanoramaModule}.
  */
 public class WideAnglePanoramaUI implements
-        TextureView.SurfaceTextureListener,
+        SurfaceHolder.Callback,
         ShutterButton.OnShutterButtonListener,
         CameraRootView.MyDisplayListener,
         View.OnLayoutChangeListener {
@@ -76,29 +81,23 @@ public class WideAnglePanoramaUI implements
     private View mReviewLayout;
     private ImageView mReview;
     private View mPreviewBorder;
-    private View mLeftIndicator;
-    private View mRightIndicator;
     private View mCaptureIndicator;
-    private PanoProgressBar mCaptureProgressBar;
     private PanoProgressBar mSavingProgressBar;
     private TextView mTooFastPrompt;
     private View mPreviewLayout;
     private ViewGroup mReviewControl;
-    private TextureView mTextureView;
+    private SurfaceView mSurfaceView;
     private ShutterButton mShutterButton;
     private CameraControls mCameraControls;
     private ImageView mThumbnail;
-
-    private Matrix mProgressDirectionMatrix = new Matrix();
-    private float[] mProgressAngle = new float[2];
+    private ImageView mCapturePreview;
+    private ViewGroup mCapturePreviewLayout;
 
     private DialogHelper mDialogHelper;
 
     // Color definitions.
-    private int mIndicatorColor;
-    private int mIndicatorColorFast;
     private int mReviewBackground;
-    private SurfaceTexture mSurfaceTexture;
+    private SurfaceHolder mSurfaceHolder;
     private View mPreviewCover;
 
     private int mOrientation;
@@ -106,6 +105,34 @@ public class WideAnglePanoramaUI implements
     private RotateLayout mWaitingDialog;
     private RotateLayout mPanoFailedDialog;
     private Button mPanoFailedButton;
+
+    private int mPreviewWidth = 0;
+    private int mPreviewHeight = 0;
+    private int mOriginalPreviewWidth = 0;
+    private int mOriginalPreviewHeight = 0;
+
+    private boolean mOrientationResize;
+    private boolean mPrevOrientationResize;
+
+    private Matrix mMatrix = null;
+
+    private int mScreenRatio = CameraUtil.RATIO_UNKNOWN;
+    private int mTopMargin = 0;
+    private int mBottomMargin = 0;
+    private boolean mCapturePreviewSet = false;
+
+    private final int capturePreviewW = 80;
+    private final int capturePreviewH = 80;
+    private final int sidePadding = 10;
+    private final int botPadding = 130;
+
+    private void setTransformMatrix(int width, int height) {
+        mMatrix = mSurfaceView.getMatrix();
+
+        // Calculate the new preview rectangle.
+        RectF previewRect = new RectF(0, 0, width, height);
+        mMatrix.mapRect(previewRect);
+    }
 
     /** Constructor. */
     public WideAnglePanoramaUI(
@@ -136,13 +163,27 @@ public class WideAnglePanoramaUI implements
                 mSwitcher.setOrientation(mOrientation, false);
             }
         });
+
+        mOrientationResize = false;
+        mPrevOrientationResize = false;
+
+        Point size = new Point();
+        mActivity.getWindowManager().getDefaultDisplay().getSize(size);
+        mScreenRatio = CameraUtil.determineRatio(size.x, size.y);
+        if (mScreenRatio == CameraUtil.RATIO_16_9) {
+            int l = size.x > size.y ? size.x : size.y;
+            int tm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_top_margin);
+            int bm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_bottom_margin);
+            mTopMargin = l / 4 * tm / (tm + bm);
+            mBottomMargin = l / 4 - mTopMargin;
+        }
+        mCameraControls.setMargins(mTopMargin, mBottomMargin);
     }
 
     public void onStartCapture() {
         hideSwitcher();
         mShutterButton.setImageResource(R.drawable.shutter_button_stop);
         mCaptureIndicator.setVisibility(View.VISIBLE);
-        showDirectionIndicators(PanoProgressBar.DIRECTION_NONE);
     }
 
     public void showPreviewUI() {
@@ -152,8 +193,8 @@ public class WideAnglePanoramaUI implements
 
     public void onStopCapture() {
         mCaptureIndicator.setVisibility(View.INVISIBLE);
-        hideTooFastIndication();
-        hideDirectionIndicators();
+        mCapturePreview.setImageBitmap(null);
+        mCapturePreviewSet = false;
     }
 
     public void hideSwitcher() {
@@ -187,116 +228,56 @@ public class WideAnglePanoramaUI implements
         mSwitcher.setVisibility(View.VISIBLE);
     }
 
-    public void setCaptureProgressOnDirectionChangeListener(
-            PanoProgressBar.OnDirectionChangeListener listener) {
-        mCaptureProgressBar.setOnDirectionChangeListener(listener);
-    }
+    public void drawCapturePreview(Bitmap bitmap, int mDeviceOrientationAtCapture, boolean horiz) {
+        if (!mCapturePreviewSet) {
+            int w = horiz ? LayoutParams.MATCH_PARENT : convertDpToPix(capturePreviewW);
+            int h = horiz ? convertDpToPix(capturePreviewH) : LayoutParams.MATCH_PARENT;
+            FrameLayout.LayoutParams param = (FrameLayout.LayoutParams) mCapturePreview
+                    .getLayoutParams();
+            param.height = h;
+            param.width = w;
+            param.gravity = Gravity.CENTER;
+            mCapturePreview.setLayoutParams(param);
 
-    public void resetCaptureProgress() {
-        mCaptureProgressBar.reset();
-    }
+            mCapturePreviewSet = true;
+            setPreviewOrientation(mDeviceOrientationAtCapture, horiz);
 
-    public void setMaxCaptureProgress(int max) {
-        mCaptureProgressBar.setMaxProgress(max);
-    }
-
-    public void showCaptureProgress() {
-        mCaptureProgressBar.setVisibility(View.VISIBLE);
-    }
-
-    public void updateCaptureProgress(
-            float panningRateXInDegree, float panningRateYInDegree,
-            float progressHorizontalAngle, float progressVerticalAngle,
-            float maxPanningSpeed) {
-
-        if ((Math.abs(panningRateXInDegree) > maxPanningSpeed)
-                || (Math.abs(panningRateYInDegree) > maxPanningSpeed)) {
-            showTooFastIndication();
-        } else {
-            hideTooFastIndication();
         }
-
-        // progressHorizontalAngle and progressVerticalAngle are relative to the
-        // camera. Convert them to UI direction.
-        mProgressAngle[0] = progressHorizontalAngle;
-        mProgressAngle[1] = progressVerticalAngle;
-        mProgressDirectionMatrix.mapPoints(mProgressAngle);
-
-        int angleInMajorDirection =
-                (Math.abs(mProgressAngle[0]) > Math.abs(mProgressAngle[1]))
-                        ? (int) mProgressAngle[0]
-                        : (int) mProgressAngle[1];
-        mCaptureProgressBar.setProgress((angleInMajorDirection));
+        mCapturePreview.setImageBitmap(bitmap);
     }
 
-    public void setProgressOrientation(int orientation) {
-        mProgressDirectionMatrix.reset();
-        mProgressDirectionMatrix.postRotate(orientation);
+    public SurfaceHolder getSurfaceHolder() {
+        return mSurfaceHolder;
     }
 
-    public void showDirectionIndicators(int direction) {
-        switch (direction) {
-            case PanoProgressBar.DIRECTION_NONE:
-                mLeftIndicator.setVisibility(View.VISIBLE);
-                mRightIndicator.setVisibility(View.VISIBLE);
-                break;
-            case PanoProgressBar.DIRECTION_LEFT:
-                mLeftIndicator.setVisibility(View.VISIBLE);
-                mRightIndicator.setVisibility(View.INVISIBLE);
-                break;
-            case PanoProgressBar.DIRECTION_RIGHT:
-                mLeftIndicator.setVisibility(View.INVISIBLE);
-                mRightIndicator.setVisibility(View.VISIBLE);
-                break;
-        }
-    }
-
-    public SurfaceTexture getSurfaceTexture() {
-        return mSurfaceTexture;
+    // SurfaceHolder callbacks
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        hidePreviewCover();
     }
 
     @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i2) {
-        mSurfaceTexture = surfaceTexture;
+    public void surfaceCreated(SurfaceHolder holder) {
+        mSurfaceHolder = holder;
         mController.onPreviewUIReady();
+
+        if (mPreviewWidth != 0 && mPreviewHeight != 0) {
+            // Re-apply transform matrix for new surface texture
+            setTransformMatrix(mPreviewWidth, mPreviewHeight);
+        }
+
         mActivity.updateThumbnail(mThumbnail);
     }
 
     @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i2) {
-
-    }
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        mSurfaceHolder = null;
         mController.onPreviewUIDestroyed();
-        mSurfaceTexture = null;
-        Log.d(TAG, "surfaceTexture is destroyed");
-        return true;
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-        // Make sure preview cover is hidden if preview data is available.
-        if (mPreviewCover.getVisibility() != View.GONE) {
-            mPreviewCover.setVisibility(View.GONE);
-        }
-    }
-
-    private void hideDirectionIndicators() {
-        mLeftIndicator.setVisibility(View.INVISIBLE);
-        mRightIndicator.setVisibility(View.INVISIBLE);
-    }
-
-    public Point getPreviewAreaSize() {
-        return new Point(
-                mTextureView.getWidth(), mTextureView.getHeight());
     }
 
     public void reset() {
         mShutterButton.setImageResource(R.drawable.btn_new_shutter_panorama);
         mReviewLayout.setVisibility(View.GONE);
-        mCaptureProgressBar.setVisibility(View.INVISIBLE);
     }
 
     public void showFinalMosaic(Bitmap bitmap, int orientation) {
@@ -307,14 +288,6 @@ public class WideAnglePanoramaUI implements
                     bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(),
                     rotateMatrix, false);
         }
-
-        mReview.setImageBitmap(bitmap);
-        mCaptureLayout.setVisibility(View.GONE);
-        mReviewLayout.setVisibility(View.VISIBLE);
-        // If capture is stopped by device rotation, the rendering progress bar
-        // is sometimes not shown due to wrong layout result. It's likely to be
-        // a framework bug. Call requestLayout() as a workaround.
-        mSavingProgressBar.requestLayout();
 
         mActivity.updateThumbnail(bitmap);
     }
@@ -333,7 +306,6 @@ public class WideAnglePanoramaUI implements
         inflater.inflate(R.layout.pano_review_control, mReviewControl, true);
 
         mRootView.bringChildToFront(mCameraControls);
-        setViews(mActivity.getResources());
         if (threadRunning) {
             mReview.setImageDrawable(lowResReview);
             mCaptureLayout.setVisibility(View.GONE);
@@ -358,29 +330,16 @@ public class WideAnglePanoramaUI implements
         yOffset = (height - h) / 2;
 
         FrameLayout.LayoutParams param = new FrameLayout.LayoutParams(w, h);
-        mTextureView.setLayoutParams(param);
-        mTextureView.setX(xOffset);
-        mTextureView.setY(yOffset);
+
+        mSurfaceView.setLayoutParams(param);
+        mSurfaceView.setX(xOffset);
+        mSurfaceView.setY(yOffset);
         mPreviewBorder.setLayoutParams(param);
         mPreviewBorder.setX(xOffset);
         mPreviewBorder.setY(yOffset);
         mPreviewYOffset = yOffset;
 
-        int t = mPreviewYOffset;
-        int b1 = mTextureView.getBottom() - mPreviewYOffset;
-        int r = mTextureView.getRight();
-        int b2 = mTextureView.getBottom();
-
         mCameraControls.setPreviewRatio(1.0f, true);
-    }
-
-    public void resetSavingProgress() {
-        mSavingProgressBar.reset();
-        mSavingProgressBar.setRightIncreasing(true);
-    }
-
-    public void updateSavingProgress(int progress) {
-        mSavingProgressBar.setProgress(progress);
     }
 
     @Override
@@ -422,29 +381,18 @@ public class WideAnglePanoramaUI implements
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflator.inflate(R.layout.panorama_module, mRootView, true);
 
-        Resources appRes = mActivity.getResources();
-        mIndicatorColor = appRes.getColor(R.color.pano_progress_indication);
-        mReviewBackground = appRes.getColor(R.color.review_background);
-        mIndicatorColorFast = appRes.getColor(R.color.pano_progress_indication_fast);
-
         mPreviewCover = mRootView.findViewById(R.id.preview_cover);
         mPreviewLayout = mRootView.findViewById(R.id.pano_preview_layout);
         mReviewControl = (ViewGroup) mRootView.findViewById(R.id.pano_review_control);
         mReviewLayout = mRootView.findViewById(R.id.pano_review_layout);
         mReview = (ImageView) mRootView.findViewById(R.id.pano_reviewarea);
         mCaptureLayout = (FrameLayout) mRootView.findViewById(R.id.panorama_capture_layout);
-        mCaptureProgressBar = (PanoProgressBar) mRootView.findViewById(R.id.pano_pan_progress_bar);
-        mCaptureProgressBar.setBackgroundColor(appRes.getColor(R.color.pano_progress_empty));
-        mCaptureProgressBar.setDoneColor(appRes.getColor(R.color.pano_progress_done));
-        mCaptureProgressBar.setIndicatorColor(mIndicatorColor);
-        mCaptureProgressBar.setIndicatorWidth(20);
-
+        mCapturePreviewLayout = (FrameLayout) mRootView
+                .findViewById(R.id.pano_capture_preview_layout);
+        mCapturePreview = (ImageView) mRootView.findViewById(R.id.pano_capture_preview);
+        mCapturePreview.setScaleType(ScaleType.FIT_CENTER);
         mPreviewBorder = mCaptureLayout.findViewById(R.id.pano_preview_area_border);
 
-        mLeftIndicator = mRootView.findViewById(R.id.pano_pan_left_indicator);
-        mRightIndicator = mRootView.findViewById(R.id.pano_pan_right_indicator);
-        mLeftIndicator.setEnabled(false);
-        mRightIndicator.setEnabled(false);
         mTooFastPrompt = (TextView) mRootView.findViewById(R.id.pano_capture_too_fast_textview);
         mCaptureIndicator = mRootView.findViewById(R.id.pano_capture_indicator);
 
@@ -458,9 +406,11 @@ public class WideAnglePanoramaUI implements
 
         // TODO: set display change listener properly.
         ((CameraRootView) mRootView).setDisplayChangeListener(null);
-        mTextureView = (TextureView) mRootView.findViewById(R.id.pano_preview_textureview);
-        mTextureView.setSurfaceTextureListener(this);
-        mTextureView.addOnLayoutChangeListener(this);
+        mSurfaceView = (SurfaceView) mRootView.findViewById(R.id.pano_preview_surfaceview);
+        mSurfaceHolder = mSurfaceView.getHolder();
+        mSurfaceHolder.addCallback(this);
+        mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        mSurfaceView.addOnLayoutChangeListener(this);
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
         setPanoramaPreviewView();
 
@@ -468,64 +418,11 @@ public class WideAnglePanoramaUI implements
         mPanoFailedDialog = (RotateLayout) mRootView.findViewById(R.id.pano_dialog_layout);
         mPanoFailedButton = (Button) mRootView.findViewById(R.id.pano_dialog_button1);
         mDialogHelper = new DialogHelper();
-        setViews(appRes);
-    }
-
-    private void setViews(Resources appRes) {
-        int weight = appRes.getInteger(R.integer.SRI_pano_layout_weight);
-
-        mSavingProgressBar = (PanoProgressBar) mRootView.findViewById(R.id.pano_saving_progress_bar);
-        mSavingProgressBar.setIndicatorWidth(0);
-        mSavingProgressBar.setMaxProgress(100);
-        mSavingProgressBar.setBackgroundColor(appRes.getColor(R.color.pano_progress_empty));
-        mSavingProgressBar.setDoneColor(appRes.getColor(R.color.pano_progress_indication));
-
-        View cancelButton = mRootView.findViewById(R.id.pano_review_cancel_button);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                mController.cancelHighResStitching();
-            }
-        });
-
-
-    }
-
-    private void showTooFastIndication() {
-        mTooFastPrompt.setVisibility(View.VISIBLE);
-        // The PreviewArea also contains the border for "too fast" indication.
-        mPreviewBorder.setVisibility(View.VISIBLE);
-        mCaptureProgressBar.setIndicatorColor(mIndicatorColorFast);
-        mLeftIndicator.setEnabled(true);
-        mRightIndicator.setEnabled(true);
-    }
-
-    private void hideTooFastIndication() {
-        mTooFastPrompt.setVisibility(View.GONE);
-        mPreviewBorder.setVisibility(View.INVISIBLE);
-        mCaptureProgressBar.setIndicatorColor(mIndicatorColor);
-        mLeftIndicator.setEnabled(false);
-        mRightIndicator.setEnabled(false);
-    }
-
-    public void flipPreviewIfNeeded() {
-        // Rotation needed to display image correctly clockwise
-        int cameraOrientation = mController.getCameraOrientation();
-        // Display rotated counter-clockwise
-        int displayRotation = CameraUtil.getDisplayRotation(mActivity);
-        // Rotation needed to display image correctly on current display
-        int rotation = (cameraOrientation - displayRotation + 360) % 360;
-        if (rotation >= 180) {
-            mTextureView.setRotation(180);
-        } else {
-            mTextureView.setRotation(0);
-        }
     }
 
     @Override
     public void onDisplayChanged() {
         mCameraControls.checkLayoutFlip();
-        flipPreviewIfNeeded();
     }
 
     public void initDisplayChangeListener() {
@@ -538,6 +435,12 @@ public class WideAnglePanoramaUI implements
 
     public void showPreviewCover() {
         mPreviewCover.setVisibility(View.VISIBLE);
+    }
+
+    public void hidePreviewCover() {
+        if (mPreviewCover.getVisibility() != View.GONE) {
+            mPreviewCover.setVisibility(View.GONE);
+        }
     }
 
     private class DialogHelper {
@@ -598,7 +501,91 @@ public class WideAnglePanoramaUI implements
             return true;
         }
         return false;
-   }
+    }
+
+    private int convertDpToPix(int dp) {
+        Resources r = mActivity.getResources();
+        return ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
+                r.getDisplayMetrics()));
+    }
+
+
+    public void setPreviewOrientation(int orientation, boolean horiz) {
+
+        Point size = new Point();
+        mActivity.getWindowManager().getDefaultDisplay().getSize(size);
+        int sW = size.x;
+        int sH = size.y;
+        ViewGroup v = mCapturePreviewLayout;
+        int w = v.getWidth();
+        int h = v.getHeight();
+        int idx1;
+        int idx2;
+        int botPadding_pix = convertDpToPix(botPadding);
+        int sidePadding_pix = convertDpToPix(sidePadding);
+
+        final View dummy = mRootView.findViewById(R.id.pano_dummy_layout);
+        int t = dummy.getTop();
+        int b1 = dummy.getBottom();
+        int r = dummy.getRight();
+        int b2 = dummy.getBottom();
+        int yc = (t + b1) / 2;
+        int xc = r / 2;
+        int x = xc;
+        int y = yc;
+        int vH = convertDpToPix(capturePreviewH);
+        int vW = convertDpToPix(capturePreviewW);
+        if (horiz) {
+            v.setPivotX(w / 2);
+            v.setPivotY(h / 2);
+            switch (orientation) {
+                case 90:
+                    x = sW - vH / 2 - sidePadding_pix;
+                    y = yc;
+                    break;
+                case 180:
+                    x = xc;
+                    y = t / 2;
+                    break;
+                case 270:
+                    x = vH / 2 + sidePadding_pix;
+                    y = yc;
+                    break;
+                default:
+                    x = xc;
+                    y = sH - botPadding_pix;
+                    break;
+            }
+            v.setTranslationX(x - xc);
+            v.setTranslationY(y - yc);
+            v.setRotation(-orientation);
+        } else {
+            v.setPivotX(w / 2);
+            v.setPivotY(h / 2);
+            switch (orientation) {
+                case 90:
+                    x = xc;
+                    y = sH - botPadding_pix;
+                    break;
+                case 180:
+                    x = sW - vW / 2 - sidePadding_pix;
+                    y = yc;
+                    break;
+                case 270:
+                    x = xc;
+                    y = t / 2;
+
+                    break;
+                default:
+                    x = vW / 2 + sidePadding_pix;
+                    y = yc;
+                    break;
+            }
+            v.setTranslationX(x - xc);
+            v.setTranslationY(y - yc);
+            v.setRotation(-orientation);
+        }
+    }
 
     public void setOrientation(int orientation, boolean animation) {
         mOrientation = orientation;
@@ -619,9 +606,7 @@ public class WideAnglePanoramaUI implements
         int b2 = dummy.getBottom();
         final FrameLayout progressLayout = (FrameLayout)
                 mRootView.findViewById(R.id.pano_progress_layout);
-        int pivotY = ((ViewGroup) progressLayout).getPaddingTop()
-                + progressLayout.getChildAt(0).getHeight() / 2;
-
+        int pivotY = ((ViewGroup) progressLayout).getPaddingTop();
         int[] x = { r / 2, r / 10, r * 9 / 10, r / 2 };
         int[] y = { t / 2, (t + b1) / 2, (t + b1) / 2, b1 + pivotY };
 
@@ -670,7 +655,7 @@ public class WideAnglePanoramaUI implements
             v.setRotation(-orientation);
         }
 
-        final View[] views2 = { progressLayout, mReviewControl };
+        final View[] views2 = { progressLayout, mReviewControl};
         for (final View v : views2) {
             v.setPivotX(r / 2);
             v.setPivotY(pivotY);
