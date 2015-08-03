@@ -1164,7 +1164,9 @@ public class PhotoModule
                 return;
             }
             if (mIsImageCaptureIntent) {
-                stopPreview();
+                if (!mRefocus) {
+                    stopPreview();
+                }
             } else if (mSceneMode == CameraUtil.SCENE_MODE_HDR) {
                 mUI.showSwitcher();
                 mUI.setSwipingEnabled(true);
@@ -1323,6 +1325,7 @@ public class PhotoModule
                         }
 
                     } else {
+                        stopPreview();
                         mJpegImageData = jpegData;
                         if (!mQuickCapture) {
                             mUI.showCapturedImageForReview(jpegData, orientation, mMirror);
@@ -1754,8 +1757,6 @@ public class PhotoModule
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
             disableLongShot = true;
-            RotateTextToast.makeText(mActivity, R.string.advanced_capture_disable_continuous_shot,
-                    Toast.LENGTH_LONG).show();
         }
 
         // If scene mode is set, for  white balance and focus mode
@@ -3788,7 +3789,13 @@ public class PhotoModule
                     double focuspos = 0;
                     String focusStr = input.getText().toString();
                     if (focusStr.length() > 0) {
-                        focuspos = Double.parseDouble(focusStr);
+                        try {
+                            focuspos = Double.parseDouble(focusStr);
+                        } catch (NumberFormatException e) {
+                            Log.w(TAG, "Input foucspos " + focuspos + " is invalid");
+                            focuspos = maxFocusPos + 1f;
+                        }
+
                     } else {
                         RotateTextToast.makeText(mActivity, "Invalid focus position",
                                 Toast.LENGTH_SHORT).show();
@@ -3927,10 +3934,20 @@ public class PhotoModule
                     String Rgain = Rinput.getText().toString();
                     String Ggain = Ginput.getText().toString();
                     String Bgain = Binput.getText().toString();
+                    double Rgainf = -1;
+                    double Ggainf = -1;
+                    double Bgainf = -1;
                     if (Rgain.length() > 0 && Ggain.length() > 0 && Bgain.length() > 0) {
-                        double Rgainf = Double.parseDouble(Rgain);
-                        double Ggainf = Double.parseDouble(Ggain);
-                        double Bgainf = Double.parseDouble(Bgain);
+                        try {
+                            Rgainf = Double.parseDouble(Rgain);
+                            Ggainf = Double.parseDouble(Ggain);
+                            Bgainf = Double.parseDouble(Bgain);
+                        } catch (NumberFormatException e) {
+                            Log.w(TAG, "Input RGB gain is invalid");
+                            Rgainf = maxGain + 1f;
+                            Ggainf = maxGain + 1f;
+                            Bgainf = maxGain + 1f;
+                        }
                         String RGBGain = Rgain + "," + Ggain + "," + Bgain;
                         if (Rgainf <= maxGain && Rgainf >= minGain &&
                             Ggainf <= maxGain && Ggainf >= minGain &&
@@ -4054,7 +4071,12 @@ public class PhotoModule
                     double newExpTime = -1;
                     String expTime = ExpTimeInput.getText().toString();
                     if (expTime.length() > 0) {
-                        newExpTime = Double.parseDouble(expTime);
+                        try {
+                            newExpTime = Double.parseDouble(expTime);
+                        } catch (NumberFormatException e) {
+                            Log.w(TAG, "Input expTime " + expTime + " is invalid");
+                            newExpTime = Double.parseDouble(maxExpTime) + 1f;
+                        }
                     }
                     if (newExpTime <= Double.parseDouble(maxExpTime) &&
                         newExpTime >= Double.parseDouble(minExpTime)) {
@@ -4100,7 +4122,13 @@ public class PhotoModule
                     double newExpTime = -1;
                     String expTime = ExpTimeInput.getText().toString();
                     if (expTime.length() > 0) {
-                        newExpTime = Double.parseDouble(expTime);
+                        try {
+                            newExpTime = Double.parseDouble(expTime);
+                        } catch (NumberFormatException e) {
+                            Log.w(TAG, "input newExpTime " + newExpTime + " is invalid");
+                            newExpTime = Double.parseDouble(maxExpTime) + 1f;
+                        }
+
                     }
                     if (newISO <= maxISO && newISO >= minISO &&
                         newExpTime <= Double.parseDouble(maxExpTime) &&
@@ -4177,6 +4205,36 @@ public class PhotoModule
             mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, pref.getValue());
         }
 
+        String ubiFocusOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_ubifocus_off);
+        String chromaFlashOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_chromaflash_off);
+        String optiZoomOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_optizoom_off);
+        String reFocusOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_refocus_off);
+        String fssrOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_FSSR_off);
+        String truePortraitOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_trueportrait_off);
+        String multiTouchFocusOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_multi_touch_focus_off);
+        String stillMoreOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_stillmore_off);
+        String advancedFeatureOff = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_none);
+        if (notSame(pref, CameraSettings.KEY_QC_OPTI_ZOOM, optiZoomOff) ||
+                notSame(pref, CameraSettings.KEY_QC_CHROMA_FLASH, chromaFlashOff) ||
+                notSame(pref, CameraSettings.KEY_QC_AF_BRACKETING, ubiFocusOff) ||
+                notSame(pref, CameraSettings.KEY_QC_FSSR, fssrOff) ||
+                notSame(pref, CameraSettings.KEY_QC_TP, truePortraitOff) ||
+                notSame(pref, CameraSettings.KEY_QC_MULTI_TOUCH_FOCUS, multiTouchFocusOff) ||
+                notSame(pref, CameraSettings.KEY_QC_STILL_MORE, stillMoreOff) ||
+                notSame(pref, CameraSettings.KEY_QC_RE_FOCUS, reFocusOff) ||
+                notSame(pref, CameraSettings.KEY_ADVANCED_FEATURES, advancedFeatureOff)) {
+            RotateTextToast.makeText(mActivity, R.string.advanced_capture_disable_continuous_shot,
+                    Toast.LENGTH_LONG).show();
+        }
         //call generic onSharedPreferenceChanged
         onSharedPreferenceChanged();
     }
