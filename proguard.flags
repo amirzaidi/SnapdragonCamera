@@ -32,10 +32,6 @@
   public static void injectMockCamera(...);
 }
 
--keep class com.android.camera.MosaicFrameProcessor { *; }
--keep class com.android.camera.WideAnglePanoramaModule { *; }
--keep class com.android.camera.WideAnglePanoramaModule$PanoramaInfo { *; }
-
 # Disable the warnings of using dynamic method calls in EffectsRecorder
 -dontnote com.android.camera.EffectsRecorder
 
