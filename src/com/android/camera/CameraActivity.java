@@ -814,8 +814,6 @@ public class CameraActivity extends Activity
             int w = opt.outWidth;
             int h = opt.outHeight;
             int d = w > h ? h : w;
-            final Rect rect = w > h ? new Rect((w - h) / 2, 0, (w + h) / 2, h)
-                    : new Rect(0, (h - w) / 2, w, (h + w) / 2);
 
             final int target = getResources().getDimensionPixelSize(R.dimen.capture_size);
             int sample = 1;
@@ -824,6 +822,8 @@ public class CameraActivity extends Activity
                     sample *= 2;
                 }
             }
+            int st = sample * target;
+            final Rect rect = new Rect((w - st) / 2, (h - st) / 2, (w + st) / 2, (h + st) / 2);
 
             opt.inJustDecodeBounds = false;
             opt.inSampleSize = sample;
@@ -877,6 +877,8 @@ public class CameraActivity extends Activity
             } else if (w < h) {
                 mLength = w;
                 bitmap = Bitmap.createBitmap(bitmap, 0, (h - w) / 2, w, w);
+            } else {
+                mLength = w;
             }
 
             mBitmapShader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
