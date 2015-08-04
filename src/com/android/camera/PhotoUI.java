@@ -19,33 +19,32 @@ package com.android.camera;
 
 import java.util.List;
 
+import org.codeaurora.snapcam.R;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.RectF;
 import android.graphics.Point;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
 import android.hardware.Camera.Face;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.Surface;
-import android.view.SurfaceView;
-import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLayoutChangeListener;
 import android.view.ViewGroup;
-import android.view.ViewPropertyAnimator;
 import android.view.ViewStub;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
@@ -54,7 +53,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.Toast;
-import android.graphics.drawable.AnimationDrawable;
 
 import com.android.camera.CameraPreference.OnPreferenceChangedListener;
 import com.android.camera.FocusOverlayManager.FocusUI;
@@ -75,7 +73,6 @@ import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.ui.ZoomRenderer;
 import com.android.camera.util.CameraUtil;
-import org.codeaurora.snapcam.R;
 
 public class PhotoUI implements PieListener,
         PreviewGestures.SingleTapListener,
@@ -123,10 +120,8 @@ public class PhotoUI implements PieListener,
     private int mZoomMax;
     private List<Integer> mZoomRatios;
 
-    private int mPreviewWidth = 0;
-    private int mPreviewHeight = 0;
-    private int mOriginalPreviewWidth = 0;
-    private int mOriginalPreviewHeight = 0;
+    private int mMaxPreviewWidth = 0;
+    private int mMaxPreviewHeight = 0;
 
     public boolean mMenuInitialized = false;
     private float mSurfaceTextureUncroppedWidth;
@@ -137,7 +132,6 @@ public class PhotoUI implements PieListener,
 
     private SurfaceTextureSizeChangedListener mSurfaceTextureSizeListener;
     private SurfaceView mSurfaceView = null;
-    private Matrix mMatrix = null;
     private float mAspectRatio = 4f / 3f;
     private boolean mAspectRatioResize;
 
@@ -165,38 +159,6 @@ public class PhotoUI implements PieListener,
         @Override
         public void onLayoutChange(View v, int left, int top, int right,
                 int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-            int width = right - left;
-            int height = bottom - top;
-
-            int orientation = mActivity.getResources().getConfiguration().orientation;
-            if ((orientation == Configuration.ORIENTATION_PORTRAIT && width > height)
-                    || (orientation == Configuration.ORIENTATION_LANDSCAPE && width < height)) {
-                // The screen has rotated; swap SurfaceView width & height
-                // to ensure correct preview
-                int oldWidth = width;
-                width = height;
-                height = oldWidth;
-                Log.d(TAG, "Swapping SurfaceView width & height dimensions");
-                if (mOriginalPreviewWidth != 0 && mOriginalPreviewHeight != 0) {
-                    int temp = mOriginalPreviewWidth;
-                    mOriginalPreviewWidth = mOriginalPreviewHeight;
-                    mOriginalPreviewHeight = temp;
-                }
-            }
-
-            if (mPreviewWidth != width || mPreviewHeight != height
-                    || (mOrientationResize != mPrevOrientationResize)
-                    || mAspectRatioResize) {
-                if (mOriginalPreviewWidth == 0) mOriginalPreviewWidth = width;
-                if (mOriginalPreviewHeight == 0) mOriginalPreviewHeight = height;
-                mPreviewWidth = width;
-                mPreviewHeight = height;
-                setTransformMatrix(mPreviewWidth, mPreviewHeight);
-                mController.onScreenSizeChanged((int) mSurfaceTextureUncroppedWidth,
-                        (int) mSurfaceTextureUncroppedHeight);
-                mAspectRatioResize = false;
-            }
-
             if (mMenu != null)
                 mMenu.tryToCloseSubList();
         }
@@ -266,6 +228,43 @@ public class PhotoUI implements PieListener,
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         mSurfaceView.addOnLayoutChangeListener(mLayoutListener);
         Log.v(TAG, "Using mdp_preview_content (MDP path)");
+
+        View surfaceContainer = mRootView.findViewById(R.id.preview_container);
+        surfaceContainer.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right,
+                    int bottom, int oldLeft, int oldTop, int oldRight,
+                    int oldBottom) {
+                int width = right - left;
+                int height = bottom - top;
+
+                if (mMaxPreviewWidth == 0 && mMaxPreviewHeight == 0) {
+                    mMaxPreviewWidth = width;
+                    mMaxPreviewHeight = height;
+                }
+
+                int orientation = mActivity.getResources().getConfiguration().orientation;
+                if ((orientation == Configuration.ORIENTATION_PORTRAIT && width > height)
+                        || (orientation == Configuration.ORIENTATION_LANDSCAPE && width < height)) {
+                    // The screen has rotated; swap SurfaceView width & height
+                    // to ensure correct preview
+                    int oldWidth = width;
+                    width = height;
+                    height = oldWidth;
+                    Log.d(TAG, "Swapping SurfaceView width & height dimensions");
+                    if (mMaxPreviewWidth != 0 && mMaxPreviewHeight != 0) {
+                        int temp = mMaxPreviewWidth;
+                        mMaxPreviewWidth = mMaxPreviewHeight;
+                        mMaxPreviewHeight = temp;
+                    }
+                }
+                if (mOrientationResize != mPrevOrientationResize
+                        || mAspectRatioResize) {
+                    layoutPreview(mAspectRatio);
+                    mAspectRatioResize = false;
+                }
+            }
+        });
 
         mRenderOverlay = (RenderOverlay) mRootView.findViewById(R.id.render_overlay);
         mFlashOverlay = mRootView.findViewById(R.id.flash_overlay);
@@ -372,7 +371,7 @@ public class PhotoUI implements PieListener,
                     break;
             }
         } else {
-            float width = mOriginalPreviewWidth, height = mOriginalPreviewHeight;
+            float width = mMaxPreviewWidth, height = mMaxPreviewHeight;
             if (width == 0 || height == 0) return;
 
             if (mOrientationResize) {
@@ -385,18 +384,27 @@ public class PhotoUI implements PieListener,
                 }
             } else {
                 if (width > height) {
-                    scaledTextureWidth = Math.max(width, height * mAspectRatio);
-                    scaledTextureHeight = Math.max(height, width / mAspectRatio);
+                    if(Math.max(width, height * mAspectRatio) > width) {
+                        scaledTextureWidth = width;
+                        scaledTextureHeight = width / mAspectRatio;
+                    } else {
+                        scaledTextureWidth = height * mAspectRatio;
+                        scaledTextureHeight = height;
+                    }
                 } else {
-                    scaledTextureWidth = Math.max(width, height / mAspectRatio);
-                    scaledTextureHeight = Math.max(height, width * mAspectRatio);
+                    if(Math.max(height, width * mAspectRatio) > height) {
+                        scaledTextureWidth = height / mAspectRatio;
+                        scaledTextureHeight = height;
+                    } else {
+                        scaledTextureWidth = width;
+                        scaledTextureHeight = width * mAspectRatio;
+                    }
                 }
             }
 
             Log.v(TAG, "setTransformMatrix: scaledTextureWidth = " + scaledTextureWidth
                     + ", scaledTextureHeight = " + scaledTextureHeight);
 
-            int orientation = mActivity.getResources().getConfiguration().orientation;
             if (((rotation == 0 || rotation == 180) && scaledTextureWidth > scaledTextureHeight)
                     || ((rotation == 90 || rotation == 270)
                         && scaledTextureWidth < scaledTextureHeight)) {
@@ -425,19 +433,13 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setLayoutParams(lp);
         }
+
+        mController.onScreenSizeChanged((int) mSurfaceTextureUncroppedWidth,
+                (int) mSurfaceTextureUncroppedHeight);
     }
 
     public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
         mSurfaceTextureSizeListener = listener;
-    }
-
-    private void setTransformMatrix(int width, int height) {
-        mMatrix = mSurfaceView.getMatrix();
-
-        // Calculate the new preview rectangle.
-        RectF previewRect = new RectF(0, 0, width, height);
-        mMatrix.mapRect(previewRect);
-        mController.onPreviewRectChanged(CameraUtil.rectFToRect(previewRect));
     }
 
     // SurfaceHolder callbacks
@@ -451,10 +453,6 @@ public class PhotoUI implements PieListener,
         Log.v(TAG, "surfaceCreated");
         mSurfaceHolder = holder;
         mController.onPreviewUIReady();
-        if (mPreviewWidth != 0 && mPreviewHeight != 0) {
-            // Re-apply transform matrix for new surface texture
-            setTransformMatrix(mPreviewWidth, mPreviewHeight);
-        }
         mActivity.updateThumbnail(mThumbnail);
     }
 
@@ -667,6 +665,12 @@ public class PhotoUI implements PieListener,
                     public void onCancel(DialogInterface dialog) {
                         mController.enableRecordingLocation(false);
                         mLocationDialog = null;
+                    }
+                })
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        mActivity.setSystemBarsVisibility(false);
                     }
                 })
                 .show();
