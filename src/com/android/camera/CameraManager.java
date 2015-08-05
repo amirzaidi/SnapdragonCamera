@@ -240,6 +240,7 @@ public interface CameraManager {
          */
         public void setPreviewDataCallbackWithBuffer(Handler handler, CameraPreviewDataCallback cb);
 
+        public void setOneShotPreviewCallback(Handler handler, CameraPreviewDataCallback cb);
         /**
          * Adds buffer for the preview callback.
          *
