@@ -1579,7 +1579,7 @@ public class CameraActivity extends Activity
 
         int lower = Math.min(width, height);
 
-        int offset = lower * 10 / 100;
+        int offset = lower * 7 / 100;
         SETTING_LIST_WIDTH_1 = lower / 2 + offset;
         SETTING_LIST_WIDTH_2 = lower / 2 - offset;
         registerSDcardMountedReceiver();
