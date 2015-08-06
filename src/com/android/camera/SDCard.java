@@ -28,12 +28,11 @@
 
 package com.android.camera;
 
+import android.content.Context;
 import android.os.UserHandle;
-import android.os.StatFs;
 import android.os.Environment;
 import android.os.storage.StorageVolume;
-import android.os.storage.IMountService;
-import android.os.ServiceManager;
+import android.os.storage.StorageManager;
 import android.util.Log;
 
 public class SDCard {
@@ -41,7 +40,7 @@ public class SDCard {
 
     private static final int VOLUME_SDCARD_INDEX = 1;
 
-    private IMountService mMountService = null;
+    private StorageManager mStorageManager = null;
     private StorageVolume mVolume = null;
     private String path = null;
     private String rawpath = null;
@@ -76,10 +75,13 @@ public class SDCard {
         return rawpath;
     }
 
-    public static synchronized SDCard instance() {
+    public static void initialize(Context context) {
         if (sSDCard == null) {
-            sSDCard = new SDCard();
+            sSDCard = new SDCard(context);
         }
+    }
+
+    public static synchronized SDCard instance() {
         return sSDCard;
     }
 
@@ -87,11 +89,10 @@ public class SDCard {
         return mVolume.getState();
     }
 
-    private SDCard() {
+    private SDCard(Context context) {
         try {
-            mMountService = IMountService.Stub.asInterface(ServiceManager
-                                                           .getService("mount"));
-            final StorageVolume[] volumes = mMountService.getVolumeList(UserHandle.myUserId(), "com.android.camera");
+            mStorageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+            final StorageVolume[] volumes = mStorageManager.getVolumeList();
             if (volumes.length > VOLUME_SDCARD_INDEX) {
                 mVolume = volumes[VOLUME_SDCARD_INDEX];
             }

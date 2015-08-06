@@ -18,6 +18,7 @@ package com.android.camera.app;
 
 import android.app.Application;
 
+import com.android.camera.SDCard;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.UsageStatistics;
 
@@ -28,6 +29,7 @@ public class CameraApp extends Application {
         super.onCreate();
         UsageStatistics.initialize(this);
         CameraUtil.initialize(this);
+        SDCard.initialize(this);
     }
 }
 
