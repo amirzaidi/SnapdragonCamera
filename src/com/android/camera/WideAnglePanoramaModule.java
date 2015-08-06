@@ -627,6 +627,7 @@ public class WideAnglePanoramaModule implements
         mCaptureState = CAPTURE_STATE_VIEWFINDER;
 
         if (!setupCamera()) {
+            CameraUtil.showErrorAndFinish(mActivity, R.string.cannot_connect_camera);
             Log.e(TAG, "Failed to open camera, aborting");
             return;
         }
