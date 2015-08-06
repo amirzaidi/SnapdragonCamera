@@ -1443,50 +1443,10 @@ public class CameraActivity extends Activity
             mAudioManager.setMasterVolume(mShutterVol,0);
 
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
-        setContentView(R.layout.camera_filmstrip);
 
-        mActionBar = getActionBar();
-        mActionBar.addOnMenuVisibilityListener(this);
-
-        if (ApiHelper.HAS_ROTATION_ANIMATION) {
-            setRotationAnimation();
-        }
-
-        mMainHandler = new MainHandler(getMainLooper());
-
-        mAboveFilmstripControlLayout =
-                (FrameLayout) findViewById(R.id.camera_above_filmstrip_layout);
-        mAboveFilmstripControlLayout.setFitsSystemWindows(true);
-        // Hide action bar first since we are in full screen mode first, and
-        // switch the system UI to lights-out mode.
-        this.setSystemBarsVisibility(false);
-        mPanoramaManager = AppManagerFactory.getInstance(this)
-                .getPanoramaStitchingManager();
-        mPlaceholderManager = AppManagerFactory.getInstance(this)
-                .getGcamProcessingManager();
-        mPanoramaManager.addTaskListener(mStitchingListener);
-        mPlaceholderManager.addTaskListener(mPlaceholderListener);
         LayoutInflater inflater = getLayoutInflater();
         View rootLayout = inflater.inflate(R.layout.camera, null, false);
         mCameraModuleRootView = rootLayout.findViewById(R.id.camera_app_root);
-        mPanoStitchingPanel = findViewById(R.id.pano_stitching_progress_panel);
-        mBottomProgress = (ProgressBar) findViewById(R.id.pano_stitching_progress_bar);
-        mCameraPreviewData = new CameraPreviewData(rootLayout,
-                FilmStripView.ImageData.SIZE_FULL,
-                FilmStripView.ImageData.SIZE_FULL);
-        // Put a CameraPreviewData at the first position.
-        mWrappedDataAdapter = new FixedFirstDataAdapter(
-                new CameraDataAdapter(new ColorDrawable(
-                        getResources().getColor(R.color.photo_placeholder))),
-                mCameraPreviewData);
-        mFilmStripView = (FilmStripView) findViewById(R.id.filmstrip_view);
-        mFilmStripView.setViewGap(
-                getResources().getDimensionPixelSize(R.dimen.camera_film_strip_gap));
-        mPanoramaViewHelper = new PanoramaViewHelper(this);
-        mPanoramaViewHelper.onCreate();
-        mFilmStripView.setPanoramaViewHelper(mPanoramaViewHelper);
-        // Set up the camera preview first so the preview shows up ASAP.
-        mFilmStripView.setListener(mFilmStripListener);
 
         int moduleIndex = -1;
         if (MediaStore.INTENT_ACTION_VIDEO_CAMERA.equals(getIntent().getAction())
@@ -1518,6 +1478,48 @@ public class CameraActivity extends Activity
         mOrientationListener = new MyOrientationEventListener(this);
         setModuleFromIndex(moduleIndex);
         mCurrentModule.init(this, mCameraModuleRootView);
+
+        setContentView(R.layout.camera_filmstrip);
+
+        mActionBar = getActionBar();
+        mActionBar.addOnMenuVisibilityListener(this);
+
+        if (ApiHelper.HAS_ROTATION_ANIMATION) {
+            setRotationAnimation();
+        }
+
+        mMainHandler = new MainHandler(getMainLooper());
+
+        mAboveFilmstripControlLayout =
+                (FrameLayout) findViewById(R.id.camera_above_filmstrip_layout);
+        mAboveFilmstripControlLayout.setFitsSystemWindows(true);
+        // Hide action bar first since we are in full screen mode first, and
+        // switch the system UI to lights-out mode.
+        this.setSystemBarsVisibility(false);
+        mPanoramaManager = AppManagerFactory.getInstance(this)
+                .getPanoramaStitchingManager();
+        mPlaceholderManager = AppManagerFactory.getInstance(this)
+                .getGcamProcessingManager();
+        mPanoramaManager.addTaskListener(mStitchingListener);
+        mPlaceholderManager.addTaskListener(mPlaceholderListener);
+        mPanoStitchingPanel = findViewById(R.id.pano_stitching_progress_panel);
+        mBottomProgress = (ProgressBar) findViewById(R.id.pano_stitching_progress_bar);
+        mCameraPreviewData = new CameraPreviewData(rootLayout,
+                FilmStripView.ImageData.SIZE_FULL,
+                FilmStripView.ImageData.SIZE_FULL);
+        // Put a CameraPreviewData at the first position.
+        mWrappedDataAdapter = new FixedFirstDataAdapter(
+                new CameraDataAdapter(new ColorDrawable(
+                        getResources().getColor(R.color.photo_placeholder))),
+                mCameraPreviewData);
+        mFilmStripView = (FilmStripView) findViewById(R.id.filmstrip_view);
+        mFilmStripView.setViewGap(
+                getResources().getDimensionPixelSize(R.dimen.camera_film_strip_gap));
+        mPanoramaViewHelper = new PanoramaViewHelper(this);
+        mPanoramaViewHelper.onCreate();
+        mFilmStripView.setPanoramaViewHelper(mPanoramaViewHelper);
+        // Set up the camera preview first so the preview shows up ASAP.
+        mFilmStripView.setListener(mFilmStripListener);
 
         if (!mSecureCamera) {
             mDataAdapter = mWrappedDataAdapter;
