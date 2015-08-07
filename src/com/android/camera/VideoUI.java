@@ -386,14 +386,14 @@ public class VideoUI implements PieRenderer.PieListener,
                 if (width > height) {
                     if(Math.max(width, height * mAspectRatio) > width) {
                         scaledTextureWidth = width;
-                        scaledTextureHeight = width / mAspectRatio;
+                        scaledTextureHeight = height;
                     } else {
                         scaledTextureWidth = height * mAspectRatio;
                         scaledTextureHeight = height;
                     }
                 } else {
                     if(Math.max(height, width * mAspectRatio) > height) {
-                        scaledTextureWidth = height / mAspectRatio;
+                        scaledTextureWidth = width;
                         scaledTextureHeight = height;
                     } else {
                         scaledTextureWidth = width;

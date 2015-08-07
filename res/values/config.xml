@@ -27,4 +27,7 @@
     <!-- This value may be changed to true to enable the warped pano preview overlayed on top
          of the fullscreen pano preview. -->
     <bool name="enable_warped_pano_preview">true</bool>
+
+    <!-- This value may be changed to true to hide navigation bar. -->
+    <bool name="hide_navigation_bar">false</bool>
 </resources>
