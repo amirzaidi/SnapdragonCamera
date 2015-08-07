@@ -30,6 +30,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
@@ -446,6 +447,9 @@ public class PhotoUI implements PieListener,
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.v(TAG, "surfaceChanged: width =" + width + ", height = " + height);
+        RectF r = new RectF(mSurfaceView.getLeft(), mSurfaceView.getTop(),
+                mSurfaceView.getRight(), mSurfaceView.getBottom());
+        mController.onPreviewRectChanged(CameraUtil.rectFToRect(r));
     }
 
     @Override
