@@ -36,12 +36,15 @@
         android:layout_width="@dimen/setting_item_icon_width"
         android:layout_height="@dimen/setting_item_icon_width"
         android:layout_marginRight="@dimen/setting_item_list_margin"
+        android:layout_alignParentLeft="true"
+        android:layout_centerInParent="true"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter" />
 
     <TextView
         android:id="@+id/text"
         style="@style/CustomSettingItemTitle"
+        android:layout_toRightOf="@+id/image"
         android:shadowColor="@android:color/transparent"
         android:shadowDx="1"
         android:shadowDy="1"
