@@ -51,6 +51,7 @@ import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.Toast;
+import android.os.SystemProperties;
 
 import com.android.camera.CameraActivity;
 import com.android.camera.CameraDisabledException;
@@ -483,6 +484,38 @@ public class CameraUtil {
 
     private static Point getDefaultDisplaySize(Activity activity, Point size) {
         activity.getWindowManager().getDefaultDisplay().getSize(size);
+        //cap the display resolution given to getOptimalPreviewSize if the below properties
+        //are set. For example if the properties are set as below :
+        //adb shell setprop camera.display.umax 1920x1080
+        //adb shell setprop camera.display.lmax 1280x720
+        //Then, in devices having display panel size >1080p, panel size will be seen as 1080p.
+        //If its 1080p or lesser (but >=720p), limit it to next allowed max which is 720p.
+        //For < 720p, there is no need to do any capping.
+        //By capping the panel size, we are indirectly controlling the preview size being
+        //chosen in getOptimalPreviewSize().
+        String uMax = SystemProperties.get("camera.display.umax", "");
+        String lMax = SystemProperties.get("camera.display.lmax", "");
+        if ((uMax.length() > 0) && (lMax.length() > 0)) {
+            Log.v(TAG,"display uMax "+ uMax + " lMax " + lMax);
+            String uMaxArr[] = uMax.split("x", 2);
+            String lMaxArr[] = lMax.split("x", 2);
+            try {
+                int uMaxWidth = Integer.parseInt(uMaxArr[0]);
+                int uMaxHeight = Integer.parseInt(uMaxArr[1]);
+                int lMaxWidth = Integer.parseInt(lMaxArr[0]);
+                int lMaxHeight = Integer.parseInt(lMaxArr[1]);
+                int defaultDisplaySize = (size.x * size.y);
+                if (defaultDisplaySize > (uMaxWidth*uMaxHeight)) {
+                    size.set(uMaxWidth,uMaxHeight);
+                } else if (defaultDisplaySize >= (lMaxWidth*lMaxHeight)) {
+                    size.set(lMaxWidth,lMaxHeight);
+                } else {
+                    Log.v(TAG,"No need to cap display size");
+                }
+            } catch (Exception e) {
+                Log.e(TAG,"Invalid display properties");
+            }
+        }
         return size;
     }
 
