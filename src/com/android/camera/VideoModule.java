@@ -2028,8 +2028,6 @@ public class VideoModule implements CameraModule,
                         mActivity.getString(R.string.pref_camera_dis_value_disable));
                 mUI.overrideSettings(CameraSettings.KEY_DIS,
                         mActivity.getString(R.string.pref_camera_dis_value_disable));
-                RotateTextToast.makeText(mActivity, R.string.video_quality_4k_disable_IS,
-                        Toast.LENGTH_LONG).show();
             } else {
                 Log.e(TAG, "Not supported IS mode = " +
                         mActivity.getString(R.string.pref_camera_dis_value_disable));
@@ -2446,6 +2444,22 @@ public class VideoModule implements CameraModule,
 
     @Override
     public void onSharedPreferenceChanged(ListPreference pref) {
+        if (pref != null && CameraSettings.KEY_VIDEO_QUALITY.equals(pref.getKey())) {
+            String videoQuality = pref.getValue();
+            if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(videoQuality)) {
+                int quality = CameraSettings.VIDEO_QUALITY_TABLE.get(videoQuality);
+                if ((quality == CamcorderProfile.QUALITY_2160P
+                        || quality == CamcorderProfile.QUALITY_4kDCI)
+                        && mPreferences != null) {
+                    String disDisable = mActivity.getString(R.string.pref_camera_dis_value_disable);
+                    if (!disDisable.equals(
+                            mPreferences.getString(CameraSettings.KEY_DIS, disDisable))) {
+                        RotateTextToast.makeText(mActivity, R.string.video_quality_4k_disable_IS,
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        }
         onSharedPreferenceChanged();
     }
 
