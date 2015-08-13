@@ -1043,7 +1043,7 @@ public class VideoModule implements CameraModule,
         mUI.initDisplayChangeListener();
         // Initializing it here after the preview is started.
         mUI.initializeZoom(mParameters);
-
+        mUI.setPreviewGesturesVideoUI();
         keepScreenOnAwhile();
 
         mOrientationManager.resume();
