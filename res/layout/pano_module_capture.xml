@@ -25,10 +25,11 @@
         android:layout_height="match_parent"
         android:layout_gravity="center" >
 
-        <SurfaceView
-            android:id="@+id/pano_preview_surfaceview"
+        <TextureView
+            android:id="@+id/pano_preview_textureview"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
         <View
             android:id="@+id/pano_preview_area_border"
             android:layout_width="match_parent"
@@ -74,8 +75,44 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="top"
-            android:paddingTop="50dp" >
+            android:paddingTop="20dp" >
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:orientation="horizontal" >
+
+                <ImageView
+                    android:id="@+id/pano_pan_left_indicator"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="5dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:src="@drawable/pano_direction_left_indicator"
+                    android:visibility="gone" />
+
+                <com.android.camera.PanoProgressBar
+                    android:id="@+id/pano_pan_progress_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="9"
+                    android:gravity="center_vertical"
+                    android:src="@drawable/ic_pan_progression"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/pano_pan_right_indicator"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:layout_toRightOf="@id/pano_pan_progress_bar"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:src="@drawable/pano_direction_right_indicator"
+                    android:visibility="gone" />
+            </LinearLayout>
         </FrameLayout>
     </LinearLayout>
 
@@ -88,17 +125,5 @@
         android:text="@string/pano_too_fast_prompt"
         android:textAppearance="?android:textAppearanceMedium"
         android:visibility="gone" />
-
-    <FrameLayout
-        android:id="@+id/pano_capture_preview_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-
-        <ImageView
-            android:id="@+id/pano_capture_preview"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:layout_gravity="center" />
-    </FrameLayout>
 
 </FrameLayout>
