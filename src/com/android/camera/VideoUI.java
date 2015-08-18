@@ -902,7 +902,9 @@ public class VideoUI implements PieRenderer.PieListener,
 
     public void showUIafterRecording() {
         mCameraControls.setWillNotDraw(false);
-        mVideoMenu.showUI();
+        if (!mController.isVideoCaptureIntent()) {
+            mVideoMenu.showUI();
+        }
     }
 
     public void showReviewImage(Bitmap bitmap) {
