@@ -292,4 +292,5 @@
     <string name="cannot_load_image" msgid="4100136187076585580">"無法載入相片！"</string>
     <string name="switch_photo_filmstrip" msgid="1448511001008888767">"幻燈片檢視"</string>
     <string name="setting_wallpaper" msgid="2397759659347872725">"正在設定桌布"</string>
+    <string name="video_quality_4k_disable_IS">開啟4K錄像模式將禁用IS</string>
 </resources>
