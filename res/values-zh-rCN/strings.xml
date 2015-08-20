@@ -549,10 +549,21 @@
 
     <!-- Settings menu, setting title text for Manual white balance -->
     <string name="pref_camera_manual_wb_title">手动白平衡</string>
+    <string name="pref_camera_manual_wb_entry_color_temperature">色温</string>
+    <string name="pref_camera_manual_wb_entry_rbgb_gains">RBGB 增益</string>
+    <string name="pref_camera_manual_wb_entry_off">关</string>
     <!-- Settings menu, setting title text for Manual exposure -->
     <string name="pref_camera_manual_exp_title">手动曝光</string>
+    <string name="pref_camera_manual_exp_entry_ISO_priority">ISO 优先</string>
+    <string name="pref_camera_manual_exp_entry_exptime_priority">曝光时间优先</string>
+    <string name="pref_camera_manual_exp_entry_user_setting">用户设置</string>
+    <string name="pref_camera_manual_exp_entry_off">关</string>
+
     <!-- Settings menu, setting title text for Manual Focus -->
     <string name="pref_camera_manual_focus_title">手动对焦</string>
+    <string name="pref_camera_manual_focus_entry_scale_mode">比例模式</string>
+    <string name="pref_camera_manual_focus_entry_diopter_mode">屈光度模式</string>
+    <string name="pref_camera_manual_focus_entry_off">关</string>
     <!-- Settings menu, setting title text for cds mode -->
     <string name="pref_camera_cds_title">CDS模式</string>
     <!-- Settings menu, setting title text for video cds mode -->
@@ -569,4 +580,50 @@
     <string name="camera_unknown_error">未知错误，关闭相机。</string>
     <!-- Toast after enable 2k4k video quality to inform IS has disabled -->
     <string name="video_quality_4k_disable_IS">开启4K录像模式将禁用IS</string>
+    <!-- Settings screen, Selectable Zone Af dialog radio button choices -->
+    <!-- Settings screen, Select See More title -->
+    <string name="pref_camera_see_more_title">查看更多</string>
+
+    <!-- Settings screen, see more radio button choices -->
+    <string name="pref_camera_see_more_entry_off">关</string>
+    <string name="pref_camera_see_more_entry_on">开</string>
+
+    <!-- video TNR  dialog box entries -->
+    <string-array name="pref_camera_video_tnr_entries" translatable="false">
+    <item>@string/pref_camera_video_tnr_entry_disable</item>
+    <item>@string/pref_camera_video_tnr_entry_enable</item>
+    </string-array>
+    <string name="pref_camera_video_tnr_entry_disable">禁用</string>
+    <string name="pref_camera_video_tnr_entry_enable">启用</string>
+
+    <!-- video CDS  dialog box entries -->
+    <string-array name="pref_camera_video_cds_entries" translatable="false">
+    <item>@string/pref_camera_video_cds_entry_off</item>
+    <item>@string/pref_camera_video_cds_entry_on</item>
+    <item>@string/pref_camera_video_cds_entry_auto</item>
+    </string-array>
+     <!-- Settings screen, video CDS location dialog choices -->
+    <string name="pref_camera_video_cds_entry_off">关</string>
+    <string name="pref_camera_video_cds_entry_on">开</string>
+    <string name="pref_camera_video_cds_entry_auto">自动</string>
+
+    <!-- CDS  dialog box entries -->
+    <string-array name="pref_camera_cds_entries" translatable="false">
+    <item>@string/pref_camera_cds_entry_off</item>
+    <item>@string/pref_camera_cds_entry_on</item>
+    <item>@string/pref_camera_cds_entry_auto</item>
+    </string-array>
+    <!-- Settings screen, CDS location dialog choices -->
+    <string name="pref_camera_cds_entry_off">关</string>
+    <string name="pref_camera_cds_entry_on">开</string>
+    <string name="pref_camera_cds_entry_auto">自动</string>
+
+    <!-- TNR  dialog box entries -->
+    <string-array name="pref_camera_tnr_entries" translatable="false">
+    <item>@string/pref_camera_tnr_entry_disable</item>
+    <item>@string/pref_camera_tnr_entry_enable</item>
+    </string-array>
+    <!-- Settings screen, TNR location dialog choices -->
+    <string name="pref_camera_tnr_entry_disable">禁用</string>
+    <string name="pref_camera_tnr_entry_enable">启用</string>
 </resources>
