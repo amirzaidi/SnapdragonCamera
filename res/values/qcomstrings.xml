@@ -889,8 +889,8 @@
 
     <string name="all_in_focus">All in Focus</string>
     <string name="refocus_toast">To re-focus last photo, tap here</string>
-    <string name="refocus_prompt_title">Macro+</string>
-    <string name="refocus_prompt_message">With Macro+, your camera will take 5 pictures, each time that you press the shutter button. The 5 pictures will be combined into 1 picture, where everything is in focus. You can choose to re-focus, after you take the picture.</string>
+    <string name="refocus_prompt_title">UbiFocus</string>
+    <string name="refocus_prompt_message">With UbiFocus, your camera will take 5 pictures, each time that you press the shutter button. The 5 pictures will be combined into 1 picture, where everything is in focus. You can choose to re-focus, after you take the picture.</string>
 
     <string name="camera_thermal_shutdown">Phone overheated, closing camera.</string>
     <string name="camera_server_died">Media server died, closing camera.</string>
