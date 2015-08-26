@@ -887,7 +887,7 @@ public class VideoUI implements PieRenderer.PieListener,
             hideSwitcher();
             mRecordingTimeView.setText("");
             mRecordingTimeView.setVisibility(View.VISIBLE);
-            mPauseButton.setVisibility(mIsTimeLapse ? View.GONE : View.VISIBLE);
+            mPauseButton.setVisibility(View.VISIBLE);
         } else {
             mShutterButton.setImageResource(R.drawable.btn_new_shutter_video);
             if (!mController.isVideoCaptureIntent()) {
