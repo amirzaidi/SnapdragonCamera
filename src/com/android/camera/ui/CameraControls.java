@@ -916,6 +916,30 @@ public class CameraControls extends RotatableLayout {
         layoutRemaingPhotos();
     }
 
+    public void hideCameraSettings() {
+        mFrontBackSwitcher.setVisibility(View.INVISIBLE);
+        if(TsMakeupManager.HAS_TS_MAKEUP) {
+            mTsMakeupSwitcher.setVisibility(View.INVISIBLE);
+        } else {
+            mHdrSwitcher.setVisibility(View.INVISIBLE);
+        }
+        mSceneModeSwitcher.setVisibility(View.INVISIBLE);
+        mFilterModeSwitcher.setVisibility(View.INVISIBLE);
+        mMenu.setVisibility(View.INVISIBLE);
+    }
+
+    public void showCameraSettings() {
+        mFrontBackSwitcher.setVisibility(View.VISIBLE);
+        if(TsMakeupManager.HAS_TS_MAKEUP) {
+            mTsMakeupSwitcher.setVisibility(View.VISIBLE);
+        } else {
+            mHdrSwitcher.setVisibility(View.VISIBLE);
+        }
+        mSceneModeSwitcher.setVisibility(View.VISIBLE);
+        mFilterModeSwitcher.setVisibility(View.VISIBLE);
+        mMenu.setVisibility(View.VISIBLE);
+    }
+
     private class ArrowTextView extends TextView {
         private static final int TEXT_SIZE = 14;
         private static final int PADDING_SIZE = 18;
