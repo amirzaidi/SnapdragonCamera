@@ -707,11 +707,7 @@ public class VideoMenu extends MenuController
     // Hit when an item in the second-level popup gets selected
     public void onListPrefChanged(ListPreference pref) {
         onSettingChanged(pref);
-        if (mPopupStatus == POPUP_SECOND_LEVEL) {
-            mListMenu.reloadPreference();
-            animateFadeOut(mListSubMenu, 2);
-            ((ListMenu) mListMenu).resetHighlight();
-        }
+        closeView();
     }
 
     protected void initializePopup() {

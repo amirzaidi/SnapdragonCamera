@@ -242,9 +242,8 @@ public class PhotoMenu extends MenuController
     @Override
     // Hit when an item in a popup gets selected
     public void onListPrefChanged(ListPreference pref) {
-        animateFadeOut(mListSubMenu, 2);
         onSettingChanged(pref);
-        ((ListMenu) mListMenu).resetHighlight();
+        closeView();
     }
 
     public boolean handleBackKey() {
@@ -1024,6 +1023,7 @@ public class PhotoMenu extends MenuController
                             }
                             View border = v.findViewById(R.id.border);
                             border.setBackgroundResource(R.drawable.scene_mode_view_border_selected);
+                            animateSlideOutPreviewMenu();
                         }
 
                     }
