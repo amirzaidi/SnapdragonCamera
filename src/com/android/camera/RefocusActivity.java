@@ -228,6 +228,7 @@ public class RefocusActivity extends Activity {
         private int mWidth;
         private int mHeight;
         private boolean mFail = true;
+        private static final int W_SIZE = 61;
 
         public DepthMap(final String path) {
             File file = new File(path);
@@ -253,9 +254,38 @@ public class RefocusActivity extends Activity {
         public int getDepth(float x, float y) {
             if (mFail || x > 1.0f || y > 1.0f) {
                 return NAMES.length - 1;
-            } else {
-                return mData[(int) ((y * mHeight + x) * mWidth)];
             }
+
+            int newX = (int) (x * mWidth);
+            int newY = (int) (y * mHeight);
+
+            int[] hist = new int[256];
+            for (int i = 0; i < 256; i++) {
+                hist[i] = 0;
+            }
+
+            int colStart = Math.max(newX - W_SIZE / 2, 0);
+            int colEnd = Math.min(colStart + W_SIZE, mWidth);
+            int rowStart = Math.max(newY - W_SIZE / 2, 0);
+            int rowEnd = Math.min(rowStart + W_SIZE, mHeight);
+
+            for (int col = colStart; col < colEnd; col++) {
+                for (int row = rowStart; row < rowEnd; row++) {
+                    int level = mData[row * mWidth + col];
+                    hist[level]++;
+                }
+            }
+
+            int depth = NAMES.length - 1;
+            int maxCount = 0;
+            for (int i = 0; i < 256; i++) {
+                int count = hist[i];
+                if (count != 0 && (maxCount == 0 || count > maxCount)) {
+                    maxCount = count;
+                    depth = i;
+                }
+            }
+            return depth;
         }
 
         private int readInteger(int offset) {
