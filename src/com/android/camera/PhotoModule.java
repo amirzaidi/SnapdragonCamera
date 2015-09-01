@@ -2780,9 +2780,12 @@ public class PhotoModule
                 CameraSettings.KEY_LONGSHOT,
                 mActivity.getString(R.string.pref_camera_longshot_default));
         mParameters.set("long-shot", longshot_enable);
+        String optizoomOn = mActivity.getString(R.string
+                .pref_camera_advanced_feature_value_optizoom_on);
 
         if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
-            CameraUtil.SCENE_MODE_HDR.equals(mSceneMode)) {
+            CameraUtil.SCENE_MODE_HDR.equals(mSceneMode) ||
+            optizoomOn.equals(mSceneMode)) {
             // Set Touch AF/AEC parameter.
             String touchAfAec = mPreferences.getString(
                  CameraSettings.KEY_TOUCH_AF_AEC,
