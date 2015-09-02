@@ -798,6 +798,8 @@ public class CameraActivity extends Activity
         protected void onPostExecute(Bitmap bitmap) {
             if (bitmap == null) {
                 if (mThumbnail != null) {
+                    // Clear the image resource when the bitmap is invalid.
+                    mThumbnail.setImageDrawable(null);
                     mThumbnail.setVisibility(View.GONE);
                 }
             } else {
