@@ -527,34 +527,40 @@ public class VideoModule implements CameraModule,
                 settings.getPreferenceGroup(R.xml.video_preferences));
 
         int numOfCams = Camera.getNumberOfCameras();
-        int backCamId = CameraHolder.instance().getBackCameraId();
-        int frontCamId = CameraHolder.instance().getFrontCameraId();
-        // We need to swap the list preference contents if back camera and front camera
-        // IDs are not 0 and 1 respectively
-        if( (numOfCams == 2) && ((backCamId != CameraInfo.CAMERA_FACING_BACK)
-                || (frontCamId != CameraInfo.CAMERA_FACING_FRONT))) {
-            Log.e(TAG,"loadCameraPreferences() updating camera_id pref");
 
-            IconListPreference switchIconPref =
-                    (IconListPreference)mPreferenceGroup.findPreference(
-                    CameraSettings.KEY_CAMERA_ID);
+        //TODO: If numOfCams > 2 then corresponding entries needs to be added to the media_profiles.xml
 
-            int[] iconIds = {R.drawable.ic_switch_front, R.drawable.ic_switch_back};
-            switchIconPref.setIconIds(iconIds);
+        Log.e(TAG,"loadCameraPreferences() updating camera_id pref");
 
-            String[] entries = {mActivity.getResources().getString(
-                    R.string.pref_camera_id_entry_front), mActivity.getResources().
-                    getString(R.string.pref_camera_id_entry_back)};
-            switchIconPref.setEntries(entries);
+        int[] iconIds = new int[numOfCams];
+        String[] entries = new String[numOfCams];
+        String[] labels = new String[numOfCams];
+        int[] largeIconIds = new int[numOfCams];
 
-            String[] labels = {mActivity.getResources().getString(
-                    R.string.pref_camera_id_label_front), mActivity.getResources().
-                    getString(R.string.pref_camera_id_label_back)};
-            switchIconPref.setLabels(labels);
-
-            int[] largeIconIds = {R.drawable.ic_switch_front, R.drawable.ic_switch_back};
-            switchIconPref.setLargeIconIds(largeIconIds);
+        for(int i=0;i<numOfCams;i++) {
+            CameraInfo info = CameraHolder.instance().getCameraInfo()[i];
+            if(info.facing == CameraInfo.CAMERA_FACING_BACK) {
+                iconIds[i] = R.drawable.ic_switch_back;
+                entries[i] = mActivity.getResources().getString(R.string.pref_camera_id_entry_back);
+                labels[i] = mActivity.getResources().getString(R.string.pref_camera_id_label_back);
+                largeIconIds[i] = R.drawable.ic_switch_back;
+            } else {
+                iconIds[i] = R.drawable.ic_switch_front;
+                entries[i] = mActivity.getResources().getString(R.string.pref_camera_id_entry_front);
+                labels[i] = mActivity.getResources().getString(R.string.pref_camera_id_label_front);
+                largeIconIds[i] = R.drawable.ic_switch_front;
+            }
         }
+
+        IconListPreference switchIconPref =
+                (IconListPreference)mPreferenceGroup.findPreference(
+                CameraSettings.KEY_CAMERA_ID);
+
+        switchIconPref.setIconIds(iconIds);
+        switchIconPref.setEntries(entries);
+        switchIconPref.setLabels(labels);
+        switchIconPref.setLargeIconIds(largeIconIds);
+
     }
 
     private void initializeVideoControl() {
