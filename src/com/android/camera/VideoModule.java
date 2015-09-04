@@ -1125,6 +1125,13 @@ public class VideoModule implements CameraModule,
             mCameraDevice.setPreviewDisplay(sh);
             mCameraDevice.startPreview();
             mPreviewing = true;
+            mCameraDevice.setOneShotPreviewCallback(mHandler,
+                new CameraManager.CameraPreviewDataCallback() {
+                    @Override
+                    public void onPreviewFrame(byte[] data, CameraProxy camera) {
+                        mUI.hidePreviewCover();
+                    }
+                });
             onPreviewStarted();
         } catch (Throwable ex) {
             closeCamera();
@@ -1135,7 +1142,6 @@ public class VideoModule implements CameraModule,
 
     private void onPreviewStarted() {
         mUI.enableShutter(true);
-        mUI.hidePreviewCover();
     }
 
     @Override
