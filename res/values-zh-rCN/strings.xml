@@ -534,6 +534,9 @@
     <string name="pref_camera_tsmakeup_title">美颜</string>
     <string name="pref_camera_tsmakeup_entry_on">开</string>
     <string name="pref_camera_tsmakeup_entry_off">关</string>
+    <string name="pref_camera_tsmakeup_entry_low">低</string>
+    <string name="pref_camera_tsmakeup_entry_mid">中</string>
+    <string name="pref_camera_tsmakeup_entry_high">高</string>
     <string name="pref_camera_tsmakeup_custom">自定义</string>
     <string name="pref_camera_tsmakeup_level_whiten">美白</string>
     <string name="pref_camera_tsmakeup_level_clean">磨皮</string>

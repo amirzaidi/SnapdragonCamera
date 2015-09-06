@@ -877,6 +877,9 @@
      <string name="pref_camera_tsmakeup_title">Beautification</string>
      <string name="pref_camera_tsmakeup_entry_on">On</string>
      <string name="pref_camera_tsmakeup_entry_off">Off</string>
+     <string name="pref_camera_tsmakeup_entry_low">Low</string>
+     <string name="pref_camera_tsmakeup_entry_mid">Mid</string>
+     <string name="pref_camera_tsmakeup_entry_high">High</string>
      <string name="pref_camera_tsmakeup_default" translatable="false">Off</string>
      <string name="pref_camera_tsmakeup_level_default" translatable="false">60</string>
      <string name="pref_camera_tsmakeup_custom">Custom</string>
