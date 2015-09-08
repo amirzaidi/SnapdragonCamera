@@ -563,8 +563,4 @@
     <string name="pref_camera_video_tnr_title">视频TNR模式</string>
     <!-- Settings menu, setting title text for video rotation title -->
     <string name="pref_camera_video_rotation_title">视频旋转</string>
-
-    <string name="camera_thermal_shutdown">手机过热，关闭相机。</string>
-    <string name="camera_server_died">媒体服务终止，关闭相机。</string>
-    <string name="camera_unknown_error">未知错误，关闭相机。</string>
 </resources>
