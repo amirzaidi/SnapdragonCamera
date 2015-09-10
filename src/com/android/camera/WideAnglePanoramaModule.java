@@ -495,9 +495,6 @@ public class WideAnglePanoramaModule
             mMosaicPreviewRenderer = renderer;
             mCameraTexture = mMosaicPreviewRenderer.getInputSurfaceTexture();
 
-            if (!mPaused && !mThreadRunning && mWaitProcessorTask == null) {
-                mMainHandler.sendEmptyMessage(MSG_RESET_TO_PREVIEW);
-            }
             mRendererLock.notifyAll();
         }
         mMosaicPreviewConfigured = true;
@@ -515,9 +512,14 @@ public class WideAnglePanoramaModule
         if (mCaptureState == CAPTURE_STATE_MOSAIC){
             capturePending = true;
         }
-        mPreviewUIWidth = r - l;
-        mPreviewUIHeight = b - t;
-        configMosaicPreview();
+        int width = r -l;
+        int height = b - t;
+        if (mPreviewUIWidth != width || mPreviewUIHeight != height
+                || mCameraState != PREVIEW_ACTIVE) {
+            mPreviewUIWidth = r - l;
+            mPreviewUIHeight = b - t;
+            configMosaicPreview();
+        }
         if (capturePending == true){
             mMainHandler.post(new Runnable() {
                 @Override
