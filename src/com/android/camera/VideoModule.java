@@ -1421,10 +1421,21 @@ public class VideoModule implements CameraModule,
 
         // Set params individually for HFR case, as we do not want to encode audio
         if ((isHFR || isHSR) && captureRate > 0) {
+            if (isHSR) {
+                Log.i(TAG, "Enabling audio for HSR");
+                mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+            }
             mMediaRecorder.setOutputFormat(mProfile.fileFormat);
             mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
             mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
             mMediaRecorder.setVideoEncoder(mProfile.videoCodec);
+            if (isHSR) {
+                Log.i(TAG, "Configuring audio for HSR");
+                mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
+                mMediaRecorder.setAudioChannels(mProfile.audioChannels);
+                mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
+                mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
+            }
         } else {
             if (!mCaptureTimeLapse) {
                 mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
@@ -1441,17 +1452,20 @@ public class VideoModule implements CameraModule,
         } else if (captureRate > 0) {
             Log.i(TAG, "Setting capture-rate = " + captureRate);
             mMediaRecorder.setCaptureRate(captureRate);
-            // for HFR, encoder's target-framerate = capture-rate
-            if (isHSR) {
-                Log.i(TAG, "Setting fps = " + captureRate + " for HSR");
-                mMediaRecorder.setVideoFrameRate(captureRate);
-            }
+
+            // for HSR, encoder's target-framerate = capture-rate
             // for HFR, encoder's taget-framerate = 30fps (from profile)
-            if (isHFR) {
-                Log.i(TAG, "Setting fps = 30 for HFR");
-                mMediaRecorder.setVideoFrameRate(30);
-            }
-            // TODO : bitrate correction..check with google
+            int targetFrameRate = isHSR ? captureRate :
+                    isHFR ? 30 : mProfile.videoFrameRate;
+
+            Log.i(TAG, "Setting target fps = " + targetFrameRate);
+            mMediaRecorder.setVideoFrameRate(targetFrameRate);
+
+            // Profiles advertizes bitrate corresponding to published framerate.
+            // In case framerate is different, scale the bitrate
+            int scaledBitrate = mProfile.videoBitRate * targetFrameRate / mProfile.videoFrameRate;
+            Log.i(TAG, "Scaled Video bitrate : " + scaledBitrate);
+            mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
 
         setRecordLocation();
