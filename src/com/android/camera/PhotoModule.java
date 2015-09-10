@@ -915,6 +915,10 @@ public class PhotoModule
 
     // TODO: need to check cached background apps memory and longshot ION memory
     private boolean isLongshotNeedCancel() {
+        if (Storage.getAvailableSpace() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
+            Log.w(TAG, "current storage is full");
+            return true;
+        }
         if (SECONDARY_SERVER_MEM == 0) {
             ActivityManager am = (ActivityManager) mActivity.getSystemService(
                     Context.ACTIVITY_SERVICE);

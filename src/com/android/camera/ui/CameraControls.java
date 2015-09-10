@@ -41,6 +41,7 @@ import org.codeaurora.snapcam.R;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.RotateImageView;
 import com.android.camera.ShutterButton;
+import com.android.camera.Storage;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.TsMakeupManager;
 
@@ -84,6 +85,7 @@ public class CameraControls extends RotatableLayout {
 
     private LinearLayout mRemainingPhotos;
     private TextView mRemainingPhotosText;
+    private int mCurrentRemaining = -1;
     private int mOrientation;
 
     private int mPreviewRatio;
@@ -91,6 +93,8 @@ public class CameraControls extends RotatableLayout {
     private static int mBottomMargin = 0;
 
     private Paint mPaint;
+
+    private static final int LOW_REMAINING_PHOTOS = 20;
 
     AnimatorListener outlistener = new AnimatorListener() {
         @Override
@@ -868,14 +872,20 @@ public class CameraControls extends RotatableLayout {
     }
 
     public void updateRemainingPhotos(int remaining) {
-        if (remaining < 0) {
+        long remainingStorage = Storage.getAvailableSpace() - Storage.LOW_STORAGE_THRESHOLD_BYTES;
+        if (remaining < 0 && remainingStorage <= 0) {
             mRemainingPhotos.setVisibility(View.GONE);
         } else {
             for (int i = mRemainingPhotos.getChildCount() - 1; i >= 0; --i) {
                 mRemainingPhotos.getChildAt(i).setVisibility(View.VISIBLE);
             }
-            mRemainingPhotosText.setText(remaining + " ");
+            if (remaining < LOW_REMAINING_PHOTOS) {
+                mRemainingPhotosText.setText("<" + LOW_REMAINING_PHOTOS + " ");
+            } else {
+                mRemainingPhotosText.setText(remaining + " ");
+            }
         }
+        mCurrentRemaining = remaining;
     }
 
     public void setMargins(int top, int bottom) {
@@ -900,7 +910,9 @@ public class CameraControls extends RotatableLayout {
 
     public void showRefocusToast(boolean show) {
         mRefocusToast.setVisibility(show ? View.VISIBLE : View.GONE);
-        mRemainingPhotos.setVisibility(show ? View.GONE : View.VISIBLE);
+        if (mCurrentRemaining > 0 ) {
+            mRemainingPhotos.setVisibility(show ? View.GONE : View.VISIBLE);
+        }
     }
 
     public void setOrientation(int orientation, boolean animation) {
