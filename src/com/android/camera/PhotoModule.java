@@ -532,6 +532,7 @@ public class PhotoModule
         if (mCameraState == SNAPSHOT_IN_PROGRESS) {
             return;
         }
+        mUI.hidePreviewCover();
         setCameraState(IDLE);
         mFocusManager.onPreviewStarted();
         startFaceDetection();
@@ -2645,13 +2646,6 @@ public class PhotoModule
         setCameraParameters(UPDATE_PARAM_ALL);
 
         mCameraDevice.startPreview();
-        mCameraDevice.setOneShotPreviewCallback(mHandler,
-                new CameraManager.CameraPreviewDataCallback() {
-                    @Override
-                    public void onPreviewFrame(byte[] data, CameraProxy camera) {
-                        mUI.hidePreviewCover();
-                    }
-                });
         mHandler.sendEmptyMessage(ON_PREVIEW_STARTED);
 
         setDisplayOrientation();
@@ -3488,22 +3482,6 @@ public class PhotoModule
                 .pref_camera_advanced_feature_value_refocus_on);
         String optizoomOn = mActivity.getString(R.string
                 .pref_camera_advanced_feature_value_optizoom_on);
-        if (refocusOn.equals(mSceneMode)) {
-            try {
-                mSceneMode = Parameters.SCENE_MODE_AUTO;
-                mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
-                mUI.showRefocusDialog();
-            } catch (NullPointerException e) {
-            }
-        } else if (optizoomOn.equals(mSceneMode)) {
-            try {
-                mSceneMode = Parameters.SCENE_MODE_AUTO;
-                mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, optizoomOn);
-            } catch (NullPointerException e) {
-            }
-        } else if (mSceneMode == null) {
-            mSceneMode = Parameters.SCENE_MODE_AUTO;
-        }
 
         if (CameraUtil.isSupported(mSceneMode, mParameters.getSupportedSceneModes())) {
             if (!mParameters.getSceneMode().equals(mSceneMode)) {
@@ -3514,6 +3492,24 @@ public class PhotoModule
                 // parameters, so we can know those settings.
                 mCameraDevice.setParameters(mParameters);
                 mParameters = mCameraDevice.getParameters();
+            }
+        } else {
+            if (refocusOn.equals(mSceneMode)) {
+                try {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
+                    mUI.showRefocusDialog();
+                } catch (NullPointerException e) {
+                }
+            } else if (optizoomOn.equals(mSceneMode)) {
+                try {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, optizoomOn);
+                } catch (NullPointerException e) {
+                }
+            } else {
+                mSceneMode = mParameters.getSceneMode();
+                if (mSceneMode == null) {
+                    mSceneMode = Parameters.SCENE_MODE_AUTO;
+                }
             }
         }
 
