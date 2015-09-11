@@ -2480,6 +2480,7 @@ public class PhotoModule
         }
         // Check if metering area or focus area is supported.
         if (!mFocusAreaSupported && !mMeteringAreaSupported) return;
+        if (! mFocusManager.getPreviewRect().contains(x, y)) return;
         mFocusManager.onSingleTapUp(x, y);
     }
 
