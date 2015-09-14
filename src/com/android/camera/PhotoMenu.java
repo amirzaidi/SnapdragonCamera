@@ -562,6 +562,11 @@ public class PhotoMenu extends MenuController
             return false;
         Rect rec = new Rect();
         mUI.getPreviewMenuLayout().getChildAt(0).getHitRect(rec);
+        if (View.LAYOUT_DIRECTION_RTL == TextUtils
+                .getLayoutDirectionFromLocale(Locale.getDefault())) {
+            rec.left = mUI.getRootView().getWidth() - (rec.right-rec.left);
+            rec.right = mUI.getRootView().getWidth();
+        }
         rec.top += (int) mUI.getPreviewMenuLayout().getY();
         rec.bottom += (int) mUI.getPreviewMenuLayout().getY();
         return rec.contains((int) ev.getX(), (int) ev.getY());
