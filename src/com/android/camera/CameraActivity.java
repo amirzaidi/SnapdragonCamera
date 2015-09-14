@@ -1501,9 +1501,6 @@ public class CameraActivity extends Activity
         mAboveFilmstripControlLayout =
                 (FrameLayout) findViewById(R.id.camera_above_filmstrip_layout);
         mAboveFilmstripControlLayout.setFitsSystemWindows(true);
-        // Hide action bar first since we are in full screen mode first, and
-        // switch the system UI to lights-out mode.
-        this.setSystemBarsVisibility(false);
         mPanoramaManager = AppManagerFactory.getInstance(this)
                 .getPanoramaStitchingManager();
         mPlaceholderManager = AppManagerFactory.getInstance(this)
@@ -1665,6 +1662,9 @@ public class CameraActivity extends Activity
 
     @Override
     public void onResume() {
+        // Hide action bar first since we are in full screen mode first, and
+        // switch the system UI to lights-out mode.
+        this.setSystemBarsVisibility(false);
         if (mShutterVol >= 0 && mShutterVol <= 100)
             mAudioManager.setMasterVolume(mShutterVol,0);
 
