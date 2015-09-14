@@ -96,6 +96,9 @@ public class PhotoMenu extends MenuController
     private View mFrontBackSwitcher;
     private View mSceneModeSwitcher;
     private View mFilterModeSwitcher;
+    private View mCameraSwitcher;
+    private View mSettingMenu;
+    private View mPreviewThumbnail;
     private PhotoUI mUI;
     private int mPopupStatus;
     private int mPreviewMenuStatus;
@@ -125,6 +128,9 @@ public class PhotoMenu extends MenuController
         mSceneModeSwitcher = ui.getRootView().findViewById(R.id.scene_mode_switcher);
         mFilterModeSwitcher = ui.getRootView().findViewById(R.id.filter_mode_switcher);
         mMakeupListener = makeupListener;
+        mSettingMenu = ui.getRootView().findViewById(R.id.menu);
+        mCameraSwitcher = ui.getRootView().findViewById(R.id.camera_switcher);
+        mPreviewThumbnail = ui.getRootView().findViewById(R.id.preview_thumb);
     }
 
     public void initialize(PreferenceGroup group) {
@@ -1409,5 +1415,20 @@ public class PhotoMenu extends MenuController
             mFrontBackSwitcher.setVisibility(View.VISIBLE);
             mTsMakeupSwitcher.setVisibility(View.VISIBLE);
         }
+    }
+
+    public void hideCameraControls(boolean hide) {
+        final int status = (hide) ? View.INVISIBLE : View.VISIBLE;
+        mSettingMenu.setVisibility(status);
+        mFrontBackSwitcher.setVisibility(status);
+        if (TsMakeupManager.HAS_TS_MAKEUP) {
+            mTsMakeupSwitcher.setVisibility(status);
+        } else {
+            mHdrSwitcher.setVisibility(status);
+        }
+        mSceneModeSwitcher.setVisibility(status);
+        mFilterModeSwitcher.setVisibility(status);
+        mCameraSwitcher.setVisibility(status);
+        mPreviewThumbnail.setVisibility(status);
     }
 }
