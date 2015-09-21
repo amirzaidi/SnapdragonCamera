@@ -2049,6 +2049,7 @@ public class PhotoModule
                mLongshotActive = false;
                mCameraDevice.setLongshot(false);
                mUI.animateCapture(mLastJpegData, mLastJpegOrientation, mMirror);
+               mLastJpegData = null;
                if (!mFocusManager.isZslEnabled()) {
                    setupPreview();
                } else {
