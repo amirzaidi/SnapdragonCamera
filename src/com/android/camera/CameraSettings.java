@@ -122,6 +122,8 @@ public class CameraSettings {
 
     public static final String KEY_LONGSHOT = "pref_camera_longshot_key";
 
+    public static final String KEY_VIDEO_PARTIAL_UI = "pref_camera_video_partial_ui_key";
+
     private static final String KEY_QC_SUPPORTED_AE_BRACKETING_MODES = "ae-bracket-hdr-values";
     private static final String KEY_QC_SUPPORTED_AF_BRACKETING_MODES = "af-bracket-values";
     private static final String KEY_QC_SUPPORTED_RE_FOCUS_MODES = "re-focus-values";

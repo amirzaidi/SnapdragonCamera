@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.codeaurora.snapcam.R;
 
+import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -27,6 +28,7 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera.Parameters;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -35,6 +37,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLayoutChangeListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageView;
@@ -100,6 +103,11 @@ public class VideoUI implements PieRenderer.PieListener,
     private RotateLayout mMenuLayout;
     private RotateLayout mSubMenuLayout;
     private LinearLayout mPreviewMenuLayout;
+
+    private ShutterButton mFloatingShutter;
+    private RotateLayout mFloatingRecordingTimeRect;
+    private View mFloatingTimeLapse;
+    private boolean mPartialUiRecording;
 
     private View mPreviewCover;
     private SurfaceView mSurfaceView = null;
@@ -885,6 +893,28 @@ public class VideoUI implements PieRenderer.PieListener,
         if (recording) {
             mShutterButton.setImageResource(R.drawable.shutter_button_video_stop);
             hideSwitcher();
+
+            if(mPartialUiRecording) {
+                mActivity.hideAboveFilmStripControlLayout();
+                mCameraControls.setVisibility(View.INVISIBLE);
+                mRenderOverlay.setVisibility(View.INVISIBLE);
+                mFloatingTimeLapse.setVisibility(mIsTimeLapse ? View.VISIBLE : View.GONE);
+
+                ((ViewGroup)mRootView).requestTransparentRegion((View) mSurfaceView.getParent());
+
+                int leftOffset = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 50, mActivity.getResources().getDisplayMetrics());
+                CameraUtil.addView(mActivity, mRecordingTimeRect, leftOffset, 0,
+                                    Gravity.TOP | Gravity.LEFT,
+                                    WindowManager.LayoutParams.WRAP_CONTENT,
+                                    WindowManager.LayoutParams.WRAP_CONTENT);
+
+                mShutterButton.setVisibility(View.GONE);
+
+                int shutterBottomOffset = (int)mActivity.getResources().getDimension(R.dimen.shutter_offset);
+                CameraUtil.addView(mActivity, mFloatingShutter, 0, shutterBottomOffset, Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL,
+                                    mShutterButton.getMeasuredWidth(), mShutterButton.getMeasuredHeight());
+            }
+
             mRecordingTimeView.setText("");
             mRecordingTimeView.setVisibility(View.VISIBLE);
             mPauseButton.setVisibility(View.VISIBLE);
@@ -893,8 +923,20 @@ public class VideoUI implements PieRenderer.PieListener,
             if (!mController.isVideoCaptureIntent()) {
                 showSwitcher();
             }
-            mRecordingTimeView.setVisibility(View.GONE);
-            mPauseButton.setVisibility(View.GONE);
+
+            if(mPartialUiRecording) {
+                mShutterButton.setVisibility(View.VISIBLE);
+                WindowManager wm = (WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE);
+                wm.removeView(mRecordingTimeRect);
+                wm.removeView(mFloatingShutter);
+
+                mActivity.showAboveFilmStripControlLayout();
+                mCameraControls.setVisibility(View.VISIBLE);
+                mRenderOverlay.setVisibility(View.VISIBLE);
+            } else {
+                mRecordingTimeView.setVisibility(View.GONE);
+                mPauseButton.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -979,7 +1021,10 @@ public class VideoUI implements PieRenderer.PieListener,
     }
 
     public void clickShutter() {
-        mShutterButton.performClick();
+        if(mRecordingStarted && mPartialUiRecording)
+            mFloatingShutter.performClick();
+        else
+            mShutterButton.performClick();
     }
 
     public void pressShutter(boolean pressed) {
@@ -1131,5 +1176,35 @@ public class VideoUI implements PieRenderer.PieListener,
 
     public void adjustOrientation() {
         setOrientation(mOrientation, false);
+    }
+
+    public void setPartialUiRecording(boolean enable) {
+        mPartialUiRecording = enable;
+
+        if(mPartialUiRecording) {
+            if(mFloatingShutter == null) {
+                mFloatingShutter = (ShutterButton)View.inflate(mActivity, R.layout.floating_shutter_icon, null);
+                mFloatingShutter.setOnShutterButtonListener(mController);
+            }
+
+            if(mFloatingRecordingTimeRect == null) {
+                mFloatingRecordingTimeRect = new RotateLayout(mActivity, null);
+                mFloatingRecordingTimeRect.addView(View.inflate(mActivity, R.layout.floating_recording_time, null));
+                mFloatingTimeLapse = mFloatingRecordingTimeRect.findViewById(R.id.time_lapse_label);
+            }
+
+            mRootView.findViewById(R.id.recording_time_rect).setVisibility(View.GONE);
+            mRecordingTimeRect = mFloatingRecordingTimeRect;
+
+            mRecordingTimeView = (TextView) mRecordingTimeRect.findViewById(R.id.recording_time);
+            mPauseButton = (PauseButton) mRecordingTimeRect.findViewById(R.id.video_pause);
+            mPauseButton.setOnPauseButtonListener(this);
+        } else {
+            mRecordingTimeRect = (RotateLayout) mRootView.findViewById(R.id.recording_time_rect);
+            mRecordingTimeRect.setVisibility(View.VISIBLE);
+
+            mRecordingTimeView = (TextView) mRootView.findViewById(R.id.recording_time);
+            initializePauseButton();
+        }
     }
 }

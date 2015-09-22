@@ -674,6 +674,14 @@ public class CameraActivity extends Activity
         }
     }
 
+    public void hideAboveFilmStripControlLayout() {
+        mAboveFilmstripControlLayout.setVisibility(View.INVISIBLE);
+    }
+
+    public void showAboveFilmStripControlLayout() {
+        mAboveFilmstripControlLayout.setVisibility(View.VISIBLE);
+    }
+
     private void hidePanoStitchingProgress() {
         mPanoStitchingPanel.setVisibility(View.GONE);
     }
