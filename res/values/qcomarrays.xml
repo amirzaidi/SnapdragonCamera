@@ -183,37 +183,19 @@
         <item>@string/pref_camera_jpegquality_entry_0</item>
         <item>@string/pref_camera_jpegquality_entry_1</item>
         <item>@string/pref_camera_jpegquality_entry_2</item>
-        <item>@string/pref_camera_jpegquality_entry_3</item>
-        <item>@string/pref_camera_jpegquality_entry_4</item>
-        <item>@string/pref_camera_jpegquality_entry_5</item>
-        <item>@string/pref_camera_jpegquality_entry_superfine</item>
-        <item>@string/pref_camera_jpegquality_entry_fine</item>
-        <item>@string/pref_camera_jpegquality_entry_normal</item>
     </string-array>
 
     <string-array name="pref_camera_jpegquality_entryvalues" translatable="false">
         <item>55</item>
-        <item>65</item>
-        <item>75</item>
         <item>85</item>
-        <item>95</item>
         <item>100</item>
-        <item>superfine</item>
-        <item>fine</item>
-        <item>normal</item>
     </string-array>
 
     <!-- Rough estimates of jpeg compression ratio corresponding to qualities defined above. -->
     <integer-array name="jpegquality_compression_ratio">
         <item>48</item>
-        <item>38</item>
-        <item>31</item>
         <item>20</item>
-        <item>11</item>
         <item>6</item>
-        <item>20</item>
-        <item>31</item>
-        <item>38</item>
     </integer-array>
 
     <!-- Camera Preferences Color effect dialog box entries -->
