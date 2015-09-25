@@ -1389,6 +1389,13 @@ public class PhotoMenu extends MenuController
                         mActivity.getString(R.string.pref_camera_advanced_feature_default));
             }
         }
+
+        String scene_auto = mActivity.getString(R.string
+                .pref_camera_scenemode_entry_auto);
+        if (notSame(pref, CameraSettings.KEY_SCENE_MODE, scene_auto)) {
+            setPreference(CameraSettings.KEY_COLOR_EFFECT,
+                    mActivity.getString(R.string.pref_camera_coloreffect_default));
+        }
         updateFilterModeIcon(pref, pref);
         super.onSettingChanged(pref);
     }
