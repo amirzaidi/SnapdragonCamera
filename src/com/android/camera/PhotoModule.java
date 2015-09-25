@@ -4390,6 +4390,7 @@ public class PhotoModule
         mFocusManager.doSnap();
         mFocusManager.onShutterUp();
         mUI.overrideSettings(CameraSettings.KEY_ZSL, null);
+        mUI.showUIAfterCountDown();
     }
 
     @Override
