@@ -580,6 +580,9 @@ public class PhotoUI implements PieListener,
                 @Override
                 public void onClick(View v) {
                     mController.onCaptureRetake();
+                    if (mController.isImageCaptureIntent()) {
+                        mCameraControls.setTitleBarVisibility(View.VISIBLE);
+                    }
                 }
             });
         }
@@ -622,6 +625,9 @@ public class PhotoUI implements PieListener,
             public void onClick(View v) {
                 if (!CameraControls.isAnimating())
                     doShutterAnimation();
+                    if (mController.isImageCaptureIntent()) {
+                        mCameraControls.setTitleBarVisibility(View.VISIBLE);
+                    }
             }
         });
 

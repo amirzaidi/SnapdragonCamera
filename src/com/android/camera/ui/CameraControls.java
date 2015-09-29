@@ -465,6 +465,18 @@ public class CameraControls extends RotatableLayout {
         mPreview.setY(mLocY[idx1][PREVIEW_INDEX] - y);
     }
 
+    public void setTitleBarVisibility(int status){
+        mFrontBackSwitcher.setVisibility(status);
+        mMenu.setVisibility(status);
+        mSceneModeSwitcher.setVisibility(status);
+        mFilterModeSwitcher.setVisibility(status);
+        if(TsMakeupManager.HAS_TS_MAKEUP) {
+            mTsMakeupSwitcher.setVisibility(status);
+        } else {
+            mHdrSwitcher.setVisibility(status);
+        }
+    }
+
     public void hideUI() {
         isAnimating = true;
         enableTouch(false);
