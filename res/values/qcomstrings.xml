@@ -717,15 +717,9 @@
     <string name="pref_camera_jpegquality_title">Picture quality</string>
 
     <!-- Settings screen, Picture quality dialog radio button choices -->
-    <string name="pref_camera_jpegquality_entry_superfine">Super fine</string>
-    <string name="pref_camera_jpegquality_entry_fine">Fine</string>
-    <string name="pref_camera_jpegquality_entry_normal">Normal</string>
-    <string name="pref_camera_jpegquality_entry_0">Jpeg 55%</string>
-    <string name="pref_camera_jpegquality_entry_1">Jpeg 65%</string>
-    <string name="pref_camera_jpegquality_entry_2">Jpeg 75%</string>
-    <string name="pref_camera_jpegquality_entry_3">Jpeg 85%</string>
-    <string name="pref_camera_jpegquality_entry_4">Jpeg 95%</string>
-    <string name="pref_camera_jpegquality_entry_5">Jpeg 100%</string>
+    <string name="pref_camera_jpegquality_entry_0">Low</string>
+    <string name="pref_camera_jpegquality_entry_1">Standard</string>
+    <string name="pref_camera_jpegquality_entry_2">High</string>
 
      <!-- Default auto histogram setting. Do not translate. -->
      <string name="pref_camera_histogram_default">disable</string>
