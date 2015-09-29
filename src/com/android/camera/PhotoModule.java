@@ -4276,7 +4276,6 @@ public class PhotoModule
         String advancedFeatureOff = mActivity.getString(R.string.
                 pref_camera_advanced_feature_value_none);
         if (notSame(pref, CameraSettings.KEY_QC_OPTI_ZOOM, optiZoomOff) ||
-                notSame(pref, CameraSettings.KEY_QC_CHROMA_FLASH, chromaFlashOff) ||
                 notSame(pref, CameraSettings.KEY_QC_AF_BRACKETING, ubiFocusOff) ||
                 notSame(pref, CameraSettings.KEY_QC_FSSR, fssrOff) ||
                 notSame(pref, CameraSettings.KEY_QC_TP, truePortraitOff) ||
