@@ -2220,6 +2220,43 @@ public class VideoModule implements CameraModule,
             mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
         }
 
+        String noiseReductionMode = mPreferences.getString(
+                CameraSettings.KEY_NOISE_REDUCTION,
+                mActivity.getString(R.string.pref_camera_noise_reduction_default));
+        Log.v(TAG, "Noise ReductionMode =" + noiseReductionMode);
+
+        if (isSupported(noiseReductionMode,
+                CameraSettings.getSupportedNoiseReductionModes(mParameters))) {
+            /* Disable CDS */
+            if (noiseReductionMode.equals(
+                    mActivity.getString(R.string.pref_camera_noise_reduction_value_high_quality)) &&
+                    video_cds.equals(mActivity.getString(R.string.
+                            pref_camera_video_cds_value_on))) {
+                mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
+                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
+                Toast.makeText(mActivity, R.string.disable_CDS_during_HighQualityNoiseReduction,
+                        Toast.LENGTH_LONG).show();
+            }
+
+            /* Disable TNR */
+            if (noiseReductionMode.equals(
+                    mActivity.getString(R.string.pref_camera_noise_reduction_value_high_quality)) &&
+                    video_tnr.equals(mActivity.getString(R.string.
+                            pref_camera_video_tnr_value_on))) {
+                mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
+                        mActivity.getString(R.string.pref_camera_video_tnr_value_off));
+                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
+                        mActivity.getString(R.string.pref_camera_video_tnr_value_off));
+                Toast.makeText(mActivity, R.string.disable_TNR_during_HighQualityNoiseReduction,
+                        Toast.LENGTH_LONG).show();
+            }
+
+            /* Set Noise Reduction mode */
+            mParameters.set(CameraSettings.KEY_QC_NOISE_REDUCTION_MODE, noiseReductionMode);
+        }
+
         String seeMoreMode = mPreferences.getString(
                 CameraSettings.KEY_SEE_MORE,
                 mActivity.getString(R.string.pref_camera_see_more_default));

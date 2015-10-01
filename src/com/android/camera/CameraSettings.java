@@ -112,6 +112,7 @@ public class CameraSettings {
     public static final String KEY_VIDEO_SNAPSHOT_SIZE = "pref_camera_videosnapsize_key";
     public static final String KEY_VIDEO_HIGH_FRAME_RATE = "pref_camera_hfr_key";
     public static final String KEY_SEE_MORE = "pref_camera_see_more_key";
+    public static final String KEY_NOISE_REDUCTION = "pref_camera_noise_reduction_key";
     public static final String KEY_VIDEO_HDR = "pref_camera_video_hdr_key";
     public static final String DEFAULT_VIDEO_QUALITY_VALUE = "custom";
     public static final String KEY_SKIN_TONE_ENHANCEMENT = "pref_camera_skinToneEnhancement_key";
@@ -135,6 +136,7 @@ public class CameraSettings {
     private static final String KEY_QC_SUPPORTED_FACE_RECOGNITION_MODES = "face-recognition-values";
     private static final String KEY_QC_SUPPORTED_DIS_MODES = "dis-values";
     private static final String KEY_QC_SUPPORTED_SEE_MORE_MODES = "see-more-values";
+    private static final String KEY_QC_SUPPORTED_NOISE_REDUCTION_MODES = "noise-reduction-mode-values";
     private static final String KEY_QC_SUPPORTED_STILL_MORE_MODES = "still-more-values";
     private static final String KEY_QC_SUPPORTED_CDS_MODES = "cds-mode-values";
     private static final String KEY_QC_SUPPORTED_VIDEO_CDS_MODES = "video-cds-mode-values";
@@ -163,6 +165,7 @@ public class CameraSettings {
     public static final String KEY_SNAPCAM_HDR_NEED_1X = "hdr-need-1x";
     public static final String KEY_VIDEO_HSR = "video-hsr";
     public static final String KEY_QC_SEE_MORE_MODE = "see-more";
+    public static final String KEY_QC_NOISE_REDUCTION_MODE = "noise-reduction-mode";
 
     public static final String KEY_INTERNAL_PREVIEW_RESTART = "internal-restart";
     public static final String KEY_QC_ZSL_HDR_SUPPORTED = "zsl-hdr-supported";
@@ -380,6 +383,14 @@ public class CameraSettings {
 
     public static List<String> getSupportedSeeMoreModes(Parameters params) {
         String str = params.get(KEY_QC_SUPPORTED_SEE_MORE_MODES);
+        if (str == null) {
+            return null;
+        }
+        return split(str);
+    }
+
+    public static List<String> getSupportedNoiseReductionModes(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_NOISE_REDUCTION_MODES);
         if (str == null) {
             return null;
         }
@@ -760,9 +771,16 @@ public class CameraSettings {
                 group.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
         ListPreference seeMoreMode = group.findPreference(KEY_SEE_MORE);
         ListPreference videoEncoder = group.findPreference(KEY_VIDEO_ENCODER);
+        ListPreference noiseReductionMode = group.findPreference(KEY_NOISE_REDUCTION);
 
         // Since the screen could be loaded from different resources, we need
         // to check if the preference is available here
+
+        if (noiseReductionMode != null) {
+            filterUnsupportedOptions(group, noiseReductionMode,
+                    getSupportedNoiseReductionModes(mParameters));
+        }
+
         if (seeMoreMode != null) {
             filterUnsupportedOptions(group, seeMoreMode,
                     getSupportedSeeMoreModes(mParameters));
