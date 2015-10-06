@@ -570,6 +570,14 @@ public class CameraSettings {
         return split(str);
     }
 
+    // add auto as a valid video snapshot size.
+    public static List<String> getSupportedVideoSnapSizes(Parameters params) {
+        List<String> sizes = sizeListToStringList(params.getSupportedPictureSizes());
+        sizes.add(0, "auto");
+
+        return sizes;
+    }
+
     // Splits a comma delimited string to an ArrayList of String.
     // Return null if the passing string is null or the size is 0.
     private static ArrayList<String> split(String str) {
@@ -741,12 +749,9 @@ public class CameraSettings {
                     autoExposure, mParameters.getSupportedAutoexposure());
         }
 
-        if (!mParameters.isPowerModeSupported()){
-            filterUnsupportedOptions(group,
-                    videoSnapSize, null);
-        } else {
-            filterUnsupportedOptions(group, videoSnapSize, sizeListToStringList(
-                        mParameters.getSupportedPictureSizes()));
+        if(videoSnapSize != null) {
+            filterUnsupportedOptions(group, videoSnapSize, getSupportedVideoSnapSizes(mParameters));
+            filterSimilarPictureSize(group, videoSnapSize);
         }
 
         if (histogram!= null) {

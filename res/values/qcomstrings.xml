@@ -798,7 +798,7 @@
     <!-- Toast showing error if invalid size selected for  time lapse  [CHAR LIMIT=65] -->
     <string name="time_lapse_error">Invalid video-size for time-lapse recording.</string>
 
-    <string name="pref_camera_videosnapsize_default" translatable="false">1920x1080</string>
+    <string name="pref_camera_videosnapsize_default" translatable="false">auto</string>
 
     <!-- longshot value -->
     <string name="pref_camera_longshot_default" translatable="false">off</string>

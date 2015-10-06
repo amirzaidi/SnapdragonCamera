@@ -2477,13 +2477,26 @@ public class VideoModule implements CameraModule,
         // The logic here is different from the logic in still-mode camera.
         // There we determine the preview size based on the picture size, but
         // here we determine the picture size based on the preview size.
-        List<Size> supported = mParameters.getSupportedPictureSizes();
-        Size optimalSize = CameraUtil.getOptimalVideoSnapshotPictureSize(supported,
-                (double) mDesiredPreviewWidth / mDesiredPreviewHeight);
-        Size original = mParameters.getPictureSize();
-        if (!original.equals(optimalSize)) {
-            mParameters.setPictureSize(optimalSize.width, optimalSize.height);
+        String videoSnapshotSize = mPreferences.getString(
+                CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE,
+                mActivity.getString(R.string.pref_camera_videosnapsize_default));
+        Size optimalSize;
+        if(videoSnapshotSize.equals("auto")) {
+            List<Size> supported = mParameters.getSupportedPictureSizes();
+            optimalSize = CameraUtil.getOptimalVideoSnapshotPictureSize(supported,
+                    (double) mDesiredPreviewWidth / mDesiredPreviewHeight);
+            Size original = mParameters.getPictureSize();
+            if (!original.equals(optimalSize)) {
+                mParameters.setPictureSize(optimalSize.width, optimalSize.height);
+            }
+        } else {
+            CameraSettings.setCameraPictureSize(
+                videoSnapshotSize,
+                mParameters.getSupportedPictureSizes(),
+                mParameters);
+            optimalSize = mParameters.getPictureSize();
         }
+
         Log.v(TAG, "Video snapshot size is " + optimalSize.width + "x" +
                 optimalSize.height);
 
@@ -2494,7 +2507,7 @@ public class VideoModule implements CameraModule,
         List<Size> sizes = mParameters.getSupportedJpegThumbnailSizes();
         optimalSize = CameraUtil.getOptimalJpegThumbnailSize(sizes,
                 (double) size.width / size.height);
-        original = mParameters.getJpegThumbnailSize();
+        Size original = mParameters.getJpegThumbnailSize();
         if (!original.equals(optimalSize)) {
             mParameters.setJpegThumbnailSize(optimalSize.width, optimalSize.height);
         }
