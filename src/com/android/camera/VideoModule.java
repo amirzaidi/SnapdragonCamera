@@ -2417,11 +2417,6 @@ public class VideoModule implements CameraModule,
             mParameters.setVideoRotation(videoRotation);
         }
 
-        //partial ui setting
-        String partialUi = mPreferences.getString(CameraSettings.KEY_VIDEO_PARTIAL_UI,
-                                   mActivity.getString(R.string.pref_camera_video_partial_ui_default));
-        mUI.setPartialUiRecording(Boolean.valueOf(partialUi));
-
         //set power mode settings
         updatePowerMode();
     }

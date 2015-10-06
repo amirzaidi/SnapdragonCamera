@@ -28,7 +28,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -61,7 +60,6 @@ import com.android.camera.CameraManager;
 import com.android.camera.CameraSettings;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.IntentHelper;
-
 import org.codeaurora.snapcam.R;
 
 import java.io.Closeable;
@@ -1166,16 +1164,4 @@ public class CameraUtil {
         return retRatio;
     }
 
-    public static WindowManager.LayoutParams addView(Context context, View v, int x, int y,
-            int gravity, int width, int height) {
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(width, height,
-                WindowManager.LayoutParams.TYPE_APPLICATION_PANEL,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT);
-        params.gravity = gravity;
-        params.x = x;
-        params.y = y;
-        wm.addView(v, params);
-        return params;
-    }
 }
