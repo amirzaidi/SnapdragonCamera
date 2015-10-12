@@ -115,6 +115,8 @@ class AndroidCameraManagerImpl implements CameraManager {
     }
 
     private class CameraHandler extends Handler {
+        CameraOpenErrorCallbackForward errorCbInstance;
+
         CameraHandler(Looper looper) {
             super(looper);
         }
@@ -238,6 +240,7 @@ class AndroidCameraManagerImpl implements CameraManager {
                             return;
                         }
                         mCamera.release();
+                        errorCbInstance = null;
                         mCamera = null;
                         return;
 
@@ -271,7 +274,13 @@ class AndroidCameraManagerImpl implements CameraManager {
                         return;
 
                     case START_PREVIEW_ASYNC:
-                        mCamera.startPreview();
+                        try {
+                            mCamera.startPreview();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            if (errorCbInstance != null)
+                                errorCbInstance.onStartPreviewFailure(msg.arg1);
+                        }
                         return;
 
                     case STOP_PREVIEW:
@@ -397,9 +406,10 @@ class AndroidCameraManagerImpl implements CameraManager {
     @Override
     public CameraManager.CameraProxy cameraOpen(
         Handler handler, int cameraId, CameraOpenErrorCallback callback) {
-        mCameraHandler.obtainMessage(OPEN_CAMERA, cameraId, 0,
-                CameraOpenErrorCallbackForward.getNewInstance(
-                        handler, callback)).sendToTarget();
+        mCameraHandler.errorCbInstance = CameraOpenErrorCallbackForward
+                .getNewInstance(handler, callback);
+        mCameraHandler.obtainMessage(OPEN_CAMERA, cameraId, 0, mCameraHandler.errorCbInstance)
+                .sendToTarget();
         mCameraHandler.waitDone();
         if (mCamera != null) {
             return new AndroidCameraProxyImpl();
@@ -957,6 +967,16 @@ class AndroidCameraManagerImpl implements CameraManager {
                 @Override
                 public void run() {
                     mCallback.onReconnectionFailure(mgr);
+                }
+            });
+        }
+
+        @Override
+        public void onStartPreviewFailure(final int cameraId) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mCallback.onStartPreviewFailure(cameraId);
                 }
             });
         }

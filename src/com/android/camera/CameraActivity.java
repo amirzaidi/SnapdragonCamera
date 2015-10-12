@@ -309,6 +309,15 @@ public class CameraActivity extends Activity
                     CameraUtil.showErrorAndFinish(CameraActivity.this,
                             R.string.cannot_connect_camera);
                 }
+
+                @Override
+                public void onStartPreviewFailure(int cameraId) {
+                    UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
+                            UsageStatistics.ACTION_START_PREVIEW_FAIL, "startpreview");
+
+                    CameraUtil.showErrorAndFinish(CameraActivity.this,
+                            R.string.cannot_connect_camera);
+                }
             };
 
     // update the status of storage space when SD card status changed.
