@@ -97,6 +97,8 @@ public class VideoModule implements CameraModule,
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
+    private static final int SDCARD_SIZE_LIMIT = 4000 * 1024 * 1024;
+
     private static final long SHUTTER_BUTTON_TIMEOUT = 0L; // 0ms
 
     /**
@@ -1411,6 +1413,10 @@ public class VideoModule implements CameraModule,
         long maxFileSize = mActivity.getStorageSpaceBytes() - Storage.LOW_STORAGE_THRESHOLD_BYTES;
         if (requestedSizeLimit > 0 && requestedSizeLimit < maxFileSize) {
             maxFileSize = requestedSizeLimit;
+        }
+
+        if (Storage.isSaveSDCard() && maxFileSize > SDCARD_SIZE_LIMIT) {
+            maxFileSize = SDCARD_SIZE_LIMIT;
         }
 
         try {
