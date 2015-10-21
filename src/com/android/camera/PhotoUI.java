@@ -168,6 +168,12 @@ public class PhotoUI implements PieListener,
                 int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
             if (mMenu != null)
                 mMenu.tryToCloseSubList();
+
+            Camera.Parameters parameters = ((PhotoModule)mController).getParameters();
+            if(parameters != null) {
+                Camera.Size size = parameters.getPreviewSize();
+                setAspectRatio((float) size.width / size.height);
+            }
         }
     };
 
