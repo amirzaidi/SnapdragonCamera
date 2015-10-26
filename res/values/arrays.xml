@@ -20,6 +20,8 @@
     <string-array name="pref_video_quality_entries" translatable="false">
         <item>@string/pref_video_quality_entry_4kdci</item>
         <item>@string/pref_video_quality_entry_2160p</item>
+        <item>@string/pref_video_quality_entry_qHD</item>
+        <item>@string/pref_video_quality_entry_2k</item>
         <item>@string/pref_video_quality_entry_1080p</item>
         <item>@string/pref_video_quality_entry_720p</item>
         <item>@string/pref_video_quality_entry_480p</item>
@@ -35,6 +37,8 @@
     <string-array name="pref_video_quality_entryvalues" translatable="false">
         <item>4096x2160</item>
         <item>3840x2160</item>
+        <item>2560x1440</item>
+        <item>2048x1080</item>
         <item>1920x1080</item>
         <item>1280x720</item>
         <item>720x480</item>
