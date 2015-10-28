@@ -361,6 +361,23 @@ public class PhotoModule
 
     private int mJpegFileSizeEstimation = 0;
     private int mRemainingPhotos = -1;
+    private static final int SELFIE_FLASH_DURATION = 680;
+
+    private class SelfieThread extends Thread {
+        public void run() {
+            try {
+                Thread.sleep(SELFIE_FLASH_DURATION);
+                mActivity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        mFocusManager.doSnap();
+                    }
+                });
+            } catch(InterruptedException e) {
+            }
+            selfieThread = null;
+        }
+    }
+    private SelfieThread selfieThread;
 
     private MediaSaveService.OnMediaSavedListener mOnMediaSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
@@ -1170,6 +1187,7 @@ public class PhotoModule
 
         @Override
         public void onPictureTaken(final byte [] jpegData, CameraProxy camera) {
+            mUI.stopSelfieFlash();
             mUI.enableShutter(true);
             if (mPaused) {
                 return;
@@ -1850,6 +1868,9 @@ public class PhotoModule
             }
             mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, flashMode);
         }
+
+        if(mCameraId != CameraHolder.instance().getFrontCameraId())
+            CameraSettings.removePreferenceFromScreen(mPreferenceGroup, CameraSettings.KEY_SELFIE_FLASH);
     }
 
     private void overrideCameraSettings(final String flashMode,
@@ -2161,8 +2182,25 @@ public class PhotoModule
                     mActivity.getString(R.string.pref_camera_zsl_default));
             mUI.overrideSettings(CameraSettings.KEY_ZSL, zsl);
             mUI.startCountDown(seconds, playSound);
+
         } else {
             mSnapshotOnIdle = false;
+            initiateSnap();
+        }
+    }
+
+    private void initiateSnap()
+    {
+        if(mPreferences.getString(CameraSettings.KEY_SELFIE_FLASH,
+                mActivity.getString(R.string.pref_selfie_flash_default))
+                .equalsIgnoreCase("on") &&
+                mCameraId == CameraHolder.instance().getFrontCameraId()) {
+            mUI.startSelfieFlash();
+            if(selfieThread == null) {
+                selfieThread = new SelfieThread();
+                selfieThread.start();
+            }
+        } else {
             mFocusManager.doSnap();
         }
     }
@@ -2349,6 +2387,11 @@ public class PhotoModule
             mSoundPool.release();
             mSoundPool = null;
         }
+
+        if(selfieThread != null) {
+            selfieThread.interrupt();
+        }
+        mUI.stopSelfieFlash();
 
         Log.d(TAG, "remove idle handleer in onPause");
         removeIdleHandler();
@@ -4457,7 +4500,7 @@ public class PhotoModule
     @Override
     public void onCountDownFinished() {
         mSnapshotOnIdle = false;
-        mFocusManager.doSnap();
+        initiateSnap();
         mFocusManager.onShutterUp();
         mUI.overrideSettings(CameraSettings.KEY_ZSL, null);
         mUI.showUIAfterCountDown();

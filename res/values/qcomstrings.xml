@@ -291,6 +291,16 @@
     <string name="pref_camera_facedetection_entry_off">Off</string>
     <string name="pref_camera_facedetection_entry_on">On</string>
 
+    <!-- Default Selfie Flash setting. -->
+    <string name="pref_selfie_flash_default" translatable="false">on</string>
+
+    <!-- Settings screen, Selfie Flash Detection -->
+    <string name="pref_selfie_flash_title">Selfie Flash</string>
+
+    <!-- Settings menu, Selfie Flash choices -->
+    <string name="pref_selfie_flash_entry_off">Off</string>
+    <string name="pref_selfie_flash_entry_on">On</string>
+
      <!-- Default redeye reduction setting. -->
      <string name="pref_camera_redeyereduction_default" translatable="false">disable</string>
 

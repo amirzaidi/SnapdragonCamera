@@ -47,6 +47,8 @@ import android.view.View.OnClickListener;
 import android.view.View.OnLayoutChangeListener;
 import android.view.ViewGroup;
 import android.view.ViewStub;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageView;
@@ -72,6 +74,7 @@ import com.android.camera.ui.PieRenderer.PieListener;
 import com.android.camera.ui.RenderOverlay;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
+import com.android.camera.ui.SelfieFlashView;
 import com.android.camera.ui.ZoomRenderer;
 import com.android.camera.util.CameraUtil;
 
@@ -96,6 +99,7 @@ public class PhotoUI implements PieListener,
     private PopupWindow mPopup;
     private ShutterButton mShutterButton;
     private CountDownView mCountDownView;
+    private SelfieFlashView mSelfieView;
 
     private FaceView mFaceView;
     private RenderOverlay mRenderOverlay;
@@ -151,6 +155,7 @@ public class PhotoUI implements PieListener,
     private int mBottomMargin = 0;
 
     private int mOrientation;
+    private float mScreenBrightness = 0.0f;
 
     public interface SurfaceTextureSizeChangedListener {
         public void onSurfaceTextureSizeChanged(int uncroppedWidth, int uncroppedHeight);
@@ -1150,6 +1155,32 @@ public class PhotoUI implements PieListener,
         if (mCountDownView == null) initializeCountDown();
         mCountDownView.startCountDown(sec, playSound);
         hideUIWhileCountDown();
+    }
+
+    public void startSelfieFlash() {
+        if(mSelfieView == null)
+            mSelfieView = (SelfieFlashView) (mRootView.findViewById(R.id.selfie_flash));
+        mSelfieView.bringToFront();
+        mSelfieView.open();
+        mScreenBrightness = setScreenBrightness(1F);
+    }
+
+    public void stopSelfieFlash() {
+        if(mSelfieView == null)
+            mSelfieView = (SelfieFlashView) (mRootView.findViewById(R.id.selfie_flash));
+        mSelfieView.close();
+        if(mScreenBrightness != 0.0f)
+            setScreenBrightness(mScreenBrightness);
+    }
+
+    private float setScreenBrightness(float brightness) {
+        float originalBrightness;
+        Window window = mActivity.getWindow();
+        WindowManager.LayoutParams layout = window.getAttributes();
+        originalBrightness = layout.screenBrightness;
+        layout.screenBrightness = brightness;
+        window.setAttributes(layout);
+        return originalBrightness;
     }
 
     public void showPreferencesToast() {

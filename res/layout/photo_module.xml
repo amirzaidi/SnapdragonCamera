@@ -25,6 +25,7 @@
     android:layout_height="match_parent"
     android:layout_gravity="center" >
     <include layout="@layout/count_down_to_capture" />
+    <include layout="@layout/selfie_flash_view" />
     <FrameLayout
         android:id="@+id/preview_container"
         android:layout_width="match_parent"
