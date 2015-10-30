@@ -50,6 +50,7 @@ import android.widget.TextView;
 import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CameraRootView;
 import com.android.camera.ui.ModuleSwitcher;
+import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
@@ -137,6 +138,9 @@ public class WideAnglePanoramaUI implements
                 mSwitcher.setOrientation(mOrientation, false);
             }
         });
+
+        RotateImageView muteButton = (RotateImageView)mRootView.findViewById(R.id.mute_button);
+        muteButton.setVisibility(View.GONE);
     }
 
     public void onStartCapture() {

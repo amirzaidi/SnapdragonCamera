@@ -72,6 +72,7 @@ import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.PieRenderer.PieListener;
 import com.android.camera.ui.RenderOverlay;
+import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.ui.SelfieFlashView;
@@ -289,6 +290,10 @@ public class PhotoUI implements PieListener,
             }
         });
         mMenuButton = mRootView.findViewById(R.id.menu);
+
+        RotateImageView muteButton = (RotateImageView)mRootView.findViewById(R.id.mute_button);
+        muteButton.setVisibility(View.GONE);
+
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
         ViewStub faceViewStub = (ViewStub) mRootView
                 .findViewById(R.id.face_view_stub);
@@ -655,6 +660,8 @@ public class PhotoUI implements PieListener,
         if (mMenu != null) {
             mMenu.reloadPreferences();
         }
+        RotateImageView muteButton = (RotateImageView)mRootView.findViewById(R.id.mute_button);
+        muteButton.setVisibility(View.GONE);
     }
 
     public void showLocationDialog() {

@@ -34,6 +34,7 @@ import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.location.Location;
+import android.media.AudioManager;
 import android.media.CamcorderProfile;
 import android.media.CameraProfile;
 import android.media.MediaRecorder;
@@ -63,6 +64,7 @@ import com.android.camera.CameraManager.CameraPictureCallback;
 import com.android.camera.CameraManager.CameraProxy;
 import com.android.camera.app.OrientationManager;
 import com.android.camera.exif.ExifInterface;
+import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.AccessibilityUtils;
 import com.android.camera.util.ApiHelper;
@@ -204,6 +206,9 @@ public class VideoModule implements CameraModule,
     // The preview window is on focus
     private boolean mPreviewFocused = false;
 
+    private boolean mIsMute = false;
+    private boolean mWasMute = false;
+
     private final MediaSaveService.OnMediaSavedListener mOnVideoSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
                 @Override
@@ -227,6 +232,19 @@ public class VideoModule implements CameraModule,
                 }
             };
 
+    public void setMute(boolean enable, boolean isValue)
+    {
+        AudioManager am = (AudioManager)mActivity.getSystemService(Context.AUDIO_SERVICE);
+        am.setMicrophoneMute(enable);
+        if(isValue) {
+            mIsMute = enable;
+        }
+    }
+
+    public boolean isAudioMute()
+    {
+        return mIsMute;
+    }
 
     protected class CameraOpenThread extends Thread {
         @Override
@@ -1039,6 +1057,12 @@ public class VideoModule implements CameraModule,
         mUI.enableShutter(false);
         mZoomValue = 0;
 
+        AudioManager am = (AudioManager)mActivity.getSystemService(Context.AUDIO_SERVICE);
+        mWasMute = am.isMicrophoneMute();
+        if(mWasMute != mIsMute) {
+            setMute(mIsMute, false);
+        }
+
         showVideoSnapshotUI(false);
 
         if (!mPreviewing) {
@@ -1229,6 +1253,10 @@ public class VideoModule implements CameraModule,
 
         mUI.collapseCameraControls();
         mUI.removeDisplayChangeListener();
+
+        if(mWasMute != mIsMute) {
+            setMute(mWasMute, false);
+        }
     }
 
     @Override

@@ -910,5 +910,7 @@
     <string name="camera_thermal_shutdown">Phone overheated, closing camera.</string>
     <string name="camera_server_died">Media server died, closing camera.</string>
     <string name="camera_unknown_error">Unknown error, closing camera.</string>
+
+    <string name="mute_button_desc">Mute Button</string>
 </resources>
 

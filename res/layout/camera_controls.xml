@@ -39,6 +39,12 @@
         android:contentDescription="@string/accessibility_menu_button"
         android:src="@drawable/ic_settings" />
 
+    <com.android.camera.ui.RotateImageView
+        android:id="@+id/mute_button"
+        style="@style/MenuButton"
+        android:contentDescription="@string/mute_button_desc"
+        android:src="@drawable/ic_unmuted_button" />
+
     <com.android.camera.ui.ModuleSwitcher
         android:id="@+id/camera_switcher"
         style="@style/SwitcherButton"

@@ -252,6 +252,11 @@
         <item name="android:layout_height">@dimen/menu_outer_size</item>
         <item name="android:scaleType">center</item>
     </style>
+    <style name="MuteButton">
+        <item name="android:layout_width">@dimen/mute_outer_size</item>
+        <item name="android:layout_height">@dimen/mute_outer_size</item>
+        <item name="android:scaleType">center</item>
+    </style>
     <style name="ToggleButton">
         <item name="android:layout_width">@dimen/toggle_outer_size</item>
         <item name="android:layout_height">@dimen/toggle_outer_size</item>
