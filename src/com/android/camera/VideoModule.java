@@ -2562,7 +2562,7 @@ public class VideoModule implements CameraModule,
             if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(videoQuality)) {
                 int quality = CameraSettings.VIDEO_QUALITY_TABLE.get(videoQuality);
                 if ((quality == CamcorderProfile.QUALITY_2160P
-                        || quality == CamcorderProfile.QUALITY_4kDCI)
+                        || quality == CamcorderProfile.QUALITY_4KDCI)
                         && mPreferences != null) {
                     String disDisable = mActivity.getString(R.string.pref_camera_dis_value_disable);
                     if (!disDisable.equals(
