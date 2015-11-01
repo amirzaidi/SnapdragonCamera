@@ -118,8 +118,6 @@ public class CropActivity extends Activity {
         if (intent.getData() != null) {
             mSourceUri = intent.getData();
             startLoadBitmap(mSourceUri);
-        } else {
-            pickImage();
         }
     }
 
@@ -141,18 +139,6 @@ public class CropActivity extends Activity {
     public void onConfigurationChanged (Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mCropView.configChanged();
-    }
-
-    /**
-     * Opens a selector in Gallery to chose an image for use when none was given
-     * in the CROP intent.
-     */
-    private void pickImage() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, getString(R.string.select_image)),
-                SELECT_PICTURE);
     }
 
     /**
