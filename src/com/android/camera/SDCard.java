@@ -84,12 +84,7 @@ public class SDCard {
     }
 
     private String getSDCardStorageState() {
-        try {
-            return mMountService.getVolumeState(mVolume.getPath());
-        } catch (Exception e) {
-            Log.w(TAG, "Failed to read SDCard storage state; assuming REMOVED: " + e);
-            return Environment.MEDIA_REMOVED;
-        }
+        return mVolume.getState();
     }
 
     private SDCard() {
