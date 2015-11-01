@@ -134,8 +134,7 @@ public class VideoMenu extends MenuController
                 CameraSettings.KEY_POWER_MODE,
                 CameraSettings.KEY_VIDEO_ROTATION,
                 CameraSettings.KEY_VIDEO_CDS_MODE,
-                CameraSettings.KEY_VIDEO_TNR_MODE,
-                CameraSettings.KEY_VIDEO_PARTIAL_UI
+                CameraSettings.KEY_VIDEO_TNR_MODE
         };
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);

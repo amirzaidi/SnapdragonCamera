@@ -685,6 +685,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
     }
 
     private void init(CameraActivity cameraActivity) {
+        setWillNotDraw(false);
         mActivity = cameraActivity;
         mScale = 1.0f;
         mDataIdOnUserScrolling = 0;
@@ -1419,6 +1420,13 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
         stepIfNeeded();
         updateBottomControls(false /* no forced update */);
         mLastItemId = getCurrentId();
+    }
+
+    @Override
+    public void onDraw(Canvas c) {
+        // TODO: remove layoutViewItems() here.
+        layoutViewItems(false);
+        super.onDraw(c);
     }
 
     @Override

@@ -806,15 +806,5 @@
         <item>@drawable/ic_ts_makeup_on</item>
     </string-array>
 
-    <!-- VideoCamera Preferences partial ui recording entry-->
-    <string-array name="pref_camera_video_partial_ui_entries" translatable="false">
-        <item>@string/pref_camera_video_partial_ui_entry_false</item>
-        <item>@string/pref_camera_video_partial_ui_entry_true</item>
-    </string-array>
-
-    <string-array name="pref_camera_video_partial_ui_entryvalues" translatable="false">
-        <item>@string/pref_video_partial_ui_value_false</item>
-        <item>@string/pref_video_partial_ui_value_true</item>
-    </string-array>
 </resources>
 
