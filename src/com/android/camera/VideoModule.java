@@ -534,6 +534,14 @@ public class VideoModule implements CameraModule,
 
         Log.e(TAG,"loadCameraPreferences() updating camera_id pref");
 
+        IconListPreference switchIconPref =
+                (IconListPreference)mPreferenceGroup.findPreference(
+                CameraSettings.KEY_CAMERA_ID);
+
+        //if numOfCams < 2 then switchIconPref will be null as there is no switch icon in this case
+        if (switchIconPref == null)
+            return;
+
         int[] iconIds = new int[numOfCams];
         String[] entries = new String[numOfCams];
         String[] labels = new String[numOfCams];
@@ -553,10 +561,6 @@ public class VideoModule implements CameraModule,
                 largeIconIds[i] = R.drawable.ic_switch_front;
             }
         }
-
-        IconListPreference switchIconPref =
-                (IconListPreference)mPreferenceGroup.findPreference(
-                CameraSettings.KEY_CAMERA_ID);
 
         switchIconPref.setIconIds(iconIds);
         switchIconPref.setEntries(entries);
