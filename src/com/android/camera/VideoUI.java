@@ -666,6 +666,13 @@ public class VideoUI implements PieRenderer.PieListener,
         }
     }
 
+    public boolean is4KEnabled() {
+        if(mController != null)
+            return ((VideoModule)mController).is4KEnabled();
+        else
+            return false;
+    }
+
     private void popupDismissed() {
         mPopup = null;
     }
