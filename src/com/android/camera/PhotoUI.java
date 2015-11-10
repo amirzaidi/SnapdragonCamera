@@ -177,6 +177,10 @@ public class PhotoUI implements PieListener,
         }
     };
 
+    public CameraControls getCameraControls() {
+        return mCameraControls;
+    }
+
     private class DecodeTask extends AsyncTask<Void, Void, Bitmap> {
         private final byte [] mData;
         private int mOrientation;
