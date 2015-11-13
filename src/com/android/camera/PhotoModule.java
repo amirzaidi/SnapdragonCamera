@@ -2996,15 +2996,26 @@ public class PhotoModule
                     pref_camera_tnr_value_off))) {
                 mParameters.set(CameraSettings.KEY_QC_CDS_MODE,
                         mActivity.getString(R.string.pref_camera_cds_value_off));
-                mUI.overrideSettings(CameraSettings.KEY_QC_CDS_MODE,
-                        mActivity.getString(R.string.pref_camera_cds_value_off));
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUI.overrideSettings(CameraSettings.KEY_QC_CDS_MODE,
+                            mActivity.getString(R.string.pref_camera_cds_value_off));
+                    }
+                });
                 if (cds != null) {
                     mPrevSavedCDS = cds;
                 }
                 isTNREnabled = true;
             } else if (isTNREnabled) {
                 mParameters.set(CameraSettings.KEY_QC_CDS_MODE, mPrevSavedCDS);
-                mUI.overrideSettings(CameraSettings.KEY_QC_CDS_MODE, mPrevSavedCDS);
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUI.overrideSettings(CameraSettings.KEY_QC_CDS_MODE,
+                            mPrevSavedCDS);
+                    }
+                });
                 isTNREnabled = false;
             }
             mParameters.set(CameraSettings.KEY_QC_TNR_MODE, tnr);
