@@ -519,9 +519,6 @@ public class PhotoModule
         brightnessProgressBar.setVisibility(View.INVISIBLE);
         Storage.setSaveSDCard(
             mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
-
-        mSoundPool = new SoundPool(1, AudioManager.STREAM_NOTIFICATION, 0);
-        mRefocusSound = mSoundPool.load(mActivity, R.raw.camera_click_x5, 1);
     }
 
     private void initializeControlByIntent() {
@@ -2243,6 +2240,12 @@ public class PhotoModule
             Log.v(TAG, "On resume.");
             onResumeTasks();
         }
+
+        if (mSoundPool == null) {
+            mSoundPool = new SoundPool(1, AudioManager.STREAM_NOTIFICATION, 0);
+            mRefocusSound = mSoundPool.load(mActivity, R.raw.camera_click_x5, 1);
+        }
+
         mHandler.post(new Runnable(){
             @Override
             public void run(){
@@ -2318,6 +2321,11 @@ public class PhotoModule
         Sensor msensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         if (msensor != null) {
             mSensorManager.unregisterListener(this, msensor);
+        }
+
+        if (mSoundPool != null) {
+            mSoundPool.release();
+            mSoundPool = null;
         }
 
         Log.d(TAG, "remove idle handleer in onPause");
