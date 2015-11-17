@@ -246,6 +246,9 @@ public class CameraSettings {
     public static final String KEY_TS_MAKEUP_LEVEL_WHITEN  = "pref_camera_tsmakeup_whiten";
     public static final String KEY_TS_MAKEUP_LEVEL_CLEAN   = "pref_camera_tsmakeup_clean";
 
+    public static final String KEY_CAMERA2 = "pref_camera_camera2_key";
+    public static final String KEY_DUAL_CAMERA = "pref_camera_dual_camera_key";
+
     public static final String KEY_REFOCUS_PROMPT = "refocus-prompt";
 
     public static final String KEY_SHOW_MENU_HELP = "help_menu";

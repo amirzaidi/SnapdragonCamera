@@ -37,6 +37,7 @@ import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Scroller;
 
+import com.android.camera.CaptureMenu;
 import com.android.camera.PhotoMenu;
 import com.android.camera.VideoMenu;
 import com.android.camera.PreviewGestures;
@@ -1831,6 +1832,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
             return true;
         PhotoMenu pMenu = mPreviewGestures.getPhotoMenu();
         VideoMenu vMenu = mPreviewGestures.getVideoMenu();
+        CaptureMenu cMenu = mPreviewGestures.getCaptureMenu();
         if (pMenu != null) {
             if (pMenu.isMenuBeingShown()) {
                 if (pMenu.isMenuBeingAnimated()) {
@@ -1843,6 +1845,23 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
 
             if (pMenu.isPreviewMenuBeingShown()) {
                 if (pMenu.isOverPreviewMenu(ev)) {
+                    mSendToPreviewMenu = true;
+                    return true;
+                }
+            }
+        }
+        if (cMenu != null) {
+            if (cMenu.isMenuBeingShown()) {
+                if (cMenu.isMenuBeingAnimated()) {
+                    if (cMenu.isOverMenu(ev)) {
+                        mSendToMenu = true;
+                        return true;
+                    }
+                }
+            }
+
+            if (cMenu.isPreviewMenuBeingShown()) {
+                if (cMenu.isOverPreviewMenu(ev)) {
                     mSendToPreviewMenu = true;
                     return true;
                 }
@@ -1884,7 +1903,7 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
         }
         PhotoMenu pMenu = mPreviewGestures.getPhotoMenu();
         VideoMenu vMenu = mPreviewGestures.getVideoMenu();
-
+        CaptureMenu cMenu = mPreviewGestures.getCaptureMenu();
         if (pMenu != null) {
             if (mSendToPreviewMenu)
                 return pMenu.sendTouchToPreviewMenu(ev);
@@ -1898,7 +1917,19 @@ public class FilmStripView extends ViewGroup implements BottomControlsListener {
                 return pMenu.sendTouchToPreviewMenu(ev);
             }
         }
+        if (cMenu != null) {
+            if (mSendToPreviewMenu)
+                return cMenu.sendTouchToPreviewMenu(ev);
+            if (mSendToMenu)
+                return cMenu.sendTouchToMenu(ev);
+            if (cMenu.isMenuBeingShown()) {
+                return cMenu.sendTouchToMenu(ev);
+            }
 
+            if (cMenu.isPreviewMenuBeingShown()) {
+                return cMenu.sendTouchToPreviewMenu(ev);
+            }
+        }
         if (vMenu != null) {
             if (mSendToPreviewMenu)
                 return vMenu.sendTouchToPreviewMenu(ev);

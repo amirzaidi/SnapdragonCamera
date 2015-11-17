@@ -32,4 +32,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" >
     </com.android.camera.ui.CameraRootView>
+    <com.android.camera.ui.CameraRootView
+        android:id="@+id/camera_capture_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+    </com.android.camera.ui.CameraRootView>
 </FrameLayout>

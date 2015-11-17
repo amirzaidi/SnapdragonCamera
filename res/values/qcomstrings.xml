@@ -944,5 +944,24 @@
     <string name="help_menu_switcher_1" translatable="true">Switch</string>
     <string name="help_menu_switcher_2" translatable="true">between</string>
     <string name="help_menu_switcher_3" translatable="true">camera, video, and panorama</string>
+
+    <string name="pref_camera_camera2_title">Camera2 Mode</string>
+    <string name="pref_camera_camera2_default">disable</string>
+    <string name="pref_camera_camera2_entry_enable">Enable</string>
+    <string name="pref_camera_camera2_entry_disable">Disable</string>
+
+    <string name="pref_camera_camera2_value_enable">enable</string>
+    <string name="pref_camera_camera2_value_disable">disable</string>
+
+
+    <string name="pref_camera_dual_camera_title">Dual Camera Mode</string>
+    <string name="pref_camera_dual_camera_default">bayer</string>
+    <string name="pref_camera_dual_camera_entry_dual">Dual-camera Linked</string>
+    <string name="pref_camera_dual_camera_entry_bayer">Single Bayer Camera</string>
+    <string name="pref_camera_dual_camera_entry_mono">Single Mono Camera</string>
+
+    <string name="pref_camera_dual_camera_value_dual">dual</string>
+    <string name="pref_camera_dual_camera_value_bayer">bayer</string>
+    <string name="pref_camera_dual_camera_value_mono">mono</string>
 </resources>
 
