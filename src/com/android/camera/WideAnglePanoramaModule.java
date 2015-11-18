@@ -384,10 +384,14 @@ public class WideAnglePanoramaModule
         // This is also forward compatible if we have a new facing other than
         // back or front in the future.
         if (cameraId == -1) cameraId = 0;
-        mCameraDevice = CameraUtil.openCamera(mActivity, cameraId,
-                mMainHandler, mActivity.getCameraOpenErrorCallback());
+
+        // If mCameraDevice has already exist,there is no need to obtain again
         if (mCameraDevice == null) {
-            return false;
+            mCameraDevice = CameraUtil.openCamera(mActivity, cameraId,
+                    mMainHandler, mActivity.getCameraOpenErrorCallback());
+            if (mCameraDevice == null) {
+                return false;
+            }
         }
         mCameraOrientation = CameraUtil.getCameraOrientation(cameraId);
         if (cameraId == CameraHolder.instance().getFrontCameraId()) mUsingFrontCamera = true;
@@ -970,7 +974,9 @@ public class WideAnglePanoramaModule
         } else {
             // Camera must be initialized before MosaicFrameProcessor is
             // initialized. The preview size has to be decided by camera device.
-            initMosaicFrameProcessorIfNeeded();
+            if (! mMosaicFrameProcessorInitialized) {
+                initMosaicFrameProcessorIfNeeded();
+            }
             Point size = mUI.getPreviewAreaSize();
             mPreviewUIWidth = size.x;
             mPreviewUIHeight = size.y;
