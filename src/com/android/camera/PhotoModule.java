@@ -336,6 +336,7 @@ public class PhotoModule
 
     private String mSceneMode;
     private String mCurrTouchAfAec = Parameters.TOUCH_AF_AEC_ON;
+    private String mSavedFlashMode = null;
 
     private final Handler mHandler = new MainHandler();
     private MessageQueue.IdleHandler mIdleHandler = null;
@@ -1766,7 +1767,7 @@ public class PhotoModule
                 pref_camera_coloreffect_default);
             exposureCompensation = CameraSettings.EXPOSURE_DEFAULT_VALUE;
 
-            overrideCameraSettings(flashMode, null, focusMode,
+            overrideCameraSettings(null, null, focusMode,
                                    exposureCompensation, touchAfAec, null,
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
@@ -1795,7 +1796,7 @@ public class PhotoModule
                 Integer.toString(mParameters.getExposureCompensation());
             touchAfAec = mCurrTouchAfAec;
 
-            overrideCameraSettings(flashMode, whiteBalance, focusMode,
+            overrideCameraSettings(null, whiteBalance, focusMode,
                     exposureCompensation, touchAfAec,
                     mParameters.getAutoExposure(),
                     Integer.toString(mParameters.getSaturation()),
@@ -1805,7 +1806,7 @@ public class PhotoModule
                     sceneMode, redeyeReduction, aeBracketing);
         } else if (mFocusManager.isZslEnabled()) {
             focusMode = mParameters.getFocusMode();
-            overrideCameraSettings(flashMode, null, focusMode,
+            overrideCameraSettings(null, null, focusMode,
                                    exposureCompensation, touchAfAec, null,
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
@@ -1813,7 +1814,7 @@ public class PhotoModule
             if (mManual3AEnabled > 0) {
                 updateCommonManual3ASettings();
             } else {
-                overrideCameraSettings(flashMode, null, focusMode,
+                overrideCameraSettings(null, null, focusMode,
                                        exposureCompensation, touchAfAec, null,
                                        null, null, null, colorEffect,
                                        sceneMode, redeyeReduction, aeBracketing);
@@ -1822,15 +1823,33 @@ public class PhotoModule
         /* Disable focus if aebracket is ON */
         String aeBracket = mParameters.get(CameraSettings.KEY_QC_AE_BRACKETING);
         if (!aeBracket.equalsIgnoreCase("off")) {
-            String fMode = Parameters.FLASH_MODE_OFF;
-            mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, fMode);
-            mParameters.setFlashMode(fMode);
+            flashMode = Parameters.FLASH_MODE_OFF;
+            mParameters.setFlashMode(flashMode);
         }
         if (disableLongShot) {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
                     mActivity.getString(R.string.setting_off_value));
         } else {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, null);
+        }
+
+        if (flashMode == null) {
+            // Restore saved flash mode or default mode
+            if (mSavedFlashMode == null) {
+                mSavedFlashMode =  mPreferences.getString(
+                    CameraSettings.KEY_FLASH_MODE,
+                    mActivity.getString(R.string.pref_camera_flashmode_default));
+            }
+            mUI.setPreference(CameraSettings.KEY_FLASH_MODE, mSavedFlashMode);
+            mSavedFlashMode = null;
+        } else {
+            // Save the current flash mode
+            if (mSavedFlashMode == null) {
+                mSavedFlashMode =  mPreferences.getString(
+                    CameraSettings.KEY_FLASH_MODE,
+                    mActivity.getString(R.string.pref_camera_flashmode_default));
+            }
+            mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, flashMode);
         }
     }
 
@@ -3624,9 +3643,15 @@ public class PhotoModule
 
         if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
             // Set flash mode.
-            String flashMode = mPreferences.getString(
+            String flashMode;
+            if (mSavedFlashMode == null) {
+                flashMode = mPreferences.getString(
                     CameraSettings.KEY_FLASH_MODE,
                     mActivity.getString(R.string.pref_camera_flashmode_default));
+            } else {
+                flashMode = mSavedFlashMode;
+            }
+
             List<String> supportedFlash = mParameters.getSupportedFlashModes();
             if (CameraUtil.isSupported(flashMode, supportedFlash)) {
                 mParameters.setFlashMode(flashMode);
