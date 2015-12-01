@@ -36,6 +36,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.Toast;
 
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.util.CameraUtil;
@@ -312,6 +313,8 @@ public class TsMakeupManager implements OnSeekBarChangeListener {
 
                             showSingleView(pref.getValue());
                             mUI.adjustOrientation();
+                            if(!pref.getValue().equalsIgnoreCase("off"))
+                                Toast.makeText(mActivity, "Beautify", Toast.LENGTH_SHORT).show();
                         }
                     }
                     return true;
