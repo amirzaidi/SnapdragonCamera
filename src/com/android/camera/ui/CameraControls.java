@@ -492,8 +492,9 @@ public class CameraControls extends RotatableLayout {
     }
 
     public void hideUI() {
+        if(!isAnimating)
+            enableTouch(false);
         isAnimating = true;
-        enableTouch(false);
         int rotation = getUnifiedRotation();
         mFrontBackSwitcher.animate().cancel();
         if(TsMakeupManager.HAS_TS_MAKEUP) {
@@ -588,8 +589,9 @@ public class CameraControls extends RotatableLayout {
     }
 
     public void showUI() {
+        if(!isAnimating)
+            enableTouch(false);
         isAnimating = true;
-        enableTouch(false);
         int rotation = getUnifiedRotation();
         mFrontBackSwitcher.animate().cancel();
         if(TsMakeupManager.HAS_TS_MAKEUP) {
