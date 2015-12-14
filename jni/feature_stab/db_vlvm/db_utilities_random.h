@@ -43,7 +43,7 @@ inline double db_QuickRandomDouble(int &r)
     c=r/127773;
     r=16807*(r-c*127773)-2836*c;
     if(r<0) r+=2147483647;
-    return((1.0/((double)2147483647))*r);
+    return (1.0/((double)2147483647))*r;
     //return (((double)rand())/(double)RAND_MAX);
 }
 
@@ -62,7 +62,7 @@ inline int db_RandomInt(int &r,int max)
     itemp=(int) dtemp;
     if(itemp<=0) return(0);
     if(itemp>=max) return(max);
-    return(itemp);
+    return itemp;
 }
 
 /*!

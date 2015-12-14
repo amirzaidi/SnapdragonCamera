@@ -31,6 +31,7 @@ public class UsageStatistics {
 
     public static final String ACTION_FOREGROUNDED = "Foregrounded";
     public static final String ACTION_OPEN_FAIL = "OpenFailure";
+    public static final String ACTION_START_PREVIEW_FAIL = "StartPreviewFailure";
     public static final String ACTION_SCREEN_CHANGED = "ScreenChanged";
     public static final String ACTION_FILMSTRIP = "Filmstrip";
     public static final String ACTION_TOUCH_FOCUS= "TouchFocus";

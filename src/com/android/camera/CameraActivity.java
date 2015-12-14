@@ -110,6 +110,7 @@ import com.android.camera.util.IntentHelper;
 import com.android.camera.util.PhotoSphereHelper;
 import com.android.camera.util.PhotoSphereHelper.PanoramaViewHelper;
 import com.android.camera.util.UsageStatistics;
+import com.android.internal.view.RotationPolicy;
 import org.codeaurora.snapcam.R;
 
 import java.io.File;
@@ -303,6 +304,15 @@ public class CameraActivity extends Activity
                     CameraUtil.showErrorAndFinish(CameraActivity.this,
                             R.string.cannot_connect_camera);
                 }
+
+                @Override
+                public void onStartPreviewFailure(int cameraId) {
+                    UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
+                            UsageStatistics.ACTION_START_PREVIEW_FAIL, "startpreview");
+
+                    CameraUtil.showErrorAndFinish(CameraActivity.this,
+                            R.string.cannot_connect_camera);
+                }
             };
 
     // update the status of storage space when SD card status changed.
@@ -327,7 +337,22 @@ public class CameraActivity extends Activity
     private BroadcastReceiver mScreenOffReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            finish();
+            String action = intent.getAction();
+
+            if (action.equals(Intent.ACTION_SCREEN_ON)) {
+                mCurrentModule.onResumeBeforeSuper();
+                mCurrentModule.onResumeAfterSuper();
+            }
+
+            if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+                if (mSecureCamera) {
+                    finish();
+                } else {
+                    mCurrentModule.onPauseBeforeSuper();
+                    mCurrentModule.onPauseAfterSuper();
+                }
+            }
+
         }
     };
 
@@ -617,12 +642,23 @@ public class CameraActivity extends Activity
     private void setSystemBarsVisibility(boolean visible, boolean hideLater) {
         mMainHandler.removeMessages(HIDE_ACTION_BAR);
 
-        int currentSystemUIVisibility = mAboveFilmstripControlLayout.getSystemUiVisibility();
-        int newSystemUIVisibility = DEFAULT_SYSTEM_UI_VISIBILITY
-                | (visible ? View.SYSTEM_UI_FLAG_VISIBLE : View.SYSTEM_UI_FLAG_LOW_PROFILE
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        View decorView = getWindow().getDecorView();
+        int currentSystemUIVisibility = decorView.getSystemUiVisibility();
+        boolean hidePreview = getResources().getBoolean(R.bool.hide_navigation_bar);
+
+        int systemUIVisibility = DEFAULT_SYSTEM_UI_VISIBILITY;
+        if (hidePreview)
+            systemUIVisibility |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+
+        int systemUINotVisible = View.SYSTEM_UI_FLAG_LOW_PROFILE | View.SYSTEM_UI_FLAG_FULLSCREEN;
+        if (hidePreview)
+            systemUINotVisible |= (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
+        int newSystemUIVisibility = systemUIVisibility
+                | (visible ? View.SYSTEM_UI_FLAG_VISIBLE : systemUINotVisible);
         if (newSystemUIVisibility != currentSystemUIVisibility) {
-            mAboveFilmstripControlLayout.setSystemUiVisibility(newSystemUIVisibility);
+            decorView.setSystemUiVisibility(newSystemUIVisibility);
         }
 
         boolean currentActionBarVisibility = mActionBar.isShowing();
@@ -767,6 +803,8 @@ public class CameraActivity extends Activity
         protected void onPostExecute(Bitmap bitmap) {
             if (bitmap == null) {
                 if (mThumbnail != null) {
+                    // Clear the image resource when the bitmap is invalid.
+                    mThumbnail.setImageDrawable(null);
                     mThumbnail.setVisibility(View.GONE);
                 }
             } else {
@@ -1380,6 +1418,19 @@ public class CameraActivity extends Activity
             mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
         }
 
+        // Filter for screen off so that we can finish secure camera activity
+        // when screen is off.
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(mScreenOffReceiver, filter);
+        // TODO: This static screen off event receiver is a workaround to the
+        // double onResume() invocation (onResume->onPause->onResume). We should
+        // find a better solution to this.
+        if (sScreenOffReceiver == null) {
+            sScreenOffReceiver = new ScreenOffReceiver();
+            registerReceiver(sScreenOffReceiver, filter);
+        }
+
         if (mSecureCamera) {
             // Change the window flags so that secure camera can show when locked
             Window win = getWindow();
@@ -1394,17 +1445,7 @@ public class CameraActivity extends Activity
             }
             win.setAttributes(params);
 
-            // Filter for screen off so that we can finish secure camera activity
-            // when screen is off.
-            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-            registerReceiver(mScreenOffReceiver, filter);
-            // TODO: This static screen off event receiver is a workaround to the
-            // double onResume() invocation (onResume->onPause->onResume). We should
-            // find a better solution to this.
-            if (sScreenOffReceiver == null) {
-                sScreenOffReceiver = new ScreenOffReceiver();
-                registerReceiver(sScreenOffReceiver, filter);
-            }
+
         }
         GcamHelper.init(getContentResolver());
 
@@ -1459,9 +1500,6 @@ public class CameraActivity extends Activity
         mAboveFilmstripControlLayout =
                 (FrameLayout) findViewById(R.id.camera_above_filmstrip_layout);
         mAboveFilmstripControlLayout.setFitsSystemWindows(true);
-        // Hide action bar first since we are in full screen mode first, and
-        // switch the system UI to lights-out mode.
-        this.setSystemBarsVisibility(false);
         mPanoramaManager = AppManagerFactory.getInstance(this)
                 .getPanoramaStitchingManager();
         mPlaceholderManager = AppManagerFactory.getInstance(this)
@@ -1547,7 +1585,7 @@ public class CameraActivity extends Activity
 
         int lower = Math.min(width, height);
 
-        int offset = lower * 10 / 100;
+        int offset = lower * 7 / 100;
         SETTING_LIST_WIDTH_1 = lower / 2 + offset;
         SETTING_LIST_WIDTH_2 = lower / 2 - offset;
         registerSDcardMountedReceiver();
@@ -1613,7 +1651,18 @@ public class CameraActivity extends Activity
     }
 
     @Override
+    public void onWindowFocusChanged(boolean focus) {
+        // Hide action bar first since we are in full screen mode first, and
+        // switch the system UI to lights-out mode.
+        if (focus) this.setSystemBarsVisibility(false);
+    }
+
+    @Override
     public void onResume() {
+        // Hide action bar first since we are in full screen mode first, and
+        // switch the system UI to lights-out mode.
+        this.setSystemBarsVisibility(false);
+
         UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
                 UsageStatistics.ACTION_FOREGROUNDED, this.getClass().getSimpleName());
 
@@ -1675,9 +1724,10 @@ public class CameraActivity extends Activity
             mWakeLock.release();
             Log.d(TAG, "wake lock release");
         }
-        if (mSecureCamera) {
+        if (mScreenOffReceiver != null) {
             unregisterReceiver(mScreenOffReceiver);
         }
+
         getContentResolver().unregisterContentObserver(mLocalImagesObserver);
         getContentResolver().unregisterContentObserver(mLocalVideosObserver);
         unregisterReceiver(mSDcardMountedReceiver);
@@ -1696,6 +1746,12 @@ public class CameraActivity extends Activity
         if (mFilmStripView.inCameraFullscreen()) {
             if (mCurrentModule.onKeyDown(keyCode, event)) {
                 return true;
+            }
+            // add for stop rotate for exit camera
+            if(keyCode == KeyEvent.KEYCODE_BACK &&
+                    RotationPolicy.isRotationSupported(this)) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                RotationPolicy.setRotationLock(this,true);
             }
             // Prevent software keyboard or voice search from showing up.
             if (keyCode == KeyEvent.KEYCODE_SEARCH

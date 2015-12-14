@@ -88,7 +88,7 @@ DB_API void db_Zero(double *d,long nr);
 inline int db_MaxIndex2(double s[2])
 {
     if(s[0]>=s[1]) return(0);
-    return(1);
+    return 1;
 }
 
 inline int db_MaxIndex3(const double s[3])
@@ -99,7 +99,7 @@ inline int db_MaxIndex3(const double s[3])
     best=s[0];pos=0;
     if(s[1]>best){best=s[1];pos=1;}
     if(s[2]>best){best=s[2];pos=2;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MaxIndex4(const double s[4])
@@ -111,7 +111,7 @@ inline int db_MaxIndex4(const double s[4])
     if(s[1]>best){best=s[1];pos=1;}
     if(s[2]>best){best=s[2];pos=2;}
     if(s[3]>best){best=s[3];pos=3;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MaxIndex5(const double s[5])
@@ -124,7 +124,7 @@ inline int db_MaxIndex5(const double s[5])
     if(s[2]>best){best=s[2];pos=2;}
     if(s[3]>best){best=s[3];pos=3;}
     if(s[4]>best){best=s[4];pos=4;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MaxIndex6(const double s[6])
@@ -138,7 +138,7 @@ inline int db_MaxIndex6(const double s[6])
     if(s[3]>best){best=s[3];pos=3;}
     if(s[4]>best){best=s[4];pos=4;}
     if(s[5]>best){best=s[5];pos=5;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MaxIndex7(const double s[7])
@@ -153,7 +153,7 @@ inline int db_MaxIndex7(const double s[7])
     if(s[4]>best){best=s[4];pos=4;}
     if(s[5]>best){best=s[5];pos=5;}
     if(s[6]>best){best=s[6];pos=6;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MinIndex7(const double s[7])
@@ -168,7 +168,7 @@ inline int db_MinIndex7(const double s[7])
     if(s[4]<best){best=s[4];pos=4;}
     if(s[5]<best){best=s[5];pos=5;}
     if(s[6]<best){best=s[6];pos=6;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MinIndex9(const double s[9])
@@ -185,7 +185,7 @@ inline int db_MinIndex9(const double s[9])
     if(s[6]<best){best=s[6];pos=6;}
     if(s[7]<best){best=s[7];pos=7;}
     if(s[8]<best){best=s[8];pos=8;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MaxAbsIndex3(const double *s)
@@ -196,7 +196,7 @@ inline int db_MaxAbsIndex3(const double *s)
     best=fabs(s[0]);pos=0;
     t=fabs(s[1]);if(t>best){best=t;pos=1;}
     t=fabs(s[2]);if(t>best){pos=2;}
-    return(pos);
+    return pos;
 }
 
 inline int db_MaxAbsIndex9(const double *s)
@@ -213,7 +213,7 @@ inline int db_MaxAbsIndex9(const double *s)
     t=fabs(s[6]);if(t>best){best=t;pos=6;}
     t=fabs(s[7]);if(t>best){best=t;pos=7;}
     t=fabs(s[8]);if(t>best){best=t;pos=8;}
-    return(pos);
+    return pos;
 }
 
 

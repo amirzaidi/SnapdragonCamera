@@ -97,7 +97,7 @@ public:
   */
   inline ImageType getV()
   {
-    return (image + (width*height));
+    return image + (width*height);
   }
 
   /**
@@ -105,7 +105,7 @@ public:
   */
   inline ImageType getU()
   {
-    return (image + (width*height*2));
+    return image + (width*height*2);
   }
 
   /**

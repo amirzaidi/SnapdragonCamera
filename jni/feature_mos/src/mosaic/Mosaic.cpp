@@ -213,7 +213,7 @@ int Mosaic::createMosaic(float &progress, bool &cancelComputation)
     // Blend the mosaic (alignment has already been done)
     if (blender != NULL)
     {
-        ret = blender->runBlend((MosaicFrame **) frames, (MosaicFrame **) rframes, 
+        ret = blender->runBlend((MosaicFrame **) frames, (MosaicFrame **) rframes,
                 frames_size, imageMosaicYVU,
                 mosaicWidth, mosaicHeight, progress, cancelComputation);
     }

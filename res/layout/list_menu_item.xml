@@ -37,7 +37,7 @@
         android:layout_width="@dimen/setting_item_icon_width"
         android:layout_height="@dimen/setting_item_icon_width"
         android:layout_alignParentLeft="true"
-        android:layout_marginRight="20dp"
+        android:layout_marginRight="15dp"
         android:gravity="center" />
 
     <TextView

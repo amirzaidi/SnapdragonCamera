@@ -134,7 +134,8 @@ public class VideoMenu extends MenuController
                 CameraSettings.KEY_POWER_MODE,
                 CameraSettings.KEY_VIDEO_ROTATION,
                 CameraSettings.KEY_VIDEO_CDS_MODE,
-                CameraSettings.KEY_VIDEO_TNR_MODE
+                CameraSettings.KEY_VIDEO_TNR_MODE,
+                CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE
         };
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);
@@ -708,11 +709,7 @@ public class VideoMenu extends MenuController
     // Hit when an item in the second-level popup gets selected
     public void onListPrefChanged(ListPreference pref) {
         onSettingChanged(pref);
-        if (mPopupStatus == POPUP_SECOND_LEVEL) {
-            mListMenu.reloadPreference();
-            animateFadeOut(mListSubMenu, 2);
-            ((ListMenu) mListMenu).resetHighlight();
-        }
+        closeView();
     }
 
     protected void initializePopup() {

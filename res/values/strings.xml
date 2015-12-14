@@ -239,7 +239,7 @@
     <!-- The Video quality settings in preference [CHAR LIMIT=21] -->
     <string name="pref_video_quality_title">Video quality</string>
     <!-- The default quality value is NULL -->
-    <string name="pref_video_quality_default" translatable="false"></string>
+    <string name="pref_video_quality_default" translatable="false">1920x1080</string>
     <!-- Video quality setting entry.
     Videos will be recorded in 4k DCI quality. [CHAR LIMIT=24] -->
     <string name="pref_video_quality_entry_4kdci" translatable="false">
@@ -258,6 +258,10 @@
     <string name="pref_video_quality_entry_720p" translatable="false">HD 720p</string>
     <!-- Video quality setting entry. Videos will be recorded in 480p quality. [CHAR LIMIT=24] -->
     <string name="pref_video_quality_entry_480p" translatable="false">SD 480p</string>
+    <!-- Video quality setting entry. Videos will be recorded in QHD quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_qHD" translatable="false">QHD</string>
+    <!-- Video quality setting entry. Videos will be recorded in 2K quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_2k" translatable="false">2K</string>
 
     <!-- Describes the preference dialog for choosing interval between frame capture for
     time lapse recording. Appears at top of the dialog. [CHAR LIMIT=30] -->
@@ -397,8 +401,8 @@
     <!-- Scene mode optimized for taking indoor low-lights pictures. [CHAR LIMIT=16] -->
     <string name="pref_camera_scenemode_entry_party">Party</string>
     <!-- Scene mode for refocus feature [CHAR LIMIT=16] -->
-    <string name="pref_camera_scenemode_entry_refocus">Macro+</string>
-    <string name="pref_camera_scenemode_entry_optizoom">Opti-Zoom</string>
+    <string name="pref_camera_scenemode_entry_refocus">UbiFocus</string>
+    <string name="pref_camera_scenemode_entry_optizoom">OptiZoom</string>
 
     <!-- Settings menu, scene mode labels [CHAR LIMIT=50] -->
     <string name="pref_camera_scenemode_label_auto">NONE</string>

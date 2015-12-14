@@ -38,7 +38,7 @@ public class ZoomRenderer extends OverlayRenderer
     private ScaleGestureDetector mDetector;
     private Paint mPaint;
     private Paint mTextPaint;
-    private int mCircleSize;
+    private float mCircleSize;
     private int mCenterX;
     private int mCenterY;
     private float mMaxCircle;
@@ -82,7 +82,7 @@ public class ZoomRenderer extends OverlayRenderer
     }
 
     public void setZoom(int index) {
-        mCircleSize = (int) (mMinCircle + index * (mMaxCircle - mMinCircle) / (mMaxZoom - mMinZoom));
+        mCircleSize = mMinCircle + index * (mMaxCircle - mMinCircle) / (mMaxZoom - mMinZoom);
     }
 
     public void setZoomValue(int value) {
@@ -118,7 +118,7 @@ public class ZoomRenderer extends OverlayRenderer
                 mCenterX - mMaxCircle - 4, mCenterY, mPaint);
         mPaint.setStrokeWidth(mOuterStroke);
         canvas.drawCircle((float) mCenterX, (float) mCenterY,
-                (float) mCircleSize, mPaint);
+                mCircleSize, mPaint);
         String txt = mZoomSig+"."+mZoomFraction+"x";
         mTextPaint.getTextBounds(txt, 0, txt.length(), mTextBounds);
         canvas.drawText(txt, mCenterX - mTextBounds.centerX(), mCenterY - mTextBounds.centerY(),
@@ -128,11 +128,11 @@ public class ZoomRenderer extends OverlayRenderer
     @Override
     public boolean onScale(ScaleGestureDetector detector) {
         final float sf = detector.getScaleFactor();
-        float circle = (int) (mCircleSize * sf * sf);
+        float circle = mCircleSize * sf * sf;
         circle = Math.max(mMinCircle, circle);
         circle = Math.min(mMaxCircle, circle);
-        if (mListener != null && (int) circle != mCircleSize) {
-            mCircleSize = (int) circle;
+        if (mListener != null && circle != mCircleSize) {
+            mCircleSize = circle;
             int zoom = mMinZoom + (int) ((mCircleSize - mMinCircle) * (mMaxZoom - mMinZoom) / (mMaxCircle - mMinCircle));
             mListener.onZoomValueChanged(zoom);
             update();
