@@ -73,8 +73,8 @@ inline double ciCalc(PyramidShort *img, int xi, int yi, double xfrac, double yfr
 
   // this is the final interpolation
   off = (int)(yfrac * CTAPS);
-  return (ciTable[off + 40] * tmpf[0] + ciTable[off] * tmpf[1] +
-          ciTable[40 - off] * tmpf[2] + ciTable[80 - off] * tmpf[3]);
+  return ciTable[off + 40] * tmpf[0] + ciTable[off] * tmpf[1] +
+          ciTable[40 - off] * tmpf[2] + ciTable[80 - off] * tmpf[3];
 }
 
 #endif

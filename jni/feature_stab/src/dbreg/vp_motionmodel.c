@@ -48,7 +48,7 @@ double Det3(double m[3][3])
     m[0][2]*m[1][0]*m[2][1] - m[0][2]*m[1][1]*m[2][0] -
     m[0][0]*m[1][2]*m[2][1] - m[0][1]*m[1][0]*m[2][2];
 
-  return(result);
+  return result;
 }
 
 typedef double MATRIX[4][4];
@@ -83,7 +83,7 @@ double Det4(MATRIX m)
     m[0][2]*m[1][1]*m[2][3]*m[3][0]-m[0][1]*m[1][2]*m[2][3]*m[3][0]+
     m[0][3]*m[1][2]*m[2][1]*m[3][0]-m[0][2]*m[1][3]*m[2][1]*m[3][0];
     */
-  return(result);
+  return result;
 }
 
 static
@@ -137,7 +137,7 @@ int inv4Mat(const VP_MOTION* in, VP_MOTION* out)
     for(j=0;j<4;j++,k++)
       out->par[k]=(VP_PAR)outmat[i][j]; /*lint !e771*/
 
-  return(0);
+  return 0;
 }
 
 /*
@@ -332,7 +332,7 @@ double vp_motion_cornerdiff(const VP_MOTION *mot_a, const VP_MOTION *mot_b,
   err += (VP_SQR(ax3 - bx3) + VP_SQR(ay3 - by3));
   err += (VP_SQR(ax4 - bx4) + VP_SQR(ay4 - by4));
 
-  return(sqrt(err));
+  return sqrt(err);
 }
 
 int vp_zoom_motion2d(VP_MOTION* in, VP_MOTION* out,

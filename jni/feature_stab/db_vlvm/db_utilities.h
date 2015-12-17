@@ -77,7 +77,7 @@ inline int db_roundi (double x) {
  */
 inline double db_sqr(double a)
 {
-    return(a*a);
+    return a*a;
 }
 
 /*!
@@ -85,7 +85,7 @@ inline double db_sqr(double a)
  */
 inline long db_sqr(long a)
 {
-    return(a*a);
+    return a*a;
 }
 
 /*!
@@ -93,7 +93,7 @@ inline long db_sqr(long a)
  */
 inline long db_sqr(int a)
 {
-    return(a*a);
+    return a*a;
 }
 
 /*!
@@ -232,25 +232,25 @@ inline double db_CubRoot(double x)
  */
 inline double db_SquareSum3(const double x[3])
 {
-    return(db_sqr(x[0])+db_sqr(x[1])+db_sqr(x[2]));
+    return db_sqr(x[0])+db_sqr(x[1])+db_sqr(x[2]);
 }
 /*!
  * Sum of squares of elements of x.
  */
 inline double db_SquareSum7(double x[7])
 {
-    return(db_sqr(x[0])+db_sqr(x[1])+db_sqr(x[2])+
+    return db_sqr(x[0])+db_sqr(x[1])+db_sqr(x[2])+
         db_sqr(x[3])+db_sqr(x[4])+db_sqr(x[5])+
-        db_sqr(x[6]));
+        db_sqr(x[6]);
 }
 /*!
  * Sum of squares of elements of x.
  */
 inline double db_SquareSum9(double x[9])
 {
-    return(db_sqr(x[0])+db_sqr(x[1])+db_sqr(x[2])+
+    return db_sqr(x[0])+db_sqr(x[1])+db_sqr(x[2])+
         db_sqr(x[3])+db_sqr(x[4])+db_sqr(x[5])+
-        db_sqr(x[6])+db_sqr(x[7])+db_sqr(x[8]));
+        db_sqr(x[6])+db_sqr(x[7])+db_sqr(x[8]);
 }
 /*!
  * Copy a vector.
@@ -288,25 +288,25 @@ void inline db_Copy9(double xd[9],const double xs[9])
  */
 inline double db_ScalarProduct4(const double A[4],const double B[4])
 {
-    return(A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+A[3]*B[3]);
+    return A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+A[3]*B[3];
 }
 /*!
  * Scalar product: Transpose(A)*B.
  */
 inline double db_ScalarProduct7(const double A[7],const double B[7])
 {
-    return(A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+
+    return A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+
         A[3]*B[3]+A[4]*B[4]+A[5]*B[5]+
-        A[6]*B[6]);
+        A[6]*B[6];
 }
 /*!
  * Scalar product: Transpose(A)*B.
  */
 inline double db_ScalarProduct9(const double A[9],const double B[9])
 {
-    return(A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+
+    return A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+
         A[3]*B[3]+A[4]*B[4]+A[5]*B[5]+
-        A[6]*B[6]+A[7]*B[7]+A[8]*B[8]);
+        A[6]*B[6]+A[7]*B[7]+A[8]*B[8];
 }
 /*!
  * Vector addition: S=A+B.

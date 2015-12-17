@@ -177,11 +177,11 @@ inline double db_FocalFromCamRotFocalHomography(const double H[9])
     k2=db_sqr(H[6])+db_sqr(H[7]);
     if(k1>=k2)
     {
-        return(db_SafeSqrt(db_SafeDivision(k1,1.0-db_sqr(H[8]))));
+        return db_SafeSqrt(db_SafeDivision(k1,1.0-db_sqr(H[8])));
     }
     else
     {
-        return(db_SafeSqrt(db_SafeDivision(1.0-db_sqr(H[8]),k2)));
+        return db_SafeSqrt(db_SafeDivision(1.0-db_sqr(H[8]),k2));
     }
 }
 
@@ -194,7 +194,7 @@ inline double db_FocalAndRotFromCamRotFocalHomography(double R[9],const double H
     R[0]=H[0];      R[1]=H[1];      R[2]=fi*H[2];
     R[3]=H[3];      R[4]=H[4];      R[5]=fi*H[5];
     R[6]=back*H[6]; R[7]=back*H[7]; R[8]=H[8];
-    return(back);
+    return back;
 }
 /*!
 Compute Jacobian at zero of three coordinates dR*x with

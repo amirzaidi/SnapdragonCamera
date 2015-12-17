@@ -60,8 +60,8 @@ inline void db_MultiplyScalar9(double A[9],double mult)
  */
 inline double db_SquareSum6Stride7(const double *x)
 {
-    return(db_sqr(x[0])+db_sqr(x[7])+db_sqr(x[14])+
-        db_sqr(x[21])+db_sqr(x[28])+db_sqr(x[35]));
+    return db_sqr(x[0])+db_sqr(x[7])+db_sqr(x[14])+
+        db_sqr(x[21])+db_sqr(x[28])+db_sqr(x[35]);
 }
 
 /*!
@@ -69,9 +69,9 @@ inline double db_SquareSum6Stride7(const double *x)
  */
 inline double db_SquareSum8Stride9(const double *x)
 {
-    return(db_sqr(x[0])+db_sqr(x[9])+db_sqr(x[18])+
+    return db_sqr(x[0])+db_sqr(x[9])+db_sqr(x[18])+
         db_sqr(x[27])+db_sqr(x[36])+db_sqr(x[45])+
-        db_sqr(x[54])+db_sqr(x[63]));
+        db_sqr(x[54])+db_sqr(x[63]);
 }
 
 /*!
@@ -189,7 +189,7 @@ inline double db_OrthogonalizePair7(double *x,const double *v,double ssv)
     sp=db_ScalarProduct7(x,v);
     sp_m=sp*m;
     db_RowOperation7(x,v,sp_m);
-    return(sp*sp_m);
+    return sp*sp_m;
 }
 
 /*!
@@ -203,7 +203,7 @@ inline double db_OrthogonalizePair9(double *x,const double *v,double ssv)
     sp=db_ScalarProduct9(x,v);
     sp_m=sp*m;
     db_RowOperation9(x,v,sp_m);
-    return(sp*sp_m);
+    return sp*sp_m;
 }
 
 /*!
@@ -262,7 +262,7 @@ inline int db_ScalarProduct512_s(const short *f,const short *g)
     for(int i=1; i<=512; i++)
         back+=(*f++)*(*g++);
 
-    return(back);
+    return back;
 #endif
 }
 
@@ -280,7 +280,7 @@ inline int db_ScalarProduct32_s(const short *f,const short *g)
     back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++);
     back+=(*f++)*(*g++); back+=(*f++)*(*g++);
 
-    return(back);
+    return back;
 #endif
 }
 
@@ -323,7 +323,7 @@ inline int db_ScalarProduct128_s(const short *f,const short *g)
     back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++);
     back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++);
 
-    return(back);
+    return back;
 #else
 #ifdef DB_USE_SSE2
     int back;
@@ -420,7 +420,7 @@ inline int db_ScalarProduct128_s(const short *f,const short *g)
         emms
     }
 
-    return(back);
+    return back;
 #else
     int back;
 
@@ -584,7 +584,7 @@ inline int db_ScalarProduct128_s(const short *f,const short *g)
         emms
     }
 
-    return(back);
+    return back;
 #endif
 #endif /*DB_USE_MMX*/
 }
@@ -628,7 +628,7 @@ inline float db_ScalarProduct128Aligned16_f(const float *f,const float *g)
     back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++);
     back+=(*f++)*(*g++); back+=(*f++)*(*g++); back+=(*f++)*(*g++);
 
-    return(back);
+    return back;
 #else
     float back;
 
@@ -795,7 +795,7 @@ inline float db_ScalarProduct128Aligned16_f(const float *f,const float *g)
         movss  back,xmm7
     }
 
-    return(back);
+    return back;
 #endif /*DB_USE_SIMD*/
 }
 

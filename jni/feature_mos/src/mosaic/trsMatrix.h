@@ -36,17 +36,17 @@ int normProjMat33d(double m[3][3]);
 
 inline double ProjZ(double trs[3][3], double x, double y, double f)
 {
-    return ((trs)[2][0]*(x) + (trs)[2][1]*(y) + (trs)[2][2]*(f));
+    return (trs)[2][0]*(x) + (trs)[2][1]*(y) + (trs)[2][2]*(f);
 }
 
 inline double ProjX(double trs[3][3], double x, double y, double z, double f)
 {
-    return (((trs)[0][0]*(x) + (trs)[0][1]*(y) + (trs)[0][2]*(f)) / (z));
+    return ((trs)[0][0]*(x) + (trs)[0][1]*(y) + (trs)[0][2]*(f)) / (z);
 }
 
 inline double ProjY(double trs[3][3], double x, double y, double z, double f)
 {
-    return (((trs)[1][0]*(x) + (trs)[1][1]*(y) + (trs)[1][2]*(f)) / (z));
+    return ((trs)[1][0]*(x) + (trs)[1][1]*(y) + (trs)[1][2]*(f)) / (z);
 }
 
 

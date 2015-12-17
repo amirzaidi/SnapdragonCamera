@@ -130,6 +130,15 @@ public interface CameraManager {
          *            with the reconnect failure.
          */
         public void onReconnectionFailure(CameraManager mgr);
+
+        /**
+         * Callback when startPreview failure runtime exception is
+         * caught.
+         *
+         * @param cameraId The camera with the hardware failure.
+         */
+        public void onStartPreviewFailure(int cameraId);
+
     }
 
     /**
@@ -240,7 +249,6 @@ public interface CameraManager {
          */
         public void setPreviewDataCallbackWithBuffer(Handler handler, CameraPreviewDataCallback cb);
 
-        public void setOneShotPreviewCallback(Handler handler, CameraPreviewDataCallback cb);
         /**
          * Adds buffer for the preview callback.
          *

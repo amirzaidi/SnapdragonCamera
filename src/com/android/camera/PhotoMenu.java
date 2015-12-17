@@ -96,6 +96,9 @@ public class PhotoMenu extends MenuController
     private View mFrontBackSwitcher;
     private View mSceneModeSwitcher;
     private View mFilterModeSwitcher;
+    private View mCameraSwitcher;
+    private View mSettingMenu;
+    private View mPreviewThumbnail;
     private PhotoUI mUI;
     private int mPopupStatus;
     private int mPreviewMenuStatus;
@@ -125,6 +128,9 @@ public class PhotoMenu extends MenuController
         mSceneModeSwitcher = ui.getRootView().findViewById(R.id.scene_mode_switcher);
         mFilterModeSwitcher = ui.getRootView().findViewById(R.id.filter_mode_switcher);
         mMakeupListener = makeupListener;
+        mSettingMenu = ui.getRootView().findViewById(R.id.menu);
+        mCameraSwitcher = ui.getRootView().findViewById(R.id.camera_switcher);
+        mPreviewThumbnail = ui.getRootView().findViewById(R.id.preview_thumb);
     }
 
     public void initialize(PreferenceGroup group) {
@@ -242,9 +248,8 @@ public class PhotoMenu extends MenuController
     @Override
     // Hit when an item in a popup gets selected
     public void onListPrefChanged(ListPreference pref) {
-        animateFadeOut(mListSubMenu, 2);
         onSettingChanged(pref);
-        ((ListMenu) mListMenu).resetHighlight();
+        closeView();
     }
 
     public boolean handleBackKey() {
@@ -563,6 +568,11 @@ public class PhotoMenu extends MenuController
             return false;
         Rect rec = new Rect();
         mUI.getPreviewMenuLayout().getChildAt(0).getHitRect(rec);
+        if (View.LAYOUT_DIRECTION_RTL == TextUtils
+                .getLayoutDirectionFromLocale(Locale.getDefault())) {
+            rec.left = mUI.getRootView().getWidth() - (rec.right-rec.left);
+            rec.right = mUI.getRootView().getWidth();
+        }
         rec.top += (int) mUI.getPreviewMenuLayout().getY();
         rec.bottom += (int) mUI.getPreviewMenuLayout().getY();
         return rec.contains((int) ev.getX(), (int) ev.getY());
@@ -1024,6 +1034,7 @@ public class PhotoMenu extends MenuController
                             }
                             View border = v.findViewById(R.id.border);
                             border.setBackgroundResource(R.drawable.scene_mode_view_border_selected);
+                            animateSlideOutPreviewMenu();
                         }
 
                     }
@@ -1389,11 +1400,47 @@ public class PhotoMenu extends MenuController
                         mActivity.getString(R.string.pref_camera_advanced_feature_default));
             }
         }
+
+        String scene_auto = mActivity.getString(R.string
+                .pref_camera_scenemode_entry_auto);
+        if (notSame(pref, CameraSettings.KEY_SCENE_MODE, scene_auto)) {
+            setPreference(CameraSettings.KEY_COLOR_EFFECT,
+                    mActivity.getString(R.string.pref_camera_coloreffect_default));
+        }
         updateFilterModeIcon(pref, pref);
         super.onSettingChanged(pref);
     }
 
     public int getOrientation() {
         return mUI == null ? 0 : mUI.getOrientation();
+    }
+
+    public void hideTopMenu(boolean hide) {
+        if (hide) {
+            mSceneModeSwitcher.setVisibility(View.GONE);
+            mFilterModeSwitcher.setVisibility(View.GONE);
+            mFrontBackSwitcher.setVisibility(View.GONE);
+            mTsMakeupSwitcher.setVisibility(View.GONE);
+        } else {
+            mSceneModeSwitcher.setVisibility(View.VISIBLE);
+            mFilterModeSwitcher.setVisibility(View.VISIBLE);
+            mFrontBackSwitcher.setVisibility(View.VISIBLE);
+            mTsMakeupSwitcher.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void hideCameraControls(boolean hide) {
+        final int status = (hide) ? View.INVISIBLE : View.VISIBLE;
+        mSettingMenu.setVisibility(status);
+        mFrontBackSwitcher.setVisibility(status);
+        if (TsMakeupManager.HAS_TS_MAKEUP) {
+            mTsMakeupSwitcher.setVisibility(status);
+        } else {
+            mHdrSwitcher.setVisibility(status);
+        }
+        mSceneModeSwitcher.setVisibility(status);
+        mFilterModeSwitcher.setVisibility(status);
+        mCameraSwitcher.setVisibility(status);
+        mPreviewThumbnail.setVisibility(status);
     }
 }

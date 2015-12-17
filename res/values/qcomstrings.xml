@@ -568,7 +568,7 @@
 
     <!-- Default picture quality setting. See
          pref_camera_jpegquality_entryvalues for possible values -->
-    <string name="pref_camera_jpegquality_default" translatable="false">superfine</string>
+    <string name="pref_camera_jpegquality_default" translatable="false">85</string>
 
     <!-- Default Picture format setting. Do not translate. -->
     <string name="pref_camera_picture_format_default">jpeg</string>
@@ -725,15 +725,9 @@
     <string name="pref_camera_jpegquality_title">Picture quality</string>
 
     <!-- Settings screen, Picture quality dialog radio button choices -->
-    <string name="pref_camera_jpegquality_entry_superfine">Super fine</string>
-    <string name="pref_camera_jpegquality_entry_fine">Fine</string>
-    <string name="pref_camera_jpegquality_entry_normal">Normal</string>
-    <string name="pref_camera_jpegquality_entry_0">Jpeg 55%</string>
-    <string name="pref_camera_jpegquality_entry_1">Jpeg 65%</string>
-    <string name="pref_camera_jpegquality_entry_2">Jpeg 75%</string>
-    <string name="pref_camera_jpegquality_entry_3">Jpeg 85%</string>
-    <string name="pref_camera_jpegquality_entry_4">Jpeg 95%</string>
-    <string name="pref_camera_jpegquality_entry_5">Jpeg 100%</string>
+    <string name="pref_camera_jpegquality_entry_0">Low</string>
+    <string name="pref_camera_jpegquality_entry_1">Standard</string>
+    <string name="pref_camera_jpegquality_entry_2">High</string>
 
      <!-- Default auto histogram setting. Do not translate. -->
      <string name="pref_camera_histogram_default">disable</string>
@@ -804,7 +798,7 @@
     <!-- Toast showing error if invalid size selected for  time lapse  [CHAR LIMIT=65] -->
     <string name="time_lapse_error">Invalid video-size for time-lapse recording.</string>
 
-    <string name="pref_camera_videosnapsize_default" translatable="false">1920x1080</string>
+    <string name="pref_camera_videosnapsize_default" translatable="false">auto</string>
 
     <!-- longshot value -->
     <string name="pref_camera_longshot_default" translatable="false">off</string>
@@ -885,6 +879,9 @@
      <string name="pref_camera_tsmakeup_title">Beautification</string>
      <string name="pref_camera_tsmakeup_entry_on">On</string>
      <string name="pref_camera_tsmakeup_entry_off">Off</string>
+     <string name="pref_camera_tsmakeup_entry_low">Low</string>
+     <string name="pref_camera_tsmakeup_entry_mid">Mid</string>
+     <string name="pref_camera_tsmakeup_entry_high">High</string>
      <string name="pref_camera_tsmakeup_default" translatable="false">Off</string>
      <string name="pref_camera_tsmakeup_level_default" translatable="false">60</string>
      <string name="pref_camera_tsmakeup_custom">Custom</string>
@@ -897,8 +894,8 @@
 
     <string name="all_in_focus">All in Focus</string>
     <string name="refocus_toast">To re-focus last photo, tap here</string>
-    <string name="refocus_prompt_title">Macro+</string>
-    <string name="refocus_prompt_message">With Macro+, your camera will take 5 pictures, each time that you press the shutter button. The 5 pictures will be combined into 1 picture, where everything is in focus. You can choose to re-focus, after you take the picture.</string>
+    <string name="refocus_prompt_title">UbiFocus</string>
+    <string name="refocus_prompt_message">With UbiFocus, your camera will take 5 pictures, each time that you press the shutter button. The 5 pictures will be combined into 1 picture, where everything is in focus. You can choose to re-focus, after you take the picture.</string>
 
     <string name="camera_thermal_shutdown">Phone overheated, closing camera.</string>
     <string name="camera_server_died">Media server died, closing camera.</string>

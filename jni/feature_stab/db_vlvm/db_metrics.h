@@ -127,7 +127,7 @@ inline double db_SquaredReprojectionErrorHomography(const double y[2],const doub
     mult=1.0/((x2!=0.0)?x2:1.0);
     sd=db_sqr((y[0]-x0*mult))+db_sqr((y[1]-x1*mult));
 
-    return(sd);
+    return sd;
 }
 
 inline double db_SquaredInhomogenousHomographyError(const double y[2],const double H[9],const double x[2])
@@ -141,7 +141,7 @@ inline double db_SquaredInhomogenousHomographyError(const double y[2],const doub
     mult=1.0/((x2!=0.0)?x2:1.0);
     sd=db_sqr((y[0]-x0*mult))+db_sqr((y[1]-x1*mult));
 
-    return(sd);
+    return sd;
 }
 
 /*!
@@ -155,7 +155,7 @@ inline double db_ExpCauchyInhomogenousHomographyError(const double y[2],const do
 {
     double sd;
     sd=db_SquaredInhomogenousHomographyError(y,H,x);
-    return(1.0+sd*one_over_scale2);
+    return 1.0+sd*one_over_scale2;
 }
 
 /*!

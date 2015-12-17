@@ -560,7 +560,7 @@ inline double SquaredInhomogenousHomographyError(double y[3],double H[9],double 
     mult=1.0/((x2!=0.0)?x2:1.0);
     sd=(y[0]-x0*mult)*(y[0]-x0*mult)+(y[1]-x1*mult)*(y[1]-x1*mult);
 
-    return(sd);
+    return sd;
 }
 
 

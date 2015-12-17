@@ -384,10 +384,14 @@ public class WideAnglePanoramaModule
         // This is also forward compatible if we have a new facing other than
         // back or front in the future.
         if (cameraId == -1) cameraId = 0;
-        mCameraDevice = CameraUtil.openCamera(mActivity, cameraId,
-                mMainHandler, mActivity.getCameraOpenErrorCallback());
+
+        // If mCameraDevice has already exist,there is no need to obtain again
         if (mCameraDevice == null) {
-            return false;
+            mCameraDevice = CameraUtil.openCamera(mActivity, cameraId,
+                    mMainHandler, mActivity.getCameraOpenErrorCallback());
+            if (mCameraDevice == null) {
+                return false;
+            }
         }
         mCameraOrientation = CameraUtil.getCameraOrientation(cameraId);
         if (cameraId == CameraHolder.instance().getFrontCameraId()) mUsingFrontCamera = true;
@@ -495,9 +499,6 @@ public class WideAnglePanoramaModule
             mMosaicPreviewRenderer = renderer;
             mCameraTexture = mMosaicPreviewRenderer.getInputSurfaceTexture();
 
-            if (!mPaused && !mThreadRunning && mWaitProcessorTask == null) {
-                mMainHandler.sendEmptyMessage(MSG_RESET_TO_PREVIEW);
-            }
             mRendererLock.notifyAll();
         }
         mMosaicPreviewConfigured = true;
@@ -515,9 +516,14 @@ public class WideAnglePanoramaModule
         if (mCaptureState == CAPTURE_STATE_MOSAIC){
             capturePending = true;
         }
-        mPreviewUIWidth = r - l;
-        mPreviewUIHeight = b - t;
-        configMosaicPreview();
+        int width = r -l;
+        int height = b - t;
+        if (mPreviewUIWidth != width || mPreviewUIHeight != height
+                || mCameraState != PREVIEW_ACTIVE) {
+            mPreviewUIWidth = r - l;
+            mPreviewUIHeight = b - t;
+            configMosaicPreview();
+        }
         if (capturePending == true){
             mMainHandler.post(new Runnable() {
                 @Override
@@ -949,6 +955,7 @@ public class WideAnglePanoramaModule
         mCaptureState = CAPTURE_STATE_VIEWFINDER;
 
         if (!setupCamera()) {
+            CameraUtil.showErrorAndFinish(mActivity, R.string.cannot_connect_camera);
             Log.e(TAG, "Failed to open camera, aborting");
             return;
         }
@@ -967,7 +974,9 @@ public class WideAnglePanoramaModule
         } else {
             // Camera must be initialized before MosaicFrameProcessor is
             // initialized. The preview size has to be decided by camera device.
-            initMosaicFrameProcessorIfNeeded();
+            if (! mMosaicFrameProcessorInitialized) {
+                initMosaicFrameProcessorIfNeeded();
+            }
             Point size = mUI.getPreviewAreaSize();
             mPreviewUIWidth = size.x;
             mPreviewUIHeight = size.y;

@@ -28,7 +28,7 @@
 
 inline double hypotSq(double a, double b)
 {
-    return ((a)*(a)+(b)*(b));
+    return (a)*(a)+(b)*(b);
 }
 
 inline void ClipRect(double x, double y, BlendRect &brect)

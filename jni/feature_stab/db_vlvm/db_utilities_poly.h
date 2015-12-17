@@ -90,7 +90,7 @@ DB_API void db_SolveQuarticForced(double *roots,int *nr_roots,double a,double b,
 
 inline double db_PolyEval1(const double p[2],double x)
 {
-    return(p[0]+x*p[1]);
+    return p[0]+x*p[1];
 }
 
 inline void db_MultiplyPoly1_1(double *d,const double *a,const double *b)

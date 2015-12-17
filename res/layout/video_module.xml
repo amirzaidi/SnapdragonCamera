@@ -19,6 +19,7 @@
     android:layout_height="match_parent"
     android:layout_gravity="center" >
     <FrameLayout
+        android:id="@+id/preview_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center_vertical|center_horizontal" >
@@ -61,7 +62,7 @@
             <com.android.camera.PauseButton android:id="@+id/video_pause"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:layout_marginLeft="50dp"
+                android:layout_marginLeft="70dp"
                 android:padding="23dp"
                 android:visibility="gone"
                 android:src="@drawable/btn_pause_recording"/>
