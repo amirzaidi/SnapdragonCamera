@@ -100,7 +100,9 @@
     <include layout="@layout/camera_controls"
         android:layout_gravity="center"
         style="@style/CameraControls"/>
-
+    <include layout="@layout/menu_help"
+        android:layout_gravity="center"
+        style="@style/CameraControls"/>
     <RelativeLayout
         android:id="@+id/id_tsmakeup_level_layout_root"
         android:layout_width="match_parent"
