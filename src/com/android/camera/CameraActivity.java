@@ -223,7 +223,8 @@ public class CameraActivity extends Activity
     private LocalMediaObserver mLocalImagesObserver;
     private LocalMediaObserver mLocalVideosObserver;
 
-    private final int DEFAULT_SYSTEM_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+    private final int DEFAULT_SYSTEM_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                                   | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 
     private boolean mPendingDeletion = false;
 
@@ -639,19 +640,12 @@ public class CameraActivity extends Activity
 
         View decorView = getWindow().getDecorView();
         int currentSystemUIVisibility = decorView.getSystemUiVisibility();
-        boolean hidePreview = getResources().getBoolean(R.bool.hide_navigation_bar);
-
-        int systemUIVisibility = DEFAULT_SYSTEM_UI_VISIBILITY;
-        if (hidePreview)
-            systemUIVisibility |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-
-        int systemUINotVisible = View.SYSTEM_UI_FLAG_LOW_PROFILE | View.SYSTEM_UI_FLAG_FULLSCREEN;
-        if (hidePreview)
-            systemUINotVisible |= (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-
-        int newSystemUIVisibility = systemUIVisibility
-                | (visible ? View.SYSTEM_UI_FLAG_VISIBLE : systemUINotVisible);
+        int newSystemUIVisibility = DEFAULT_SYSTEM_UI_VISIBILITY
+                | (visible ? View.SYSTEM_UI_FLAG_VISIBLE :
+                    View.SYSTEM_UI_FLAG_LOW_PROFILE
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         if (newSystemUIVisibility != currentSystemUIVisibility) {
             decorView.setSystemUiVisibility(newSystemUIVisibility);
         }
