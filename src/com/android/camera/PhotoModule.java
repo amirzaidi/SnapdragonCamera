@@ -1579,6 +1579,8 @@ public class PhotoModule
         mPreviewRestartSupport &= CameraSettings.isInternalPreviewSupported(
                 mParameters);
         mPreviewRestartSupport &= (mBurstSnapNum == 1);
+        // Restart is needed  if HDR is enabled
+        mPreviewRestartSupport &= !CameraUtil.SCENE_MODE_HDR.equals(mSceneMode);
         mPreviewRestartSupport &= PIXEL_FORMAT_JPEG.equalsIgnoreCase(
                 pictureFormat);
 
