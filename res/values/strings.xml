@@ -437,7 +437,7 @@
     <string name="advanced_capture_disable_continuous_shot">Enable Advanced Capture will disable Continuous Shot.</string>
 
     <!-- Toast after enable 2k4k video quality to inform IS has disabled -->
-    <string name="video_quality_4k_disable_IS">Enable 4k video quality will disable IS.</string>
+    <string name="video_quality_4k_disable_IS">Enable 4k video quality will disable Image Stabilization.</string>
 
     <!-- Toast after 2k4k video is enabled to inform SeeMore has been disabled -->
     <string name="video_quality_4k_disable_SeeMore">SeeMore cannot be enabled during 4k video.</string>

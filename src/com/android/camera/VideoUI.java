@@ -51,6 +51,7 @@ import com.android.camera.ui.ListSubMenu;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.RenderOverlay;
+import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.ui.ZoomRenderer;
@@ -115,6 +116,7 @@ public class VideoUI implements PieRenderer.PieListener,
     private int mScreenRatio = CameraUtil.RATIO_UNKNOWN;
     private int mTopMargin = 0;
     private int mBottomMargin = 0;
+    private RotateImageView mMuteButton;
 
     private OnLayoutChangeListener mLayoutListener = new OnLayoutChangeListener() {
         @Override
@@ -228,6 +230,25 @@ public class VideoUI implements PieRenderer.PieListener,
             public void onClick(View v) {
                 mSwitcher.showPopup();
                 mSwitcher.setOrientation(mOrientation, false);
+            }
+        });
+
+        mMuteButton = (RotateImageView)mRootView.findViewById(R.id.mute_button);
+        mMuteButton.setVisibility(View.VISIBLE);
+        if(!((VideoModule)mController).isAudioMute()) {
+            mMuteButton.setImageResource(R.drawable.ic_unmuted_button);
+        } else {
+            mMuteButton.setImageResource(R.drawable.ic_muted_button);
+        }
+        mMuteButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isEnabled = !((VideoModule)mController).isAudioMute();
+                ((VideoModule)mController).setMute(isEnabled, true);
+                if(!isEnabled)
+                    mMuteButton.setImageResource(R.drawable.ic_unmuted_button);
+                else
+                    mMuteButton.setImageResource(R.drawable.ic_muted_button);
             }
         });
 
@@ -664,6 +685,13 @@ public class VideoUI implements PieRenderer.PieListener,
         if (mPopup != null) {
             mPopup.dismiss(topLevelOnly);
         }
+    }
+
+    public boolean is4KEnabled() {
+        if(mController != null)
+            return ((VideoModule)mController).is4KEnabled();
+        else
+            return false;
     }
 
     private void popupDismissed() {

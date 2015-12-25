@@ -231,6 +231,13 @@
             camera:entries="@array/pref_camera_skinToneEnhancement_entries"
             camera:entryValues="@array/pref_camera_skinToneEnhancement_entryvalues" />
     <IconListPreference
+            camera:key="pref_selfie_flash_key"
+            camera:defaultValue="@string/pref_selfie_flash_default"
+            camera:entries="@array/pref_selfie_flash_entries"
+            camera:entryValues="@array/pref_selfie_flash_entryvalues"
+            camera:singleIcon="@drawable/ic_settings_flash"
+            camera:title="@string/pref_selfie_flash_title" />
+    <IconListPreference
             camera:key="pref_camera_facedetection_key"
             camera:defaultValue="@string/pref_camera_facedetection_default"
             camera:title="@string/pref_camera_facedetection_title"

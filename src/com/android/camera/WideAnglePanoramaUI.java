@@ -50,6 +50,7 @@ import android.widget.TextView;
 import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CameraRootView;
 import com.android.camera.ui.ModuleSwitcher;
+import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
@@ -88,6 +89,7 @@ public class WideAnglePanoramaUI implements
     private ShutterButton mShutterButton;
     private CameraControls mCameraControls;
     private ImageView mThumbnail;
+    private Bitmap mThumbnailBitmap;
 
     private Matrix mProgressDirectionMatrix = new Matrix();
     private float[] mProgressAngle = new float[2];
@@ -136,6 +138,9 @@ public class WideAnglePanoramaUI implements
                 mSwitcher.setOrientation(mOrientation, false);
             }
         });
+
+        RotateImageView muteButton = (RotateImageView)mRootView.findViewById(R.id.mute_button);
+        muteButton.setVisibility(View.GONE);
     }
 
     public void onStartCapture() {
@@ -299,7 +304,7 @@ public class WideAnglePanoramaUI implements
         mCaptureProgressBar.setVisibility(View.INVISIBLE);
     }
 
-    public void showFinalMosaic(Bitmap bitmap, int orientation) {
+    public void saveFinalMosaic(Bitmap bitmap, int orientation) {
         if (bitmap != null && orientation != 0) {
             Matrix rotateMatrix = new Matrix();
             rotateMatrix.setRotate(orientation);
@@ -316,7 +321,14 @@ public class WideAnglePanoramaUI implements
         // a framework bug. Call requestLayout() as a workaround.
         mSavingProgressBar.requestLayout();
 
-        mActivity.updateThumbnail(bitmap);
+        mThumbnailBitmap = bitmap;
+    }
+
+    public void showFinalMosaic() {
+        if (mThumbnailBitmap == null) return;
+        mActivity.updateThumbnail(mThumbnailBitmap);
+        mThumbnailBitmap.recycle();
+        mThumbnailBitmap = null;
     }
 
     public void onConfigurationChanged(

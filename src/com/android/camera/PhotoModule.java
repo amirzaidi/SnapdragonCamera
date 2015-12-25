@@ -336,6 +336,7 @@ public class PhotoModule
 
     private String mSceneMode;
     private String mCurrTouchAfAec = Parameters.TOUCH_AF_AEC_ON;
+    private String mSavedFlashMode = null;
 
     private final Handler mHandler = new MainHandler();
     private MessageQueue.IdleHandler mIdleHandler = null;
@@ -360,6 +361,23 @@ public class PhotoModule
 
     private int mJpegFileSizeEstimation = 0;
     private int mRemainingPhotos = -1;
+    private static final int SELFIE_FLASH_DURATION = 680;
+
+    private class SelfieThread extends Thread {
+        public void run() {
+            try {
+                Thread.sleep(SELFIE_FLASH_DURATION);
+                mActivity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        mFocusManager.doSnap();
+                    }
+                });
+            } catch(InterruptedException e) {
+            }
+            selfieThread = null;
+        }
+    }
+    private SelfieThread selfieThread;
 
     private MediaSaveService.OnMediaSavedListener mOnMediaSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
@@ -532,7 +550,6 @@ public class PhotoModule
         if (mCameraState == SNAPSHOT_IN_PROGRESS) {
             return;
         }
-        mUI.hidePreviewCover();
         setCameraState(IDLE);
         mFocusManager.onPreviewStarted();
         startFaceDetection();
@@ -1170,6 +1187,7 @@ public class PhotoModule
 
         @Override
         public void onPictureTaken(final byte [] jpegData, CameraProxy camera) {
+            mUI.stopSelfieFlash();
             mUI.enableShutter(true);
             if (mPaused) {
                 return;
@@ -1766,7 +1784,7 @@ public class PhotoModule
                 pref_camera_coloreffect_default);
             exposureCompensation = CameraSettings.EXPOSURE_DEFAULT_VALUE;
 
-            overrideCameraSettings(flashMode, null, focusMode,
+            overrideCameraSettings(null, null, focusMode,
                                    exposureCompensation, touchAfAec, null,
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
@@ -1795,7 +1813,7 @@ public class PhotoModule
                 Integer.toString(mParameters.getExposureCompensation());
             touchAfAec = mCurrTouchAfAec;
 
-            overrideCameraSettings(flashMode, whiteBalance, focusMode,
+            overrideCameraSettings(null, whiteBalance, focusMode,
                     exposureCompensation, touchAfAec,
                     mParameters.getAutoExposure(),
                     Integer.toString(mParameters.getSaturation()),
@@ -1805,7 +1823,7 @@ public class PhotoModule
                     sceneMode, redeyeReduction, aeBracketing);
         } else if (mFocusManager.isZslEnabled()) {
             focusMode = mParameters.getFocusMode();
-            overrideCameraSettings(flashMode, null, focusMode,
+            overrideCameraSettings(null, null, focusMode,
                                    exposureCompensation, touchAfAec, null,
                                    null, null, null, colorEffect,
                                    sceneMode, redeyeReduction, aeBracketing);
@@ -1813,7 +1831,7 @@ public class PhotoModule
             if (mManual3AEnabled > 0) {
                 updateCommonManual3ASettings();
             } else {
-                overrideCameraSettings(flashMode, null, focusMode,
+                overrideCameraSettings(null, null, focusMode,
                                        exposureCompensation, touchAfAec, null,
                                        null, null, null, colorEffect,
                                        sceneMode, redeyeReduction, aeBracketing);
@@ -1822,9 +1840,8 @@ public class PhotoModule
         /* Disable focus if aebracket is ON */
         String aeBracket = mParameters.get(CameraSettings.KEY_QC_AE_BRACKETING);
         if (!aeBracket.equalsIgnoreCase("off")) {
-            String fMode = Parameters.FLASH_MODE_OFF;
-            mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, fMode);
-            mParameters.setFlashMode(fMode);
+            flashMode = Parameters.FLASH_MODE_OFF;
+            mParameters.setFlashMode(flashMode);
         }
         if (disableLongShot) {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
@@ -1832,6 +1849,28 @@ public class PhotoModule
         } else {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, null);
         }
+
+        if (flashMode == null) {
+            // Restore saved flash mode or default mode
+            if (mSavedFlashMode == null) {
+                mSavedFlashMode =  mPreferences.getString(
+                    CameraSettings.KEY_FLASH_MODE,
+                    mActivity.getString(R.string.pref_camera_flashmode_default));
+            }
+            mUI.setPreference(CameraSettings.KEY_FLASH_MODE, mSavedFlashMode);
+            mSavedFlashMode = null;
+        } else {
+            // Save the current flash mode
+            if (mSavedFlashMode == null) {
+                mSavedFlashMode =  mPreferences.getString(
+                    CameraSettings.KEY_FLASH_MODE,
+                    mActivity.getString(R.string.pref_camera_flashmode_default));
+            }
+            mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, flashMode);
+        }
+
+        if(mCameraId != CameraHolder.instance().getFrontCameraId())
+            CameraSettings.removePreferenceFromScreen(mPreferenceGroup, CameraSettings.KEY_SELFIE_FLASH);
     }
 
     private void overrideCameraSettings(final String flashMode,
@@ -2143,8 +2182,25 @@ public class PhotoModule
                     mActivity.getString(R.string.pref_camera_zsl_default));
             mUI.overrideSettings(CameraSettings.KEY_ZSL, zsl);
             mUI.startCountDown(seconds, playSound);
+
         } else {
             mSnapshotOnIdle = false;
+            initiateSnap();
+        }
+    }
+
+    private void initiateSnap()
+    {
+        if(mPreferences.getString(CameraSettings.KEY_SELFIE_FLASH,
+                mActivity.getString(R.string.pref_selfie_flash_default))
+                .equalsIgnoreCase("on") &&
+                mCameraId == CameraHolder.instance().getFrontCameraId()) {
+            mUI.startSelfieFlash();
+            if(selfieThread == null) {
+                selfieThread = new SelfieThread();
+                selfieThread.start();
+            }
+        } else {
             mFocusManager.doSnap();
         }
     }
@@ -2331,6 +2387,11 @@ public class PhotoModule
             mSoundPool.release();
             mSoundPool = null;
         }
+
+        if(selfieThread != null) {
+            selfieThread.interrupt();
+        }
+        mUI.stopSelfieFlash();
 
         Log.d(TAG, "remove idle handleer in onPause");
         removeIdleHandler();
@@ -2688,8 +2749,15 @@ public class PhotoModule
         }
 
         setCameraParameters(UPDATE_PARAM_ALL);
-
+        mCameraDevice.setOneShotPreviewCallback(mHandler,
+                new CameraManager.CameraPreviewDataCallback() {
+                    @Override
+                    public void onPreviewFrame(byte[] data, CameraProxy camera) {
+                        mUI.hidePreviewCover();
+                    }
+                });
         mCameraDevice.startPreview();
+
         mHandler.sendEmptyMessage(ON_PREVIEW_STARTED);
 
         setDisplayOrientation();
@@ -3624,9 +3692,15 @@ public class PhotoModule
 
         if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
             // Set flash mode.
-            String flashMode = mPreferences.getString(
+            String flashMode;
+            if (mSavedFlashMode == null) {
+                flashMode = mPreferences.getString(
                     CameraSettings.KEY_FLASH_MODE,
                     mActivity.getString(R.string.pref_camera_flashmode_default));
+            } else {
+                flashMode = mSavedFlashMode;
+            }
+
             List<String> supportedFlash = mParameters.getSupportedFlashModes();
             if (CameraUtil.isSupported(flashMode, supportedFlash)) {
                 mParameters.setFlashMode(flashMode);
@@ -4426,7 +4500,7 @@ public class PhotoModule
     @Override
     public void onCountDownFinished() {
         mSnapshotOnIdle = false;
-        mFocusManager.doSnap();
+        initiateSnap();
         mFocusManager.onShutterUp();
         mUI.overrideSettings(CameraSettings.KEY_ZSL, null);
         mUI.showUIAfterCountDown();

@@ -291,6 +291,16 @@
     <string name="pref_camera_facedetection_entry_off">Off</string>
     <string name="pref_camera_facedetection_entry_on">On</string>
 
+    <!-- Default Selfie Flash setting. -->
+    <string name="pref_selfie_flash_default" translatable="false">off</string>
+
+    <!-- Settings screen, Selfie Flash Detection -->
+    <string name="pref_selfie_flash_title">Selfie Flash</string>
+
+    <!-- Settings menu, Selfie Flash choices -->
+    <string name="pref_selfie_flash_entry_off">Off</string>
+    <string name="pref_selfie_flash_entry_on">On</string>
+
      <!-- Default redeye reduction setting. -->
      <string name="pref_camera_redeyereduction_default" translatable="false">disable</string>
 
@@ -304,13 +314,13 @@
      <string name="pref_camera_mce_default">enable</string>
 
      <!-- The message is shown in toast when the app encounters an unsupported selection for HFR/HSR mode -->
-     <string name="error_app_unsupported_hfr_selection">HFR/HSR is not supported for DIS/TimeLapse/HDR</string>
+     <string name="error_app_unsupported_hfr_selection">HFR/HSR is not supported for Image Stabilization/TimeLapse/HDR</string>
 
      <!-- The message is shown in dialog when the app encounters an unsupported resolution for HFR mode -->
      <string name="error_app_unsupported_hfr">HFR is not supported for selected resolution</string>
 
      <!-- The message is shown in toast when the app encounters an unsupported resolution for DIS mode -->
-     <string name="error_app_unsupported_dis">Unsupported video resolution for Display Image Stabilization(DIS)</string>
+     <string name="error_app_unsupported_dis">Unsupported video resolution for Image Stabilization</string>
 
      <!-- The message is shown in dialog when the app
          encounters an unsupported resolution for HSR mode -->
@@ -494,7 +504,7 @@
     <string name="pref_camera_touchafaec_entry_on">On</string>
 
     <!-- Select IS title -->
-    <string name="pref_camera_dis_title">IS</string>
+    <string name="pref_camera_dis_title">Image Stabilization</string>
     <string name="pref_camera_dis_default">disable</string>
 
     <!-- DIS choices -->
@@ -900,5 +910,7 @@
     <string name="camera_thermal_shutdown">Phone overheated, closing camera.</string>
     <string name="camera_server_died">Media server died, closing camera.</string>
     <string name="camera_unknown_error">Unknown error, closing camera.</string>
+
+    <string name="mute_button_desc">Mute Button</string>
 </resources>
 
