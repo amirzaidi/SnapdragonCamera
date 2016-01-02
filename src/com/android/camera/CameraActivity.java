@@ -639,19 +639,18 @@ public class CameraActivity extends Activity
 
         View decorView = getWindow().getDecorView();
         int currentSystemUIVisibility = decorView.getSystemUiVisibility();
-        boolean hidePreview = getResources().getBoolean(R.bool.hide_navigation_bar);
-
+        boolean hidePreview = SystemProperties.getBoolean("camera.ui.no_navigation_bar", false);
         int systemUIVisibility = DEFAULT_SYSTEM_UI_VISIBILITY;
-        if (hidePreview)
-            systemUIVisibility |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-
         int systemUINotVisible = View.SYSTEM_UI_FLAG_LOW_PROFILE | View.SYSTEM_UI_FLAG_FULLSCREEN;
-        if (hidePreview)
+        if (hidePreview) {
+            systemUIVisibility |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
             systemUINotVisible |= (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
 
         int newSystemUIVisibility = systemUIVisibility
                 | (visible ? View.SYSTEM_UI_FLAG_VISIBLE : systemUINotVisible);
+
         if (newSystemUIVisibility != currentSystemUIVisibility) {
             decorView.setSystemUiVisibility(newSystemUIVisibility);
         }

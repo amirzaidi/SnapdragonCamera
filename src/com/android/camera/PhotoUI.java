@@ -168,6 +168,12 @@ public class PhotoUI implements PieListener,
                 int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
             if (mMenu != null)
                 mMenu.tryToCloseSubList();
+
+            Camera.Parameters parameters = ((PhotoModule)mController).getParameters();
+            if(parameters != null) {
+                Camera.Size size = parameters.getPreviewSize();
+                setAspectRatio((float) size.width / size.height);
+            }
         }
     };
 
@@ -397,14 +403,14 @@ public class PhotoUI implements PieListener,
                 if (width > height) {
                     if(Math.max(width, height * mAspectRatio) > width) {
                         scaledTextureWidth = width;
-                        scaledTextureHeight = height;
+                        scaledTextureHeight = width / mAspectRatio;
                     } else {
                         scaledTextureWidth = height * mAspectRatio;
                         scaledTextureHeight = height;
                     }
                 } else {
                     if(Math.max(height, width * mAspectRatio) > height) {
-                        scaledTextureWidth = width;
+                        scaledTextureWidth = height / mAspectRatio;
                         scaledTextureHeight = height;
                     } else {
                         scaledTextureWidth = width;

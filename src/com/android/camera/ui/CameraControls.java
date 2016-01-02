@@ -97,6 +97,7 @@ public class CameraControls extends RotatableLayout {
     private Paint mPaint;
 
     private static final int LOW_REMAINING_PHOTOS = 20;
+    private static final int HIGH_REMAINING_PHOTOS = 1000000;
 
     AnimatorListener outlistener = new AnimatorListener() {
         @Override
@@ -903,7 +904,11 @@ public class CameraControls extends RotatableLayout {
         if (mOrientation == 90 || mOrientation == 270) {
             vc -= w / 2;
         }
-        mRemainingPhotos.layout(hc - w / 2, vc - h / 2, hc + w / 2, vc + h / 2);
+        if(hc < w/2) {
+            mRemainingPhotos.layout(0, vc - h / 2, w, vc + h / 2);
+        } else {
+            mRemainingPhotos.layout(hc - w / 2, vc - h / 2, hc + w / 2, vc + h / 2);
+        }
         mRemainingPhotos.setRotation(-mOrientation);
     }
 
@@ -917,6 +922,8 @@ public class CameraControls extends RotatableLayout {
             }
             if (remaining < LOW_REMAINING_PHOTOS) {
                 mRemainingPhotosText.setText("<" + LOW_REMAINING_PHOTOS + " ");
+            } else if (remaining >= HIGH_REMAINING_PHOTOS) {
+                mRemainingPhotosText.setText(">" + HIGH_REMAINING_PHOTOS);
             } else {
                 mRemainingPhotosText.setText(remaining + " ");
             }
