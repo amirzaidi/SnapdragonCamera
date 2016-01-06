@@ -708,7 +708,8 @@ public class VideoMenu extends MenuController
             }
 
             ListPreference pref_SeeMore = mPreferenceGroup.findPreference(CameraSettings.KEY_SEE_MORE);
-            if(pref_SeeMore.getValue() != null && pref_SeeMore.getValue().equals("on")) {
+            if(pref_SeeMore != null && pref_SeeMore.getValue() != null
+                    && pref_SeeMore.getValue().equals("on")) {
                 mListMenu.setPreferenceEnabled(
                         CameraSettings.KEY_VIDEO_CDS_MODE,false);
                 mListMenu.overrideSettings(
