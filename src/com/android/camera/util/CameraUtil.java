@@ -1131,35 +1131,39 @@ public class CameraUtil {
     }
 
     public static int determinCloseRatio(float ratio) {
-        if (ratio < 1) {
-            ratio = 1 / ratio;
-        }
-
-        float diffFrom_4_3 = ((float) 4 / 3) / ratio;
-        if (diffFrom_4_3 < 1) {
-            diffFrom_4_3 = 1 / diffFrom_4_3;
-        }
-
-        float diffFrom_16_9 = ((float) 16 / 9) / ratio;
-        if (diffFrom_16_9 < 1) {
-            diffFrom_16_9 = 1 / diffFrom_16_9;
-        }
-
-        float diffFrom_3_2 = ((float) 3 / 2) / ratio;
-        if (diffFrom_3_2 < 1) {
-            diffFrom_3_2 = 1 / diffFrom_3_2;
-        }
         int retRatio = RATIO_UNKNOWN;
-        float minDiffRatio = diffFrom_3_2;
-        if (diffFrom_3_2 < diffFrom_4_3) {
-            retRatio = RATIO_3_2;
-            minDiffRatio = diffFrom_3_2;
-        } else {
-            retRatio = RATIO_4_3;
-            minDiffRatio = diffFrom_4_3;
-        }
-        if (minDiffRatio > diffFrom_16_9) {
-            retRatio = RATIO_16_9;
+
+        if (ratio != 1.0) {
+
+            if (ratio < 1) {
+                ratio = 1 / ratio;
+            }
+
+            float diffFrom_4_3 = ((float) 4 / 3) / ratio;
+            if (diffFrom_4_3 < 1) {
+                diffFrom_4_3 = 1 / diffFrom_4_3;
+            }
+
+            float diffFrom_16_9 = ((float) 16 / 9) / ratio;
+            if (diffFrom_16_9 < 1) {
+                diffFrom_16_9 = 1 / diffFrom_16_9;
+            }
+
+            float diffFrom_3_2 = ((float) 3 / 2) / ratio;
+            if (diffFrom_3_2 < 1) {
+                diffFrom_3_2 = 1 / diffFrom_3_2;
+            }
+            float minDiffRatio = diffFrom_3_2;
+            if (diffFrom_3_2 < diffFrom_4_3) {
+                retRatio = RATIO_3_2;
+                minDiffRatio = diffFrom_3_2;
+            } else {
+                retRatio = RATIO_4_3;
+                minDiffRatio = diffFrom_4_3;
+            }
+            if (minDiffRatio > diffFrom_16_9) {
+                retRatio = RATIO_16_9;
+            }
         }
         return retRatio;
     }

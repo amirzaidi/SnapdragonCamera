@@ -400,8 +400,7 @@ public class PhotoMenu extends MenuController
                     initializePopup();
                     mPopupStatus = POPUP_NONE;
                     mUI.cleanupListview();
-                }
-                else if (level == 2) {
+                } else if (level == 2) {
                     mUI.dismissLevel2();
                     mPopupStatus = POPUP_FIRST_LEVEL;
                 }
@@ -414,8 +413,7 @@ public class PhotoMenu extends MenuController
                     initializePopup();
                     mPopupStatus = POPUP_NONE;
                     mUI.cleanupListview();
-                }
-                else if (level == 2) {
+                } else if (level == 2) {
                     mUI.dismissLevel2();
                     mPopupStatus = POPUP_FIRST_LEVEL;
                 }
@@ -765,6 +763,13 @@ public class PhotoMenu extends MenuController
             }
         }
 
+        if ((autohdr != null) && autohdr.equals("enable")) {
+            mHdrSwitcher.setVisibility(View.GONE);
+            mUI.getCameraControls().removeFromViewList(mHdrSwitcher);
+        } else {
+            mHdrSwitcher.setVisibility(View.VISIBLE);
+        }
+
         if (mListener != null) {
             mListener.onSharedPreferenceChanged();
         }
@@ -1012,6 +1017,7 @@ public class PhotoMenu extends MenuController
         final View[] views = new View[entries.length];
         int init = pref.getCurrentIndex();
         for (int i = 0; i < entries.length; i++) {
+
             RotateLayout layout2 = (RotateLayout) inflater.inflate(
                     R.layout.scene_mode_view, null, false);
 
@@ -1055,6 +1061,13 @@ public class PhotoMenu extends MenuController
             // ASD only available when developer options are enabled.
             if(entryValues[i].equals("asd")) {
                 layout2.setVisibility(mActivity.isDeveloperMenuEnabled()?View.VISIBLE:View.GONE);
+            }
+
+            if(entryValues[i].equals("hdr")) {
+                ListPreference autoHdrPref = mPreferenceGroup.findPreference(CameraSettings.KEY_AUTO_HDR);
+                if (autoHdrPref != null && autoHdrPref.getValue().equalsIgnoreCase("enable")) {
+                    layout2.setVisibility(View.GONE);
+                }
             }
         }
         previewMenuLayout.addView(basic);
@@ -1409,6 +1422,15 @@ public class PhotoMenu extends MenuController
             setPreference(CameraSettings.KEY_COLOR_EFFECT,
                     mActivity.getString(R.string.pref_camera_coloreffect_default));
         }
+
+        ListPreference autoHdrPref = mPreferenceGroup.findPreference(CameraSettings.KEY_AUTO_HDR);
+        if (autoHdrPref != null && autoHdrPref.getValue().equalsIgnoreCase("enable")) {
+            mHdrSwitcher.setVisibility(View.GONE);
+            mUI.getCameraControls().removeFromViewList(mHdrSwitcher);
+        } else {
+            mHdrSwitcher.setVisibility(View.VISIBLE);
+        }
+
         updateFilterModeIcon(pref, pref);
         super.onSettingChanged(pref);
     }

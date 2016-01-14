@@ -261,6 +261,12 @@ public class CameraControls extends RotatableLayout {
             mViewList.add(mMute);
     }
 
+    public void removeFromViewList(View view) {
+        if(mViewList != null) {
+            mViewList.remove(view);
+        }
+    }
+
     @Override
     public void onFinishInflate() {
         super.onFinishInflate();
