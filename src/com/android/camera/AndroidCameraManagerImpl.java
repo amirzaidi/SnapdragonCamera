@@ -675,7 +675,7 @@ class AndroidCameraManagerImpl implements CameraManager {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (currentCamera.equals(mCamera.getCamera())) {
+                    if ((currentCamera != null) && currentCamera.equals(mCamera.getCamera())) {
                         mCallback.onAutoFocus(b, mCamera);
                     }
                 }
@@ -720,7 +720,7 @@ class AndroidCameraManagerImpl implements CameraManager {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (currentCamera.equals(mCamera.getCamera())) {
+                    if ((currentCamera != null) && currentCamera.equals(mCamera.getCamera())) {
                         mCallback.onAutoFocusMoving(moving, mCamera);
                     }
                 }
@@ -765,7 +765,7 @@ class AndroidCameraManagerImpl implements CameraManager {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (currentCamera.equals(mCamera.getCamera())) {
+                    if ((currentCamera != null) && currentCamera.equals(mCamera.getCamera())) {
                         mCallback.onShutter(mCamera);
                     }
                 }
@@ -857,7 +857,7 @@ class AndroidCameraManagerImpl implements CameraManager {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (currentCamera.equals(mCamera.getCamera())) {
+                    if ((currentCamera != null) && currentCamera.equals(mCamera.getCamera())) {
                         mCallback.onPreviewFrame(data, mCamera);
                     }
                 }
@@ -900,7 +900,7 @@ class AndroidCameraManagerImpl implements CameraManager {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (currentCamera.equals(mCamera.getCamera())) {
+                    if ((currentCamera != null) && currentCamera.equals(mCamera.getCamera())) {
                         mCallback.onFaceDetection(faces, mCamera);
                     }
                 }
