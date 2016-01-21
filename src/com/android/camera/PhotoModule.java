@@ -3446,6 +3446,11 @@ public class PhotoModule
             String fMode = Parameters.FLASH_MODE_OFF;
             mParameters.setFlashMode(fMode);
         }
+
+        if(!mFocusManager.getFocusMode().equals(Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) &&
+            !mFocusManager.isFocusCompleted()) {
+            mUI.clearFocus();
+        }
     }
 
     private int estimateJpegFileSize(final Size size, final String quality) {
