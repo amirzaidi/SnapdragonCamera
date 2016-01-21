@@ -379,12 +379,53 @@ public class PhotoModule
     }
     private SelfieThread selfieThread;
 
+    private class MediaSaveNotifyThread extends Thread
+    {
+        private Uri uri;
+        public MediaSaveNotifyThread(Uri uri)
+        {
+            this.uri = uri;
+        }
+        public void setUri(Uri uri)
+        {
+            this.uri = uri;
+        }
+        public void run()
+        {
+            while(mLongshotActive) {
+                try {
+                    Thread.sleep(10);
+                } catch(InterruptedException e) {
+                }
+            }
+            mActivity.runOnUiThread(new Runnable() {
+                public void run() {
+                    if (uri != null)
+                        mActivity.notifyNewMedia(uri);
+                    mActivity.updateStorageSpaceAndHint();
+                    updateRemainingPhotos();
+                }
+            });
+            mediaSaveNotifyThread = null;
+        }
+    }
+
+    private MediaSaveNotifyThread mediaSaveNotifyThread;
     private MediaSaveService.OnMediaSavedListener mOnMediaSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
                 @Override
                 public void onMediaSaved(Uri uri) {
-                    if (uri != null) {
-                        mActivity.notifyNewMedia(uri);
+                    if(mLongshotActive) {
+                        if(mediaSaveNotifyThread == null) {
+                            mediaSaveNotifyThread = new MediaSaveNotifyThread(uri);
+                            mediaSaveNotifyThread.start();
+                        }
+                        else
+                            mediaSaveNotifyThread.setUri(uri);
+                    } else {
+                        if (uri != null) {
+                            mActivity.notifyNewMedia(uri);
+                        }
                     }
                 }
             };
@@ -1367,11 +1408,8 @@ public class PhotoModule
                             onCaptureDone();
                         }
                     }
-                    // Check this in advance of each shot so we don't add to shutter
-                    // latency. It's true that someone else could write to the SD card in
-                    // the mean time and fill it, but that could have happened between the
-                    // shutter press and saving the JPEG too.
-                    mActivity.updateStorageSpaceAndHint();
+                    if(!mLongshotActive)
+                        mActivity.updateStorageSpaceAndHint();
                     mUI.updateRemainingPhotos(--mRemainingPhotos);
                     long now = System.currentTimeMillis();
                     mJpegCallbackFinishTime = now - mJpegPictureCallbackTime;
@@ -1579,6 +1617,8 @@ public class PhotoModule
         mPreviewRestartSupport &= CameraSettings.isInternalPreviewSupported(
                 mParameters);
         mPreviewRestartSupport &= (mBurstSnapNum == 1);
+        // Restart is needed  if HDR is enabled
+        mPreviewRestartSupport &= !CameraUtil.SCENE_MODE_HDR.equals(mSceneMode);
         mPreviewRestartSupport &= PIXEL_FORMAT_JPEG.equalsIgnoreCase(
                 pictureFormat);
 
