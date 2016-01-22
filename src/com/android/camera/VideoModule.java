@@ -410,10 +410,9 @@ public class VideoModule implements CameraModule,
             String action = intent.getAction();
             if (action.equals(Intent.ACTION_MEDIA_EJECT)) {
                 stopVideoRecording();
-            } else if (action.equals(Intent.ACTION_MEDIA_SCANNER_STARTED)) {
                 RotateTextToast.makeText(mActivity,
-                        mActivity.getResources().getString(R.string.wait), Toast.LENGTH_LONG)
-                        .show();
+                        mActivity.getResources().getString(R.string.video_recording_stopped),
+                                Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -1038,6 +1037,8 @@ public class VideoModule implements CameraModule,
 
     @Override
     public void installIntentFilter() {
+        if(mReceiver != null)
+            return;
         // install an intent filter to receive SD card related events.
         IntentFilter intentFilter =
                 new IntentFilter(Intent.ACTION_MEDIA_EJECT);
@@ -1064,6 +1065,7 @@ public class VideoModule implements CameraModule,
         }
 
         showVideoSnapshotUI(false);
+        installIntentFilter();
 
         if (!mPreviewing) {
             openCamera();
