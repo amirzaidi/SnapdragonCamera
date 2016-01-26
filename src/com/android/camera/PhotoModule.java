@@ -240,8 +240,10 @@ public class PhotoModule
     // Used for check memory status for longshot mode
     // Currently, this cancel threshold selection is based on test experiments,
     // we can change it based on memory status or other requirements.
-    private static final int LONGSHOT_CANCEL_THRESHOLD = 40 * 1024 * 1024;
-    private long SECONDARY_SERVER_MEM;
+    private static final int CHECKING_INTERVAL = 10;
+    private static final int LONGSHOT_CANCEL_THRESHOLD = CHECKING_INTERVAL * 40 * 1024 * 1024;
+    private int mRemainedMemCheckingCount;
+    private long mSecondaryServerMem;
     private boolean mLongshotActive = false;
 
     // We use a queue to generated names of the images to be used later
@@ -979,16 +981,21 @@ public class PhotoModule
 
     // TODO: need to check cached background apps memory and longshot ION memory
     private boolean isLongshotNeedCancel() {
-        if (Storage.getAvailableSpace() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
+        if(mRemainedMemCheckingCount < CHECKING_INTERVAL) {
+            mRemainedMemCheckingCount++;
+            return false;
+        }
+        mRemainedMemCheckingCount = 0;
+        if (Storage.getAvailableSpace() <= Storage.LOW_STORAGE_THRESHOLD_BYTES * CHECKING_INTERVAL) {
             Log.w(TAG, "current storage is full");
             return true;
         }
-        if (SECONDARY_SERVER_MEM == 0) {
+        if (mSecondaryServerMem == 0) {
             ActivityManager am = (ActivityManager) mActivity.getSystemService(
                     Context.ACTIVITY_SERVICE);
             ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
             am.getMemoryInfo(memInfo);
-            SECONDARY_SERVER_MEM = memInfo.secondaryServerThreshold;
+            mSecondaryServerMem = memInfo.secondaryServerThreshold;
         }
 
         long totalMemory = Runtime.getRuntime().totalMemory();
@@ -1000,10 +1007,10 @@ public class PhotoModule
         long[] info = reader.getRawInfo();
         long availMem = (info[Debug.MEMINFO_FREE] + info[Debug.MEMINFO_CACHED]) * 1024;
 
-        if (availMem <= SECONDARY_SERVER_MEM || remainMemory <= LONGSHOT_CANCEL_THRESHOLD) {
+        if (availMem <= mSecondaryServerMem || remainMemory <= LONGSHOT_CANCEL_THRESHOLD) {
             Log.e(TAG, "cancel longshot: free=" + info[Debug.MEMINFO_FREE] * 1024
                     + " cached=" + info[Debug.MEMINFO_CACHED] * 1024
-                    + " threshold=" + SECONDARY_SERVER_MEM);
+                    + " threshold=" + mSecondaryServerMem);
             mLongshotActive = false;
             RotateTextToast.makeText(mActivity,R.string.msg_cancel_longshot_for_limited_memory,
                 Toast.LENGTH_SHORT).show();
@@ -2276,6 +2283,7 @@ public class PhotoModule
                     mUI.cancelCountDown();
                 }
                 //check whether current memory is enough for longshot.
+                mRemainedMemCheckingCount = 0;
                 if(isLongshotNeedCancel()) {
                     return;
                 }
