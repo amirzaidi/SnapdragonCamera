@@ -716,7 +716,8 @@ class AndroidCameraManagerImpl implements CameraManager {
         public void onAutoFocusMoving(
                 final boolean moving, android.hardware.Camera camera) {
             final android.hardware.Camera currentCamera = mCamera.getCamera();
-
+            if(currentCamera == null)
+                return;
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {

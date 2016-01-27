@@ -245,6 +245,8 @@ public class CameraSettings {
 
     public static final String KEY_REFOCUS_PROMPT = "refocus-prompt";
 
+    public static final String KEY_SHOW_MENU_HELP = "help_menu";
+
     public static final String KEY_SELFIE_FLASH = "pref_selfie_flash_key";
 
     public static final String EXPOSURE_DEFAULT_VALUE = "0";

@@ -2170,7 +2170,8 @@ public class PhotoModule
 
     @Override
     public synchronized void onShutterButtonClick() {
-        if (mPaused || mUI.collapseCameraControls()
+        if ((mCameraDevice == null)
+                || mPaused || mUI.collapseCameraControls()
                 || (mCameraState == SWITCHING_CAMERA)
                 || (mCameraState == PREVIEW_STOPPED)
                 || (null == mFocusManager)) return;
