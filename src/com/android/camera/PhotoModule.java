@@ -2181,6 +2181,7 @@ public class PhotoModule
                 || mPaused || mUI.collapseCameraControls()
                 || (mCameraState == SWITCHING_CAMERA)
                 || (mCameraState == PREVIEW_STOPPED)
+                || (mCameraState == LONGSHOT)
                 || (null == mFocusManager)) return;
 
         // Do not take the picture if there is not enough storage.
