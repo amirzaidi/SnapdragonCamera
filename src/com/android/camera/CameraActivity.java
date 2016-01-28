@@ -187,8 +187,14 @@ public class CameraActivity extends Activity
     private PlaceholderManager mPlaceholderManager;
     private int mCurrentModuleIndex;
     private CameraModule mCurrentModule;
+    private PhotoModule mPhotoModule;
+    private VideoModule mVideoModule;
+    private WideAnglePanoramaModule mPanoModule;
     private FrameLayout mAboveFilmstripControlLayout;
-    private View mCameraModuleRootView;
+    private FrameLayout mCameraRootFrame;
+    private View mCameraPhotoModuleRootView;
+    private View mCameraVideoModuleRootView;
+    private View mCameraPanoModuleRootView;
     private FilmStripView mFilmStripView;
     private ProgressBar mBottomProgress;
     private View mPanoStitchingPanel;
@@ -1446,7 +1452,10 @@ public class CameraActivity extends Activity
 
         LayoutInflater inflater = getLayoutInflater();
         View rootLayout = inflater.inflate(R.layout.camera, null, false);
-        mCameraModuleRootView = rootLayout.findViewById(R.id.camera_app_root);
+        mCameraRootFrame = (FrameLayout)rootLayout.findViewById(R.id.camera_root_frame);
+        mCameraPhotoModuleRootView = rootLayout.findViewById(R.id.camera_photo_root);
+        mCameraVideoModuleRootView = rootLayout.findViewById(R.id.camera_video_root);
+        mCameraPanoModuleRootView = rootLayout.findViewById(R.id.camera_pano_root);
 
         int moduleIndex = -1;
         if (MediaStore.INTENT_ACTION_VIDEO_CAMERA.equals(getIntent().getAction())
@@ -1477,7 +1486,6 @@ public class CameraActivity extends Activity
 
         mOrientationListener = new MyOrientationEventListener(this);
         setModuleFromIndex(moduleIndex);
-        mCurrentModule.init(this, mCameraModuleRootView);
 
         setContentView(R.layout.camera_filmstrip);
 
@@ -1870,32 +1878,53 @@ public class CameraActivity extends Activity
      * index an sets it as mCurrentModule.
      */
     private void setModuleFromIndex(int moduleIndex) {
+        mCameraPhotoModuleRootView.setVisibility(View.GONE);
+        mCameraVideoModuleRootView.setVisibility(View.GONE);
+        mCameraPanoModuleRootView.setVisibility(View.GONE);
+        mCameraRootFrame.removeAllViews();
         mCurrentModuleIndex = moduleIndex;
         switch (moduleIndex) {
             case ModuleSwitcher.VIDEO_MODULE_INDEX:
-                mCurrentModule = new VideoModule();
+                if(mVideoModule == null) {
+                    mVideoModule = new VideoModule();
+                    mVideoModule.init(this, mCameraVideoModuleRootView);
+                }
+                mCurrentModule = mVideoModule;
+                mCameraRootFrame.addView(mCameraVideoModuleRootView);
+                mCameraVideoModuleRootView.setVisibility(View.VISIBLE);
                 break;
 
             case ModuleSwitcher.PHOTO_MODULE_INDEX:
-                mCurrentModule = new PhotoModule();
+                if(mPhotoModule == null) {
+                    mPhotoModule = new PhotoModule();
+                    mPhotoModule.init(this, mCameraPhotoModuleRootView);
+                }
+                mCurrentModule = mPhotoModule;
+                mCameraRootFrame.addView(mCameraPhotoModuleRootView);
+                mCameraPhotoModuleRootView.setVisibility(View.VISIBLE);
                 break;
 
             case ModuleSwitcher.WIDE_ANGLE_PANO_MODULE_INDEX:
-                mCurrentModule = new WideAnglePanoramaModule();
+                if(mPanoModule == null) {
+                    mPanoModule = new WideAnglePanoramaModule();
+                    mPanoModule.init(this, mCameraPanoModuleRootView);
+                }
+                mCurrentModule = mPanoModule;
+                mCameraRootFrame.addView(mCameraPanoModuleRootView);
+                mCameraPanoModuleRootView.setVisibility(View.VISIBLE);
                 break;
 
-            case ModuleSwitcher.LIGHTCYCLE_MODULE_INDEX:
-                mCurrentModule = PhotoSphereHelper.createPanoramaModule();
-                break;
-            case ModuleSwitcher.GCAM_MODULE_INDEX:
-                // Force immediate release of Camera instance
-                CameraHolder.instance().strongRelease();
-                mCurrentModule = GcamHelper.createGcamModule();
-                break;
+            case ModuleSwitcher.LIGHTCYCLE_MODULE_INDEX: //Unused module for now
+            case ModuleSwitcher.GCAM_MODULE_INDEX:  //Unused module for now
             default:
                 // Fall back to photo mode.
-                mCurrentModule = new PhotoModule();
-                mCurrentModuleIndex = ModuleSwitcher.PHOTO_MODULE_INDEX;
+                if(mPhotoModule == null) {
+                    mPhotoModule = new PhotoModule();
+                    mPhotoModule.init(this, mCameraPhotoModuleRootView);
+                }
+                mCurrentModule = mPhotoModule;
+                mCameraRootFrame.addView(mCameraPhotoModuleRootView);
+                mCameraPhotoModuleRootView.setVisibility(View.VISIBLE);
                 break;
         }
     }
@@ -1935,7 +1964,6 @@ public class CameraActivity extends Activity
     }
 
     private void openModule(CameraModule module) {
-        module.init(this, mCameraModuleRootView);
         module.onResumeBeforeSuper();
         module.onResumeAfterSuper();
     }
@@ -1943,8 +1971,6 @@ public class CameraActivity extends Activity
     private void closeModule(CameraModule module) {
         module.onPauseBeforeSuper();
         module.onPauseAfterSuper();
-        ((ViewGroup) mCameraModuleRootView).removeAllViews();
-        ((ViewGroup) mCameraModuleRootView).clearDisappearingChildren();
     }
 
     private void performDeletion() {

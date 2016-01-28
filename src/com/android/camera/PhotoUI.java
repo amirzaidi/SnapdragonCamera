@@ -658,6 +658,11 @@ public class PhotoUI implements PieListener,
     public void showSwitcher() {
         mSwitcher.setVisibility(View.VISIBLE);
     }
+
+    public void setSwitcherIndex() {
+        mSwitcher.setCurrentIndex(ModuleSwitcher.PHOTO_MODULE_INDEX);
+    }
+
     // called from onResume but only the first time
     public void initializeFirstTime() {
         // Initialize shutter button.

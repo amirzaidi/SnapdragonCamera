@@ -2307,6 +2307,11 @@ public class PhotoModule
     @Override
     public void onResumeBeforeSuper() {
         mPaused = false;
+        mPreferences = new ComboPreferences(mActivity);
+        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
+        mCameraId = getPreferredCameraId(mPreferences);
+        mPreferences.setLocalId(mActivity, mCameraId);
+        CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
     }
 
     private void openCamera() {
@@ -2355,6 +2360,7 @@ public class PhotoModule
             onResumeTasks();
         }
 
+        mUI.setSwitcherIndex();
         if (mSoundPool == null) {
             mSoundPool = new SoundPool(1, AudioManager.STREAM_NOTIFICATION, 0);
             mRefocusSound = mSoundPool.load(mActivity, R.raw.camera_click_x5, 1);
@@ -3053,6 +3059,7 @@ public class PhotoModule
         if (CameraUtil.isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
             mParameters.setColorEffect(colorEffect);
         }
+
         //Set Saturation
         String saturationStr = mPreferences.getString(
                 CameraSettings.KEY_SATURATION,

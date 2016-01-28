@@ -192,6 +192,10 @@ public class WideAnglePanoramaUI implements
         mSwitcher.setVisibility(View.VISIBLE);
     }
 
+    public void setSwitcherIndex() {
+        mSwitcher.setCurrentIndex(ModuleSwitcher.WIDE_ANGLE_PANO_MODULE_INDEX);
+    }
+
     public void setCaptureProgressOnDirectionChangeListener(
             PanoProgressBar.OnDirectionChangeListener listener) {
         mCaptureProgressBar.setOnDirectionChangeListener(listener);
