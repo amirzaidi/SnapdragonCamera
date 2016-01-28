@@ -471,9 +471,12 @@
 
         <!-- Default color effect setting. -->
     <string name="pref_camera_coloreffect_default" translatable="false">none</string>
+    <string name="pref_camera_filter_mode_entry_on">On</string>
+    <string name="pref_camera_filter_mode_entry_off">Off</string>
 
     <!-- Settings screen, Select Color effect title -->
-    <string name="pref_camera_coloreffect_title">Color effect</string>
+    <string name="pref_camera_coloreffect_title">Color effect Level</string>
+    <string name="pref_camera_filter_mode_title">Color effect Mode</string>
 
     <!-- Settings screen, Color effect dialog radio button choices -->
     <string name="pref_camera_coloreffect_entry_none">None</string>

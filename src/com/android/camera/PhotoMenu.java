@@ -1086,13 +1086,17 @@ public class PhotoMenu extends MenuController
         button.setVisibility(View.INVISIBLE);
         final IconListPreference pref = (IconListPreference) mPreferenceGroup
                 .findPreference(CameraSettings.KEY_COLOR_EFFECT);
-        if (pref == null)
+        if (pref == null || pref.getValue() == null)
             return;
 
         int[] iconIds = pref.getLargeIconIds();
+        int index = pref.findIndexOfValue(pref.getValue());
         int resid = -1;
-        // The preference only has a single icon to represent it.
-        resid = pref.getSingleIcon();
+        if (!pref.getUseSingleIcon() && iconIds != null) {
+            resid = iconIds[index];
+        } else {
+            resid = pref.getSingleIcon();
+        }
         ((ImageView) button).setImageResource(resid);
         button.setVisibility(View.VISIBLE);
         button.setOnClickListener(new OnClickListener() {
@@ -1188,6 +1192,7 @@ public class PhotoMenu extends MenuController
                     } else if (event.getAction() == MotionEvent.ACTION_UP) {
                         if (System.currentTimeMillis() - startTime < CLICK_THRESHOLD) {
                             pref.setValueIndex(j);
+                            changeFilterModeControlIcon(pref.getValue());
                             onSettingChanged(pref);
                             for (View v1 : views) {
                                 v1.setBackground(null);
@@ -1210,6 +1215,22 @@ public class PhotoMenu extends MenuController
         }
         previewMenuLayout.addView(basic);
         mPreviewMenu = basic;
+    }
+
+    private void changeFilterModeControlIcon(String value) {
+        if(!value.equals("")) {
+            if(value.equalsIgnoreCase(mActivity.getString(R.string.pref_camera_coloreffect_entry_none))) {
+                value = mActivity.getString(R.string.pref_camera_filter_mode_entry_off);
+            } else {
+                value = mActivity.getString(R.string.pref_camera_filter_mode_entry_on);
+            }
+            final IconListPreference pref = (IconListPreference) mPreferenceGroup
+                    .findPreference(CameraSettings.KEY_FILTER_MODE);
+            pref.setValue(value);
+            int index = pref.getCurrentIndex();
+            ImageView iv = (ImageView) mFilterModeSwitcher;
+            iv.setImageResource(((IconListPreference) pref).getLargeIconIds()[index]);
+        }
     }
 
     public void openFirstLevel() {

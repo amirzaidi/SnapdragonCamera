@@ -788,6 +788,15 @@
         <item>On</item>
     </string-array>
 
+    <string-array name="pref_camera_filter_mode_entries" translatable="false">
+        <item>@string/pref_camera_filter_mode_entry_off</item>
+        <item>@string/pref_camera_filter_mode_entry_on</item>
+    </string-array>
+    <string-array name="pref_camera_filter_mode_entryvalues" translatable="false">
+        <item>Off</item>
+        <item>On</item>
+    </string-array>
+
     <!-- Camera Preferences Color effect dialog box entries -->
     <string-array name="pref_camera_tsmakeup_level_entries" translatable="false">
         <item>@string/pref_camera_tsmakeup_entry_off</item>
@@ -816,6 +825,9 @@
         <item>@drawable/ic_ts_makeup_off</item>
         <item>@drawable/ic_ts_makeup_on</item>
     </string-array>
-
+    <string-array name="pref_filter_mode_icons" translatable="false">
+        <item>@drawable/ic_settings_filter</item>
+        <item>@drawable/ic_settings_filter_on</item>
+    </string-array>
 </resources>
 

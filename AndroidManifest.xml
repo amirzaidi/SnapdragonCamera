@@ -121,7 +121,7 @@
             android:excludeFromRecents="true"
             android:icon="@mipmap/ic_launcher_camera"
             android:label="@string/snapcam_app_name"
-            android:launchMode="singleTop"
+            android:launchMode="singleInstance"
             android:logo="@mipmap/ic_launcher_gallery"
             android:taskAffinity="com.android.camera.SecureCameraActivity"
             android:theme="@style/Theme.Camera"

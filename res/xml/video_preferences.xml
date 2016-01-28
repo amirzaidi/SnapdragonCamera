@@ -119,6 +119,15 @@
             camera:singleIcon="@drawable/ic_eis_menu"
             camera:entryValues="@array/pref_camera_dis_entryvalues" />
     <IconListPreference
+            camera:key="pref_camera_filter_mode_key"
+            camera:defaultValue="@string/pref_camera_coloreffect_default"
+            camera:title="@string/pref_camera_filter_mode_title"
+            camera:entries="@array/pref_camera_filter_mode_entries"
+            camera:singleIcon="@drawable/ic_settings_filter"
+            camera:icons="@array/pref_filter_mode_icons"
+            camera:largeIcons="@array/pref_filter_mode_icons"
+            camera:entryValues="@array/pref_camera_filter_mode_entryvalues" />
+    <IconListPreference
             camera:key="pref_camera_coloreffect_key"
             camera:defaultValue="@string/pref_camera_coloreffect_default"
             camera:title="@string/pref_camera_coloreffect_title"
