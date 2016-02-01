@@ -408,7 +408,8 @@ public class VideoModule implements CameraModule,
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(Intent.ACTION_MEDIA_EJECT)) {
+            if (action.equals(Intent.ACTION_MEDIA_EJECT) ||
+                    action.equals(Intent.ACTION_SCREEN_OFF)) {
                 stopVideoRecording();
                 RotateTextToast.makeText(mActivity,
                         mActivity.getResources().getString(R.string.video_recording_stopped),
@@ -1042,6 +1043,7 @@ public class VideoModule implements CameraModule,
         // install an intent filter to receive SD card related events.
         IntentFilter intentFilter =
                 new IntentFilter(Intent.ACTION_MEDIA_EJECT);
+        intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
         intentFilter.addAction(Intent.ACTION_MEDIA_SCANNER_STARTED);
         intentFilter.addDataScheme("file");
         mReceiver = new MyBroadcastReceiver();

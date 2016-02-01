@@ -2733,7 +2733,7 @@ public class PhotoModule
             mCameraDevice.setFaceDetectionCallback(null, null);
             mCameraDevice.setErrorCallback(null);
 
-            if (mActivity.isSecureCamera() && !CameraActivity.isFirstStartAfterScreenOn()) {
+            if (mActivity.isSecureCamera()) {
                 // Blocks until camera is actually released.
                 CameraHolder.instance().strongRelease();
             } else {
