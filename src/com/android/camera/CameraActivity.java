@@ -110,7 +110,6 @@ import com.android.camera.util.IntentHelper;
 import com.android.camera.util.PhotoSphereHelper;
 import com.android.camera.util.PhotoSphereHelper.PanoramaViewHelper;
 import com.android.camera.util.UsageStatistics;
-import com.android.internal.view.RotationPolicy;
 import org.codeaurora.snapcam.R;
 
 import java.io.File;
@@ -1695,12 +1694,6 @@ public class CameraActivity extends Activity
         if (mFilmStripView.inCameraFullscreen()) {
             if (mCurrentModule.onKeyDown(keyCode, event)) {
                 return true;
-            }
-            // add for stop rotate for exit camera
-            if(keyCode == KeyEvent.KEYCODE_BACK &&
-                    RotationPolicy.isRotationSupported(this)) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                RotationPolicy.setRotationLock(this,true);
             }
             // Prevent software keyboard or voice search from showing up.
             if (keyCode == KeyEvent.KEYCODE_SEARCH
