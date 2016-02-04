@@ -21,11 +21,10 @@
     <TextView android:id="@+id/recording_time"
             style="@style/OnViewfinderLabel"
             android:gravity="center"
+            android:text="@string/initial_recording_seconds"
             android:drawableLeft="@drawable/ic_recording_indicator"
-            android:drawablePadding="5dp"
-            android:visibility="gone" />
+            android:drawablePadding="5dp"/>
     <TextView android:id="@+id/time_lapse_label"
             android:text="@string/time_lapse_title"
-            style="@style/OnViewfinderLabel"
-            android:visibility="gone" />
+            style="@style/OnViewfinderLabel"/>
 </LinearLayout>
