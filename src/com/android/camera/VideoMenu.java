@@ -506,15 +506,7 @@ public class VideoMenu extends MenuController
         if (pref == null || pref.getValue() == null)
             return;
 
-        int[] iconIds = pref.getLargeIconIds();
-        int index = pref.findIndexOfValue(pref.getValue());
-        int resid = -1;
-        if (!pref.getUseSingleIcon() && iconIds != null) {
-            resid = iconIds[index];
-        } else {
-            resid = pref.getSingleIcon();
-        }
-        ((ImageView) button).setImageResource(resid);
+        changeFilterModeControlIcon(pref.getValue());
         button.setVisibility(View.VISIBLE);
         button.setOnClickListener(new OnClickListener() {
             @Override
@@ -892,6 +884,7 @@ public class VideoMenu extends MenuController
             }
             setPreference(CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL, defaultValue);
         }
+
         super.onSettingChanged(pref);
     }
 
