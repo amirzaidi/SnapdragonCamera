@@ -2181,6 +2181,7 @@ public class PhotoModule
                 || mPaused || mUI.collapseCameraControls()
                 || (mCameraState == SWITCHING_CAMERA)
                 || (mCameraState == PREVIEW_STOPPED)
+                || (mCameraState == LONGSHOT)
                 || (null == mFocusManager)) return;
 
         // Do not take the picture if there is not enough storage.
@@ -2733,7 +2734,7 @@ public class PhotoModule
             mCameraDevice.setFaceDetectionCallback(null, null);
             mCameraDevice.setErrorCallback(null);
 
-            if (mActivity.isSecureCamera() && !CameraActivity.isFirstStartAfterScreenOn()) {
+            if (mActivity.isSecureCamera()) {
                 // Blocks until camera is actually released.
                 CameraHolder.instance().strongRelease();
             } else {
