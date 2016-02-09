@@ -1064,7 +1064,7 @@ public class VideoModule implements CameraModule,
     public void onResumeAfterSuper() {
         mUI.enableShutter(false);
         mZoomValue = 0;
-
+        mUI.showSurfaceView();
         AudioManager am = (AudioManager)mActivity.getSystemService(Context.AUDIO_SERVICE);
         mWasMute = am.isMicrophoneMute();
         if(mWasMute != mIsMute) {
@@ -1232,6 +1232,7 @@ public class VideoModule implements CameraModule,
         mPaused = true;
 
         mUI.showPreviewCover();
+        mUI.hideSurfaceView();
         if (mMediaRecorderRecording) {
             // Camera will be released in onStopVideoRecording.
             onStopVideoRecording();
