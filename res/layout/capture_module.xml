@@ -40,8 +40,8 @@
 
         <SurfaceView
             android:id="@+id/mdp_preview_content2"
-            android:layout_width="100dp"
-            android:layout_height="100dp" />
+            android:layout_width="300dp"
+            android:layout_height="300dp" />
     </FrameLayout>
 
     <View

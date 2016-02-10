@@ -189,16 +189,12 @@ public class CaptureUI implements PieListener,
         mPreviewCover = mRootView.findViewById(R.id.preview_cover);
         // display the view
         mSurfaceView = (SurfaceView) mRootView.findViewById(R.id.mdp_preview_content);
-        mSurfaceView.setVisibility(View.VISIBLE);
         mSurfaceView2 = (SurfaceView) mRootView.findViewById(R.id.mdp_preview_content2);
-        //mSurfaceView2.setVisibility(View.VISIBLE);
+        mSurfaceView2.setZOrderMediaOverlay(true);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
-        //mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         mSurfaceHolder2 = mSurfaceView2.getHolder();
         mSurfaceHolder2.addCallback(callback);
-        //mSurfaceHolder2.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        mSurfaceView.addOnLayoutChangeListener(mLayoutListener);
         Log.v(TAG, "Using mdp_preview_content (MDP path)");
 
         mRenderOverlay = (RenderOverlay) mRootView.findViewById(R.id.render_overlay);
@@ -671,6 +667,14 @@ public class CaptureUI implements PieListener,
         }
     }
 
+    public void hideSurfaceView() {
+        mSurfaceView.setVisibility(View.INVISIBLE);
+    }
+
+    public void showSurfaceView() {
+        mSurfaceView.setVisibility(View.VISIBLE);
+    }
+
     public void onPause() {
         // Clear UI.
         collapseCameraControls();
@@ -687,6 +691,10 @@ public class CaptureUI implements PieListener,
     }
 
     public void clearFaces() {
+    }
+
+    public void setPreference(String key, String value) {
+        mMenu.setPreference(key, value);
     }
 
     @Override

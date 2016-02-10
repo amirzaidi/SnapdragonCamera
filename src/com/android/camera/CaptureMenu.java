@@ -26,6 +26,7 @@ import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -92,13 +93,15 @@ public class CaptureMenu extends MenuController
         mOtherKeys1 = new String[]{
                 CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_CAMERA2,
-                CameraSettings.KEY_DUAL_CAMERA
+                CameraSettings.KEY_DUAL_CAMERA,
+                CameraSettings.KEY_MONO_PREVIEW
         };
 
         mOtherKeys2 = new String[]{
                 CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_CAMERA2,
-                CameraSettings.KEY_DUAL_CAMERA
+                CameraSettings.KEY_DUAL_CAMERA,
+                CameraSettings.KEY_MONO_PREVIEW
         };
 
     }
@@ -106,9 +109,8 @@ public class CaptureMenu extends MenuController
     @Override
     // Hit when an item in a popup gets selected
     public void onListPrefChanged(ListPreference pref) {
-        animateFadeOut(mListSubMenu, 2);
         onSettingChanged(pref);
-        ((ListMenu) mListMenu).resetHighlight();
+        closeView();
     }
 
     public boolean handleBackKey() {
@@ -384,6 +386,12 @@ public class CaptureMenu extends MenuController
         listMenu.initialize(mPreferenceGroup, keys);
         mListMenu = listMenu;
 
+        ListPreference pref = mPreferenceGroup.findPreference(CameraSettings.KEY_DUAL_CAMERA);
+        if (!pref.getValue().equals("dual")) {
+            setPreference(CameraSettings.KEY_MONO_PREVIEW, "off");
+            mListMenu.setPreferenceEnabled(CameraSettings.KEY_MONO_PREVIEW, false);
+        }
+
         if (mListener != null) {
             mListener.onSharedPreferenceChanged();
         }
@@ -516,18 +524,29 @@ public class CaptureMenu extends MenuController
     @Override
     public void onSettingChanged(ListPreference pref) {
         super.onSettingChanged(pref);
-        if (same(pref, CameraSettings.KEY_CAMERA2, "enable")) {
+        String key = pref.getKey();
+        String value = pref.getValue();
+        Log.d(TAG, "" + key + " " + value);
+        //Todo: restructure by using switch and create function for each case
+        if (key.equals(CameraSettings.KEY_CAMERA2)) {
             SharedPreferences prefs = PreferenceManager
                     .getDefaultSharedPreferences(mActivity);
-            prefs.edit().putBoolean(CameraSettings.KEY_CAMERA2, true).apply();
-            CameraActivity.CAMERA_2_ON = true;
-            mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
-        } else if (notSame(pref, CameraSettings.KEY_CAMERA2, "enable")) {
-            SharedPreferences prefs = PreferenceManager
-                    .getDefaultSharedPreferences(mActivity);
-            prefs.edit().putBoolean(CameraSettings.KEY_CAMERA2, false).apply();
-            CameraActivity.CAMERA_2_ON = false;
-            mActivity.onModuleSelected(ModuleSwitcher.PHOTO_MODULE_INDEX);
+            if (value.equals("enable")) {
+                prefs.edit().putBoolean(CameraSettings.KEY_CAMERA2, true).apply();
+                CameraActivity.CAMERA_2_ON = true;
+                mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
+            } else if (value.equals("disable")) {
+                prefs.edit().putBoolean(CameraSettings.KEY_CAMERA2, false).apply();
+                CameraActivity.CAMERA_2_ON = false;
+                mActivity.onModuleSelected(ModuleSwitcher.PHOTO_MODULE_INDEX);
+            }
+        } else if (key.equals(CameraSettings.KEY_DUAL_CAMERA)) {
+            boolean changeMode = CaptureModule.setMode(value);
+            if (changeMode) mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
+        } else if (key.equals(CameraSettings.KEY_MONO_PREVIEW)) {
+            if (value.equals("on")) {
+            } else if (value.equals("off")) {
+            }
         }
     }
 
