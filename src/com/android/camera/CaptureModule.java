@@ -1880,10 +1880,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             mSound = new MediaActionSound();
         }
 
+        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if(mPostProcessor != null) {
             String longshot = mSettingsManager.getValue(SettingsManager.KEY_LONGSHOT);
             String flashMode = mSettingsManager.getValue(SettingsManager.KEY_FLASH_MODE);
-            String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
             if (scene != null) {
                 int mode = Integer.parseInt(scene);
                 Log.d(TAG, "Chosen postproc filter id : " + getPostProcFilterId(mode));
@@ -1937,6 +1937,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         });
         mUI.enableShutter(true);
+
+        if(isPanoSetting(scene)) {
+            mActivity.onModuleSelected(ModuleSwitcher.PANOCAPTURE_MODULE_INDEX);
+            mSettingsManager.setValue(SettingsManager.KEY_SCENE_MODE, SettingsManager.SCENE_MODE_AUTO_INT+"");
+        }
     }
 
     @Override
@@ -3387,6 +3392,17 @@ public class CaptureModule implements CameraModule, PhotoController,
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean isPanoSetting(String value) {
+        try {
+            int mode = Integer.parseInt(value);
+            if(mode == SettingsManager.SCENE_MODE_PANORAMA_INT) {
+                return true;
+            }
+        } catch(Exception e) {
+        }
+        return false;
     }
 
     private void updateFaceDetection() {

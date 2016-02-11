@@ -1024,6 +1024,7 @@
     <string name="pref_camera2_videosnap_entry_disable" translatable="true">Disable</string>
     <string name="pref_camera2_trackingfocus_title" translatable="true">Tracking Focus</string>
     <string name="pref_camera_scenemode_entry_bestpicture" translatable="true">BestPicture</string>
+    <string name="pref_camera_scenemode_entry_panorama" translatable="true">Panorama</string>
     <string name="bestpicture_done" translatable="true">DONE</string>
     <string name="bestpicture_at_least_one_picture" translatable="true">At least, one picture has to be chosen.</string>
 
@@ -1044,5 +1045,6 @@
     <string name="pref_camera2_timer_value_2sec" translatable="false">2</string>
     <string name="pref_camera2_timer_value_5sec" translatable="false">5</string>
     <string name="pref_camera2_timer_value_10sec" translatable="false">10</string>
+    <string name="panocapture_direction_is_not_determined" translatable="true">Direction is not detected.</string>
 </resources>
 

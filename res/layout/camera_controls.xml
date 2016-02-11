@@ -79,6 +79,11 @@
         android:src="@drawable/btn_new_shutter_video" />
 
     <com.android.camera.ui.RotateImageView
+        android:id="@+id/exit_panorama"
+        style="@style/MenuButton"
+        android:src="@drawable/exit_panorama" />
+
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/preview_thumb"
         android:layout_width="@dimen/capture_size"
         android:layout_height="@dimen/capture_size"

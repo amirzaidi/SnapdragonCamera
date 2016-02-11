@@ -134,6 +134,7 @@
         <item>9</item>
         <item>-1</item>
         <item>103</item>
+        <item>104</item>
     </string-array>
 
     <!-- Camera Preferences Scene Mode dialog box entries -->
@@ -155,6 +156,7 @@
         <item>@string/pref_camera_scenemode_entry_snow</item>
         <item>@string/pref_camera_scenemode_entry_asd</item>
         <item>@string/pref_camera_scenemode_entry_bestpicture</item>
+        <item>@string/pref_camera_scenemode_entry_panorama</item>
     </string-array>
 
     <array name="pref_camera2_scenemode_thumbnails" translatable="false">
@@ -175,6 +177,7 @@
         <item>@drawable/snow</item>
         <item>@drawable/ic_scene_mode_smartauto</item>
         <item>@drawable/pick_the_best_photo</item>
+        <item>@drawable/scene_panorama</item>
     </array>
 
     <string-array name="pref_camera2_whitebalance_entryvalues" translatable="false">
