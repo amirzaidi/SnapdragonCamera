@@ -1959,9 +1959,9 @@ public class VideoModule implements CameraModule,
         if (!mPaused) mParameters = mCameraDevice.getParameters();
         UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
                 fail ? UsageStatistics.ACTION_CAPTURE_FAIL :
-                    UsageStatistics.ACTION_CAPTURE_DONE, "Video",
+                        UsageStatistics.ACTION_CAPTURE_DONE, "Video",
                 mMediaRecorderPausing ? mRecordingTotalTime :
-                    SystemClock.uptimeMillis() - mRecordingStartTime + mRecordingTotalTime);
+                        SystemClock.uptimeMillis() - mRecordingStartTime + mRecordingTotalTime);
         mStopRecPending = false;
         return fail;
     }
@@ -2313,7 +2313,7 @@ public class VideoModule implements CameraModule,
                     pref_camera_video_tnr_value_off))) {
                 mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
                         mActivity.getString(R.string.pref_camera_video_cds_value_off));
-                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                mUI.overrideSettings(CameraSettings.KEY_VIDEO_CDS_MODE,
                         mActivity.getString(R.string.pref_camera_video_cds_value_off));
                 if (!mIsVideoCDSUpdated) {
                     if (video_cds != null) {
@@ -2324,7 +2324,7 @@ public class VideoModule implements CameraModule,
                 }
             } else if (mIsVideoTNREnabled) {
                 mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
-                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
+                mUI.overrideSettings(CameraSettings.KEY_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
                 mIsVideoTNREnabled = false;
                 mIsVideoCDSUpdated = false;
                 mOverrideCDS = true;
@@ -2332,7 +2332,7 @@ public class VideoModule implements CameraModule,
                 mTempVideoCDS = video_cds;
             }
             mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
-            mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE, video_tnr);
+            mUI.overrideSettings(CameraSettings.KEY_VIDEO_TNR_MODE, video_tnr);
         }
 
         String noiseReductionMode = mPreferences.getString(
@@ -2349,7 +2349,7 @@ public class VideoModule implements CameraModule,
                             pref_camera_video_cds_value_on))) {
                 mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
                         mActivity.getString(R.string.pref_camera_video_cds_value_off));
-                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                mUI.overrideSettings(CameraSettings.KEY_VIDEO_CDS_MODE,
                         mActivity.getString(R.string.pref_camera_video_cds_value_off));
                 Toast.makeText(mActivity, R.string.disable_CDS_during_HighQualityNoiseReduction,
                         Toast.LENGTH_LONG).show();
@@ -2362,7 +2362,7 @@ public class VideoModule implements CameraModule,
                             pref_camera_video_tnr_value_on))) {
                 mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
                         mActivity.getString(R.string.pref_camera_video_tnr_value_off));
-                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
+                mUI.overrideSettings(CameraSettings.KEY_VIDEO_TNR_MODE,
                         mActivity.getString(R.string.pref_camera_video_tnr_value_off));
                 Toast.makeText(mActivity, R.string.disable_TNR_during_HighQualityNoiseReduction,
                         Toast.LENGTH_LONG).show();
@@ -2386,7 +2386,7 @@ public class VideoModule implements CameraModule,
                     pref_camera_video_cds_value_on))) {
                 mParameters.set(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
                     mActivity.getString(R.string.pref_camera_video_cds_value_off));
-                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_CDS_MODE,
+                mUI.overrideSettings(CameraSettings.KEY_VIDEO_CDS_MODE,
                     mActivity.getString(R.string.pref_camera_video_cds_value_off));
                 Toast.makeText(mActivity, R.string.disable_CDS_during_SeeMore,
                     Toast.LENGTH_LONG).show();
@@ -2399,12 +2399,24 @@ public class VideoModule implements CameraModule,
                     pref_camera_video_tnr_value_on))) {
                 mParameters.set(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
                     mActivity.getString(R.string.pref_camera_video_tnr_value_off));
-                mUI.overrideSettings(CameraSettings.KEY_QC_VIDEO_TNR_MODE,
+                mUI.overrideSettings(CameraSettings.KEY_VIDEO_TNR_MODE,
                     mActivity.getString(R.string.pref_camera_video_tnr_value_off));
                 Toast.makeText(mActivity, R.string.disable_TNR_during_SeeMore,
                     Toast.LENGTH_LONG).show();
             }
 
+            /* Disable NR */
+            if (seeMoreMode.equals(
+                    mActivity.getString(R.string.pref_camera_see_more_value_on)) &&
+                    !noiseReductionMode.equals(mActivity.getString(R.string.
+                            pref_camera_noise_reduction_value_off))) {
+                mParameters.set(CameraSettings.KEY_QC_NOISE_REDUCTION_MODE,
+                        mActivity.getString(R.string.pref_camera_noise_reduction_value_off));
+                mUI.overrideSettings(CameraSettings.KEY_NOISE_REDUCTION,
+                        mActivity.getString(R.string.pref_camera_noise_reduction_value_off));
+                Toast.makeText(mActivity, R.string.disable_NR_during_SeeMore,
+                        Toast.LENGTH_LONG).show();
+            }
             /* Set SeeMore mode */
             mParameters.set(CameraSettings.KEY_QC_SEE_MORE_MODE, seeMoreMode);
         }
