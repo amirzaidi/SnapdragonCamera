@@ -64,7 +64,6 @@
                 android:layout_width="wrap_content"
                 android:layout_marginLeft="70dp"
                 android:padding="23dp"
-                android:visibility="gone"
                 android:src="@drawable/btn_pause_recording"/>
             <include layout="@layout/viewfinder_labels_video"
                 android:id="@+id/labels" />

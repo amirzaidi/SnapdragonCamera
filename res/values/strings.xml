@@ -736,4 +736,5 @@ CHAR LIMIT = NONE] -->
     <string name="pref_camera_video_rotation_label_270">270</string>
 
     <string name="remaining_photos_format">%d left</string>
+    <string name="initial_recording_seconds">00:00</string>
  </resources>
