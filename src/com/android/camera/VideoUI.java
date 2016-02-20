@@ -582,7 +582,7 @@ public class VideoUI implements PieRenderer.PieListener,
     }
 
     public void hideSurfaceView() {
-        mSurfaceView.setVisibility(View.GONE);
+        mSurfaceView.setVisibility(View.INVISIBLE);
     }
 
     public void showSurfaceView() {

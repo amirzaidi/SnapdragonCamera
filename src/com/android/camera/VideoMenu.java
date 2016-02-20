@@ -667,9 +667,22 @@ public class VideoMenu extends MenuController
         }
     }
 
+    private void overridePreferenceAccessibility() {
+        overrideMenuForLocation();
+        overrideMenuFor4K();
+        overrideMenuForCDSMode();
+        overrideMenuForSeeMore();
+    }
+
+    private void overrideMenuForLocation() {
+        if (mActivity.isSecureCamera()) {
+            // Prevent location preference from getting changed in secure camera
+            // mode
+            mListMenu.setPreferenceEnabled(CameraSettings.KEY_RECORD_LOCATION, false);
+        }
+    }
     private void overrideMenuFor4K() {
-        if(mListMenu != null && mUI.is4KEnabled())
-        {
+        if(mUI.is4KEnabled()) {
             mListMenu.setPreferenceEnabled(
                     CameraSettings.KEY_DIS,false);
             mListMenu.overrideSettings(
@@ -682,59 +695,64 @@ public class VideoMenu extends MenuController
         }
     }
 
-    public void overrideCDSMode() {
-        if (mListMenu != null) {
-            ListPreference pref_tnr = mPreferenceGroup.
-                    findPreference(CameraSettings.KEY_VIDEO_TNR_MODE);
-            ListPreference pref_cds = mPreferenceGroup.
-                    findPreference(CameraSettings.KEY_VIDEO_CDS_MODE);
-            String tnr = (pref_tnr != null) ? pref_tnr.getValue() : null;
-            String cds = (pref_cds != null) ? pref_cds.getValue() : null;
+    private void overrideMenuForSeeMore() {
+        ListPreference pref_SeeMore = mPreferenceGroup.findPreference(CameraSettings.KEY_SEE_MORE);
+        if(pref_SeeMore != null && pref_SeeMore.getValue() != null
+                && pref_SeeMore.getValue().equals("on")) {
+            mListMenu.setPreferenceEnabled(
+                    CameraSettings.KEY_VIDEO_CDS_MODE,false);
+            mListMenu.setPreferenceEnabled(
+                    CameraSettings.KEY_VIDEO_TNR_MODE, false);
+            mListMenu.setPreferenceEnabled(
+                    CameraSettings.KEY_NOISE_REDUCTION, false);
+            mListMenu.overrideSettings(
+                    CameraSettings.KEY_VIDEO_CDS_MODE,
+                    mActivity.getString(R.string.pref_camera_video_cds_value_off),
+                    CameraSettings.KEY_VIDEO_TNR_MODE,
+                    mActivity.getString(R.string.pref_camera_video_tnr_value_off),
+                    CameraSettings.KEY_NOISE_REDUCTION,
+                    mActivity.getString(R.string.pref_camera_noise_reduction_value_off));
+        }
+    }
 
-            if (mPrevSavedVideoCDS == null && cds != null) {
-                mPrevSavedVideoCDS = cds;
-            }
+    private void overrideMenuForCDSMode() {
 
-            if ((tnr != null) && !mActivity.getString(R.string.
-                    pref_camera_video_tnr_default).equals(tnr)) {
-                mListMenu.setPreferenceEnabled(
-                        CameraSettings.KEY_VIDEO_CDS_MODE,false);
-                mListMenu.overrideSettings(
-                        CameraSettings.KEY_VIDEO_CDS_MODE,
-                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
-                mIsVideoTNREnabled = true;
-                if (!mIsVideoCDSUpdated) {
-                    if (cds != null) {
-                        mPrevSavedVideoCDS = cds;
-                    }
-                    mIsVideoCDSUpdated = true;
+        ListPreference pref_tnr = mPreferenceGroup.
+                findPreference(CameraSettings.KEY_VIDEO_TNR_MODE);
+        ListPreference pref_cds = mPreferenceGroup.
+                findPreference(CameraSettings.KEY_VIDEO_CDS_MODE);
+        String tnr = (pref_tnr != null) ? pref_tnr.getValue() : null;
+        String cds = (pref_cds != null) ? pref_cds.getValue() : null;
+
+        if (mPrevSavedVideoCDS == null && cds != null) {
+            mPrevSavedVideoCDS = cds;
+        }
+
+        if ((tnr != null) && !mActivity.getString(R.string.
+                pref_camera_video_tnr_default).equals(tnr)) {
+            mListMenu.setPreferenceEnabled(
+                    CameraSettings.KEY_VIDEO_CDS_MODE,false);
+            mListMenu.overrideSettings(
+                    CameraSettings.KEY_VIDEO_CDS_MODE,
+                    mActivity.getString(R.string.pref_camera_video_cds_value_off));
+            mIsVideoTNREnabled = true;
+            if (!mIsVideoCDSUpdated) {
+                if (cds != null) {
+                    mPrevSavedVideoCDS = cds;
                 }
-            } else if (tnr != null) {
-                mListMenu.setPreferenceEnabled(
-                        CameraSettings.KEY_VIDEO_CDS_MODE,true);
-                if (mIsVideoTNREnabled) {
-                    mListMenu.overrideSettings(
-                            CameraSettings.KEY_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
-                    mIsVideoTNREnabled = false;
-                    mIsVideoCDSUpdated = false;
-                }
+                mIsVideoCDSUpdated = true;
             }
-
-            ListPreference pref_SeeMore = mPreferenceGroup.findPreference(CameraSettings.KEY_SEE_MORE);
-            if(pref_SeeMore != null && pref_SeeMore.getValue() != null
-                    && pref_SeeMore.getValue().equals("on")) {
-                mListMenu.setPreferenceEnabled(
-                        CameraSettings.KEY_VIDEO_CDS_MODE,false);
+        } else if (tnr != null) {
+            mListMenu.setPreferenceEnabled(
+                    CameraSettings.KEY_VIDEO_CDS_MODE,true);
+            if (mIsVideoTNREnabled) {
                 mListMenu.overrideSettings(
-                        CameraSettings.KEY_VIDEO_CDS_MODE,
-                        mActivity.getString(R.string.pref_camera_video_cds_value_off));
-                mListMenu.setPreferenceEnabled(
-                        CameraSettings.KEY_VIDEO_TNR_MODE, false);
-                mListMenu.overrideSettings(
-                        CameraSettings.KEY_VIDEO_TNR_MODE,
-                        mActivity.getString(R.string.pref_camera_video_tnr_value_off));
+                        CameraSettings.KEY_VIDEO_CDS_MODE, mPrevSavedVideoCDS);
+                mIsVideoTNREnabled = false;
+                mIsVideoCDSUpdated = false;
             }
         }
+
     }
 
     @Override
@@ -743,11 +761,9 @@ public class VideoMenu extends MenuController
         if (mListMenu == null) {
             initializePopup();
         } else {
-            overrideCDSMode();
-            overrideMenuFor4K();
+            overridePreferenceAccessibility();
         }
         mListMenu.overrideSettings(keyvalues);
-
     }
 
     @Override
@@ -768,15 +784,10 @@ public class VideoMenu extends MenuController
         if (mActivity.isDeveloperMenuEnabled())
             keys = mOtherKeys2;
         popup1.initialize(mPreferenceGroup, keys);
-        if (mActivity.isSecureCamera()) {
-            // Prevent location preference from getting changed in secure camera
-            // mode
-            popup1.setPreferenceEnabled(CameraSettings.KEY_RECORD_LOCATION, false);
-        }
+
         mListMenu = popup1;
 
-        overrideCDSMode();
-        overrideMenuFor4K();
+        overridePreferenceAccessibility();
     }
 
     public void popupDismissed(boolean topPopupOnly) {
