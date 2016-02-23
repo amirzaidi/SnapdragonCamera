@@ -16,8 +16,9 @@
 
 package com.android.camera.exif;
 
-class JpegHeader {
+public class JpegHeader {
     public static final short SOI =  (short) 0xFFD8;
+    public static final short APP2 = (short) 0xFFE2;
     public static final short APP1 = (short) 0xFFE1;
     public static final short APP0 = (short) 0xFFE0;
     public static final short EOI = (short) 0xFFD9;
