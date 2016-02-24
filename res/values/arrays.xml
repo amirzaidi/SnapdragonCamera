@@ -656,7 +656,7 @@
 
     <!-- Default focus mode setting.-->
     <string-array name="pref_camera_focusmode_default_array" translatable="false">
-        <item>auto</item>
+        <item>continuous-picture</item>
     </string-array>
 
     <!-- Icons for exposure compensation -->
