@@ -121,6 +121,15 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     MeteringRectangle[][] mAFRegions = new MeteringRectangle[MAX_NUM_CAM][];
+    CaptureRequest.Key<Byte> BayerMonoLinkEnableKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.dualcam_link_meta_data.enable",
+                    Byte.class);
+    CaptureRequest.Key<Byte> BayerMonoLinkMainKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.dualcam_link_meta_data.is_main",
+                    Byte.class);
+    CaptureRequest.Key<Integer> BayerMonoLinkSessionIdKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.dualcam_link_meta_data" +
+                    ".related_camera_id", Integer.class);
     private int mLastResultAFState = -1;
     private Rect[] mCropRegion = new Rect[MAX_NUM_CAM];
     private boolean mAutoFocusSupported;
@@ -130,6 +139,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private Map<String, String> mSettings = new HashMap<String, String>();
     private boolean mFirstTimeInitialized;
     private boolean mInitialized = false;
+    private boolean mIsLinked = false;
     private long mCaptureStartTime;
     private boolean mPaused = true;
     private boolean mSurfaceReady = false;
@@ -524,6 +534,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                             mCaptureSession[id] = cameraCaptureSession;
                             initializePreviewConfiguration(id);
                             try {
+                                if (MODE == DUAL_MODE) {
+                                    linkBayerMono(id);
+                                    mIsLinked = true;
+                                }
                                 // Finally, we start displaying the camera preview.
                                 mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                                         .build(), mCaptureCallback, mCameraHandler);
@@ -639,6 +653,29 @@ public class CaptureModule implements CameraModule, PhotoController,
             e.printStackTrace();
         }
     }
+
+    public void linkBayerMono(int id) {
+        Log.d(TAG, "linkBayerMono " + id);
+        if (id == BAYER_ID) {
+            mPreviewRequestBuilder[id].set(BayerMonoLinkEnableKey, (byte) 1);
+            mPreviewRequestBuilder[id].set(BayerMonoLinkMainKey, (byte) 1);
+            mPreviewRequestBuilder[id].set(BayerMonoLinkSessionIdKey, MONO_ID);
+        } else if (id == MONO_ID) {
+            mPreviewRequestBuilder[id].set(BayerMonoLinkEnableKey, (byte) 1);
+            mPreviewRequestBuilder[id].set(BayerMonoLinkMainKey, (byte) 0);
+            mPreviewRequestBuilder[id].set(BayerMonoLinkSessionIdKey, BAYER_ID);
+        }
+    }
+
+    public void unLinkBayerMono(int id) {
+        Log.d(TAG, "unlinkBayerMono " + id);
+        if (id == BAYER_ID) {
+            mPreviewRequestBuilder[id].set(BayerMonoLinkEnableKey, (byte) 0);
+        } else if (id == MONO_ID) {
+            mPreviewRequestBuilder[id].set(BayerMonoLinkEnableKey, (byte) 0);
+        }
+    }
+
 
     /**
      * Capture a still picture. This method should be called when we get a response in
@@ -797,6 +834,16 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCameraOpenCloseLock.acquire();
             for (int i = 0; i < MAX_NUM_CAM; i++) {
                 if (null != mCaptureSession[i]) {
+                    if (mIsLinked) {
+                        unLinkBayerMono(i);
+                        try {
+                            mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
+                                    mCameraHandler);
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
                     mCaptureSession[i].close();
                     mCaptureSession[i] = null;
                 }
@@ -812,6 +859,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mCameraOpened[i] = false;
                 }
             }
+            /* no need to set this in the callback and handle asynchronously. This is the same
+               reason as why we release the semaphore here, not in camera close callback function
+               as we don't have to protect the case where camera open() gets called during camera
+               close(). The low level framework/HAL handles the synchronization for open()
+               happens after close() */
+            mIsLinked = false;
         } catch (InterruptedException e) {
             mCameraOpenCloseLock.release();
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
