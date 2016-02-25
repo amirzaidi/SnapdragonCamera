@@ -92,13 +92,21 @@ public class CaptureMenu extends MenuController
 
         mOtherKeys1 = new String[]{
                 CameraSettings.KEY_FLASH_MODE,
+                CameraSettings.KEY_RECORD_LOCATION,
+                CameraSettings.KEY_JPEG_QUALITY,
+                CameraSettings.KEY_CAMERA_SAVEPATH,
+                CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_CAMERA2,
-                CameraSettings.KEY_DUAL_CAMERA,
-                CameraSettings.KEY_MONO_PREVIEW
+                CameraSettings.KEY_DUAL_CAMERA
         };
 
+        //Todo: 2nd string to contain only developer settings
         mOtherKeys2 = new String[]{
                 CameraSettings.KEY_FLASH_MODE,
+                CameraSettings.KEY_RECORD_LOCATION,
+                CameraSettings.KEY_JPEG_QUALITY,
+                CameraSettings.KEY_CAMERA_SAVEPATH,
+                CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_CAMERA2,
                 CameraSettings.KEY_DUAL_CAMERA,
                 CameraSettings.KEY_MONO_PREVIEW

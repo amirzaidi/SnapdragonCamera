@@ -70,7 +70,7 @@ public class CaptureUI implements PieListener,
         CameraManager.CameraFaceDetectionCallback {
 
     private static final String TAG = "SnapCam_CaptureUI";
-    private boolean mMenuInitialized = false;
+    public boolean mMenuInitialized = false;
     private boolean surface1created = false;
     private boolean surface2created = false;
     private CameraActivity mActivity;
@@ -351,18 +351,17 @@ public class CaptureUI implements PieListener,
         mShutterButton.setVisibility(View.VISIBLE);
     }
 
+    // called from onResume every other time
+    public void initializeSecondTime() {
+        if (mMenu != null) {
+            mMenu.reloadPreferences();
+        }
+    }
+
     public void doShutterAnimation() {
         AnimationDrawable frameAnimation = (AnimationDrawable) mShutterButton.getDrawable();
         frameAnimation.stop();
         frameAnimation.start();
-    }
-
-    // called from onResume every other time
-    public void initializeSecondTime(Camera.Parameters params) {
-        initializeZoom(params);
-        if (mMenu != null) {
-            mMenu.reloadPreferences();
-        }
     }
 
     public void initializeZoom(Camera.Parameters params) {
