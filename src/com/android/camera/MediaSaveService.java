@@ -40,7 +40,9 @@ public class MediaSaveService extends Service {
     public static final String VIDEO_BASE_URI = "content://media/external/video/media";
 
     // The memory limit for unsaved image is 50MB.
-    private static final int SAVE_TASK_MEMORY_LIMIT = 60 * 1024 * 1024;
+    private static final int SAVE_TASK_MEMORY_LIMIT_IN_MB =
+                                   android.os.SystemProperties.getInt("persist.camera.perf.memlimit", 60);
+    private static final int SAVE_TASK_MEMORY_LIMIT = SAVE_TASK_MEMORY_LIMIT_IN_MB * 1024 * 1024;
     private static final String TAG = "CAM_" + MediaSaveService.class.getSimpleName();
 
     private final IBinder mBinder = new LocalBinder();

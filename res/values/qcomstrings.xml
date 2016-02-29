@@ -384,6 +384,7 @@
      <string name="pref_camera_hfr_entry_hsr_60">HSR 60</string>
      <string name="pref_camera_hfr_entry_hsr_90">HSR 90</string>
      <string name="pref_camera_hfr_entry_hsr_120">HSR 120</string>
+     <string name="pref_camera_hfr_entry_hsr_240">HSR 240</string>
 
      <!-- HFR entry values. Do not translate. -->
      <string name="pref_camera_hfr_value_off">off</string>
@@ -394,6 +395,7 @@
      <string name="pref_camera_hfr_value_hsr_60">hsr60</string>
      <string name="pref_camera_hfr_value_hsr_90">hsr90</string>
      <string name="pref_camera_hfr_value_hsr_120">hsr120</string>
+     <string name="pref_camera_hfr_value_hsr_240">hsr240</string>
 
      <!-- Default noise reduction setting. Do not translate. -->
      <string name="pref_camera_noise_reduction_default">off</string>
