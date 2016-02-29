@@ -2921,7 +2921,22 @@ public class VideoModule implements CameraModule,
 
     @Override
     public void onPreviewUIReady() {
-        startPreview();
+        if (mPaused || mCameraDevice == null) {
+            return;
+        }
+        Log.v(TAG, "onPreviewUIReady");
+        if (!mPreviewing) {
+            startPreview();
+        } else {
+            synchronized (mCameraDevice) {
+                SurfaceHolder sh = mUI.getSurfaceHolder();
+                if (sh == null) {
+                    Log.w(TAG, "holder for preview is not ready.");
+                    return;
+                }
+                mCameraDevice.setPreviewDisplay(sh);
+            }
+        }
     }
 
     @Override
