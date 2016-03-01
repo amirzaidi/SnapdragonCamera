@@ -543,6 +543,13 @@ public class PhotoModule
         }
     }
 
+    public void reinit() {
+        mPreferences = new ComboPreferences(mActivity);
+        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
+        mCameraId = getPreferredCameraId(mPreferences);
+        mPreferences.setLocalId(mActivity, mCameraId);
+        CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
+    }
 
     @Override
     public void init(CameraActivity activity, View parent) {
@@ -2307,11 +2314,6 @@ public class PhotoModule
     @Override
     public void onResumeBeforeSuper() {
         mPaused = false;
-        mPreferences = new ComboPreferences(mActivity);
-        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
-        mCameraId = getPreferredCameraId(mPreferences);
-        mPreferences.setLocalId(mActivity, mCameraId);
-        CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
     }
 
     private void openCamera() {
