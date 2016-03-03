@@ -209,6 +209,9 @@ public class VideoModule implements CameraModule,
     private boolean mIsMute = false;
     private boolean mWasMute = false;
 
+    private boolean mFaceDetectionEnabled = false;
+    private boolean mFaceDetectionStarted = false;
+
     private final MediaSaveService.OnMediaSavedListener mOnVideoSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
                 @Override
@@ -1190,6 +1193,7 @@ public class VideoModule implements CameraModule,
 
     private void onPreviewStarted() {
         mUI.enableShutter(true);
+        startFaceDetection();
     }
 
     @Override
@@ -1204,6 +1208,7 @@ public class VideoModule implements CameraModule,
         mPreviewing = false;
         mStopPrevPending = false;
         mUI.enableShutter(false);
+        stopFaceDetection();
     }
 
     private void closeCamera() {
@@ -1214,11 +1219,13 @@ public class VideoModule implements CameraModule,
         }
         mCameraDevice.setZoomChangeListener(null);
         mCameraDevice.setErrorCallback(null);
+        mCameraDevice.setFaceDetectionCallback(null, null);
         CameraHolder.instance().release();
         mCameraDevice = null;
         mPreviewing = false;
         mSnapshotInProgress = false;
         mPreviewFocused = false;
+        mFaceDetectionStarted = false;
     }
 
     private void releasePreviewResources() {
@@ -2475,6 +2482,23 @@ public class VideoModule implements CameraModule,
 
         //set power mode settings
         updatePowerMode();
+
+        // Set face detetction parameter.
+        String faceDetection = mPreferences.getString(
+            CameraSettings.KEY_FACE_DETECTION,
+            mActivity.getString(R.string.pref_camera_facedetection_default));
+
+        if (CameraUtil.isSupported(faceDetection, mParameters.getSupportedFaceDetectionModes())) {
+            Log.d(TAG, "setFaceDetectionMode "+faceDetection);
+            mParameters.setFaceDetectionMode(faceDetection);
+            if(faceDetection.equals("on") && mFaceDetectionEnabled == false) {
+                mFaceDetectionEnabled = true;
+                startFaceDetection();
+            } else if(faceDetection.equals("off") && mFaceDetectionEnabled == true) {
+                stopFaceDetection();
+                mFaceDetectionEnabled = false;
+            }
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -2926,4 +2950,32 @@ public class VideoModule implements CameraModule,
         }
     }
 
+
+    public void startFaceDetection() {
+        if (mCameraDevice == null) return;
+
+        if (mFaceDetectionEnabled == false
+               || mFaceDetectionStarted) return;
+        if (mParameters.getMaxNumDetectedFaces() > 0) {
+            mFaceDetectionStarted = true;
+            CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
+            mUI.onStartFaceDetection(mCameraDisplayOrientation,
+                    (info.facing == CameraInfo.CAMERA_FACING_FRONT));
+            mCameraDevice.setFaceDetectionCallback(mHandler, mUI);
+            Log.d(TAG, "start face detection Video "+mParameters.getMaxNumDetectedFaces());
+            mCameraDevice.startFaceDetection();
+        }
+    }
+
+    public void stopFaceDetection() {
+        Log.d(TAG, "stop face detection");
+        if (mFaceDetectionEnabled == false || !mFaceDetectionStarted) return;
+        if (mParameters.getMaxNumDetectedFaces() > 0) {
+            mFaceDetectionStarted = false;
+            mCameraDevice.setFaceDetectionCallback(null, null);
+            mUI.pauseFaceDetection();
+            mCameraDevice.stopFaceDetection();
+            mUI.onStopFaceDetection();
+        }
+    }
 }

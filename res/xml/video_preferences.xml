@@ -136,6 +136,13 @@
             camera:singleIcon="@drawable/ic_settings_filter"
             camera:entryValues="@array/pref_camera_coloreffect_entryvalues" />
     <IconListPreference
+            camera:key="pref_camera_facedetection_key"
+            camera:defaultValue="@string/pref_camera_facedetection_default"
+            camera:title="@string/pref_camera_facedetection_title"
+            camera:entries="@array/pref_camera_facedetection_entries"
+            camera:singleIcon="@drawable/ic_settings_facerec"
+            camera:entryValues="@array/pref_camera_facedetection_entryvalues" />
+    <IconListPreference
             camera:key="pref_camera_hfr_key"
             camera:defaultValue="@string/pref_camera_hfr_default"
             camera:title="@string/pref_camera_hfr_title"
