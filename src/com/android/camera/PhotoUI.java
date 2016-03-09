@@ -1148,6 +1148,11 @@ public class PhotoUI implements PieListener,
                 mPieRenderer.setBlockFocus(false);
             }
         }
+
+        @Override
+        public void onZoomValueChanged(float value) {
+
+        }
     }
 
     @Override

@@ -63,6 +63,7 @@ import com.android.camera.util.CameraUtil;
 import org.codeaurora.snapcam.R;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -133,6 +134,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CameraActivity mActivity;
     private PreferenceGroup mPreferenceGroup;
     private ComboPreferences mPreferences;
+    private CameraCharacteristics[] mCharacteristics = new CameraCharacteristics[MAX_NUM_CAM];
+    private List<Integer> mCharacteristicsIndex;
+    private float mZoomValue = 1f;
 
     private LocationManager mLocationManager;
     /**
@@ -346,7 +350,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mUI.onCameraOpened(mPreferenceGroup, prefListener);
+                        mUI.onCameraOpened(mCharacteristics, mCharacteristicsIndex,
+                                mPreferenceGroup, prefListener);
                     }
                 });
             }
@@ -596,6 +601,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             builder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO);
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
             applyWhiteBalance(builder);
+            applyZoom(builder, id);
             mState[id] = STATE_WAITING_LOCK;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
         } catch (CameraAccessException e) {
@@ -622,7 +628,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
             captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest
                     .CONTROL_AF_TRIGGER_IDLE);
-            applyCaptureSettings(captureBuilder);
+            applyCaptureSettings(captureBuilder, id);
 
             // Orientation
             int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
@@ -670,6 +676,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             // Applying flash only to capture does not work. Need to apply flash here.
             applyFlash(builder);
             applyWhiteBalance(builder);
+            applyZoom(builder, id);
             mState[id] = STATE_WAITING_PRECAPTURE;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
         } catch (CameraAccessException e) {
@@ -684,8 +691,7 @@ public class CaptureModule implements CameraModule, PhotoController,
      * @param height The height of available size for camera preview
      */
     private void setUpCameraOutputs() {
-        Activity activity = mActivity;
-        CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+        CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
         try {
             String[] cameraIdList = manager.getCameraIdList();
 
@@ -693,7 +699,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                 String cameraId = cameraIdList[i];
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
-
+                mCharacteristics[i] = characteristics;
+                mCharacteristicsIndex.add(i);
                 StreamConfigurationMap map = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
@@ -737,6 +744,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
             //Todo: Create applyCommonSettings function for settings applied everytime
             applyWhiteBalance(builder);
+            applyZoom(builder, id);
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             mState[id] = STATE_PREVIEW;
             mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id].build(),
@@ -848,7 +856,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onPreviewFocusChanged(boolean previewFocused) {
-
+        mUI.onPreviewFocusChanged(previewFocused);
     }
 
     @Override
@@ -874,6 +882,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onResumeAfterSuper() {
         Log.d(TAG, "onResume " + MODE);
+        mCharacteristicsIndex = new ArrayList<>();
         setUpCameraOutputs();
         readInitialValues();
         startBackgroundThread();
@@ -922,7 +931,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public boolean onBackPressed() {
-        return false;
+        return mUI.onBackPressed();
     }
 
     @Override
@@ -941,13 +950,31 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
+    public void onZoomChanged(float requestedZoom) {
+        mZoomValue = requestedZoom;
+
+        switch (MODE) {
+            case DUAL_MODE:
+                applyZoomAndUpdate(BAYER_ID);
+                applyZoomAndUpdate(MONO_ID);
+                break;
+            case BAYER_MODE:
+                applyZoomAndUpdate(BAYER_ID);
+                break;
+            case MONO_MODE:
+                applyZoomAndUpdate(MONO_ID);
+                break;
+        }
+    }
+
+    @Override
     public boolean isImageCaptureIntent() {
         return false;
     }
 
     @Override
     public boolean isCameraIdle() {
-        return false;
+        return true;
     }
 
     @Override
@@ -1144,6 +1171,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mPreviewRequestBuilder[id].set(CaptureRequest.FLASH_MODE, CaptureRequest
                 .FLASH_MODE_OFF);
         applyWhiteBalance(mPreviewRequestBuilder[id]);
+        applyZoom(mPreviewRequestBuilder[id], id);
     }
 
     private void readInitialValues() {
@@ -1156,10 +1184,28 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private void applyCaptureSettings(CaptureRequest.Builder request) {
+    public Rect cropRegionForZoom(int id) {
+        Rect activeRegion = mCharacteristics[id].get(CameraCharacteristics
+                .SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        Rect cropRegion = new Rect();
+
+        int xCenter = activeRegion.width() / 2;
+        int yCenter = activeRegion.height() / 2;
+        int xDelta = (int) (activeRegion.width() / (2 * mZoomValue));
+        int yDelta = (int) (activeRegion.height() / (2 * mZoomValue));
+        cropRegion.set(xCenter - xDelta, yCenter - yDelta, xCenter + xDelta, yCenter + yDelta);
+        return cropRegion;
+    }
+
+    private void applyZoom(CaptureRequest.Builder request, int id) {
+        request.set(CaptureRequest.SCALER_CROP_REGION, cropRegionForZoom(id));
+    }
+
+    private void applyCaptureSettings(CaptureRequest.Builder request, int id) {
         applyFlash(request);
         applyWhiteBalance(request);
         applyJpegQuality(request);
+        applyZoom(request, id);
     }
 
     private void applyPreference(int cameraId, ListPreference pref) {
@@ -1184,6 +1230,16 @@ public class CaptureModule implements CameraModule, PhotoController,
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void applyZoomAndUpdate(int id) {
+        applyZoom(mPreviewRequestBuilder[id], id);
+        try {
+            mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
+                    .build(), mCaptureCallback, mCameraHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         }
     }
 

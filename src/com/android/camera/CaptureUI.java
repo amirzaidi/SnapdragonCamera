@@ -24,8 +24,8 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.drawable.AnimationDrawable;
-import android.hardware.Camera;
 import android.hardware.Camera.Face;
+import android.hardware.camera2.CameraCharacteristics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -111,8 +111,6 @@ public class CaptureUI implements PieListener,
     private OnScreenIndicators mOnScreenIndicators;
     private PieRenderer mPieRenderer;
     private ZoomRenderer mZoomRenderer;
-    private int mZoomMax;
-    private List<Integer> mZoomRatios;
     private int mPreviewWidth = 0;
     private int mPreviewHeight = 0;
     private int mOriginalPreviewWidth = 0;
@@ -280,7 +278,9 @@ public class CaptureUI implements PieListener,
                 mRootView.findViewById(R.id.on_screen_indicators));
     }
 
-    public void onCameraOpened(PreferenceGroup prefGroup, OnPreferenceChangedListener listener) {
+    public void onCameraOpened(CameraCharacteristics[] characteristics,
+                               List<Integer> characteristicsIndex, PreferenceGroup prefGroup,
+                               OnPreferenceChangedListener listener) {
         if (mMenu == null) {
             mMenu = new CaptureMenu(mActivity, this);
             mMenu.setListener(listener);
@@ -300,8 +300,11 @@ public class CaptureUI implements PieListener,
         }
         mGestures.setCaptureMenu(mMenu);
 
+        mGestures.setZoomEnabled(CameraUtil.isZoomSupported(characteristics, characteristicsIndex));
         mGestures.setRenderOverlay(mRenderOverlay);
         mRenderOverlay.requestLayout();
+
+        initializeZoom(characteristics, characteristicsIndex);
         mActivity.setPreviewGestures(mGestures);
     }
 
@@ -364,17 +367,19 @@ public class CaptureUI implements PieListener,
         frameAnimation.start();
     }
 
-    public void initializeZoom(Camera.Parameters params) {
-        if ((params == null) || !params.isZoomSupported()
-                || (mZoomRenderer == null)) return;
-        mZoomMax = params.getMaxZoom();
-        mZoomRatios = params.getZoomRatios();
-        // Currently we use immediate zoom for fast zooming to get better UX and
-        // there is no plan to take advantage of the smooth zoom.
+    public void initializeZoom(CameraCharacteristics[] characteristics,
+                               List<Integer> characteristicsIndex) {
+        if ((characteristics == null) || !CameraUtil.isZoomSupported(characteristics,
+                characteristicsIndex) || (mZoomRenderer == null))
+            return;
         if (mZoomRenderer != null) {
-            mZoomRenderer.setZoomMax(mZoomMax);
-            mZoomRenderer.setZoom(params.getZoom());
-            mZoomRenderer.setZoomValue(mZoomRatios.get(params.getZoom()));
+            float zoomMax = Float.MAX_VALUE;
+            for (int i = 0; i < characteristicsIndex.size(); i++) {
+                zoomMax = Math.min(characteristics[characteristicsIndex.get(i)].get
+                        (CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM), zoomMax);
+            }
+            mZoomRenderer.setZoomMax(zoomMax);
+            mZoomRenderer.setZoom(1f);
             mZoomRenderer.setOnZoomChangeListener(new ZoomChangeListener());
         }
     }
@@ -781,10 +786,10 @@ public class CaptureUI implements PieListener,
 
     private class ZoomChangeListener implements ZoomRenderer.OnZoomChangedListener {
         @Override
-        public void onZoomValueChanged(int index) {
-            int newZoom = mController.onZoomChanged(index);
+        public void onZoomValueChanged(float mZoomValue) {
+            mController.onZoomChanged(mZoomValue);
             if (mZoomRenderer != null) {
-                mZoomRenderer.setZoomValue(mZoomRatios.get(newZoom));
+                mZoomRenderer.setZoom(mZoomValue);
             }
         }
 
@@ -801,6 +806,11 @@ public class CaptureUI implements PieListener,
             if (mPieRenderer != null) {
                 mPieRenderer.setBlockFocus(false);
             }
+        }
+
+        @Override
+        public void onZoomValueChanged(int index) {
+
         }
     }
 

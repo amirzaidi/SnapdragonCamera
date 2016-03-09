@@ -4657,6 +4657,11 @@ public class PhotoModule
     }
 
     @Override
+    public void onZoomChanged(float requestedZoom) {
+
+    }
+
+    @Override
     public int getCameraState() {
         return mCameraState;
     }

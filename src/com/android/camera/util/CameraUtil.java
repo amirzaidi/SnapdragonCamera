@@ -35,6 +35,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
+import android.hardware.camera2.CameraCharacteristics;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
@@ -1168,4 +1169,15 @@ public class CameraUtil {
         return retRatio;
     }
 
+    public static boolean isZoomSupported(CameraCharacteristics[] characteristics, List<Integer>
+            characteristicsIndex) {
+        boolean supported = true;
+
+        for (int i = 0; i < characteristicsIndex.size(); i++) {
+            if (characteristics[characteristicsIndex.get(i)].get(CameraCharacteristics
+                    .SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) <= 1f)
+                return false;
+        }
+        return supported;
+    }
 }
