@@ -200,6 +200,16 @@
      <string name="pref_camera_manual_focus_value_diopter_mode">diopter-mode</string>
      <string name="pref_camera_manual_focus_value_off">off</string>
 
+    <!-- Instant Capture entry -->
+    <string name="pref_camera_instant_capture_title" translatable="true">Instant Capture</string>
+    <string name="pref_camera_instant_capture_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera_instant_capture_entry_disable" translatable="true">Disable</string>
+
+    <!-- Instant Capture entry values -->
+    <string name="pref_camera_instant_capture_default" translatable="false">0</string>
+    <string name="pref_camera_instant_capture_value_enable" translatable="false">1</string>
+    <string name="pref_camera_instant_capture_value_disable" translatable="false">0</string>
+
     <!-- Settings screen, ZSL location dialog choices -->
     <string name="pref_camera_zsl_entry_off">Off</string>
     <string name="pref_camera_zsl_entry_on">On</string>

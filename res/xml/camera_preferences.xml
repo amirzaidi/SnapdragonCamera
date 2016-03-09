@@ -358,4 +358,12 @@
             camera:title="@string/pref_camera_manual_focus_title"
             camera:entries="@array/pref_camera_manual_focus_entries"
             camera:entryValues="@array/pref_camera_manual_focus_entry_values" />
+
+    <ListPreference
+            camera:key="pref_camera_instant_capture_key"
+            camera:defaultValue="@string/pref_camera_instant_capture_default"
+            camera:title="@string/pref_camera_instant_capture_title"
+            camera:entries="@array/pref_camera_instant_capture_entries"
+            camera:entryValues="@array/pref_camera_instant_capture_entry_values" />
+
 </PreferenceGroup>
