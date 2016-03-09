@@ -906,6 +906,7 @@
      <string name="text_tsmakeup_alert_msg">The beautification must turn on Face Detection, Continue or Quit?</string>
      <string name="text_tsmakeup_alert_continue">Continue</string>
      <string name="text_tsmakeup_alert_quit">Quit</string>
+    <string name="text_tsmakeup_beautify_toast" translatable="true">Beautify</string>
 
     <string name="all_in_focus">All in Focus</string>
     <string name="refocus_toast">To re-focus last photo, tap here</string>
