@@ -79,4 +79,19 @@
 
     <color name="refocus_indicator_1">#a0ffffff</color>
     <color name="refocus_indicator_2">#ff29b6f6</color>
+
+    <!-- Help menu text color -->
+    <color name="help_menu_scene_mode_1">#ffffff</color>
+    <color name="help_menu_scene_mode_2">#00ff00</color>
+    <color name="help_menu_scene_mode_3">#ffffff</color>
+    <color name="help_menu_color_filter_1">#ffffff</color>
+    <color name="help_menu_color_filter_2">#00ff00</color>
+    <color name="help_menu_color_filter_3">#ffffff</color>
+    <color name="help_menu_color_filter_4">#ffffff</color>
+    <color name="help_menu_beautify_1">#ffffff</color>
+    <color name="help_menu_beautify_2">#ffffff</color>
+    <color name="help_menu_beautify_3">#00ff00</color>
+    <color name="help_menu_switcher_1">#00ff00</color>
+    <color name="help_menu_switcher_2">#ffffff</color>
+    <color name="help_menu_switcher_3">#ffffff</color>
 </resources>
