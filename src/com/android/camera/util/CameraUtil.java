@@ -1171,13 +1171,30 @@ public class CameraUtil {
 
     public static boolean isZoomSupported(CameraCharacteristics[] characteristics, List<Integer>
             characteristicsIndex) {
-        boolean supported = true;
-
         for (int i = 0; i < characteristicsIndex.size(); i++) {
-            if (characteristics[characteristicsIndex.get(i)].get(CameraCharacteristics
-                    .SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) <= 1f)
+            if (!isZoomSupported(characteristics[characteristicsIndex.get(i)]))
                 return false;
         }
-        return supported;
+        return true;
+    }
+
+    public static boolean isZoomSupported(CameraCharacteristics characteristic) {
+        return characteristic.get(CameraCharacteristics
+                .SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) > 1f;
+    }
+
+    public static boolean isAutoFocusSupported(CameraCharacteristics[] characteristics, List<Integer>
+            characteristicsIndex) {
+        for (int i = 0; i < characteristicsIndex.size(); i++) {
+            if (!isAutoFocusSupported(characteristics[characteristicsIndex.get(i)]))
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean isAutoFocusSupported(CameraCharacteristics characteristic) {
+        Integer maxAfRegions = characteristic.get(
+                CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
+        return maxAfRegions != null && maxAfRegions > 0;
     }
 }

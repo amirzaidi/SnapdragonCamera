@@ -281,6 +281,12 @@ public class CaptureUI implements PieListener,
     public void onCameraOpened(CameraCharacteristics[] characteristics,
                                List<Integer> characteristicsIndex, PreferenceGroup prefGroup,
                                OnPreferenceChangedListener listener) {
+        if (mPieRenderer == null) {
+            mPieRenderer = new PieRenderer(mActivity);
+            mPieRenderer.setPieListener(this);
+            mRenderOverlay.addRenderer(mPieRenderer);
+        }
+
         if (mMenu == null) {
             mMenu = new CaptureMenu(mActivity, this);
             mMenu.setListener(listener);
@@ -686,7 +692,7 @@ public class CaptureUI implements PieListener,
 
     // focus UI implementation
     private FocusIndicator getFocusIndicator() {
-        return null;
+        return mPieRenderer;
     }
 
     @Override
@@ -778,6 +784,18 @@ public class CaptureUI implements PieListener,
         if (mZoomRenderer != null) {
             mZoomRenderer.setOrientation(orientation);
         }
+    }
+
+    public Point getSurfaceViewSize() {
+        Point point = new Point();
+        if (mSurfaceView != null) point.set(mSurfaceView.getWidth(), mSurfaceView.getHeight());
+        return point;
+    }
+
+    public Point getSurfaceView2Size() {
+        Point point = new Point();
+        if (mSurfaceView2 != null) point.set(mSurfaceView2.getWidth(), mSurfaceView2.getHeight());
+        return point;
     }
 
     public int getOrientation() {

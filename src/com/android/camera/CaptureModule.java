@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -36,6 +37,7 @@ import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CameraProfile;
 import android.media.Image;
@@ -118,6 +120,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
+    MeteringRectangle[][] mAFRegions = new MeteringRectangle[MAX_NUM_CAM][];
+    private int mLastResultAFState = -1;
+    private Rect[] mCropRegion = new Rect[MAX_NUM_CAM];
+    private boolean mAutoFocusSupported;
     // The degrees of the device rotated clockwise from its natural orientation.
     private int mOrientation = OrientationEventListener.ORIENTATION_UNKNOWN;
     private int mJpegQuality;
@@ -137,7 +143,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CameraCharacteristics[] mCharacteristics = new CameraCharacteristics[MAX_NUM_CAM];
     private List<Integer> mCharacteristicsIndex;
     private float mZoomValue = 1f;
-
+    private FocusStateListener mFocusStateListener;
     private LocationManager mLocationManager;
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -273,6 +279,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         public void onCaptureProgressed(CameraCaptureSession session,
                                         CaptureRequest request,
                                         CaptureResult partialResult) {
+            int id = (int) partialResult.getRequest().getTag();
+            if (id == getMainCameraId()) updateFocusStateChange(partialResult);
             process(partialResult);
         }
 
@@ -280,6 +288,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         public void onCaptureCompleted(CameraCaptureSession session,
                                        CaptureRequest request,
                                        TotalCaptureResult result) {
+            int id = (int) result.getRequest().getTag();
+            if (id == getMainCameraId()) updateFocusStateChange(result);
             process(result);
         }
     };
@@ -562,6 +572,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mContentResolver = mActivity.getContentResolver();
         mUI = new CaptureUI(activity, this, parent);
         mUI.initializeControlByIntent();
+        mFocusStateListener = new FocusStateListener(mUI);
         mLocationManager = new LocationManager(mActivity, mUI);
         Storage.setSaveSDCard(
                 mPreferences.getString(CameraSettings.KEY_CAMERA_SAVEPATH, "0").equals("1"));
@@ -603,6 +614,26 @@ public class CaptureModule implements CameraModule, PhotoController,
             applyWhiteBalance(builder);
             applyZoom(builder, id);
             mState[id] = STATE_WAITING_LOCK;
+            mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void autoFocusTrigger(int id) {
+        Log.d(TAG, "autoFocusTrigger " + id);
+        try {
+            CaptureRequest.Builder builder = mCameraDevice[id].createCaptureRequest(CameraDevice
+                    .TEMPLATE_PREVIEW);
+            builder.setTag(id);
+            builder.addTarget(getPreviewSurface(id));
+
+            builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO);
+            builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+            applyWhiteBalance(builder);
+            applyZoom(builder, id);
+            applyAFRegions(builder, id);
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -719,6 +750,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mOnImageAvailableListener, mImageAvailableHandler);
                 mCameraId[i] = cameraId;
             }
+            mAutoFocusSupported = CameraUtil.isAutoFocusSupported(mCharacteristics,
+                    mCharacteristicsIndex);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
@@ -1009,7 +1042,42 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onSingleTapUp(View view, int x, int y) {
+        if (mPaused || mCameraDevice == null || !mFirstTimeInitialized || !mAutoFocusSupported ||
+                !isStatePreview()) {
+            return;
+        }
+        mUI.setFocusPosition(x, y);
+        mUI.onFocusStarted();
+        switch (MODE) {
+            case DUAL_MODE:
+                triggerFocusAtPoint(x, y, BAYER_ID);
+                triggerFocusAtPoint(x, y, MONO_ID);
+                break;
+            case BAYER_MODE:
+                triggerFocusAtPoint(x, y, BAYER_ID);
+                break;
+            case MONO_MODE:
+                triggerFocusAtPoint(x, y, MONO_ID);
+                break;
+        }
+    }
 
+    private int getMainCameraId() {
+        switch (MODE) {
+            case DUAL_MODE:
+            case BAYER_MODE:
+                return BAYER_ID;
+            case MONO_MODE:
+                return MONO_ID;
+        }
+        return 0;
+    }
+
+    private boolean isStatePreview() {
+        for (int i = 0; i < mState.length; i++) {
+            if (mState[i] != STATE_PREVIEW) return false;
+        }
+        return true;
     }
 
     @Override
@@ -1185,6 +1253,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public Rect cropRegionForZoom(int id) {
+        Log.d(TAG, "cropRegionForZoom " + id);
         Rect activeRegion = mCharacteristics[id].get(CameraCharacteristics
                 .SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         Rect cropRegion = new Rect();
@@ -1194,7 +1263,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         int xDelta = (int) (activeRegion.width() / (2 * mZoomValue));
         int yDelta = (int) (activeRegion.height() / (2 * mZoomValue));
         cropRegion.set(xCenter - xDelta, yCenter - yDelta, xCenter + xDelta, yCenter + yDelta);
-        return cropRegion;
+        mCropRegion[id] = cropRegion;
+        return mCropRegion[id];
     }
 
     private void applyZoom(CaptureRequest.Builder request, int id) {
@@ -1253,6 +1323,10 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyJpegQuality(CaptureRequest.Builder request) {
         request.set(CaptureRequest.JPEG_QUALITY, (byte) mJpegQuality);
+    }
+
+    private void applyAFRegions(CaptureRequest.Builder request, int id) {
+        request.set(CaptureRequest.CONTROL_AF_REGIONS, mAFRegions[id]);
     }
 
     private void applyWhiteBalance(CaptureRequest.Builder request) {
@@ -1318,6 +1392,56 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onQueueStatus(boolean full) {
         mUI.enableShutter(!full);
+    }
+
+    public void triggerFocusAtPoint(float x, float y, int id) {
+        Point p;
+        if (id == getMainCameraId()) {
+            p = mUI.getSurfaceViewSize();
+        } else {
+            p = mUI.getSurfaceView2Size();
+        }
+        int width = p.x;
+        int height = p.y;
+        x = x / width;
+        y = y / height;
+        mAFRegions[id] = afRectangle(x, y, mCropRegion[id]);
+        autoFocusTrigger(id);
+    }
+
+    private MeteringRectangle[] afRectangle(float x, float y, Rect cropRegion) {
+        int side = Math.max(cropRegion.width(), cropRegion.height()) / 8;
+        int xCenter = (int) (cropRegion.left + x * cropRegion.width());
+        int yCenter = (int) (cropRegion.top + y * cropRegion.height());
+        Rect meteringRegion = new Rect(xCenter - side / 2, yCenter - side / 2, xCenter +
+                side / 2, yCenter + side / 2);
+
+        meteringRegion.left = CameraUtil.clamp(meteringRegion.left, cropRegion.left, cropRegion
+                .right);
+        meteringRegion.top = CameraUtil.clamp(meteringRegion.top, cropRegion.top, cropRegion
+                .bottom);
+        meteringRegion.right = CameraUtil.clamp(meteringRegion.right, cropRegion.left, cropRegion
+                .right);
+        meteringRegion.bottom = CameraUtil.clamp(meteringRegion.bottom, cropRegion.top,
+                cropRegion.bottom);
+        MeteringRectangle[] meteringRectangle = new MeteringRectangle[1];
+        meteringRectangle[0] = new MeteringRectangle(meteringRegion, 1);
+        return meteringRectangle;
+    }
+
+    private void updateFocusStateChange(CaptureResult result) {
+        final int resultAFState = result.get(CaptureResult.CONTROL_AF_STATE);
+
+        // Report state change when AF state has changed.
+        if (resultAFState != mLastResultAFState && mFocusStateListener != null) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mFocusStateListener.onFocusStatusUpdate(resultAFState);
+                }
+            });
+        }
+        mLastResultAFState = resultAFState;
     }
 
     /**
