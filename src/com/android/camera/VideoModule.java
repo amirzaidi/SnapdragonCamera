@@ -620,6 +620,7 @@ public class VideoModule implements CameraModule,
                 updatePowerMode();
                 mCameraDevice.setParameters(mParameters);
             }
+            mUI.tryToCloseSubList();
             mUI.setOrientation(newOrientation, true);
         }
 

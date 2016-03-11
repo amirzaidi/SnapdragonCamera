@@ -168,8 +168,7 @@ public class PhotoUI implements PieListener,
         @Override
         public void onLayoutChange(View v, int left, int top, int right,
                 int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-            if (mMenu != null)
-                mMenu.tryToCloseSubList();
+            tryToCloseSubList();
 
             Camera.Parameters parameters = ((PhotoModule)mController).getParameters();
             if(parameters != null) {
@@ -1410,6 +1409,11 @@ public class PhotoUI implements PieListener,
         if (mZoomRenderer != null) {
             mZoomRenderer.setOrientation(orientation);
         }
+    }
+
+    public void tryToCloseSubList() {
+        if (mMenu != null)
+            mMenu.tryToCloseSubList();
     }
 
     public int getOrientation() {
