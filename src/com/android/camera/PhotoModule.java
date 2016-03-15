@@ -1919,6 +1919,16 @@ public class PhotoModule
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, null);
         }
 
+        if(TsMakeupManager.HAS_TS_MAKEUP) {
+            IconListPreference tsMakeupLevelPref = (IconListPreference) mPreferenceGroup
+                    .findPreference(CameraSettings.KEY_TS_MAKEUP_LEVEL);
+            if (tsMakeupLevelPref != null &&
+                !tsMakeupLevelPref.getValue().equalsIgnoreCase(TsMakeupManager.MAKEUP_OFF)) {
+                mUI.overrideSettings(CameraSettings.KEY_FACE_DETECTION,
+                                     Parameters.FACE_DETECTION_ON);
+            }
+        }
+
         if (flashMode == null) {
             // Restore saved flash mode or default mode
             if (mSavedFlashMode == null) {
