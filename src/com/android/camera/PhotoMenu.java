@@ -781,6 +781,7 @@ public class PhotoMenu extends MenuController
         if ((notSame(scenePref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO))
                 || (notSame(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff))) {
             buttonSetEnabled(mFilterModeSwitcher, false);
+            changeFilterModeControlIcon("none");
         } else {
             buttonSetEnabled(mFilterModeSwitcher, true);
         }
