@@ -39,6 +39,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Toast;
 
 import com.android.camera.ui.RotateLayout;
+import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
 
 import org.codeaurora.snapcam.R;
@@ -316,7 +317,7 @@ public class TsMakeupManager implements OnSeekBarChangeListener {
                             if(!pref.getValue().equalsIgnoreCase("off")) {
                                 String toast = mActivity.getString(
                                         R.string.text_tsmakeup_beautify_toast);
-                                Toast.makeText(mActivity, toast, Toast.LENGTH_SHORT).show();
+                                RotateTextToast.makeText(mActivity, toast, Toast.LENGTH_SHORT).show();
                             }
                         }
                     }

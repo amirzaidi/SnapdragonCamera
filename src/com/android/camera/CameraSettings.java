@@ -123,6 +123,7 @@ public class CameraSettings {
     public static final String KEY_DIS = "pref_camera_dis_key";
 
     public static final String KEY_LONGSHOT = "pref_camera_longshot_key";
+    public static final String KEY_INSTANT_CAPTURE = "pref_camera_instant_capture_key";
 
     private static final String KEY_QC_SUPPORTED_AE_BRACKETING_MODES = "ae-bracket-hdr-values";
     private static final String KEY_QC_SUPPORTED_AF_BRACKETING_MODES = "af-bracket-values";
@@ -165,6 +166,7 @@ public class CameraSettings {
     public static final String KEY_VIDEO_HSR = "video-hsr";
     public static final String KEY_QC_SEE_MORE_MODE = "see-more";
     public static final String KEY_QC_NOISE_REDUCTION_MODE = "noise-reduction-mode";
+    public static final String KEY_QC_INSTANT_CAPTURE = "instant-capture";
 
     public static final String KEY_INTERNAL_PREVIEW_RESTART = "internal-restart";
     public static final String KEY_QC_ZSL_HDR_SUPPORTED = "zsl-hdr-supported";
@@ -662,6 +664,13 @@ public class CameraSettings {
         ListPreference manualFocus = group.findPreference(KEY_MANUAL_FOCUS);
         ListPreference manualExposure = group.findPreference(KEY_MANUAL_EXPOSURE);
         ListPreference manualWB = group.findPreference(KEY_MANUAL_WB);
+        ListPreference instantCapture = group.findPreference(KEY_INSTANT_CAPTURE);
+
+        if (instantCapture != null) {
+            if (!isInstantCaptureSupported(mParameters)) {
+                removePreference(group, instantCapture.getKey());
+            }
+        }
 
         if (hdr_need_1x != null) {
             filterUnsupportedOptions(group,
@@ -1383,6 +1392,19 @@ public class CameraSettings {
             return null;
         }
         return split(str);
+    }
+
+    public static boolean isInstantCaptureSupported(Parameters params) {
+        boolean ret = false;
+        if (null != params) {
+            // TODO: need to uncomment this code once get parameter
+            // is supported
+            //String val = params.get(KEY_QC_INSTANT_CAPTURE);
+            //if (null != val) {
+                ret = true;
+            //}
+        }
+        return ret;
     }
 
 }

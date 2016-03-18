@@ -195,7 +195,7 @@ public class PhotoModule
     private boolean mLongshotSave = false;
     private boolean mRefocus = false;
     private boolean mLastPhotoTakenWithRefocus = false;
-
+    private boolean mInstantCaptureSnapShot = false;
     private int mLongShotCaptureCount;
     private int mLongShotCaptureCountLimit;
 
@@ -543,6 +543,13 @@ public class PhotoModule
         }
     }
 
+    public void reinit() {
+        mPreferences = new ComboPreferences(mActivity);
+        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
+        mCameraId = getPreferredCameraId(mPreferences);
+        mPreferences.setLocalId(mActivity, mCameraId);
+        CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
+    }
 
     @Override
     public void init(CameraActivity activity, View parent) {
@@ -1241,6 +1248,14 @@ public class PhotoModule
         public void onPictureTaken(final byte [] jpegData, CameraProxy camera) {
             mUI.stopSelfieFlash();
             mUI.enableShutter(true);
+            if (mInstantCaptureSnapShot == true) {
+                Log.v(TAG, "Instant capture picture taken!");
+                mInstantCaptureSnapShot = false;
+
+                // When take picture request is sent before starting preview, onPreviewFrame()
+                // callback doesn't happen so removing preview cover here, instead.
+                mUI.hidePreviewCover();
+            }
             if (mPaused) {
                 return;
             }
@@ -2008,6 +2023,7 @@ public class PhotoModule
                     mCameraDevice.setParameters(mParameters);
                 }
             }
+            mUI.tryToCloseSubList();
             mUI.setOrientation(mOrientation, true);
             if (mGraphView != null) {
                 mGraphView.setRotation(-mOrientation);
@@ -2307,11 +2323,6 @@ public class PhotoModule
     @Override
     public void onResumeBeforeSuper() {
         mPaused = false;
-        mPreferences = new ComboPreferences(mActivity);
-        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
-        mCameraId = getPreferredCameraId(mPreferences);
-        mPreferences.setLocalId(mActivity, mCameraId);
-        CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
     }
 
     private void openCamera() {
@@ -2334,7 +2345,7 @@ public class PhotoModule
         mInitialParams = mParameters;
         if (mFocusManager == null) initializeFocusManager();
         initializeCapabilities();
-        mHandler.sendEmptyMessageDelayed(CAMERA_OPEN_DONE,100);
+        mHandler.sendEmptyMessageDelayed(CAMERA_OPEN_DONE, 100);
         return;
     }
 
@@ -2348,11 +2359,18 @@ public class PhotoModule
         if (MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA.equals(action)
                 || MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)) {
             Log.v(TAG, "On resume, from lock screen.");
+
             // Note: onPauseAfterSuper() will delete this runnable, so we will
             // at most have 1 copy queued up.
             mHandler.postDelayed(new Runnable() {
                 public void run() {
                     onResumeTasks();
+
+                    // Check if there is a need to take a snapshot without
+                    // waiting for the shutter click
+                    if (isInstantCaptureEnabled()) {
+                        mInstantCaptureSnapShot = true;
+                    }
                 }
             }, ON_RESUME_TASKS_DELAY_MSEC);
         } else {
@@ -2366,9 +2384,9 @@ public class PhotoModule
             mRefocusSound = mSoundPool.load(mActivity, R.raw.camera_click_x5, 1);
         }
 
-        mHandler.post(new Runnable(){
+        mHandler.post(new Runnable() {
             @Override
-            public void run(){
+            public void run() {
                 mActivity.updateStorageSpaceAndHint();
                 updateRemainingPhotos();
             }
@@ -2822,13 +2840,14 @@ public class PhotoModule
 
         setDisplayOrientation();
 
-        if (!mSnapshotOnIdle) {
+        if (!mSnapshotOnIdle && !mInstantCaptureSnapShot) {
             // If the focus mode is continuous autofocus, call cancelAutoFocus to
             // resume it because it may have been paused by autoFocus call.
             if (CameraUtil.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mFocusManager.getFocusMode())) {
                 mCameraDevice.cancelAutoFocus();
             }
         } else {
+            Log.v(TAG, "Trigger snapshot from start preview.");
             mHandler.post(mDoSnapRunnable);
         }
     }
@@ -2892,6 +2911,17 @@ public class PhotoModule
             return mRestartPreview;
         }
         return mRestartPreview;
+    }
+
+    private boolean isInstantCaptureEnabled() {
+        String instantCapture = mPreferences.getString(
+                CameraSettings.KEY_INSTANT_CAPTURE,
+                mActivity.getString(R.string.pref_camera_instant_capture_default));
+        if (instantCapture.equals(mActivity.getString(
+                R.string.pref_camera_instant_capture_value_enable))) {
+            return true;
+        }
+        return false;
     }
 
     private void qcomUpdateAdvancedFeatures(String ubiFocus,
@@ -3173,6 +3203,23 @@ public class PhotoModule
                 CameraSettings.getSupportedHDRNeed1x(mParameters))) {
             mParameters.set(CameraSettings.KEY_SNAPCAM_HDR_NEED_1X, hdrNeed1x);
         }
+
+        // Set Instant Capture
+        String instantCapture = mPreferences.getString(
+                CameraSettings.KEY_INSTANT_CAPTURE,
+                mActivity.getString(R.string.pref_camera_instant_capture_default));
+
+        if (instantCapture.equals(mActivity.getString(
+                R.string.pref_camera_instant_capture_value_enable))) {
+            if (!mInstantCaptureSnapShot) {
+                // Disable instant capture after first snapshot is taken
+                instantCapture = mActivity.getString(
+                        R.string.pref_camera_instant_capture_value_disable);
+            }
+        }
+        Log.v(TAG, "Instant capture = " + instantCapture + ", mInstantCaptureSnapShot = "
+                + mInstantCaptureSnapShot);
+        mParameters.set(CameraSettings.KEY_QC_INSTANT_CAPTURE, instantCapture);
 
         // Set Advanced features.
         String advancedFeature = mPreferences.getString(
@@ -3795,7 +3842,11 @@ public class PhotoModule
             }
 
             // Set focus mode.
-            if ((mManual3AEnabled & MANUAL_FOCUS) == 0) {
+            if (mInstantCaptureSnapShot == true) {
+                Log.v(TAG, "Change the focuse mode to "+ Parameters.FOCUS_MODE_INFINITY);
+                mFocusManager.overrideFocusMode(Parameters.FOCUS_MODE_INFINITY);
+                mParameters.setFocusMode(Parameters.FOCUS_MODE_INFINITY);
+            } else if ((mManual3AEnabled & MANUAL_FOCUS) == 0) {
                 mFocusManager.overrideFocusMode(null);
                 mParameters.setFocusMode(mFocusManager.getFocusMode());
             }

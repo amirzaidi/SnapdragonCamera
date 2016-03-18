@@ -200,6 +200,16 @@
      <string name="pref_camera_manual_focus_value_diopter_mode">diopter-mode</string>
      <string name="pref_camera_manual_focus_value_off">off</string>
 
+    <!-- Instant Capture entry -->
+    <string name="pref_camera_instant_capture_title" translatable="true">Instant Capture</string>
+    <string name="pref_camera_instant_capture_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera_instant_capture_entry_disable" translatable="true">Disable</string>
+
+    <!-- Instant Capture entry values -->
+    <string name="pref_camera_instant_capture_default" translatable="false">0</string>
+    <string name="pref_camera_instant_capture_value_enable" translatable="false">1</string>
+    <string name="pref_camera_instant_capture_value_disable" translatable="false">0</string>
+
     <!-- Settings screen, ZSL location dialog choices -->
     <string name="pref_camera_zsl_entry_off">Off</string>
     <string name="pref_camera_zsl_entry_on">On</string>
@@ -918,5 +928,21 @@
     <string name="camera_unknown_error">Unknown error, closing camera.</string>
 
     <string name="mute_button_desc">Mute Button</string>
+
+    <!-- Help menu strings -->
+    <string name="help_menu_ok" translatable="true">OK</string>
+    <string name="help_menu_scene_mode_1" translatable="true">Select a</string>
+    <string name="help_menu_scene_mode_2" translatable="true">Scene Mode</string>
+    <string name="help_menu_scene_mode_3" translatable="true">for better pictures</string>
+    <string name="help_menu_color_filter_1" translatable="true">Apply color</string>
+    <string name="help_menu_color_filter_2" translatable="true">filters</string>
+    <string name="help_menu_color_filter_3" translatable="true">to</string>
+    <string name="help_menu_color_filter_4" translatable="true">improve pictures</string>
+    <string name="help_menu_beautify_1" translatable="true">Enhance portraits</string>
+    <string name="help_menu_beautify_2" translatable="true">with the</string>
+    <string name="help_menu_beautify_3" translatable="true">Beautify feature</string>
+    <string name="help_menu_switcher_1" translatable="true">Switch</string>
+    <string name="help_menu_switcher_2" translatable="true">between</string>
+    <string name="help_menu_switcher_3" translatable="true">camera, video, and panorama</string>
 </resources>
 

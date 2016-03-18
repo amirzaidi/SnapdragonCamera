@@ -446,6 +446,14 @@ public class VideoModule implements CameraModule,
         }
     }
 
+    public void reinit() {
+        mPreferences = new ComboPreferences(mActivity);
+        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
+        mCameraId = getPreferredCameraId(mPreferences);
+        mPreferences.setLocalId(mActivity, mCameraId);
+        CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
+    }
+
     @Override
     public void init(CameraActivity activity, View root) {
         mActivity = activity;
@@ -612,6 +620,7 @@ public class VideoModule implements CameraModule,
                 updatePowerMode();
                 mCameraDevice.setParameters(mParameters);
             }
+            mUI.tryToCloseSubList();
             mUI.setOrientation(newOrientation, true);
         }
 
@@ -1056,11 +1065,6 @@ public class VideoModule implements CameraModule,
     @Override
     public void onResumeBeforeSuper() {
         mPaused = false;
-        mPreferences = new ComboPreferences(mActivity);
-        CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
-        mCameraId = getPreferredCameraId(mPreferences);
-        mPreferences.setLocalId(mActivity, mCameraId);
-        CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
     }
 
     @Override
@@ -1697,6 +1701,7 @@ public class VideoModule implements CameraModule,
     public void onError(MediaRecorder mr, int what, int extra) {
         Log.e(TAG, "MediaRecorder error. what=" + what + ". extra=" + extra);
         stopVideoRecording();
+        mUI.showUIafterRecording();
         if (what == MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN) {
             // We may have run out of space on the sdcard.
             mActivity.updateStorageSpaceAndHint();
