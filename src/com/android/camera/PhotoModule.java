@@ -1832,10 +1832,12 @@ public class PhotoModule
         if ((multiTouchFocus != null && multiTouchFocus.equals(multiTouchFocusOn)) ||
                 (chromaFlash != null && chromaFlash.equals(chromaFlashOn)) ||
                 (optiZoom != null && optiZoom.equals(optiZoomOn)) ||
+                (reFocus != null && reFocus.equals(reFocusOn)) ||
                 (fssr != null && fssr.equals(fssrOn)) ||
                 (truePortrait != null && truePortrait.equals(truPortraitOn)) ||
                 (stillMore != null && stillMore.equals(stillMoreOn))) {
-            if (optiZoom != null && optiZoom.equals(optiZoomOn)) {
+            if ( (optiZoom != null && optiZoom.equals(optiZoomOn)) ||
+                 (reFocus != null && reFocus.equals(reFocusOn))       ) {
                 sceneMode = null;
             } else {
                 mSceneMode = sceneMode = Parameters.SCENE_MODE_AUTO;

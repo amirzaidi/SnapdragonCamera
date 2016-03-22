@@ -352,6 +352,7 @@ class AndroidCameraManagerImpl implements CameraManager {
 
                     case SET_ONESHOT_PREVIEW_CALLBACK:
                         mCamera.setOneShotPreviewCallback((PreviewCallback) msg.obj);
+                        return;
 
                     case ENABLE_SHUTTER_SOUND:
                         enableShutterSound((msg.arg1 == 1) ? true : false);
