@@ -41,6 +41,7 @@ import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 
+import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.ui.ListMenu;
 
 import org.codeaurora.snapcam.R;
@@ -59,6 +60,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final int RESOURCE_TYPE_LARGEICON = 1;
     // Custom-Scenemodes start from 100
     public static final int SCENE_MODE_DUAL_INT = 100;
+    public static final int SCENE_MODE_OPTIZOOM_INT = 101;
     public static final String SCENE_MODE_DUAL_STRING = "100";
     public static final String KEY_CAMERA_SAVEPATH = "pref_camera2_savepath_key";
     public static final String KEY_RECORD_LOCATION = "pref_camera2_recordlocation_key";
@@ -108,7 +110,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 String cameraId = cameraIdList[i];
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
-                Byte monoOnly = characteristics.get(CaptureModule.MetaDataMonoOnlyKey);
+                Byte monoOnly = 0;
+                try {
+                    monoOnly = characteristics.get(CaptureModule.MetaDataMonoOnlyKey);
+                }catch(Exception e) {
+                }
                 if (monoOnly == 1) {
                     CaptureModule.MONO_ID = i;
                     mIsMonoCameraPresent = true;
@@ -680,6 +686,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         List<String> modes = new ArrayList<>();
         modes.add("0"); // need special case handle for auto scene mode
         if (mIsMonoCameraPresent) modes.add(SCENE_MODE_DUAL_STRING); // need special case handle for dual mode
+        if (OptizoomFilter.isSupportedStatic()) modes.add(SCENE_MODE_OPTIZOOM_INT + ""); // need special case handle for dual mode
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }
