@@ -1181,6 +1181,13 @@ public class PhotoUI implements PieListener,
         return mSurfaceHolder;
     }
 
+    public void hideSurfaceView() {
+        mSurfaceView.setVisibility(View.INVISIBLE);
+    }
+
+    public void showSurfaceView() {
+        mSurfaceView.setVisibility(View.VISIBLE);
+    }
     // Countdown timer
 
     private void initializeCountDown() {

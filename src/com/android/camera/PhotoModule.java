@@ -2364,6 +2364,7 @@ public class PhotoModule
     @Override
     public void onResumeAfterSuper() {
         mLastPhotoTakenWithRefocus = false;
+        mUI.showSurfaceView();
         // Add delay on resume from lock screen only, in order to to speed up
         // the onResume --> onPause --> onResume cycle from lock screen.
         // Don't do always because letting go of thread can cause delay.
@@ -2491,6 +2492,7 @@ public class PhotoModule
     public void onPauseAfterSuper() {
         Log.v(TAG, "On pause.");
         mUI.showPreviewCover();
+        mUI.hideSurfaceView();
 
         try {
             if (mOpenCameraThread != null) {
