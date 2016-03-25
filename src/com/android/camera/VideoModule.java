@@ -1657,12 +1657,13 @@ public class VideoModule implements CameraModule,
 
             long duration = 0L;
             MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(mCurrentVideoFilename);
+
             try {
+                retriever.setDataSource(mCurrentVideoFilename);
                 duration = Long.valueOf(retriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_DURATION));
-            } catch (NumberFormatException e) {
-                Log.e(TAG, "cannot retrieve duration metadata");
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "cannot access the file");
             }
             retriever.release();
 
