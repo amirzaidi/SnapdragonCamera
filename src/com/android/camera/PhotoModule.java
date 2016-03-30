@@ -1713,9 +1713,9 @@ public class PhotoModule
         mSceneMode = Parameters.SCENE_MODE_AUTO;
         String flashMode = Parameters.FLASH_MODE_OFF;
         String redeyeReduction = mActivity.getString(R.string.
-                pref_camera_redeyereduction_entry_disable);
+                pref_camera_redeyereduction_default);
         String aeBracketing = mActivity.getString(R.string.
-                pref_camera_ae_bracket_hdr_entry_off);
+                pref_camera_ae_bracket_hdr_default);
         String colorEffect = mActivity.getString(R.string.
                 pref_camera_coloreffect_default);
         String exposureCompensation = CameraSettings.EXPOSURE_DEFAULT_VALUE;
@@ -1845,9 +1845,9 @@ public class PhotoModule
             flashMode = Parameters.FLASH_MODE_OFF;
             focusMode = Parameters.FOCUS_MODE_INFINITY;
             redeyeReduction = mActivity.getString(R.string.
-                pref_camera_redeyereduction_entry_disable);
+                pref_camera_redeyereduction_default);
             aeBracketing = mActivity.getString(R.string.
-                pref_camera_ae_bracket_hdr_entry_off);
+                pref_camera_ae_bracket_hdr_default);
             colorEffect = mActivity.getString(R.string.
                 pref_camera_coloreffect_default);
             exposureCompensation = CameraSettings.EXPOSURE_DEFAULT_VALUE;
@@ -1917,6 +1917,16 @@ public class PhotoModule
                     mActivity.getString(R.string.setting_off_value));
         } else {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, null);
+        }
+
+        if(TsMakeupManager.HAS_TS_MAKEUP) {
+            IconListPreference tsMakeupLevelPref = (IconListPreference) mPreferenceGroup
+                    .findPreference(CameraSettings.KEY_TS_MAKEUP_LEVEL);
+            if (tsMakeupLevelPref != null &&
+                !tsMakeupLevelPref.getValue().equalsIgnoreCase(TsMakeupManager.MAKEUP_OFF)) {
+                mUI.overrideSettings(CameraSettings.KEY_FACE_DETECTION,
+                                     Parameters.FACE_DETECTION_ON);
+            }
         }
 
         if (flashMode == null) {

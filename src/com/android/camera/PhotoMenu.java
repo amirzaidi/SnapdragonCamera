@@ -781,6 +781,7 @@ public class PhotoMenu extends MenuController
         if ((notSame(scenePref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO))
                 || (notSame(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff))) {
             buttonSetEnabled(mFilterModeSwitcher, false);
+            changeFilterModeControlIcon("none");
         } else {
             buttonSetEnabled(mFilterModeSwitcher, true);
         }
@@ -813,6 +814,10 @@ public class PhotoMenu extends MenuController
                         .findPreference(prefKey);
                 if (pref == null)
                     return;
+                // Hide the camera control while switching the camera.
+                // The camera control will be added back when
+                // onCameraPickerClicked is completed
+                mUI.hideUI();
                 int index = pref.findIndexOfValue(pref.getValue());
                 CharSequence[] values = pref.getEntryValues();
                 index = (index + 1) % values.length;
@@ -1213,10 +1218,10 @@ public class PhotoMenu extends MenuController
 
     private void changeFilterModeControlIcon(String value) {
         if(!value.equals("")) {
-            if(value.equalsIgnoreCase(mActivity.getString(R.string.pref_camera_coloreffect_entry_none))) {
-                value = mActivity.getString(R.string.pref_camera_filter_mode_entry_off);
+            if(value.equalsIgnoreCase("none")) {
+                value = "Off";
             } else {
-                value = mActivity.getString(R.string.pref_camera_filter_mode_entry_on);
+                value = "On";
             }
             final IconListPreference pref = (IconListPreference) mPreferenceGroup
                     .findPreference(CameraSettings.KEY_FILTER_MODE);
@@ -1432,9 +1437,7 @@ public class PhotoMenu extends MenuController
             }
         }
 
-        String scene_auto = mActivity.getString(R.string
-                .pref_camera_scenemode_entry_auto);
-        if (notSame(pref, CameraSettings.KEY_SCENE_MODE, scene_auto)) {
+        if (notSame(pref, CameraSettings.KEY_SCENE_MODE, "auto")) {
             setPreference(CameraSettings.KEY_COLOR_EFFECT,
                     mActivity.getString(R.string.pref_camera_coloreffect_default));
         }
