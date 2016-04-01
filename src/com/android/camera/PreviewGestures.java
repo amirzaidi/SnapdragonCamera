@@ -20,9 +20,8 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.util.Log;
 
-import com.android.camera.PhotoMenu;
-import com.android.camera.VideoMenu;
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.RenderOverlay;
 import com.android.camera.ui.ZoomRenderer;
@@ -56,6 +55,7 @@ public class PreviewGestures
     private boolean mEnabled;
     private boolean mZoomOnly;
     private GestureDetector mGestureDetector;
+    private CaptureMenu mCaptureMenu;
     private PhotoMenu mPhotoMenu;
     private VideoMenu mVideoMenu;
     private boolean waitUntilNextDown;
@@ -95,6 +95,8 @@ public class PreviewGestures
                 orientation = mPhotoMenu.getOrientation();
             else if (mVideoMenu != null)
                 orientation = mVideoMenu.getOrientation();
+            else if (mCaptureMenu != null)
+                orientation = mCaptureMenu.getOrientation();
 
             if (isLeftSwipe(orientation, deltaX, deltaY)) {
                 waitUntilNextDown = true;
@@ -102,6 +104,8 @@ public class PreviewGestures
                     mPhotoMenu.openFirstLevel();
                 else if (mVideoMenu != null && !mVideoMenu.isMenuBeingShown())
                     mVideoMenu.openFirstLevel();
+                else if (mCaptureMenu != null && !mCaptureMenu.isMenuBeingShown())
+                    mCaptureMenu.openFirstLevel();
                 return true;
             }
             return false;
@@ -156,12 +160,20 @@ public class PreviewGestures
         return mEnabled;
     }
 
+    public void setCaptureMenu(CaptureMenu menu) {
+        mCaptureMenu = menu;
+    }
+
     public void setPhotoMenu(PhotoMenu menu) {
         mPhotoMenu = menu;
     }
 
     public void setVideoMenu(VideoMenu menu) {
         mVideoMenu = menu;
+    }
+
+    public CaptureMenu getCaptureMenu() {
+        return mCaptureMenu;
     }
 
     public PhotoMenu getPhotoMenu() {
@@ -198,6 +210,20 @@ public class PreviewGestures
         // If pie is open, redirects all the touch events to pie.
         if (mPie != null && mPie.isOpen()) {
             return sendToPie(m);
+        }
+
+        if (mCaptureMenu != null) {
+            if (mCaptureMenu.isMenuBeingShown()) {
+                if (!mCaptureMenu.isMenuBeingAnimated()) {
+                    waitUntilNextDown = true;
+                    mCaptureMenu.closeView();
+                }
+                return true;
+            }
+            if (mCaptureMenu.isPreviewMenuBeingShown()) {
+                waitUntilNextDown = true;
+                return true;
+            }
         }
 
         if (mPhotoMenu != null) {

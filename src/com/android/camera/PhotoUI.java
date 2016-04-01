@@ -1050,7 +1050,7 @@ public class PhotoUI implements PieListener,
         // Remove all the popups/dialog boxes
         boolean ret = false;
         if (mMenu != null) {
-            mMenu.closeAllView();
+            mMenu.removeAllView();
         }
         if (mPopup != null) {
             dismissAllPopup();
