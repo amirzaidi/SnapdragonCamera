@@ -478,9 +478,6 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setLayoutParams(lp);
         }
-
-        mController.onScreenSizeChanged((int) mSurfaceTextureUncroppedWidth,
-                (int) mSurfaceTextureUncroppedHeight);
     }
 
     public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
