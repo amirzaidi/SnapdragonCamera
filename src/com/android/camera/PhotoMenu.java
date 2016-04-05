@@ -731,6 +731,8 @@ public class PhotoMenu extends MenuController
                     mActivity.getString(R.string.pref_camera_advanced_feature_default));
 
             popup1.setPreferenceEnabled(CameraSettings.KEY_ADVANCED_FEATURES, false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_INSTANT_CAPTURE, false);
+
             if(!TsMakeupManager.HAS_TS_MAKEUP) {
                 if (mHdrSwitcher.getVisibility() == View.VISIBLE) {
                     buttonSetEnabled(mHdrSwitcher, true);
@@ -752,7 +754,7 @@ public class PhotoMenu extends MenuController
                 popup1.setPreferenceEnabled(CameraSettings.KEY_COLOR_EFFECT, false);
                 popup1.setPreferenceEnabled(CameraSettings.KEY_TOUCH_AF_AEC, false);
                 popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE, false);
-
+                popup1.setPreferenceEnabled(CameraSettings.KEY_INSTANT_CAPTURE, false);
                 setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
                 if(!TsMakeupManager.HAS_TS_MAKEUP) {
                     if (mHdrSwitcher.getVisibility() == View.VISIBLE) {

@@ -833,12 +833,14 @@
     </string-array>
 
     <string-array name="pref_camera_instant_capture_entries" translatable="true">
-        <item>@string/pref_camera_instant_capture_entry_enable</item>
+        <item>@string/pref_camera_instant_capture_entry_aggressive_aec</item>
+        <item>@string/pref_camera_instant_capture_entry_fast_aec</item>
         <item>@string/pref_camera_instant_capture_entry_disable</item>
     </string-array>
 
     <string-array name="pref_camera_instant_capture_entry_values" translatable="false">
-        <item>@string/pref_camera_instant_capture_value_enable</item>
+        <item>@string/pref_camera_instant_capture_value_aggressive_aec</item>
+        <item>@string/pref_camera_instant_capture_value_fast_aec</item>
         <item>@string/pref_camera_instant_capture_value_disable</item>
     </string-array>
 

@@ -2939,10 +2939,10 @@ public class PhotoModule
                 CameraSettings.KEY_INSTANT_CAPTURE,
                 mActivity.getString(R.string.pref_camera_instant_capture_default));
         if (instantCapture.equals(mActivity.getString(
-                R.string.pref_camera_instant_capture_value_enable))) {
-            return true;
+                R.string.pref_camera_instant_capture_value_disable))) {
+            return false;
         }
-        return false;
+        return true;
     }
 
     private void qcomUpdateAdvancedFeatures(String ubiFocus,
@@ -3225,23 +3225,6 @@ public class PhotoModule
             mParameters.set(CameraSettings.KEY_SNAPCAM_HDR_NEED_1X, hdrNeed1x);
         }
 
-        // Set Instant Capture
-        String instantCapture = mPreferences.getString(
-                CameraSettings.KEY_INSTANT_CAPTURE,
-                mActivity.getString(R.string.pref_camera_instant_capture_default));
-
-        if (instantCapture.equals(mActivity.getString(
-                R.string.pref_camera_instant_capture_value_enable))) {
-            if (!mInstantCaptureSnapShot) {
-                // Disable instant capture after first snapshot is taken
-                instantCapture = mActivity.getString(
-                        R.string.pref_camera_instant_capture_value_disable);
-            }
-        }
-        Log.v(TAG, "Instant capture = " + instantCapture + ", mInstantCaptureSnapShot = "
-                + mInstantCaptureSnapShot);
-        mParameters.set(CameraSettings.KEY_QC_INSTANT_CAPTURE, instantCapture);
-
         // Set Advanced features.
         String advancedFeature = mPreferences.getString(
                 CameraSettings.KEY_ADVANCED_FEATURES,
@@ -3490,6 +3473,39 @@ public class PhotoModule
                 mParameters.setFocusMode(mFocusManager.getFocusMode());
             }
         }
+
+        // Set Instant Capture
+        String instantCapture = mPreferences.getString(
+                CameraSettings.KEY_INSTANT_CAPTURE,
+                mActivity.getString(R.string.pref_camera_instant_capture_default));
+
+        if (!instantCapture.equals(mActivity.getString(
+                R.string.pref_camera_instant_capture_value_disable))) {
+            if (zsl.equals("on")  &&
+                advancedFeature.equals(mActivity.getString(R.string.pref_camera_advanced_feature_value_none))) {
+                if (!mInstantCaptureSnapShot) {
+                    // Disable instant capture after first snapshot is taken
+                    instantCapture = mActivity.getString(
+                        R.string.pref_camera_instant_capture_value_disable);
+                }
+            } else {
+                mParameters.set(CameraSettings.KEY_QC_INSTANT_CAPTURE,
+                    mActivity.getString(R.string.pref_camera_instant_capture_value_disable));
+                instantCapture = mActivity.getString(
+                        R.string.pref_camera_instant_capture_value_disable);
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUI.overrideSettings(CameraSettings.KEY_INSTANT_CAPTURE,
+                             mActivity.getString(R.string.pref_camera_instant_capture_value_disable));
+                    }
+                });
+            }
+        }
+        Log.v(TAG, "Instant capture = " + instantCapture + ", mInstantCaptureSnapShot = "
+                + mInstantCaptureSnapShot);
+        mParameters.set(CameraSettings.KEY_QC_INSTANT_CAPTURE, instantCapture);
+
 
         //Set Histogram
         String histogram = mPreferences.getString(

@@ -167,6 +167,7 @@ public class CameraSettings {
     public static final String KEY_QC_SEE_MORE_MODE = "see-more";
     public static final String KEY_QC_NOISE_REDUCTION_MODE = "noise-reduction-mode";
     public static final String KEY_QC_INSTANT_CAPTURE = "instant-capture";
+    public static final String KEY_QC_INSTANT_CAPTURE_VALUES = "instant-capture-values";
 
     public static final String KEY_INTERNAL_PREVIEW_RESTART = "internal-restart";
     public static final String KEY_QC_ZSL_HDR_SUPPORTED = "zsl-hdr-supported";
@@ -1402,14 +1403,11 @@ public class CameraSettings {
     public static boolean isInstantCaptureSupported(Parameters params) {
         boolean ret = false;
         if (null != params) {
-            // TODO: need to uncomment this code once get parameter
-            // is supported
-            //String val = params.get(KEY_QC_INSTANT_CAPTURE);
-            //if (null != val) {
+            String val = params.get(KEY_QC_INSTANT_CAPTURE_VALUES);
+            if (null != val) {
                 ret = true;
-            //}
+            }
         }
         return ret;
     }
-
 }
