@@ -183,4 +183,11 @@
         camera:key="pref_camera2_initial_camera_key"
         camera:entries="@array/pref_camera2_initial_camera_entries"
         camera:entryValues="@array/pref_camera2_initial_camera_entryvalues"/>
+
+    <ListPreference
+        camera:defaultValue="off"
+        camera:key="pref_camera2_makeup_key"
+        camera:entries="@array/pref_camera2_makeup_entries"
+        camera:entryValues="@array/pref_camera2_makeup_entryvalues"
+        camera:title="@string/pref_camera2_makeup_title"/>
 </PreferenceGroup>

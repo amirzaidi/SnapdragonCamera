@@ -132,9 +132,13 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     }
 
     public boolean isFilterOn() {
-        if(mFilter == null)
-            return false;
-        return true;
+        if(mFilter != null) {
+            return true;
+        }
+        if(mController.getFrameFilters().size() != 0) {
+            return true;
+        }
+        return false;
     }
 
     public void onOpen(int postFilterId) {
@@ -389,6 +393,12 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                             }
                         }
                     }
+                    //Start processing FrameProcessor filter as well
+                    for (ImageFilter filter : mController.getFrameFilters()) {
+                        filter.init(resultImage.width, resultImage.height, resultImage.stride, resultImage.stride);
+                        filter.addImage(resultImage.outBuffer, null, 0, new Boolean(false));
+                    }
+                    //End processing FrameProessor filter
                     clear();
                     mStatus = STATUS.INIT;
                     if(mWatchdog != null) {

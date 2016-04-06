@@ -92,7 +92,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_LONGSHOT,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
-            SettingsManager.KEY_CAMERA2
+            SettingsManager.KEY_CAMERA2,
+            SettingsManager.KEY_MAKEUP
     };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_MONO_ONLY,
