@@ -1126,23 +1126,26 @@ public class PhotoModule
                 for (int i =0;i<3;i++) {
                     metadata[i] = byteToInt( (byte []) data, i*4);
                 }
-                if (metadata[2] == 1) {
-                    mAutoHdrEnable = true;
-                    mActivity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            if (mDrawAutoHDR != null)
-                                mDrawAutoHDR.AutoHDR();
-                        }
-                    });
-                }
-                else {
-                    mAutoHdrEnable = false;
-                    mActivity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            if (mDrawAutoHDR != null)
-                                mDrawAutoHDR.AutoHDR();
-                        }
-                    });
+                /* Checking if the meta data is for auto HDR */
+                if (metadata[0] == 3) {
+                    if (metadata[2] == 1) {
+                        mAutoHdrEnable = true;
+                        mActivity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                if (mDrawAutoHDR != null)
+                                    mDrawAutoHDR.AutoHDR();
+                            }
+                        });
+                    }
+                    else {
+                        mAutoHdrEnable = false;
+                        mActivity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                if (mDrawAutoHDR != null)
+                                    mDrawAutoHDR.AutoHDR();
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -4976,7 +4979,7 @@ class DrawAutoHDR extends View{
             AutoHDRPaint.setStyle(Paint.Style.STROKE);
             AutoHDRPaint.setColor(Color.MAGENTA);
             AutoHDRPaint.setStrokeWidth(1);
-            AutoHDRPaint.setTextSize(16);
+            AutoHDRPaint.setTextSize(32);
             AutoHDRPaint.setAlpha (255);
             canvas.drawText("HDR On",200,100,AutoHDRPaint);
         }
