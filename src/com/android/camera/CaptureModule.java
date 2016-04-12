@@ -87,10 +87,13 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static final int DUAL_MODE = 0;
     public static final int BAYER_MODE = 1;
     public static final int MONO_MODE = 2;
+    private static final int CANCEL_TOUCH_FOCUS_DELAY = 3000;
     private static final int OPEN_CAMERA = 0;
+    private static final int CANCEL_TOUCH_FOCUS = 1;
     private static final int MAX_NUM_CAM = 3;
     private static final long TIMESTAMP_THRESHOLD_NS = 10*1000000;  // 10 ms
-
+    private static final MeteringRectangle[] ZERO_WEIGHT_3A_REGION = new MeteringRectangle[]{
+            new MeteringRectangle(0, 0, 0, 0, 0)};
     /**
      * Conversion from screen rotation to JPEG orientation.
      */
@@ -115,6 +118,10 @@ public class CaptureModule implements CameraModule, PhotoController,
      * Camera state: Picture was taken.
      */
     private static final int STATE_PICTURE_TAKEN = 4;
+    /**
+     * Camera state: Waiting for the touch-to-focus to converge.
+     */
+    private static final int STATE_WAITING_TOUCH_FOCUS = 5;
     //Todo: Read ids from the device dynamically
     private static final int BAYER_ID = 0;
     private static final int MONO_ID = 1;
@@ -150,6 +157,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             new CaptureResult.Key<>("org.codeaurora.qcamera3.dualcam_calib_meta_data.dualcam_calib_meta_data_blob",
                     Byte.class);
 
+    private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
+    private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
     private int mLastResultAFState = -1;
     private Rect[] mCropRegion = new Rect[MAX_NUM_CAM];
     private boolean mAutoFocusSupported;
@@ -747,6 +756,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     }
                     break;
                 }
+                case STATE_WAITING_TOUCH_FOCUS:
+                    break;
             }
         }
 
@@ -825,9 +836,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 return;
             }
             if (MODE == DUAL_MODE && id == BAYER_ID) {
-                Message msg = Message.obtain();
-                msg.what = OPEN_CAMERA;
-                msg.arg1 = MONO_ID;
+                Message msg = mCameraHandler.obtainMessage(OPEN_CAMERA, MONO_ID);
                 mCameraHandler.sendMessage(msg);
             }
             if (!mInitialized) {
@@ -1044,11 +1053,24 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void setAFModeToPreview(int id, int afMode) {
+        Log.d(TAG, "setAFModeToPreview " + afMode);
+        mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AF_MODE, afMode);
+        applyAFRegions(mPreviewRequestBuilder[id], id);
+        try {
+            mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
+                    .build(), mCaptureCallback, mCameraHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void init(CameraActivity activity, View parent) {
         Log.d(TAG, "init");
         for (int i = 0; i < MAX_NUM_CAM; i++) {
             mCameraOpened[i] = false;
+            mTakingPicture[i] = false;
         }
         mSurfaceReady = false;
 
@@ -1104,6 +1126,13 @@ public class CaptureModule implements CameraModule, PhotoController,
      */
     private void lockFocus(int id) {
         Log.d(TAG, "lockFocus " + id);
+        mTakingPicture[id] = true;
+        if (mState[id] == STATE_WAITING_TOUCH_FOCUS) {
+            mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, id);
+            mState[id] = STATE_WAITING_LOCK;
+            return;
+        }
+
         try {
             CaptureRequest.Builder builder = mCameraDevice[id].createCaptureRequest(CameraDevice
                     .TEMPLATE_PREVIEW);
@@ -1111,10 +1140,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             builder.addTarget(getPreviewSurface(id));
 
             builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
             applyWhiteBalance(builder);
             applyZoom(builder, id);
+            applyAFRegions(builder, id);
             mState[id] = STATE_WAITING_LOCK;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
         } catch (CameraAccessException e) {
@@ -1130,13 +1160,20 @@ public class CaptureModule implements CameraModule, PhotoController,
             builder.setTag(id);
             builder.addTarget(getPreviewSurface(id));
 
+            mControlAFMode = CaptureRequest.CONTROL_AF_MODE_AUTO;
             builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO);
-            builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+            builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
+            builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest
+                    .CONTROL_AF_TRIGGER_START);
+
             applyWhiteBalance(builder);
             applyZoom(builder, id);
             applyAFRegions(builder, id);
+            mState[id] = STATE_WAITING_TOUCH_FOCUS;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
+            setAFModeToPreview(id, mControlAFMode);
+            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, id);
+            mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -1163,7 +1200,6 @@ public class CaptureModule implements CameraModule, PhotoController,
             mPreviewRequestBuilder[id].set(BayerMonoLinkEnableKey, (byte) 0);
         }
     }
-
 
     /**
      * Capture a still picture. This method should be called when we get a response in
@@ -1251,8 +1287,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             captureBuilder.addTarget(getPreviewSurface(id));
             captureBuilder.addTarget(mImageReader[id].getSurface());
-            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
-            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
+            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
+            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest
+                    .CONTROL_AF_TRIGGER_IDLE);
             applyCaptureSettings(captureBuilder, id);
 
             mCaptureSession[id].stopRepeating();
@@ -1285,6 +1322,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             builder.setTag(id);
             builder.addTarget(getPreviewSurface(id));
             builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
             builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
             // Applying flash only to capture does not work. Need to apply flash here.
@@ -1390,10 +1428,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                     .TEMPLATE_PREVIEW);
             builder.setTag(id);
             builder.addTarget(getPreviewSurface(id));
+
             builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest
                     .CONTROL_MODE_AUTO);
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest
-                    .CONTROL_AF_MODE_AUTO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                     CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
             //Todo: Create applyCommonSettings function for settings applied everytime
@@ -1401,13 +1439,15 @@ public class CaptureModule implements CameraModule, PhotoController,
             applyZoom(builder, id);
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             mState[id] = STATE_PREVIEW;
+            mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+            setAFModeToPreview(id, mControlAFMode);
             mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id].build(),
                     mCaptureCallback, mCameraHandler);
+            mTakingPicture[id] = false;
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
-
 
     /**
      * Closes the current {@link CameraDevice}.
@@ -1591,12 +1631,12 @@ public class CaptureModule implements CameraModule, PhotoController,
         switch (MODE) {
             case DUAL_MODE:
             case BAYER_MODE:
-                msg.arg1 = BAYER_ID;
+                msg.obj = BAYER_ID;
                 mCameraHandler.sendMessage(msg);
                 break;
             case MONO_MODE:
                 msg.what = OPEN_CAMERA;
-                msg.arg1 = MONO_ID;
+                msg.obj = MONO_ID;
                 mCameraHandler.sendMessage(msg);
                 break;
         }
@@ -1710,9 +1750,10 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onSingleTapUp(View view, int x, int y) {
         if (mPaused || mCameraDevice == null || !mFirstTimeInitialized || !mAutoFocusSupported ||
-                !isStatePreview()) {
+                !isTouchToFocusAllowed()) {
             return;
         }
+        Log.d(TAG, "onSingleTapUp " + x + " " + y);
         mUI.setFocusPosition(x, y);
         mUI.onFocusStarted();
         switch (MODE) {
@@ -1740,9 +1781,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         return 0;
     }
 
-    private boolean isStatePreview() {
-        for (int i = 0; i < mState.length; i++) {
-            if (mState[i] != STATE_PREVIEW) return false;
+    private boolean isTouchToFocusAllowed() {
+        for (int i = 0; i < mTakingPicture.length; i++) {
+            if (mTakingPicture[i]) return false;
         }
         return true;
     }
@@ -1993,7 +2034,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void applyAFRegions(CaptureRequest.Builder request, int id) {
-        request.set(CaptureRequest.CONTROL_AF_REGIONS, mAFRegions[id]);
+        if (mControlAFMode == CaptureRequest.CONTROL_AF_MODE_AUTO) {
+            request.set(CaptureRequest.CONTROL_AF_REGIONS, mAFRegions[id]);
+        } else {
+            request.set(CaptureRequest.CONTROL_AF_REGIONS, ZERO_WEIGHT_3A_REGION);
+        }
     }
 
     private void applyWhiteBalance(CaptureRequest.Builder request) {
@@ -2062,6 +2107,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void triggerFocusAtPoint(float x, float y, int id) {
+        Log.d(TAG, "triggerFocusAtPoint " + x + " " + y + " " + id);
         Point p;
         if (id == getMainCameraId()) {
             p = mUI.getSurfaceViewSize();
@@ -2073,6 +2119,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         x = x / width;
         y = y / height;
         mAFRegions[id] = afRectangle(x, y, mCropRegion[id]);
+        mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, id);
         autoFocusTrigger(id);
     }
 
@@ -2133,12 +2180,16 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         @Override
         public void handleMessage(Message msg) {
+            int id = (int) msg.obj;
             switch (msg.what) {
-                case OPEN_CAMERA: {
-                    int id = msg.arg1;
+                case OPEN_CAMERA:
                     openCamera(id);
                     break;
-                }
+                case CANCEL_TOUCH_FOCUS:
+                    mState[id] = STATE_PREVIEW;
+                    mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+                    setAFModeToPreview(id, mControlAFMode);
+                    break;
             }
         }
     }
