@@ -49,11 +49,16 @@ public class ZoomRenderer extends OverlayRenderer
     private int mZoomFraction;
     private Rect mTextBounds;
     private int mOrientation;
+    private boolean mCamera2 = false;
+    private float mZoomValue;
+    private float mZoomMinValue;
+    private float mZoomMaxValue;
 
     public interface OnZoomChangedListener {
         void onZoomStart();
         void onZoomEnd();
         void onZoomValueChanged(int index);  // only for immediate zoom
+        void onZoomValueChanged(float value);
     }
 
     public ZoomRenderer(Context ctx) {
@@ -81,8 +86,21 @@ public class ZoomRenderer extends OverlayRenderer
         mMinZoom = 0;
     }
 
+    public void setZoomMax(float zoomMax) {
+        mCamera2 = true;
+        mZoomMaxValue = zoomMax;
+        mZoomMinValue = 1f;
+    }
+
     public void setZoom(int index) {
         mCircleSize = mMinCircle + index * (mMaxCircle - mMinCircle) / (mMaxZoom - mMinZoom);
+    }
+
+    public void setZoom(float zoomValue) {
+        mCamera2 = true;
+        mZoomValue = zoomValue;
+        mCircleSize = (int) (mMinCircle + (mMaxCircle - mMinCircle) * (mZoomValue - mZoomMinValue) /
+                (mZoomMaxValue - mZoomMinValue));
     }
 
     public void setZoomValue(int value) {
@@ -120,6 +138,7 @@ public class ZoomRenderer extends OverlayRenderer
         canvas.drawCircle((float) mCenterX, (float) mCenterY,
                 mCircleSize, mPaint);
         String txt = mZoomSig+"."+mZoomFraction+"x";
+        if (mCamera2) txt = "" + mZoomValue;
         mTextPaint.getTextBounds(txt, 0, txt.length(), mTextBounds);
         canvas.drawText(txt, mCenterX - mTextBounds.centerX(), mCenterY - mTextBounds.centerY(),
                 mTextPaint);
@@ -133,8 +152,16 @@ public class ZoomRenderer extends OverlayRenderer
         circle = Math.min(mMaxCircle, circle);
         if (mListener != null && circle != mCircleSize) {
             mCircleSize = circle;
-            int zoom = mMinZoom + (int) ((mCircleSize - mMinCircle) * (mMaxZoom - mMinZoom) / (mMaxCircle - mMinCircle));
-            mListener.onZoomValueChanged(zoom);
+            if (mCamera2) {
+                float zoom = mZoomMinValue + (mZoomMaxValue - mZoomMinValue) / (mMaxCircle -
+                        mMinCircle) * (mCircleSize - mMinCircle);
+                zoom = ((int) (zoom * 10)) / 10.0f;
+                mListener.onZoomValueChanged(zoom);
+            } else {
+                int zoom = mMinZoom + (int) ((mCircleSize - mMinCircle) * (mMaxZoom - mMinZoom) /
+                        (mMaxCircle - mMinCircle));
+                mListener.onZoomValueChanged(zoom);
+            }
             update();
         }
         return true;

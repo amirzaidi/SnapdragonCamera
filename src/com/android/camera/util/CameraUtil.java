@@ -35,6 +35,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
+import android.hardware.camera2.CameraCharacteristics;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
@@ -1168,4 +1169,32 @@ public class CameraUtil {
         return retRatio;
     }
 
+    public static boolean isZoomSupported(CameraCharacteristics[] characteristics, List<Integer>
+            characteristicsIndex) {
+        for (int i = 0; i < characteristicsIndex.size(); i++) {
+            if (!isZoomSupported(characteristics[characteristicsIndex.get(i)]))
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean isZoomSupported(CameraCharacteristics characteristic) {
+        return characteristic.get(CameraCharacteristics
+                .SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) > 1f;
+    }
+
+    public static boolean isAutoFocusSupported(CameraCharacteristics[] characteristics, List<Integer>
+            characteristicsIndex) {
+        for (int i = 0; i < characteristicsIndex.size(); i++) {
+            if (!isAutoFocusSupported(characteristics[characteristicsIndex.get(i)]))
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean isAutoFocusSupported(CameraCharacteristics characteristic) {
+        Integer maxAfRegions = characteristic.get(
+                CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
+        return maxAfRegions != null && maxAfRegions > 0;
+    }
 }

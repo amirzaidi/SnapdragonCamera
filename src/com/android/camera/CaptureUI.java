@@ -24,8 +24,8 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.drawable.AnimationDrawable;
-import android.hardware.Camera;
 import android.hardware.Camera.Face;
+import android.hardware.camera2.CameraCharacteristics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -70,7 +70,7 @@ public class CaptureUI implements PieListener,
         CameraManager.CameraFaceDetectionCallback {
 
     private static final String TAG = "SnapCam_CaptureUI";
-    private boolean mMenuInitialized = false;
+    public boolean mMenuInitialized = false;
     private boolean surface1created = false;
     private boolean surface2created = false;
     private CameraActivity mActivity;
@@ -111,8 +111,6 @@ public class CaptureUI implements PieListener,
     private OnScreenIndicators mOnScreenIndicators;
     private PieRenderer mPieRenderer;
     private ZoomRenderer mZoomRenderer;
-    private int mZoomMax;
-    private List<Integer> mZoomRatios;
     private int mPreviewWidth = 0;
     private int mPreviewHeight = 0;
     private int mOriginalPreviewWidth = 0;
@@ -189,16 +187,12 @@ public class CaptureUI implements PieListener,
         mPreviewCover = mRootView.findViewById(R.id.preview_cover);
         // display the view
         mSurfaceView = (SurfaceView) mRootView.findViewById(R.id.mdp_preview_content);
-        mSurfaceView.setVisibility(View.VISIBLE);
         mSurfaceView2 = (SurfaceView) mRootView.findViewById(R.id.mdp_preview_content2);
-        //mSurfaceView2.setVisibility(View.VISIBLE);
+        mSurfaceView2.setZOrderMediaOverlay(true);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
-        //mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         mSurfaceHolder2 = mSurfaceView2.getHolder();
         mSurfaceHolder2.addCallback(callback);
-        //mSurfaceHolder2.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        mSurfaceView.addOnLayoutChangeListener(mLayoutListener);
         Log.v(TAG, "Using mdp_preview_content (MDP path)");
 
         mRenderOverlay = (RenderOverlay) mRootView.findViewById(R.id.render_overlay);
@@ -284,7 +278,15 @@ public class CaptureUI implements PieListener,
                 mRootView.findViewById(R.id.on_screen_indicators));
     }
 
-    public void onCameraOpened(PreferenceGroup prefGroup, OnPreferenceChangedListener listener) {
+    public void onCameraOpened(CameraCharacteristics[] characteristics,
+                               List<Integer> characteristicsIndex, PreferenceGroup prefGroup,
+                               OnPreferenceChangedListener listener) {
+        if (mPieRenderer == null) {
+            mPieRenderer = new PieRenderer(mActivity);
+            mPieRenderer.setPieListener(this);
+            mRenderOverlay.addRenderer(mPieRenderer);
+        }
+
         if (mMenu == null) {
             mMenu = new CaptureMenu(mActivity, this);
             mMenu.setListener(listener);
@@ -304,8 +306,11 @@ public class CaptureUI implements PieListener,
         }
         mGestures.setCaptureMenu(mMenu);
 
+        mGestures.setZoomEnabled(CameraUtil.isZoomSupported(characteristics, characteristicsIndex));
         mGestures.setRenderOverlay(mRenderOverlay);
         mRenderOverlay.requestLayout();
+
+        initializeZoom(characteristics, characteristicsIndex);
         mActivity.setPreviewGestures(mGestures);
     }
 
@@ -355,31 +360,32 @@ public class CaptureUI implements PieListener,
         mShutterButton.setVisibility(View.VISIBLE);
     }
 
+    // called from onResume every other time
+    public void initializeSecondTime() {
+        if (mMenu != null) {
+            mMenu.reloadPreferences();
+        }
+    }
+
     public void doShutterAnimation() {
         AnimationDrawable frameAnimation = (AnimationDrawable) mShutterButton.getDrawable();
         frameAnimation.stop();
         frameAnimation.start();
     }
 
-    // called from onResume every other time
-    public void initializeSecondTime(Camera.Parameters params) {
-        initializeZoom(params);
-        if (mMenu != null) {
-            mMenu.reloadPreferences();
-        }
-    }
-
-    public void initializeZoom(Camera.Parameters params) {
-        if ((params == null) || !params.isZoomSupported()
-                || (mZoomRenderer == null)) return;
-        mZoomMax = params.getMaxZoom();
-        mZoomRatios = params.getZoomRatios();
-        // Currently we use immediate zoom for fast zooming to get better UX and
-        // there is no plan to take advantage of the smooth zoom.
+    public void initializeZoom(CameraCharacteristics[] characteristics,
+                               List<Integer> characteristicsIndex) {
+        if ((characteristics == null) || !CameraUtil.isZoomSupported(characteristics,
+                characteristicsIndex) || (mZoomRenderer == null))
+            return;
         if (mZoomRenderer != null) {
-            mZoomRenderer.setZoomMax(mZoomMax);
-            mZoomRenderer.setZoom(params.getZoom());
-            mZoomRenderer.setZoomValue(mZoomRatios.get(params.getZoom()));
+            float zoomMax = Float.MAX_VALUE;
+            for (int i = 0; i < characteristicsIndex.size(); i++) {
+                zoomMax = Math.min(characteristics[characteristicsIndex.get(i)].get
+                        (CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM), zoomMax);
+            }
+            mZoomRenderer.setZoomMax(zoomMax);
+            mZoomRenderer.setZoom(1f);
             mZoomRenderer.setOnZoomChangeListener(new ZoomChangeListener());
         }
     }
@@ -671,6 +677,14 @@ public class CaptureUI implements PieListener,
         }
     }
 
+    public void hideSurfaceView() {
+        mSurfaceView.setVisibility(View.INVISIBLE);
+    }
+
+    public void showSurfaceView() {
+        mSurfaceView.setVisibility(View.VISIBLE);
+    }
+
     public void onPause() {
         // Clear UI.
         collapseCameraControls();
@@ -678,7 +692,7 @@ public class CaptureUI implements PieListener,
 
     // focus UI implementation
     private FocusIndicator getFocusIndicator() {
-        return null;
+        return mPieRenderer;
     }
 
     @Override
@@ -687,6 +701,10 @@ public class CaptureUI implements PieListener,
     }
 
     public void clearFaces() {
+    }
+
+    public void setPreference(String key, String value) {
+        mMenu.setPreference(key, value);
     }
 
     @Override
@@ -768,16 +786,28 @@ public class CaptureUI implements PieListener,
         }
     }
 
+    public Point getSurfaceViewSize() {
+        Point point = new Point();
+        if (mSurfaceView != null) point.set(mSurfaceView.getWidth(), mSurfaceView.getHeight());
+        return point;
+    }
+
+    public Point getSurfaceView2Size() {
+        Point point = new Point();
+        if (mSurfaceView2 != null) point.set(mSurfaceView2.getWidth(), mSurfaceView2.getHeight());
+        return point;
+    }
+
     public int getOrientation() {
         return mOrientation;
     }
 
     private class ZoomChangeListener implements ZoomRenderer.OnZoomChangedListener {
         @Override
-        public void onZoomValueChanged(int index) {
-            int newZoom = mController.onZoomChanged(index);
+        public void onZoomValueChanged(float mZoomValue) {
+            mController.onZoomChanged(mZoomValue);
             if (mZoomRenderer != null) {
-                mZoomRenderer.setZoomValue(mZoomRatios.get(newZoom));
+                mZoomRenderer.setZoom(mZoomValue);
             }
         }
 
@@ -794,6 +824,11 @@ public class CaptureUI implements PieListener,
             if (mPieRenderer != null) {
                 mPieRenderer.setBlockFocus(false);
             }
+        }
+
+        @Override
+        public void onZoomValueChanged(int index) {
+
         }
     }
 

@@ -248,6 +248,7 @@ public class CameraSettings {
 
     public static final String KEY_CAMERA2 = "pref_camera_camera2_key";
     public static final String KEY_DUAL_CAMERA = "pref_camera_dual_camera_key";
+    public static final String KEY_MONO_PREVIEW = "pref_camera_mono_preview_key";
 
     public static final String KEY_REFOCUS_PROMPT = "refocus-prompt";
 

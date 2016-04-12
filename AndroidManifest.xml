@@ -4,7 +4,7 @@
     package="org.codeaurora.snapcam">
 
     <uses-sdk
-        android:minSdkVersion="21"
+        android:minSdkVersion="23"
         android:targetSdkVersion="23" />
 
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
