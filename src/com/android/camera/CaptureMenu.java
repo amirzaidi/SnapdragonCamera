@@ -97,7 +97,8 @@ public class CaptureMenu extends MenuController
                 CameraSettings.KEY_CAMERA_SAVEPATH,
                 CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_CAMERA2,
-                CameraSettings.KEY_DUAL_CAMERA
+                CameraSettings.KEY_DUAL_CAMERA,
+                CameraSettings.KEY_CLEARSIGHT
         };
 
         //Todo: 2nd string to contain only developer settings
@@ -109,6 +110,7 @@ public class CaptureMenu extends MenuController
                 CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_CAMERA2,
                 CameraSettings.KEY_DUAL_CAMERA,
+                CameraSettings.KEY_CLEARSIGHT,
                 CameraSettings.KEY_MONO_PREVIEW
         };
 
@@ -398,6 +400,8 @@ public class CaptureMenu extends MenuController
         if (!pref.getValue().equals("dual")) {
             setPreference(CameraSettings.KEY_MONO_PREVIEW, "off");
             mListMenu.setPreferenceEnabled(CameraSettings.KEY_MONO_PREVIEW, false);
+            setPreference(CameraSettings.KEY_CLEARSIGHT, "off");
+            mListMenu.setPreferenceEnabled(CameraSettings.KEY_CLEARSIGHT, false);
         }
 
         if (mListener != null) {
@@ -555,6 +559,9 @@ public class CaptureMenu extends MenuController
             if (value.equals("on")) {
             } else if (value.equals("off")) {
             }
+        } else if (key.equals(CameraSettings.KEY_CLEARSIGHT)) {
+            // restart module to re-create sessions and callbacks
+            mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
         }
     }
 
