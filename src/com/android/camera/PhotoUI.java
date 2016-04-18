@@ -478,9 +478,6 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setLayoutParams(lp);
         }
-
-        mController.onScreenSizeChanged((int) mSurfaceTextureUncroppedWidth,
-                (int) mSurfaceTextureUncroppedHeight);
     }
 
     public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
@@ -597,6 +594,7 @@ public class PhotoUI implements PieListener,
         });
         if (mController.isImageCaptureIntent()) {
             hideSwitcher();
+            mCameraControls.hideRemainingPhotoCnt();
             mSwitcher.setSwitcherVisibility(false);
             ViewGroup cameraControls = (ViewGroup) mRootView.findViewById(R.id.camera_controls);
             mActivity.getLayoutInflater().inflate(R.layout.review_module_control, cameraControls);

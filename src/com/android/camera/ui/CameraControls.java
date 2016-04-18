@@ -84,7 +84,7 @@ public class CameraControls extends RotatableLayout {
     private float[][] mLocY = new float[4][10];
     private boolean[] mTempEnabled = new boolean[10];
     private boolean mLocSet = false;
-
+    private boolean mHideRemainingPhoto = false;
     private LinearLayout mRemainingPhotos;
     private TextView mRemainingPhotosText;
     private int mCurrentRemaining = -1;
@@ -706,7 +706,8 @@ public class CameraControls extends RotatableLayout {
                 mPreview.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 break;
         }
-        if (mRemainingPhotos.getVisibility() == View.INVISIBLE) {
+        if ((mRemainingPhotos.getVisibility() == View.INVISIBLE) &&
+                !mHideRemainingPhoto){
             mRemainingPhotos.setVisibility(View.VISIBLE);
         }
         mRefocusToast.setVisibility(View.GONE);
@@ -922,7 +923,7 @@ public class CameraControls extends RotatableLayout {
 
     public void updateRemainingPhotos(int remaining) {
         long remainingStorage = Storage.getAvailableSpace() - Storage.LOW_STORAGE_THRESHOLD_BYTES;
-        if (remaining < 0 && remainingStorage <= 0) {
+        if ((remaining < 0 && remainingStorage <= 0) || mHideRemainingPhoto) {
             mRemainingPhotos.setVisibility(View.GONE);
         } else {
             for (int i = mRemainingPhotos.getChildCount() - 1; i >= 0; --i) {
@@ -961,7 +962,7 @@ public class CameraControls extends RotatableLayout {
 
     public void showRefocusToast(boolean show) {
         mRefocusToast.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (mCurrentRemaining > 0 ) {
+        if ((mCurrentRemaining > 0 ) && !mHideRemainingPhoto) {
             mRemainingPhotos.setVisibility(show ? View.GONE : View.VISIBLE);
         }
     }
@@ -1001,6 +1002,12 @@ public class CameraControls extends RotatableLayout {
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mMenu.setVisibility(View.VISIBLE);
+    }
+
+    public void hideRemainingPhotoCnt() {
+        mHideRemainingPhoto = true;
+        mRemainingPhotos.setVisibility(View.GONE);
+        mRemainingPhotosText.setVisibility(View.GONE);
     }
 
     private class ArrowTextView extends TextView {

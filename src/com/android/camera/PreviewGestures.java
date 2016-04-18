@@ -107,8 +107,9 @@ public class PreviewGestures
                 else if (mCaptureMenu != null && !mCaptureMenu.isMenuBeingShown())
                     mCaptureMenu.openFirstLevel();
                 return true;
+            } else {
+                return onSingleTapUp(e2);
             }
-            return false;
         }
 
         private boolean isLeftSwipe(int orientation, int deltaX, int deltaY) {
