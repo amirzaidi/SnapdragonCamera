@@ -696,6 +696,7 @@ public class PhotoModule
     private void switchCamera() {
         if (mPaused) return;
 
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.HIDE);
         Log.v(TAG, "Start to switch camera. id=" + mPendingSwitchCameraId);
         mCameraId = mPendingSwitchCameraId;
         mPendingSwitchCameraId = -1;
@@ -735,6 +736,7 @@ public class PhotoModule
         mFocusManager.setParameters(mInitialParams);
         setupPreview();
 
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.SURFACE_VIEW);
         // reset zoom value index
         mZoomValue = 0;
         resizeForPreviewAspectRatio();
@@ -2426,6 +2428,8 @@ public class PhotoModule
             mOpenCameraThread.start();
         }
 
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.SURFACE_VIEW);
+
         mJpegPictureCallbackTime = 0;
         mZoomValue = 0;
 
@@ -2464,6 +2468,8 @@ public class PhotoModule
     @Override
     public void onPauseBeforeSuper() {
         mPaused = true;
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.HIDE);
+
         Sensor gsensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         if (gsensor != null) {
             mSensorManager.unregisterListener(this, gsensor);
