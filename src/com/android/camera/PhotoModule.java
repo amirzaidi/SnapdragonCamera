@@ -2373,17 +2373,17 @@ public class PhotoModule
                 || MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)) {
             Log.v(TAG, "On resume, from lock screen.");
 
+            // Check if there is a need to take a snapshot without
+            // waiting for the shutter click
+            if (isInstantCaptureEnabled()) {
+                mInstantCaptureSnapShot = true;
+            }
+
             // Note: onPauseAfterSuper() will delete this runnable, so we will
             // at most have 1 copy queued up.
             mHandler.postDelayed(new Runnable() {
                 public void run() {
                     onResumeTasks();
-
-                    // Check if there is a need to take a snapshot without
-                    // waiting for the shutter click
-                    if (isInstantCaptureEnabled()) {
-                        mInstantCaptureSnapShot = true;
-                    }
                 }
             }, ON_RESUME_TASKS_DELAY_MSEC);
         } else {
