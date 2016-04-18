@@ -259,21 +259,6 @@ public class PhotoUI implements PieListener,
                     mMaxPreviewHeight = height;
                 }
 
-                int orientation = mActivity.getResources().getConfiguration().orientation;
-                if ((orientation == Configuration.ORIENTATION_PORTRAIT && width > height)
-                        || (orientation == Configuration.ORIENTATION_LANDSCAPE && width < height)) {
-                    // The screen has rotated; swap SurfaceView width & height
-                    // to ensure correct preview
-                    int oldWidth = width;
-                    width = height;
-                    height = oldWidth;
-                    Log.d(TAG, "Swapping SurfaceView width & height dimensions");
-                    if (mMaxPreviewWidth != 0 && mMaxPreviewHeight != 0) {
-                        int temp = mMaxPreviewWidth;
-                        mMaxPreviewWidth = mMaxPreviewHeight;
-                        mMaxPreviewHeight = temp;
-                    }
-                }
                 if (mOrientationResize != mPrevOrientationResize
                         || mAspectRatioResize) {
                     layoutPreview(mAspectRatio);
