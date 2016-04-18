@@ -65,7 +65,7 @@
             android:id="@+id/autohdr_view"
             android:layout_width="200dip"
             android:layout_height="200dip"
-            android:layout_marginTop="15dip"
+            android:layout_marginTop="50dip"
             android:layout_marginLeft="15dip" />
     </RelativeLayout>
     <ImageView
