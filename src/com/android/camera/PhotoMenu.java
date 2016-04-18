@@ -16,6 +16,7 @@
 
 package com.android.camera;
 
+import java.util.HashSet;
 import java.util.Locale;
 
 import android.animation.Animator;
@@ -117,6 +118,7 @@ public class PhotoMenu extends MenuController
     private MakeupLevelListener mMakeupListener;
     private MakeupHandler mHandler = new MakeupHandler();
     private static final int MAKEUP_MESSAGE_ID = 0;
+    private HashSet<View> mWasVisibleSet = new HashSet<View>();
 
     public PhotoMenu(CameraActivity activity, PhotoUI ui, MakeupLevelListener makeupListener) {
         super(activity);
@@ -1509,7 +1511,17 @@ public class PhotoMenu extends MenuController
         }
         mSceneModeSwitcher.setVisibility(status);
         mFilterModeSwitcher.setVisibility(status);
-        mCameraSwitcher.setVisibility(status);
+        if(status == View.INVISIBLE) {
+            if(mCameraSwitcher.getVisibility() == View.VISIBLE) {
+                mWasVisibleSet.add(mCameraSwitcher);
+            }
+            mCameraSwitcher.setVisibility(status);
+        } else {
+            if(mWasVisibleSet.contains(mCameraSwitcher)) {
+                mCameraSwitcher.setVisibility(status);
+                mWasVisibleSet.remove(mCameraSwitcher);
+            }
+        }
         mPreviewThumbnail.setVisibility(status);
     }
 }
