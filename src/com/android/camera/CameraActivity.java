@@ -1842,7 +1842,6 @@ public class CameraActivity extends Activity
         mCameraVideoModuleRootView.setVisibility(View.GONE);
         mCameraPanoModuleRootView.setVisibility(View.GONE);
         mCameraCaptureModuleRootView.setVisibility(View.GONE);
-        mCameraRootFrame.removeAllViews();
         mCurrentModuleIndex = moduleIndex;
         switch (moduleIndex) {
             case ModuleSwitcher.VIDEO_MODULE_INDEX:
@@ -1853,7 +1852,6 @@ public class CameraActivity extends Activity
                     mVideoModule.reinit();
                 }
                 mCurrentModule = mVideoModule;
-                mCameraRootFrame.addView(mCameraVideoModuleRootView);
                 mCameraVideoModuleRootView.setVisibility(View.VISIBLE);
                 break;
 
@@ -1865,7 +1863,6 @@ public class CameraActivity extends Activity
                     mPhotoModule.reinit();
                 }
                 mCurrentModule = mPhotoModule;
-                mCameraRootFrame.addView(mCameraPhotoModuleRootView);
                 mCameraPhotoModuleRootView.setVisibility(View.VISIBLE);
                 break;
 
@@ -1875,7 +1872,6 @@ public class CameraActivity extends Activity
                     mPanoModule.init(this, mCameraPanoModuleRootView);
                 }
                 mCurrentModule = mPanoModule;
-                mCameraRootFrame.addView(mCameraPanoModuleRootView);
                 mCameraPanoModuleRootView.setVisibility(View.VISIBLE);
                 break;
 
@@ -1885,7 +1881,6 @@ public class CameraActivity extends Activity
                     mCaptureModule.init(this, mCameraCaptureModuleRootView);
                 }
                 mCurrentModule = mCaptureModule;
-                mCameraRootFrame.addView(mCameraCaptureModuleRootView);
                 mCameraCaptureModuleRootView.setVisibility(View.VISIBLE);
                 break;
             case ModuleSwitcher.LIGHTCYCLE_MODULE_INDEX: //Unused module for now
@@ -1899,7 +1894,6 @@ public class CameraActivity extends Activity
                     mPhotoModule.reinit();
                 }
                 mCurrentModule = mPhotoModule;
-                mCameraRootFrame.addView(mCameraPhotoModuleRootView);
                 mCameraPhotoModuleRootView.setVisibility(View.VISIBLE);
                 break;
         }

@@ -160,25 +160,14 @@ public class PhotoUI implements PieListener,
     private int mOrientation;
     private float mScreenBrightness = 0.0f;
 
+    public enum SURFACE_STATUS {
+        HIDE,
+        SURFACE_VIEW;
+    }
+
     public interface SurfaceTextureSizeChangedListener {
         public void onSurfaceTextureSizeChanged(int uncroppedWidth, int uncroppedHeight);
     }
-
-    private OnLayoutChangeListener mLayoutListener = new OnLayoutChangeListener() {
-        @Override
-        public void onLayoutChange(View v, int left, int top, int right,
-                int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-            tryToCloseSubList();
-
-            Camera.Parameters parameters = ((PhotoModule)mController).getParameters();
-            if(parameters != null) {
-                Camera.Size size = parameters.getPreviewSize();
-                if (size != null) {
-                    setAspectRatio((float) size.width / size.height);
-                }
-            }
-        }
-    };
 
     public CameraControls getCameraControls() {
         return mCameraControls;
@@ -233,6 +222,14 @@ public class PhotoUI implements PieListener,
         }
     }
 
+    public synchronized void applySurfaceChange(SURFACE_STATUS status) {
+        if(status == SURFACE_STATUS.HIDE) {
+            mSurfaceView.setVisibility(View.GONE);
+            return;
+        }
+        mSurfaceView.setVisibility(View.VISIBLE);
+    }
+
     public PhotoUI(CameraActivity activity, PhotoController controller, View parent) {
         mActivity = activity;
         mController = controller;
@@ -246,17 +243,16 @@ public class PhotoUI implements PieListener,
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        mSurfaceView.addOnLayoutChangeListener(mLayoutListener);
         Log.v(TAG, "Using mdp_preview_content (MDP path)");
-
-        View surfaceContainer = mRootView.findViewById(R.id.preview_container);
-        surfaceContainer.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+        mSurfaceView.addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right,
                     int bottom, int oldLeft, int oldTop, int oldRight,
                     int oldBottom) {
                 int width = right - left;
                 int height = bottom - top;
+
+                tryToCloseSubList();
 
                 if (mMaxPreviewWidth == 0 && mMaxPreviewHeight == 0) {
                     mMaxPreviewWidth = width;
@@ -478,9 +474,6 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setLayoutParams(lp);
         }
-
-        mController.onScreenSizeChanged((int) mSurfaceTextureUncroppedWidth,
-                (int) mSurfaceTextureUncroppedHeight);
     }
 
     public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
@@ -597,6 +590,7 @@ public class PhotoUI implements PieListener,
         });
         if (mController.isImageCaptureIntent()) {
             hideSwitcher();
+            mCameraControls.hideRemainingPhotoCnt();
             mSwitcher.setSwitcherVisibility(false);
             ViewGroup cameraControls = (ViewGroup) mRootView.findViewById(R.id.camera_controls);
             mActivity.getLayoutInflater().inflate(R.layout.review_module_control, cameraControls);

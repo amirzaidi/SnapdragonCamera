@@ -130,13 +130,10 @@ public class VideoUI implements PieRenderer.PieListener,
     private float mSurfaceTextureUncroppedWidth;
     private float mSurfaceTextureUncroppedHeight;
 
-    private OnLayoutChangeListener mLayoutListener = new OnLayoutChangeListener() {
-        @Override
-        public void onLayoutChange(View v, int left, int top, int right,
-                int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-            tryToCloseSubList();
-        }
-    };
+    public enum SURFACE_STATUS {
+        HIDE,
+        SURFACE_VIEW;
+    }
 
     public void showPreviewCover() {
         mPreviewCover.setVisibility(View.VISIBLE);
@@ -177,6 +174,14 @@ public class VideoUI implements PieRenderer.PieListener,
         }
     }
 
+    public synchronized void applySurfaceChange(SURFACE_STATUS status) {
+        if(status == SURFACE_STATUS.HIDE) {
+            mSurfaceView.setVisibility(View.GONE);
+            return;
+        }
+        mSurfaceView.setVisibility(View.VISIBLE);
+    }
+
     public VideoUI(CameraActivity activity, VideoController controller, View parent) {
         mActivity = activity;
         mController = controller;
@@ -190,9 +195,7 @@ public class VideoUI implements PieRenderer.PieListener,
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        mSurfaceView.addOnLayoutChangeListener(mLayoutListener);
         Log.v(TAG, "Using mdp_preview_content (MDP path)");
-
         View surfaceContainer = mRootView.findViewById(R.id.preview_container);
         surfaceContainer.addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @Override
@@ -202,6 +205,7 @@ public class VideoUI implements PieRenderer.PieListener,
                 int width = right - left;
                 int height = bottom - top;
 
+                tryToCloseSubList();
                 if (mMaxPreviewWidth == 0 && mMaxPreviewHeight == 0) {
                     mMaxPreviewWidth = width;
                     mMaxPreviewHeight = height;

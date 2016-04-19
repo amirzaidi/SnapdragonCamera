@@ -696,6 +696,7 @@ public class PhotoModule
     private void switchCamera() {
         if (mPaused) return;
 
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.HIDE);
         Log.v(TAG, "Start to switch camera. id=" + mPendingSwitchCameraId);
         mCameraId = mPendingSwitchCameraId;
         mPendingSwitchCameraId = -1;
@@ -735,6 +736,7 @@ public class PhotoModule
         mFocusManager.setParameters(mInitialParams);
         setupPreview();
 
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.SURFACE_VIEW);
         // reset zoom value index
         mZoomValue = 0;
         resizeForPreviewAspectRatio();
@@ -1126,23 +1128,26 @@ public class PhotoModule
                 for (int i =0;i<3;i++) {
                     metadata[i] = byteToInt( (byte []) data, i*4);
                 }
-                if (metadata[2] == 1) {
-                    mAutoHdrEnable = true;
-                    mActivity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            if (mDrawAutoHDR != null)
-                                mDrawAutoHDR.AutoHDR();
-                        }
-                    });
-                }
-                else {
-                    mAutoHdrEnable = false;
-                    mActivity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            if (mDrawAutoHDR != null)
-                                mDrawAutoHDR.AutoHDR();
-                        }
-                    });
+                /* Checking if the meta data is for auto HDR */
+                if (metadata[0] == 3) {
+                    if (metadata[2] == 1) {
+                        mAutoHdrEnable = true;
+                        mActivity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                if (mDrawAutoHDR != null)
+                                    mDrawAutoHDR.AutoHDR();
+                            }
+                        });
+                    }
+                    else {
+                        mAutoHdrEnable = false;
+                        mActivity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                if (mDrawAutoHDR != null)
+                                    mDrawAutoHDR.AutoHDR();
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -2373,17 +2378,17 @@ public class PhotoModule
                 || MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)) {
             Log.v(TAG, "On resume, from lock screen.");
 
+            // Check if there is a need to take a snapshot without
+            // waiting for the shutter click
+            if (isInstantCaptureEnabled()) {
+                mInstantCaptureSnapShot = true;
+            }
+
             // Note: onPauseAfterSuper() will delete this runnable, so we will
             // at most have 1 copy queued up.
             mHandler.postDelayed(new Runnable() {
                 public void run() {
                     onResumeTasks();
-
-                    // Check if there is a need to take a snapshot without
-                    // waiting for the shutter click
-                    if (isInstantCaptureEnabled()) {
-                        mInstantCaptureSnapShot = true;
-                    }
                 }
             }, ON_RESUME_TASKS_DELAY_MSEC);
         } else {
@@ -2426,6 +2431,8 @@ public class PhotoModule
             mOpenCameraThread.start();
         }
 
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.SURFACE_VIEW);
+
         mJpegPictureCallbackTime = 0;
         mZoomValue = 0;
 
@@ -2464,6 +2471,8 @@ public class PhotoModule
     @Override
     public void onPauseBeforeSuper() {
         mPaused = true;
+        mUI.applySurfaceChange(PhotoUI.SURFACE_STATUS.HIDE);
+
         Sensor gsensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         if (gsensor != null) {
             mSensorManager.unregisterListener(this, gsensor);
@@ -2566,12 +2575,6 @@ public class PhotoModule
         // we will update focus manager with proper UI.
         if (mFocusManager != null && mUI != null) {
             mFocusManager.setPhotoUI(mUI);
-
-            View root = mUI.getRootView();
-            // These depend on camera parameters.
-            int width = root.getWidth();
-            int height = root.getHeight();
-            mFocusManager.setPreviewSize(width, height);
         }
     }
 
@@ -4983,7 +4986,7 @@ class DrawAutoHDR extends View{
             AutoHDRPaint.setStyle(Paint.Style.STROKE);
             AutoHDRPaint.setColor(Color.MAGENTA);
             AutoHDRPaint.setStrokeWidth(1);
-            AutoHDRPaint.setTextSize(16);
+            AutoHDRPaint.setTextSize(32);
             AutoHDRPaint.setAlpha (255);
             canvas.drawText("HDR On",200,100,AutoHDRPaint);
         }
