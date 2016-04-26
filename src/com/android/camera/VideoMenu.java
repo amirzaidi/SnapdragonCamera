@@ -729,8 +729,7 @@ public class VideoMenu extends MenuController
             mPrevSavedVideoCDS = cds;
         }
 
-        if ((tnr != null) && !mActivity.getString(R.string.
-                pref_camera_video_tnr_default).equals(tnr)) {
+        if ((tnr != null) && !tnr.equals("off")) { 
             mListMenu.setPreferenceEnabled(
                     CameraSettings.KEY_VIDEO_CDS_MODE,false);
             mListMenu.overrideSettings(
