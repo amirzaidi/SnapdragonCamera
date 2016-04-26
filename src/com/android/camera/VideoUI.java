@@ -1123,8 +1123,6 @@ public class VideoUI implements PieRenderer.PieListener,
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.v(TAG, "surfaceChanged: width = " + width + ", height = " + height);
-        // Make sure preview cover is hidden if preview data is available.
-        hidePreviewCover();
     }
 
     @Override
