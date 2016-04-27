@@ -277,7 +277,7 @@
     <string name="pref_camera_cds_default" translatable="false">on</string>
 
     <!-- Default video cds mode setting-->
-    <string name="pref_camera_video_cds_default" translatable="false">on</string>
+    <string name="pref_camera_video_cds_default" translatable="false">off</string>
 
      <!-- Settings menu, setting title text for tnr mode-->
     <string name="pref_camera_tnr_title">TNR mode</string>
@@ -289,7 +289,7 @@
     <string name="pref_camera_tnr_default" translatable="false">off</string>
 
     <!-- Default video tnr mode setting-->
-    <string name="pref_camera_video_tnr_default" translatable="false">off</string>
+    <string name="pref_camera_video_tnr_default" translatable="false">on</string>
 
     <!-- Default face  detection setting. -->
     <string name="pref_camera_facedetection_default" translatable="false">off</string>
