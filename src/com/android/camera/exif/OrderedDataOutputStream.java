@@ -22,7 +22,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-class OrderedDataOutputStream extends FilterOutputStream {
+public class OrderedDataOutputStream extends FilterOutputStream {
     private final ByteBuffer mByteBuffer = ByteBuffer.allocate(4);
     private int mSize = 0;
 
