@@ -253,13 +253,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                     // AF_PASSIVE is added for continous auto focus mode
                     if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
                             CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState ||
-                            CaptureRequest.CONTROL_AF_STATE_PASSIVE_FOCUSED == afState ||
+                            CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED == afState ||
                             CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED == afState) {
                         // CONTROL_AE_STATE can be null on some devices
-                        if ((aeState == null
-                                || aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED
-                                || (id == MONO_ID && MODE == DUAL_MODE))
-                                && isFlashOff()) {
+                        if (aeState == null || (aeState == CaptureResult
+                                .CONTROL_AE_STATE_CONVERGED) && isFlashOff()) {
                             mState[id] = STATE_PICTURE_TAKEN;
                             captureStillPicture(id);
                         } else {
@@ -274,7 +272,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     Log.d(TAG, "STATE_WAITING_PRECAPTURE id: " + id + " aeState:" + aeState);
                     if (aeState == null ||
                             aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                            aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
+                            aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
+                            aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
                         mState[id] = STATE_WAITING_NON_PRECAPTURE;
                     }
                     break;
@@ -856,7 +855,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     Size largest = Collections.max(
                         Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
                         new CompareSizesByArea());
-                    ClearSightImageProcessor.getInstance().init(largest.getWidth(), largest.getHeight());
+                    ClearSightImageProcessor.getInstance().init(largest.getWidth(), largest.getHeight(), mActivity);
                     ClearSightImageProcessor.getInstance().setCallback(this);
                 } else {
                     // No Clearsight
