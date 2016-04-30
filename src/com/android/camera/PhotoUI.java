@@ -984,7 +984,10 @@ public class PhotoUI implements PieListener,
     }
 
     public boolean sendTouchToPreviewMenu(MotionEvent ev) {
-        return mPreviewMenuLayout.dispatchTouchEvent(ev);
+        if (mPreviewMenuLayout != null) {
+            return mPreviewMenuLayout.dispatchTouchEvent(ev);
+        }
+        return false;
     }
 
     public boolean sendTouchToMenu(MotionEvent ev) {
