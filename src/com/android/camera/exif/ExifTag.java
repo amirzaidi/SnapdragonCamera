@@ -85,7 +85,7 @@ public class ExifTag {
         TYPE_TO_SIZE_MAP[TYPE_RATIONAL] = 8;
     }
 
-    static final int SIZE_UNDEFINED = 0;
+    public static final int SIZE_UNDEFINED = 0;
 
     // Exif TagId
     private final short mTagId;
@@ -124,7 +124,7 @@ public class ExifTag {
     }
 
     // Use builtTag in ExifInterface instead of constructor.
-    ExifTag(short tagId, short type, int componentCount, int ifd,
+    public ExifTag(short tagId, short type, int componentCount, int ifd,
             boolean hasDefinedComponentCount) {
         mTagId = tagId;
         mDataType = type;
@@ -163,7 +163,7 @@ public class ExifTag {
         return mIfd;
     }
 
-    protected void setIfd(int ifdId) {
+    public void setIfd(int ifdId) {
         mIfd = ifdId;
     }
 
@@ -785,7 +785,7 @@ public class ExifTag {
      * @exception IllegalArgumentException if the data type is
      *                {@link #TYPE_RATIONAL} or {@link #TYPE_UNSIGNED_RATIONAL}.
      */
-    protected long getValueAt(int index) {
+    public long getValueAt(int index) {
         if (mValue instanceof long[]) {
             return ((long[]) mValue)[index];
         } else if (mValue instanceof byte[]) {
@@ -812,7 +812,7 @@ public class ExifTag {
     /*
      * Get the converted ascii byte. Used by ExifOutputStream.
      */
-    protected byte[] getStringByte() {
+    public byte[] getStringByte() {
         return (byte[]) mValue;
     }
 
@@ -822,7 +822,7 @@ public class ExifTag {
      * @exception IllegalArgumentException If the type is NOT
      *                {@link #TYPE_RATIONAL} or {@link #TYPE_UNSIGNED_RATIONAL}.
      */
-    protected Rational getRational(int index) {
+    public Rational getRational(int index) {
         if ((mDataType != TYPE_RATIONAL) && (mDataType != TYPE_UNSIGNED_RATIONAL)) {
             throw new IllegalArgumentException("Cannot get RATIONAL value from "
                     + convertTypeToString(mDataType));
@@ -833,7 +833,7 @@ public class ExifTag {
     /**
      * Equivalent to getBytes(buffer, 0, buffer.length).
      */
-    protected void getBytes(byte[] buf) {
+    public void getBytes(byte[] buf) {
         getBytes(buf, 0, buf.length);
     }
 
@@ -847,7 +847,7 @@ public class ExifTag {
      * @exception IllegalArgumentException If the type is NOT
      *                {@link #TYPE_UNDEFINED} or {@link #TYPE_UNSIGNED_BYTE}.
      */
-    protected void getBytes(byte[] buf, int offset, int length) {
+    public void getBytes(byte[] buf, int offset, int length) {
         if ((mDataType != TYPE_UNDEFINED) && (mDataType != TYPE_UNSIGNED_BYTE)) {
             throw new IllegalArgumentException("Cannot get BYTE value from "
                     + convertTypeToString(mDataType));
@@ -860,14 +860,14 @@ public class ExifTag {
      * Gets the offset of this tag. This is only valid if this data size > 4 and
      * contains an offset to the location of the actual value.
      */
-    protected int getOffset() {
+    public int getOffset() {
         return mOffset;
     }
 
     /**
      * Sets the offset of this tag.
      */
-    protected void setOffset(int offset) {
+    public void setOffset(int offset) {
         mOffset = offset;
     }
 

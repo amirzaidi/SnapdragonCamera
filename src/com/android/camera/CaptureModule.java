@@ -19,8 +19,22 @@
 
 package com.android.camera;
 
-import android.annotation.TargetApi;
-import android.app.Activity;
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
+import org.codeaurora.snapcam.R;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -28,20 +42,25 @@ import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CameraProfile;
 import android.media.Image;
+import android.media.Image.Plane;
 import android.media.ImageReader;
+import android.media.ImageWriter;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -61,20 +80,7 @@ import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
-
-import org.codeaurora.snapcam.R;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import com.android.camera.util.ClearSightNativeEngine;
 
 public class CaptureModule implements CameraModule, PhotoController,
         MediaSaveService.Listener {
@@ -83,6 +89,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static final int MONO_MODE = 2;
     private static final int OPEN_CAMERA = 0;
     private static final int MAX_NUM_CAM = 3;
+    private static final long TIMESTAMP_THRESHOLD_NS = 10*1000000;  // 10 ms
+
     /**
      * Conversion from screen rotation to JPEG orientation.
      */
@@ -113,6 +121,13 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final String TAG = "SnapCam_CaptureModule";
     private static int MODE = DUAL_MODE;
 
+    private static final int MSG_START_CAPTURE = 0;
+    private static final int MSG_NEW_IMG = 1;
+    private static final int MSG_NEW_RESULT = 2;
+    private static final int MSG_SAVE = 4;
+
+    private static final int NUM_IMAGES_TO_BURST = 4;
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -130,6 +145,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     CaptureRequest.Key<Integer> BayerMonoLinkSessionIdKey =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.dualcam_link_meta_data" +
                     ".related_camera_id", Integer.class);
+
+    CaptureResult.Key<Byte> OTP_CALIB_BLOB =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.dualcam_calib_meta_data.dualcam_calib_meta_data_blob",
+                    Byte.class);
+
     private int mLastResultAFState = -1;
     private Rect[] mCropRegion = new Rect[MAX_NUM_CAM];
     private boolean mAutoFocusSupported;
@@ -165,16 +185,24 @@ public class CaptureModule implements CameraModule, PhotoController,
     private HandlerThread mCameraThread;
     private HandlerThread mImageAvailableThread;
     private HandlerThread mCallbackThread;
+    private HandlerThread mImageProcessThread;
+    private HandlerThread mImageReprocessThread;
+
     /**
      * A {@link Handler} for running tasks in the background.
      */
     private Handler mCameraHandler;
     private Handler mImageAvailableHandler;
     private Handler mCallbackHandler;
+    private ImageProcessHandler mImageProcessHandler;
+    private ImageReprocessHandler mImageReprocessHandler;
+
     /**
      * An {@link ImageReader} that handles still image capture.
      */
     private ImageReader[] mImageReader = new ImageReader[MAX_NUM_CAM];
+    private ImageReader[] mReprocessImageReader = new ImageReader[MAX_NUM_CAM];
+    private ImageWriter[] mImageWriter = new ImageWriter[MAX_NUM_CAM];
     private NamedImages mNamedImages;
     private ContentResolver mContentResolver;
     private MediaSaveService.OnMediaSavedListener mOnMediaSavedListener =
@@ -186,35 +214,472 @@ public class CaptureModule implements CameraModule, PhotoController,
                     }
                 }
             };
-    /**
-     * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
-     * still image is ready to be saved.
-     */
-    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
-            = new ImageReader.OnImageAvailableListener() {
+
+    private class ReprocessableImage {
+        final Image mImage;
+        final TotalCaptureResult mCaptureResult;
+
+        ReprocessableImage(Image image, TotalCaptureResult result) {
+            mImage = image;
+            mCaptureResult = result;
+        }
+    }
+
+    private abstract class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
+        int mCamId;
+
+        ImageAvailableListener(int cameraId) {
+            mCamId = cameraId;
+        }
+    }
+
+    private abstract class CameraCaptureCallback extends CameraCaptureSession.CaptureCallback {
+        int mCamId;
+
+        CameraCaptureCallback(int cameraId) {
+            mCamId = cameraId;
+        }
+    }
+
+    private class ImageProcessHandler extends Handler {
+        private ArrayDeque<ReprocessableImage> mBayerFrames = new ArrayDeque<ReprocessableImage>(
+                NUM_IMAGES_TO_BURST);
+        private ArrayDeque<ReprocessableImage> mMonoFrames = new ArrayDeque<ReprocessableImage>(
+                NUM_IMAGES_TO_BURST);
+        private ArrayDeque<TotalCaptureResult> mBayerCaptureResults = new ArrayDeque<TotalCaptureResult>(
+                NUM_IMAGES_TO_BURST);
+        private ArrayDeque<TotalCaptureResult> mMonoCaptureResults = new ArrayDeque<TotalCaptureResult>(
+                NUM_IMAGES_TO_BURST);
+        private ArrayDeque<Image> mBayerImages = new ArrayDeque<Image>(
+                NUM_IMAGES_TO_BURST);
+        private ArrayDeque<Image> mMonoImages = new ArrayDeque<Image>(
+                NUM_IMAGES_TO_BURST);
+        private int[] mNumImagesToProcess = new int[MAX_NUM_CAM];
+
+        public ImageProcessHandler(Looper looper) {
+            super(looper);
+        }
 
         @Override
-        public void onImageAvailable(ImageReader reader) {
-            Log.d(TAG, "image available");
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case MSG_START_CAPTURE:
+                mNumImagesToProcess[msg.arg1] = msg.arg2;
+                break;
+            case MSG_NEW_IMG:
+                processNewImg(msg);
+                break;
+            case MSG_NEW_RESULT:
+                processNewCaptureResult(msg);
+                break;
+            case MSG_SAVE:
+                processSaveImage(msg);
+                break;
+            }
+        }
+
+        private void processNewImg(Message msg) {
+            Image image = (Image) msg.obj;
+
+            ArrayDeque<Image> imageQueue;
+            ArrayDeque<TotalCaptureResult> resultQueue;
+            ArrayDeque<ReprocessableImage> reprocQueue;
+            // push image onto queue
+            if (msg.arg1 == BAYER_ID) {
+                imageQueue = mBayerImages;
+                resultQueue = mBayerCaptureResults;
+                reprocQueue = mBayerFrames;
+            } else {
+                imageQueue = mMonoImages;
+                resultQueue = mMonoCaptureResults;
+                reprocQueue = mMonoFrames;
+            }
+
+            imageQueue.add(image);
+
+            Log.d(TAG, "processNewImg - cam: " + msg.arg1 + " num imgs: "
+                    + imageQueue.size() + " num results: " + resultQueue.size());
+            if (imageQueue.isEmpty() == resultQueue.isEmpty()) {
+                Image headImage = imageQueue.poll();
+                TotalCaptureResult headResult = resultQueue.poll();
+                reprocQueue.add(new ReprocessableImage(headImage, headResult));
+                checkForValidFramePair();
+                mNumImagesToProcess[msg.arg1]--;
+                if (mNumImagesToProcess[BAYER_ID] == 0
+                        && mNumImagesToProcess[MONO_ID] == 0) {
+                    ClearSightNativeEngine.getInstance().reset();
+                    processReprocess();
+                }
+            }
+        }
+
+        private void processNewCaptureResult(Message msg) {
+            if (msg.arg2 == 1) {
+                // capture failed
+                mNumImagesToProcess[msg.arg1]--;
+            } else {
+                TotalCaptureResult result = (TotalCaptureResult) msg.obj;
+                ArrayDeque<Image> imageQueue;
+                ArrayDeque<TotalCaptureResult> resultQueue;
+                ArrayDeque<ReprocessableImage> reprocQueue;
+                // push image onto queue
+                if (msg.arg1 == BAYER_ID) {
+                    imageQueue = mBayerImages;
+                    resultQueue = mBayerCaptureResults;
+                    reprocQueue = mBayerFrames;
+                } else {
+                    imageQueue = mMonoImages;
+                    resultQueue = mMonoCaptureResults;
+                    reprocQueue = mMonoFrames;
+                }
+
+                resultQueue.add(result);
+
+                Log.d(TAG, "processNewCaptureResult - cam: " + msg.arg1
+                        + " num imgs: " + imageQueue.size() + " num results: "
+                        + resultQueue.size());
+                if (imageQueue.isEmpty() == resultQueue.isEmpty()) {
+                    Image headImage = imageQueue.poll();
+                    TotalCaptureResult headResult = resultQueue.poll();
+                    reprocQueue.add(new ReprocessableImage(headImage,
+                            headResult));
+                    checkForValidFramePair();
+                    mNumImagesToProcess[msg.arg1]--;
+                    if (mNumImagesToProcess[BAYER_ID] == 0
+                            && mNumImagesToProcess[MONO_ID] == 0) {
+                        ClearSightNativeEngine.getInstance().reset();
+                        processReprocess();
+                    }
+                }
+            }
+        }
+
+        private void checkForValidFramePair() {
+            // if we have images from both
+            // as we just added an image onto one of the queues
+            // this condition is only true when both are not empty
+            Log.d(TAG,
+                    "checkForValidFramePair - num bayer frames: "
+                            + mBayerFrames.size() + " num mono frames: "
+                            + mMonoFrames.size());
+
+            if (mBayerFrames.isEmpty() == mMonoFrames.isEmpty()) {
+                // peek oldest pair of images
+                ReprocessableImage bayer = mBayerFrames.peek();
+                ReprocessableImage mono = mMonoFrames.peek();
+
+                Log.d(TAG,
+                        "checkForValidFramePair - bayer ts: "
+                                + bayer.mImage.getTimestamp() + " mono ts: "
+                                + mono.mImage.getTimestamp());
+                Log.d(TAG,
+                        "checkForValidFramePair - difference: "
+                                + Math.abs(bayer.mImage.getTimestamp()
+                                        - mono.mImage.getTimestamp()));
+                // if timestamps are within threshold, keep frames
+                if (Math.abs(bayer.mImage.getTimestamp()
+                        - mono.mImage.getTimestamp()) > TIMESTAMP_THRESHOLD_NS) {
+                    Log.d(TAG, "checkForValidFramePair - toss pair");
+                    // no match, toss
+                    bayer = mBayerFrames.poll();
+                    mono = mMonoFrames.poll();
+                    bayer.mImage.close();
+                    mono.mImage.close();
+                }
+            }
+        }
+
+        private void releaseBayerFrames() {
+            for (ReprocessableImage reprocImg : mBayerFrames) {
+                reprocImg.mImage.close();
+            }
+
+            mBayerFrames.clear();
+        }
+
+        private void releaseMonoFrames() {
+            for (ReprocessableImage reprocImg : mMonoFrames) {
+                reprocImg.mImage.close();
+            }
+
+            mMonoFrames.clear();
+        }
+
+        private void processReprocess() {
+            if (mBayerFrames.size() != mMonoFrames.size()
+                    || mBayerFrames.isEmpty()) {
+                Log.d(TAG, "processReprocess - frame size mismatch or empty");
+                releaseBayerFrames();
+                releaseMonoFrames();
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        RotateTextToast.makeText(mActivity, R.string.clearsight_capture_fail,
+                                Toast.LENGTH_SHORT).show();
+                        unlockFocus(BAYER_ID);
+                        unlockFocus(MONO_ID);
+                    }
+                });
+                return;
+            } else {
+                sendReprocessRequests(BAYER_ID);
+                sendReprocessRequests(MONO_ID);
+            }
+        }
+
+        private void sendReprocessRequests(final int camId) {
+            try {
+                ArrayDeque<ReprocessableImage> frameQueue;
+                if (camId == BAYER_ID) {
+                    frameQueue = mBayerFrames;
+                } else {
+                    frameQueue = mMonoFrames;
+                }
+                Log.d(TAG, "sendReprocessRequests - start cam: " + camId
+                        + " num frames: " + frameQueue.size());
+
+                ArrayList<CaptureRequest> reprocRequests = new ArrayList<CaptureRequest>(
+                        frameQueue.size());
+                while (!frameQueue.isEmpty()) {
+                    ReprocessableImage reprocImg = frameQueue.poll();
+
+                    CaptureRequest.Builder reprocRequest = mCameraDevice[camId]
+                            .createReprocessCaptureRequest(reprocImg.mCaptureResult);
+                    reprocRequest.addTarget(mReprocessImageReader[camId]
+                            .getSurface());
+                    reprocRequests.add(reprocRequest.build());
+
+                    mImageWriter[camId].queueInputImage(reprocImg.mImage);
+                }
+
+                mImageReprocessHandler.obtainMessage(MSG_START_CAPTURE, camId,
+                        reprocRequests.size()).sendToTarget();
+                mCaptureSession[camId].captureBurst(reprocRequests,
+                        new CameraCaptureCallback(camId) {
+                    @Override
+                    public void onCaptureCompleted(
+                            CameraCaptureSession session,
+                            CaptureRequest request,
+                            TotalCaptureResult result) {
+                        super.onCaptureCompleted(session, request, result);
+                        Log.d(TAG, "reprocess - onCaptureCompleted: "
+                                + mCamId);
+                        // TODO: parse OTP Calib data to be used in final CS
+                        // result.get(OTP_CALIB_BLOB);
+                    }
+
+                    @Override
+                    public void onCaptureFailed(
+                            CameraCaptureSession session,
+                            CaptureRequest request,
+                            CaptureFailure failure) {
+                        super.onCaptureFailed(session, request, failure);
+                        Log.d(TAG, "reprocess - onCaptureFailed: "
+                                + mCamId);
+                        mImageReprocessHandler.obtainMessage(
+                                MSG_NEW_RESULT, mCamId, 1)
+                                .sendToTarget();
+                    }
+                }, mCameraHandler);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void processSaveImage(Message msg) {
+            Image image = (Image) msg.obj;
+            if (image.getFormat() == ImageFormat.JPEG) {
+                mCaptureStartTime = System.currentTimeMillis();
+                mNamedImages.nameNewImage(mCaptureStartTime);
+                NamedEntity name = mNamedImages.getNextNameEntity();
+                String title = (name == null) ? null : name.title;
+                long date = (name == null) ? -1 : name.date;
+
+                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                byte[] bytes = new byte[buffer.remaining()];
+                buffer.get(bytes);
+
+                mActivity.getMediaSaveService().addImage(bytes, title, date,
+                        null, image.getWidth(), image.getHeight(), 0, null,
+                        mOnMediaSavedListener, mContentResolver, "jpeg");
+            } else {
+                Log.w(TAG, "processSaveImage - image format incorrect: " + image.getFormat());
+            }
+            image.close();
+        }
+    };
+
+    private class ImageReprocessHandler extends Handler {
+        private int[] mNumImagesToProcess = new int[MAX_NUM_CAM];
+
+        public ImageReprocessHandler(Looper looper) {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case MSG_START_CAPTURE:
+                mNumImagesToProcess[msg.arg1] = msg.arg2;
+                break;
+            case MSG_NEW_IMG:
+                processNewImg(msg);
+                break;
+            case MSG_NEW_RESULT:
+                processNewCaptureResult(msg);
+                break;
+            }
+        }
+
+        private void processNewImg(Message msg) {
+            Image image = (Image) msg.obj;
+            boolean isBayer = (msg.arg1 == BAYER_ID);
+
+            Log.d(TAG, "reprocess - processNewImg");
+            if (!ClearSightNativeEngine.getInstance()
+                    .hasReferenceImage(isBayer)) {
+                // reference not yet set
+                ClearSightNativeEngine.getInstance().setReferenceImage(isBayer,
+                        image);
+            } else {
+                // if ref images set, register this image
+                ClearSightNativeEngine.getInstance().registerImage(isBayer,
+                        image);
+            }
+
+            mNumImagesToProcess[msg.arg1]--;
+
+            Log.d(TAG, "reprocess - processNewImg, cam: " + msg.arg1
+                    + " count: " + mNumImagesToProcess[msg.arg1]);
+
+            if (mNumImagesToProcess[BAYER_ID] == 0
+                    && mNumImagesToProcess[MONO_ID] == 0) {
+                processClearSight();
+            }
+        }
+
+        private void processNewCaptureResult(Message msg) {
+            if (msg.arg2 == 1) {
+                // capture failed
+                mNumImagesToProcess[msg.arg1]--;
+            }
+
+            Log.d(TAG, "reprocess - processNewCaptureResult, cam: " + msg.arg1
+                    + " count: " + mNumImagesToProcess[msg.arg1]);
+
+            if (mNumImagesToProcess[BAYER_ID] == 0
+                    && mNumImagesToProcess[MONO_ID] == 0) {
+                processClearSight();
+            }
+        }
+
+        private void processClearSight() {
+            Log.d(TAG, "reprocess - processClearSight, bayercount: "
+                    + mNumImagesToProcess[BAYER_ID] + " mono count: "
+                    + mNumImagesToProcess[MONO_ID]);
+
             mCaptureStartTime = System.currentTimeMillis();
             mNamedImages.nameNewImage(mCaptureStartTime);
             NamedEntity name = mNamedImages.getNextNameEntity();
             String title = (name == null) ? null : name.title;
             long date = (name == null) ? -1 : name.date;
 
-            Image mImage = reader.acquireNextImage();
-            ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
-            //Todo: dont create new buffer and use the one from ImageReader
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
+            ClearSightNativeEngine.ClearsightImage csImage = ClearSightNativeEngine
+                    .getInstance().processImage();
+            if (csImage != null) {
+                Log.d(TAG, "reprocess - processClearSight success");
 
-            mActivity.getMediaSaveService().addImage(
-                    bytes, title, date, null, reader.getWidth(), reader.getHeight(),
-                    0, null, mOnMediaSavedListener, mContentResolver, "jpeg");
-            mImage.close();
+                mActivity.getMediaSaveService().addMpoImage(
+                        csImage,
+                        createYuvImage(ClearSightNativeEngine.getInstance()
+                                .getReferenceImage(true)),
+                        createYuvImage(ClearSightNativeEngine.getInstance()
+                                .getReferenceImage(false)), null, null, title,
+                        date, null, 0, mOnMediaSavedListener, mContentResolver,
+                        "jpeg");
+
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        RotateTextToast.makeText(mActivity, R.string.clearsight_capture_success,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                Log.d(TAG, "reprocess - processClearSight fail");
+                Image bayerRef = ClearSightNativeEngine.getInstance()
+                        .getReferenceImage(true);
+                Image monoRef = ClearSightNativeEngine.getInstance()
+                        .getReferenceImage(false);
+                if (bayerRef != null && monoRef != null) {
+                    Log.d(TAG, "reprocess - saving with bayer + mono mpo");
+                    mActivity.getMediaSaveService().addMpoImage(null,
+                            createYuvImage(bayerRef), createYuvImage(monoRef),
+                            null, null, title, date, null, 0,
+                            mOnMediaSavedListener, mContentResolver, "jpeg");
+                } else {
+                    Log.d(TAG, "reprocess - bayer + mono images not available");
+                }
         }
 
+            unlockFocus(BAYER_ID);
+            unlockFocus(MONO_ID);
+            ClearSightNativeEngine.getInstance().reset();
+        }
     };
+
+    private void saveDebugImage(byte[] data, int width, int height,
+            boolean isReproc) {
+        mCaptureStartTime = System.currentTimeMillis();
+        mNamedImages.nameNewImage(mCaptureStartTime);
+        NamedEntity name = mNamedImages.getNextNameEntity();
+        String title = (name == null) ? null : name.title;
+        long date = (name == null) ? -1 : name.date;
+
+        if (isReproc) {
+            title += "_reproc";
+        }
+
+        mActivity.getMediaSaveService().addImage(data, title, date, null,
+                width, height, 0, null, mOnMediaSavedListener,
+                mContentResolver, "jpeg");
+    }
+
+    private void saveDebugImage(YuvImage image, boolean isReproc) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        image.compressToJpeg(
+                new Rect(0, 0, image.getWidth(), image.getHeight()), 100, baos);
+
+        saveDebugImage(baos.toByteArray(), image.getWidth(), image.getHeight(),
+                isReproc);
+    }
+
+    private void saveDebugImage(Image image, boolean isReproc) {
+        saveDebugImage(createYuvImage(image), isReproc);
+    }
+
+    private YuvImage createYuvImage(Image image) {
+        if (image == null) {
+            Log.d(TAG, "createYuvImage - invalid param");
+            return null;
+        }
+        Plane[] planes = image.getPlanes();
+        ByteBuffer yBuffer = planes[0].getBuffer();
+        ByteBuffer vuBuffer = planes[2].getBuffer();
+        int sizeY = yBuffer.capacity();
+        int sizeVU = vuBuffer.capacity();
+        byte[] data = new byte[sizeY + sizeVU];
+        yBuffer.rewind();
+        yBuffer.get(data, 0, sizeY);
+        vuBuffer.rewind();
+        vuBuffer.get(data, sizeY, sizeVU);
+        int[] strides = new int[] { planes[0].getRowStride(),
+                planes[2].getRowStride() };
+
+        return new YuvImage(data, ImageFormat.NV21, image.getWidth(),
+                image.getHeight(), strides);
+    }
+
     /**
      * {@link CaptureRequest.Builder} for the camera preview
      */
@@ -417,6 +882,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         switch (value) {
             case "dual":
                 mode = DUAL_MODE;
+                ClearSightNativeEngine.createInstance();
                 break;
             case "bayer":
                 mode = BAYER_MODE;
@@ -518,40 +984,62 @@ public class CaptureModule implements CameraModule, PhotoController,
             mPreviewRequestBuilder[id].setTag(id);
             mPreviewRequestBuilder[id].addTarget(surface);
 
-            list.add(surface);
-            list.add(mImageReader[id].getSurface());
-            // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice[id].createCaptureSession(list,
+            CameraCaptureSession.StateCallback captureSessionCallback =
                     new CameraCaptureSession.StateCallback() {
 
-                        @Override
-                        public void onConfigured(CameraCaptureSession cameraCaptureSession) {
-                            // The camera is already closed
-                            if (mPaused || null == mCameraDevice[id]) {
-                                return;
-                            }
-                            // When the session is ready, we start displaying the preview.
-                            mCaptureSession[id] = cameraCaptureSession;
-                            initializePreviewConfiguration(id);
-                            try {
-                                if (MODE == DUAL_MODE) {
-                                    linkBayerMono(id);
-                                    mIsLinked = true;
-                                }
-                                // Finally, we start displaying the camera preview.
-                                mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
-                                        .build(), mCaptureCallback, mCameraHandler);
-                            } catch (CameraAccessException e) {
-                                e.printStackTrace();
-                            }
+                @Override
+                public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                    // The camera is already closed
+                    if (mPaused || null == mCameraDevice[id]) {
+                        return;
+                    }
+                    // When the session is ready, we start displaying the preview.
+                    mCaptureSession[id] = cameraCaptureSession;
+                    initializePreviewConfiguration(id);
+                    try {
+                        if (MODE == DUAL_MODE) {
+                            linkBayerMono(id);
+                            mIsLinked = true;
                         }
+                        // Finally, we start displaying the camera preview.
+                        mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
+                                .build(), mCaptureCallback, mCameraHandler);
 
-                        @Override
-                        public void onConfigureFailed(
-                                CameraCaptureSession cameraCaptureSession) {
+                        // For Clearsight
+                        if(mCaptureSession[id].isReprocessable()) {
+                            mImageWriter[id] = ImageWriter.newInstance(cameraCaptureSession.getInputSurface(), NUM_IMAGES_TO_BURST);
                         }
-                    }, null
-            );
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                    Log.d(TAG, "cameracapturesession - onConfigureFailed");
+                }
+
+                @Override
+                public void onClosed(CameraCaptureSession session) {
+                    Log.d(TAG, "cameracapturesession - onClosed");
+                }
+            };
+
+            list.add(surface);
+            list.add(mImageReader[id].getSurface());
+
+            ListPreference pref = mPreferenceGroup.findPreference(CameraSettings.KEY_CLEARSIGHT);
+            if(pref.getValue().equals(mActivity.getString(R.string.pref_camera_clearsight_value_on))) {
+                list.add(mReprocessImageReader[id].getSurface());
+                // Here, we create a CameraCaptureSession for camera preview.
+                mCameraDevice[id].createReprocessableCaptureSession(
+                        new InputConfiguration(mImageReader[id].getWidth(),
+                                mImageReader[id].getHeight(), mImageReader[id].getImageFormat()),
+                                list, captureSessionCallback, null);
+            } else {
+                // Here, we create a CameraCaptureSession for camera preview.
+                mCameraDevice[id].createCaptureSession(list, captureSessionCallback, null);
+            }
         } catch (CameraAccessException e) {
         }
     }
@@ -687,40 +1175,98 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (null == mActivity || null == mCameraDevice[id]) {
                 return;
             }
-            CaptureRequest.Builder captureBuilder =
-                    mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+
+            ListPreference pref = mPreferenceGroup.findPreference(CameraSettings.KEY_CLEARSIGHT);
+            final boolean csEnabled = pref.getValue().equals(
+                    mActivity.getString(R.string.pref_camera_clearsight_value_on));
+            CaptureRequest.Builder captureBuilder;
+            CameraCaptureSession.CaptureCallback captureCallback;
+
+            if(csEnabled) {
+                captureBuilder = mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
+
+                // Orientation
+                // int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
+                // captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
+
+                captureCallback = new CameraCaptureSession.CaptureCallback() {
+
+                    @Override
+                    public void onCaptureCompleted(CameraCaptureSession session,
+                            CaptureRequest request,
+                            TotalCaptureResult result) {
+                        Log.d(TAG, "captureStillPicture onCaptureCompleted: " + id);
+                        result.dumpToLog();
+                        mImageProcessHandler.obtainMessage(MSG_NEW_RESULT,
+                                id, 0, result).sendToTarget();
+                    }
+
+                    @Override
+                    public void onCaptureFailed(CameraCaptureSession session,
+                            CaptureRequest request,
+                            CaptureFailure result) {
+                        Log.d(TAG, "captureStillPicture onCaptureFailed: " + id);
+                        mImageProcessHandler.obtainMessage(MSG_NEW_RESULT,
+                                id, 1, result).sendToTarget();
+                    }
+
+                    @Override
+                    public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                            sequenceId, long frameNumber) {
+                        Log.d(TAG, "captureStillPicture onCaptureSequenceCompleted: " + id);
+                    }
+                };
+            } else {
+                // No Clearsight
+                captureBuilder = mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+
+                // Orientation
+                int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
+                captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
+                captureCallback = new CameraCaptureSession.CaptureCallback() {
+
+                    @Override
+                    public void onCaptureCompleted(CameraCaptureSession session,
+                            CaptureRequest request,
+                            TotalCaptureResult result) {
+                        Log.d(TAG, "captureStillPicture onCaptureCompleted: " + id);
+                    }
+
+                    @Override
+                    public void onCaptureFailed(CameraCaptureSession session,
+                            CaptureRequest request,
+                            CaptureFailure result) {
+                        Log.d(TAG, "captureStillPicture onCaptureFailed: " + id);
+                    }
+
+                    @Override
+                    public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                            sequenceId, long frameNumber) {
+                        Log.d(TAG, "captureStillPicture onCaptureSequenceCompleted: " + id);
+                        unlockFocus(id);
+                    }
+                };
+            }
 
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             captureBuilder.addTarget(getPreviewSurface(id));
             captureBuilder.addTarget(mImageReader[id].getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
-            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest
-                    .CONTROL_AF_TRIGGER_IDLE);
+            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
             applyCaptureSettings(captureBuilder, id);
 
-            // Orientation
-            int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-
-            CameraCaptureSession.CaptureCallback CaptureCallback
-                    = new CameraCaptureSession.CaptureCallback() {
-
-                @Override
-                public void onCaptureCompleted(CameraCaptureSession session,
-                                               CaptureRequest request,
-                                               TotalCaptureResult result) {
-                    Log.d(TAG, "captureStillPicture onCaptureCompleted");
-                }
-
-                @Override
-                public void onCaptureSequenceCompleted(CameraCaptureSession session, int
-                        sequenceId, long frameNumber) {
-                    Log.d(TAG, "captureStillPicture onCaptureSequenceCompleted");
-                    unlockFocus(id);
-                }
-            };
             mCaptureSession[id].stopRepeating();
-            mCaptureSession[id].capture(captureBuilder.build(), CaptureCallback, mCallbackHandler);
+
+            if(csEnabled) {
+                List<CaptureRequest> burstList = new ArrayList<CaptureRequest>();
+                for (int i = 0; i < NUM_IMAGES_TO_BURST; i++) {
+                    burstList.add(captureBuilder.build());
+                }
+                mImageProcessHandler.obtainMessage(MSG_START_CAPTURE, id, burstList.size()).sendToTarget();
+                mCaptureSession[id].captureBurst(burstList, captureCallback, mCallbackHandler);
+            } else {
+                mCaptureSession[id].capture(captureBuilder.build(), captureCallback, mCallbackHandler);
+            }
         } catch (CameraAccessException e) {
             Log.d(TAG, "Capture still picture has failed");
             e.printStackTrace();
@@ -766,7 +1312,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             for (int i = 0; i < cameraIdList.length; i++) {
                 String cameraId = cameraIdList[i];
                 CameraCharacteristics characteristics
-                        = manager.getCameraCharacteristics(cameraId);
+                = manager.getCameraCharacteristics(cameraId);
                 mCharacteristics[i] = characteristics;
                 mCharacteristicsIndex.add(i);
                 StreamConfigurationMap map = characteristics.get(
@@ -776,16 +1322,54 @@ public class CaptureModule implements CameraModule, PhotoController,
                 }
                 Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                 Log.d(TAG, "flash : " + (available == null ? false : available));
-                // For still image captures, we use the largest available size.
-                Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-                        new CompareSizesByArea());
-
-                mImageReader[i] = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-                        ImageFormat.JPEG, 3);
-                mImageReader[i].setOnImageAvailableListener(
-                        mOnImageAvailableListener, mImageAvailableHandler);
                 mCameraId[i] = cameraId;
+
+                ListPreference pref = mPreferenceGroup.findPreference(CameraSettings.KEY_CLEARSIGHT);
+                if(pref.getValue().equals(mActivity.getString(R.string.pref_camera_clearsight_value_on))) {
+                    // For still image captures, we use the largest available size.
+                    Size largest = Collections.max(
+                            Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
+                            new CompareSizesByArea());
+
+                    mImageReader[i] = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
+                            ImageFormat.YUV_420_888, NUM_IMAGES_TO_BURST);
+                    mImageReader[i].setOnImageAvailableListener(new ImageAvailableListener(i) {
+                        @Override
+                        public void onImageAvailable(ImageReader reader) {
+                            Log.d(TAG, "image available for cam: " + mCamId);
+                            mImageProcessHandler.obtainMessage(
+                                    MSG_NEW_IMG, mCamId, 0, reader.acquireNextImage()).sendToTarget();
+                        }
+                    }, mImageAvailableHandler);
+
+                    mReprocessImageReader[i] = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
+                            ImageFormat.YUV_420_888, NUM_IMAGES_TO_BURST);
+                    mReprocessImageReader[i].setOnImageAvailableListener(new ImageAvailableListener(i) {
+                        @Override
+                        public void onImageAvailable(ImageReader reader) {
+                            Log.d(TAG, "reprocessed image available for cam: " + mCamId);
+                            mImageReprocessHandler.obtainMessage(
+                                    MSG_NEW_IMG, mCamId, 0, reader.acquireNextImage()).sendToTarget();
+                        }
+                    }, mImageAvailableHandler);
+                } else {
+                    // No Clearsight
+                    // For still image captures, we use the largest available size.
+                    Size largest = Collections.max(
+                            Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
+                            new CompareSizesByArea());
+
+                    mImageReader[i] = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
+                            ImageFormat.JPEG, 3);
+                    mImageReader[i].setOnImageAvailableListener(new ImageAvailableListener(i) {
+                        @Override
+                        public void onImageAvailable(ImageReader reader) {
+                            Log.d(TAG, "image available for cam: " + mCamId);
+                            mImageProcessHandler.obtainMessage(
+                                    MSG_SAVE, mCamId, 0, reader.acquireNextImage()).sendToTarget();
+                        }
+                    }, mImageAvailableHandler);
+                }
             }
             mAutoFocusSupported = CameraUtil.isAutoFocusSupported(mCharacteristics,
                     mCharacteristicsIndex);
@@ -851,6 +1435,14 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mImageReader[i].close();
                     mImageReader[i] = null;
                 }
+                if (null != mReprocessImageReader[i]) {
+                    mReprocessImageReader[i].close();
+                    mReprocessImageReader[i] = null;
+                }
+                if (null != mImageWriter[i]) {
+                    mImageWriter[i].close();
+                    mImageWriter[i] = null;
+                }
             }
             for (int i = 0; i < MAX_NUM_CAM; i++) {
                 if (null != mCameraDevice[i]) {
@@ -883,10 +1475,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         mImageAvailableThread.start();
         mCallbackThread = new HandlerThread("CameraCallback");
         mCallbackThread.start();
+        mImageProcessThread = new HandlerThread("CameraImageProcess");
+        mImageProcessThread.start();
+        mImageReprocessThread = new HandlerThread("CameraImageReprocess");
+        mImageReprocessThread.start();
 
         mCameraHandler = new MyCameraHandler(mCameraThread.getLooper());
         mImageAvailableHandler = new Handler(mImageAvailableThread.getLooper());
         mCallbackHandler = new Handler(mCallbackThread.getLooper());
+        mImageProcessHandler = new ImageProcessHandler(mImageProcessThread.getLooper());
+        mImageReprocessHandler = new ImageReprocessHandler(mImageReprocessThread.getLooper());
     }
 
     /**
@@ -896,6 +1494,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         mCameraThread.quitSafely();
         mImageAvailableThread.quitSafely();
         mCallbackThread.quitSafely();
+        mImageProcessThread.quitSafely();
+        mImageReprocessThread.quitSafely();
         try {
             mCameraThread.join();
             mCameraThread = null;
@@ -914,6 +1514,20 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCallbackThread.join();
             mCallbackThread = null;
             mCallbackHandler = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+            mImageProcessThread.join();
+            mImageProcessThread = null;
+            mImageProcessHandler = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+            mImageReprocessThread.join();
+            mImageReprocessThread = null;
+            mImageReprocessHandler = null;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -955,8 +1569,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "onPause");
         mUI.showPreviewCover();
         if (mLocationManager != null) mLocationManager.recordLocation(false);
-        stopBackgroundThread();
         closeCamera();
+        stopBackgroundThread();
         mUI.onPause();
     }
 
@@ -969,9 +1583,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void onResumeAfterSuper() {
         Log.d(TAG, "onResume " + MODE);
         mCharacteristicsIndex = new ArrayList<>();
+        startBackgroundThread();
         setUpCameraOutputs();
         readInitialValues();
-        startBackgroundThread();
         Message msg = Message.obtain();
         msg.what = OPEN_CAMERA;
         switch (MODE) {

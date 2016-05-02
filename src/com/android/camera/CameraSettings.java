@@ -249,6 +249,7 @@ public class CameraSettings {
     public static final String KEY_CAMERA2 = "pref_camera_camera2_key";
     public static final String KEY_DUAL_CAMERA = "pref_camera_dual_camera_key";
     public static final String KEY_MONO_PREVIEW = "pref_camera_mono_preview_key";
+    public static final String KEY_CLEARSIGHT = "pref_camera_clearsight_key";
 
     public static final String KEY_REFOCUS_PROMPT = "refocus-prompt";
 
@@ -281,7 +282,7 @@ public class CameraSettings {
         //video encoders
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H263, "h263");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H264, "h264");
-        VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H265, "h265");
+        // VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H265, "h265");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.MPEG_4_SP, "m4v");
 
         //video qualities

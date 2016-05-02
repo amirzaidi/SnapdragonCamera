@@ -16,11 +16,18 @@
 
 package com.android.camera;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.nio.ByteOrder;
+
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.hardware.camera2.TotalCaptureResult;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -32,6 +39,10 @@ import com.android.camera.PhotoModule;
 import com.android.camera.exif.ExifInterface;
 
 import java.io.File;
+import com.android.camera.mpo.MpoData;
+import com.android.camera.mpo.MpoImageData;
+import com.android.camera.mpo.MpoInterface;
+import com.android.camera.util.ClearSightNativeEngine.ClearsightImage;
 
 /*
  * Service for saving images in the background thread.
@@ -87,6 +98,31 @@ public class MediaSaveService extends Service {
         return (mMemoryUse >= SAVE_TASK_MEMORY_LIMIT);
     }
 
+    public void addMpoImage(final ClearsightImage csImage,
+            final YuvImage bayerImg, final YuvImage monoImg,
+            TotalCaptureResult bayerResult, TotalCaptureResult monoResult,
+            String title, long date, Location loc, int orientation,
+            OnMediaSavedListener l, ContentResolver resolver,
+            String pictureFormat) {
+        if (isQueueFull()) {
+            Log.e(TAG, "Cannot add image when the queue is full");
+            return;
+        }
+
+        MpoSaveTask t = new MpoSaveTask(csImage, bayerImg, monoImg,
+                bayerResult, monoResult, title, date, loc, orientation, l,
+                resolver, pictureFormat);
+
+        long size = (csImage == null ? 0
+                : csImage.getDataLength())
+                + bayerImg.getYuvData().length + monoImg.getYuvData().length;
+        mMemoryUse += size;
+        if (isQueueFull()) {
+            onQueueFull();
+        }
+        t.execute();
+    }
+
     public void addImage(final byte[] data, String title, long date, Location loc,
             int width, int height, int orientation, ExifInterface exif,
             OnMediaSavedListener l, ContentResolver resolver, String pictureFormat) {
@@ -139,6 +175,97 @@ public class MediaSaveService extends Service {
 
     private void onQueueAvailable() {
         if (mListener != null) mListener.onQueueStatus(false);
+    }
+
+    private class MpoSaveTask extends AsyncTask<Void, Void, Uri> {
+        private ClearsightImage csImage;
+        private YuvImage bayerImage;
+        private YuvImage monoImage;
+        private String title;
+        private long date;
+        private Location loc;
+        private int width, height;
+        private int orientation;
+        private TotalCaptureResult bayerResult;
+        private TotalCaptureResult monoResult;
+        private ContentResolver resolver;
+        private OnMediaSavedListener listener;
+        private String pictureFormat;
+
+        public MpoSaveTask(ClearsightImage csImage, YuvImage bayerImg,
+                YuvImage monoImg, TotalCaptureResult bayerResult,
+                TotalCaptureResult monoResult, String title, long date,
+                Location loc, int orientation, OnMediaSavedListener listener,
+                ContentResolver resolver, String pictureFormat) {
+            this.csImage = csImage;
+            this.bayerImage = bayerImg;
+            this.monoImage = monoImg;
+            this.title = title;
+            this.date = date;
+            this.loc = loc;
+            this.width = bayerImg.getWidth();
+            this.height = bayerImg.getHeight();
+            this.orientation = orientation;
+            this.bayerResult = bayerResult;
+            this.monoResult = monoResult;
+            this.resolver = resolver;
+            this.listener = listener;
+            this.pictureFormat = pictureFormat;
+        }
+
+        @Override
+        protected Uri doInBackground(Void... v) {
+            // encode jpeg and add exif for all images
+            MpoData mpo = new MpoData();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bayerImage.compressToJpeg(new Rect(0, 0, bayerImage.getWidth(),
+                    bayerImage.getHeight()), 100, baos);
+            MpoImageData bayer = new MpoImageData(baos.toByteArray(),
+                    ByteOrder.BIG_ENDIAN);
+
+            baos.reset();
+            monoImage.compressToJpeg(new Rect(0, 0, monoImage.getWidth(),
+                    monoImage.getHeight()), 100, baos);
+            MpoImageData mono = new MpoImageData(baos.toByteArray(),
+                    ByteOrder.BIG_ENDIAN);
+
+            if (csImage == null) {
+                mpo.addAuxiliaryMpoImage(mono);
+                mpo.setPrimaryMpoImage(bayer);
+            } else {
+                MpoImageData cs = new MpoImageData(csImage.compressToJpeg(),
+                        ByteOrder.BIG_ENDIAN);
+
+                mpo.addAuxiliaryMpoImage(bayer);
+                mpo.addAuxiliaryMpoImage(mono);
+                mpo.setPrimaryMpoImage(cs);
+            }
+
+            // combine to single mpo
+            String path = Storage.generateFilepath(title, pictureFormat);
+            int size = MpoInterface.writeMpo(mpo, path);
+            // Try to get the real image size after add exif.
+            File f = new File(path);
+            if (f.exists() && f.isFile()) {
+                size = (int) f.length();
+            }
+            return Storage.addImage(resolver, title, date, loc, orientation,
+                    size, path, width, height, pictureFormat);
+        }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            if (listener != null)
+                listener.onMediaSaved(uri);
+            boolean previouslyFull = isQueueFull();
+            long size = (csImage == null ? 0
+                    : csImage.getDataLength())
+                    + bayerImage.getYuvData().length
+                    + monoImage.getYuvData().length;
+            mMemoryUse -= size;
+            if (isQueueFull() != previouslyFull)
+                onQueueAvailable();
+        }
     }
 
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
