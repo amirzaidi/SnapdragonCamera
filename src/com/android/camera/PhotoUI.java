@@ -1400,6 +1400,10 @@ public class PhotoUI implements PieListener,
         if (mZoomRenderer != null) {
             mZoomRenderer.setOrientation(orientation);
         }
+        if (mReviewImage != null) {
+            RotateImageView v = (RotateImageView) mReviewImage;
+            v.setOrientation(orientation, animation);
+        }
     }
 
     public void tryToCloseSubList() {

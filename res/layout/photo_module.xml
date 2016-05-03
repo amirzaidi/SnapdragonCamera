@@ -68,7 +68,7 @@
             android:layout_marginTop="50dip"
             android:layout_marginLeft="15dip" />
     </RelativeLayout>
-    <ImageView
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/review_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
