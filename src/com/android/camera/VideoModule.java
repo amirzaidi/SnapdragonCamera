@@ -1731,13 +1731,17 @@ public class VideoModule implements CameraModule,
      * Make sure we're not recording music playing in the background, ask the
      * MediaPlaybackService to pause playback.
      */
-    private void pauseAudioPlayback() {
-        // Shamelessly copied from MediaPlaybackService.java, which
-        // should be public, but isn't.
-        Intent i = new Intent("com.android.music.musicservicecommand");
-        i.putExtra("command", "pause");
+    private void requestAudioFocus() {
+        AudioManager am = (AudioManager)mActivity.getSystemService(Context.AUDIO_SERVICE);
 
-        mActivity.sendBroadcast(i);
+        // Send request to obtain audio focus. This will stop other
+        // music stream.
+        int result = am.requestAudioFocus(null, AudioManager.STREAM_MUSIC,
+                                 AudioManager.AUDIOFOCUS_GAIN);
+
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
+            Log.v(TAG, "Audio focus request failed");
+        }
     }
 
     // For testing.
@@ -1805,7 +1809,7 @@ public class VideoModule implements CameraModule,
             return false;
         }
 
-        pauseAudioPlayback();
+        requestAudioFocus();
 
         try {
             mMediaRecorder.start(); // Recording is now started

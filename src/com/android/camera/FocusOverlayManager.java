@@ -373,7 +373,7 @@ public class FocusOverlayManager {
                 UsageStatistics.ACTION_TOUCH_FOCUS, x + "," + y);
 
         // Let users be able to cancel previous touch focus.
-        if ((mFocusArea != null) && (mState == STATE_FOCUSING ||
+        if ((mState == STATE_FOCUSING ||
                     mState == STATE_SUCCESS || mState == STATE_FAIL)) {
             cancelAutoFocus();
         }
