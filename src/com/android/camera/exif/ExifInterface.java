@@ -1978,6 +1978,23 @@ public class ExifInterface {
         return true;
     }
 
+    public boolean addOrientationTag(int orientation) {
+        int value = Orientation.TOP_LEFT;
+        if(orientation == 90) {
+            value = Orientation.RIGHT_TOP;
+        } else if(orientation == 180) {
+            value = Orientation.BOTTOM_LEFT;
+        } else if(orientation == 270) {
+            value = Orientation.RIGHT_BOTTOM;
+        }
+        ExifTag t = buildTag(TAG_ORIENTATION, value);
+        if (t == null) {
+            return false;
+        }
+        setTag(t);
+        return true;
+    }
+
     /**
      * Creates and sets all to the GPS tags for a give latitude and longitude.
      *

@@ -58,6 +58,8 @@ import java.util.Set;
 public class SettingsManager implements ListMenu.SettingsListener {
     public static final int RESOURCE_TYPE_THUMBNAIL = 0;
     public static final int RESOURCE_TYPE_LARGEICON = 1;
+    public static final int SCENE_MODE_NIGHT_INT = 5;
+
     // Custom-Scenemodes start from 100
     public static final int SCENE_MODE_DUAL_INT = 100;
     public static final int SCENE_MODE_OPTIZOOM_INT = 101;
