@@ -1449,9 +1449,9 @@ public class CameraActivity extends Activity
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
 
         mOrientationListener = new MyOrientationEventListener(this);
-        setModuleFromIndex(moduleIndex);
-
         setContentView(R.layout.camera_filmstrip);
+        mFilmStripView = (FilmStripView) findViewById(R.id.filmstrip_view);
+        setModuleFromIndex(moduleIndex);
 
         mActionBar = getActionBar();
         mActionBar.addOnMenuVisibilityListener(this);
@@ -1481,7 +1481,7 @@ public class CameraActivity extends Activity
                 new CameraDataAdapter(new ColorDrawable(
                         getResources().getColor(R.color.photo_placeholder))),
                 mCameraPreviewData);
-        mFilmStripView = (FilmStripView) findViewById(R.id.filmstrip_view);
+
         mFilmStripView.setViewGap(
                 getResources().getDimensionPixelSize(R.dimen.camera_film_strip_gap));
         mPanoramaViewHelper = new PanoramaViewHelper(this);

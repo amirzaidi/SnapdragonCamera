@@ -19,6 +19,7 @@
 
 package com.android.camera;
 
+import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -42,6 +43,7 @@ import android.media.CameraProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.net.Uri;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -58,8 +60,11 @@ import android.widget.Toast;
 
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
+import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.CameraUtil;
+import com.android.camera.util.PersistUtil;
+import com.android.internal.util.MemInfoReader;
 
 import org.codeaurora.snapcam.R;
 import org.codeaurora.snapcam.filter.ClearSightImageProcessor;
@@ -76,7 +81,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CaptureModule implements CameraModule, PhotoController,
         MediaSaveService.Listener, ClearSightImageProcessor.Callback,
-        SettingsManager.Listener {
+        SettingsManager.Listener, CountDownView.OnCountDownFinishedListener {
     public static final int DUAL_MODE = 0;
     public static final int BAYER_MODE = 1;
     public static final int MONO_MODE = 2;
@@ -122,6 +127,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final int STATE_WAITING_TOUCH_FOCUS = 5;
     private static final String TAG = "SnapCam_CaptureModule";
 
+    // Used for check memory status for longshot mode
+    // Currently, this cancel threshold selection is based on test experiments,
+    // we can change it based on memory status or other requirements.
+    private static final int LONGSHOT_CANCEL_THRESHOLD = 40 * 1024 * 1024;
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -164,6 +174,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     private FocusStateListener mFocusStateListener;
     private LocationManager mLocationManager;
     private SettingsManager mSettingsManager;
+    private int mLongShotCaptureCount;
+    private int mLongShotCaptureCountLimit;
+    private long SECONDARY_SERVER_MEM;
+    private boolean mLongshotActive = false;
+
     /**
      * A {@link CameraCaptureSession } for camera preview.
      */
@@ -188,12 +203,51 @@ public class CaptureModule implements CameraModule, PhotoController,
     private ImageReader[] mImageReader = new ImageReader[MAX_NUM_CAM];
     private NamedImages mNamedImages;
     private ContentResolver mContentResolver;
+
+    private class MediaSaveNotifyThread extends Thread {
+        private Uri uri;
+
+        public MediaSaveNotifyThread(Uri uri) {
+            this.uri = uri;
+        }
+
+        public void setUri(Uri uri) {
+            this.uri = uri;
+        }
+
+        public void run() {
+            while (mLongshotActive) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                }
+            }
+            mActivity.runOnUiThread(new Runnable() {
+                public void run() {
+                    if (uri != null)
+                        mActivity.notifyNewMedia(uri);
+                    mActivity.updateStorageSpaceAndHint();
+                }
+            });
+            mediaSaveNotifyThread = null;
+        }
+    }
+
+    private MediaSaveNotifyThread mediaSaveNotifyThread;
     private MediaSaveService.OnMediaSavedListener mOnMediaSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
                 @Override
                 public void onMediaSaved(Uri uri) {
-                    if (uri != null) {
-                        mActivity.notifyNewMedia(uri);
+                    if (mLongshotActive) {
+                        if (mediaSaveNotifyThread == null) {
+                            mediaSaveNotifyThread = new MediaSaveNotifyThread(uri);
+                            mediaSaveNotifyThread.start();
+                        } else
+                            mediaSaveNotifyThread.setUri(uri);
+                    } else {
+                        if (uri != null) {
+                            mActivity.notifyNewMedia(uri);
+                        }
                     }
                 }
             };
@@ -720,29 +774,79 @@ public class CaptureModule implements CameraModule, PhotoController,
                 captureBuilder.addTarget(mImageReader[id].getSurface());
                 mCaptureSession[id].stopRepeating();
 
-                mCaptureSession[id].capture(captureBuilder.build(), new CameraCaptureSession.CaptureCallback() {
+                if (mLongshotActive) {
+                    mCaptureSession[id].setRepeatingRequest(captureBuilder.build(), new
+                             CameraCaptureSession.CaptureCallback() {
 
-                    @Override
-                    public void onCaptureCompleted(CameraCaptureSession session,
-                                                   CaptureRequest request,
-                                                   TotalCaptureResult result) {
-                        Log.d(TAG, "captureStillPicture onCaptureCompleted: " + id);
-                    }
+                        @Override
+                        public void onCaptureCompleted(CameraCaptureSession session,
+                                                       CaptureRequest request,
+                                                       TotalCaptureResult result) {
+                            Log.d(TAG, "captureStillPicture Longshot onCaptureCompleted: " + id);
+                            mActivity.updateStorageSpaceAndHint();
+                            if (checkLongShotMemoAndLimit()) {
+                                cancelAutoFocus();
+                                return;
+                            }
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mUI.doShutterAnimation();
+                                }
+                            });
+                            mLongShotCaptureCount++;
+                        }
 
-                    @Override
-                    public void onCaptureFailed(CameraCaptureSession session,
-                                                CaptureRequest request,
-                                                CaptureFailure result) {
-                        Log.d(TAG, "captureStillPicture onCaptureFailed: " + id);
-                    }
+                        @Override
+                        public void onCaptureFailed(CameraCaptureSession session,
+                                                    CaptureRequest request,
+                                                    CaptureFailure result) {
+                            Log.d(TAG, "captureStillPicture Longshot onCaptureFailed: " + id);
+                            if (checkLongShotMemoAndLimit()) {
+                                cancelAutoFocus();
+                                return;
+                            }
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mUI.doShutterAnimation();
+                                }
+                            });
+                        }
 
-                    @Override
-                    public void onCaptureSequenceCompleted(CameraCaptureSession session, int
-                            sequenceId, long frameNumber) {
-                        Log.d(TAG, "captureStillPicture onCaptureSequenceCompleted: " + id);
-                        unlockFocus(id);
-                    }
-                }, mCaptureCallbackHandler);
+                        @Override
+                        public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                                sequenceId, long frameNumber) {
+                            Log.d(TAG, "captureStillPicture Longshot onCaptureSequenceCompleted: " +
+                                    id);
+                            unlockFocus(id);
+                        }
+                    }, mCaptureCallbackHandler);
+                } else {
+                    mCaptureSession[id].capture(captureBuilder.build(), new CameraCaptureSession.CaptureCallback() {
+
+                        @Override
+                        public void onCaptureCompleted(CameraCaptureSession session,
+                                                       CaptureRequest request,
+                                                       TotalCaptureResult result) {
+                            Log.d(TAG, "captureStillPicture onCaptureCompleted: " + id);
+                        }
+
+                        @Override
+                        public void onCaptureFailed(CameraCaptureSession session,
+                                                    CaptureRequest request,
+                                                    CaptureFailure result) {
+                            Log.d(TAG, "captureStillPicture onCaptureFailed: " + id);
+                        }
+
+                        @Override
+                        public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                                sequenceId, long frameNumber) {
+                            Log.d(TAG, "captureStillPicture onCaptureSequenceCompleted: " + id);
+                            unlockFocus(id);
+                        }
+                    }, mCaptureCallbackHandler);
+                }
             }
         } catch (CameraAccessException e) {
             Log.d(TAG, "Capture still picture has failed");
@@ -1095,6 +1199,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             initializeSecondTime();
         }
         mUI.hidePreviewCover();
+        mActivity.updateStorageSpaceAndHint();
         mUI.enableShutter(true);
     }
 
@@ -1251,7 +1356,8 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onCountDownFinished() {
-
+        mUI.showUIAfterCountDown();
+        takePicture();
     }
 
     @Override
@@ -1372,17 +1478,125 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onShutterButtonFocus(boolean pressed) {
-
+        if (!pressed && mLongshotActive) {
+            cancelLongshot();
+        }
     }
 
     @Override
     public void onShutterButtonClick() {
-        takePicture();
+        String timer = mSettingsManager.getValue(SettingsManager.KEY_TIMER);
+
+        int seconds = Integer.parseInt(timer);
+        // When shutter button is pressed, check whether the previous countdown is
+        // finished. If not, cancel the previous countdown and start a new one.
+        if (mUI.isCountingDown()) {
+            mUI.cancelCountDown();
+        }
+        if (seconds > 0) {
+            mUI.startCountDown(seconds, true);
+        } else {
+            takePicture();
+        }
     }
 
     @Override
     public void onShutterButtonLongClick() {
+        if (isBackMode() && getMode() == DUAL_MODE) return;
+        if (mActivity.getStorageSpaceBytes() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
+            Log.i(TAG, "Not enough space or storage not ready. remaining="
+                    + mActivity.getStorageSpaceBytes());
+            return;
+        }
 
+        String longshot = mSettingsManager.getValue(SettingsManager.KEY_LONGSHOT);
+        if (longshot.equals("on")) {
+            //Cancel the previous countdown when long press shutter button for longshot.
+            if (mUI.isCountingDown()) {
+                mUI.cancelCountDown();
+            }
+            //check whether current memory is enough for longshot.
+            mActivity.updateStorageSpaceAndHint();
+
+            if (isLongshotNeedCancel()) {
+                mLongshotActive = false;
+                return;
+            }
+            mLongShotCaptureCountLimit = PersistUtil.getLongshotShotLimit();
+            mLongShotCaptureCount = 1;
+            mLongshotActive = true;
+            takePicture();
+        }
+    }
+
+    private void cancelLongshot() {
+        Log.d(TAG, "cancelLongshot");
+        mLongshotActive = false;
+        try {
+            if (isBackMode()) {
+                switch (getMode()) {
+                    case BAYER_MODE:
+                        mCaptureSession[BAYER_ID].stopRepeating();
+                        break;
+                    case MONO_MODE:
+                        mCaptureSession[MONO_MODE].stopRepeating();
+                        break;
+                }
+            } else {
+                mCaptureSession[FRONT_ID].stopRepeating();
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isLongshotNeedCancel() {
+        if (PersistUtil.getSkipMemoryCheck()) {
+            return false;
+        }
+
+        if (Storage.getAvailableSpace() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
+            Log.w(TAG, "current storage is full");
+            return true;
+        }
+        if (SECONDARY_SERVER_MEM == 0) {
+            ActivityManager am = (ActivityManager) mActivity.getSystemService(
+                    Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(memInfo);
+            SECONDARY_SERVER_MEM = memInfo.secondaryServerThreshold;
+        }
+
+        long totalMemory = Runtime.getRuntime().totalMemory();
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        long remainMemory = maxMemory - totalMemory;
+
+        MemInfoReader reader = new MemInfoReader();
+        reader.readMemInfo();
+        long[] info = reader.getRawInfo();
+        long availMem = (info[Debug.MEMINFO_FREE] + info[Debug.MEMINFO_CACHED]) * 1024;
+
+        if (availMem <= SECONDARY_SERVER_MEM || remainMemory <= LONGSHOT_CANCEL_THRESHOLD) {
+            Log.e(TAG, "cancel longshot: free=" + info[Debug.MEMINFO_FREE] * 1024
+                    + " cached=" + info[Debug.MEMINFO_CACHED] * 1024
+                    + " threshold=" + SECONDARY_SERVER_MEM);
+            RotateTextToast.makeText(mActivity, R.string.msg_cancel_longshot_for_limited_memory,
+                    Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean checkLongShotMemoAndLimit() {
+        if (isLongshotNeedCancel()) {
+            return true;
+        }
+
+        if (mLongShotCaptureCount == mLongShotCaptureCountLimit) {
+            return true;
+        }
+        return false;
     }
 
     private boolean isFlashOff(int id) {

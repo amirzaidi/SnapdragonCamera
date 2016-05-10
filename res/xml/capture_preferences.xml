@@ -165,4 +165,18 @@
         camera:key="pref_camera2_iso_key"
         camera:singleIcon="@drawable/ic_settings_iso"
         camera:title="@string/pref_camera_iso_title"/>
+
+    <IconListPreference
+        camera:defaultValue="@string/pref_camera_longshot_default"
+        camera:entries="@array/pref_camera2_longshot_entries"
+        camera:entryValues="@array/pref_camera2_longshot_entryvalues"
+        camera:key="pref_camera2_longshot_key"
+        camera:singleIcon="@drawable/ic_settings_continuous"
+        camera:title="@string/pref_camera_longshot_title"/>
+
+    <CountDownTimerPreference
+        camera:defaultValue="@string/pref_camera_timer_default"
+        camera:key="pref_camera2_timer_key"
+        camera:singleIcon="@drawable/ic_settings_countdowntimer"
+        camera:title="@string/pref_camera_timer_title"/>
 </PreferenceGroup>

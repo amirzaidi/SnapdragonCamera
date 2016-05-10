@@ -43,6 +43,7 @@ import android.widget.TextView;
 
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.CameraControls;
+import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.FocusIndicator;
 import com.android.camera.ui.ListMenu;
 import com.android.camera.ui.ListSubMenu;
@@ -81,13 +82,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private static final int MODE_SCENE = 1;
     private static final int ANIMATION_DURATION = 300;
     private static final int CLICK_THRESHOLD = 200;
-    public boolean mMenuInitialized = false;
     String[] mSettingKeys = new String[]{
             SettingsManager.KEY_FLASH_MODE,
             SettingsManager.KEY_RECORD_LOCATION,
             SettingsManager.KEY_PICTURE_SIZE,
             SettingsManager.KEY_JPEG_QUALITY,
+            SettingsManager.KEY_TIMER,
             SettingsManager.KEY_CAMERA_SAVEPATH,
+            SettingsManager.KEY_LONGSHOT,
             SettingsManager.KEY_ISO,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
@@ -100,7 +102,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_RECORD_LOCATION,
             SettingsManager.KEY_PICTURE_SIZE,
             SettingsManager.KEY_JPEG_QUALITY,
+            SettingsManager.KEY_TIMER,
             SettingsManager.KEY_CAMERA_SAVEPATH,
+            SettingsManager.KEY_LONGSHOT,
             SettingsManager.KEY_ISO,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
@@ -160,6 +164,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private RenderOverlay mRenderOverlay;
     private View mMenuButton;
     private ModuleSwitcher mSwitcher;
+    private CountDownView mCountDownView;
     private CameraControls mCameraControls;
     private PieRenderer mPieRenderer;
     private ZoomRenderer mZoomRenderer;
@@ -253,14 +258,11 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mBottomMargin = l / 4 - mTopMargin;
         }
         mCameraControls.setMargins(mTopMargin, mBottomMargin);
-    }
 
-    public void onCameraOpened(List<Integer> cameraIds) {
         if (mPieRenderer == null) {
             mPieRenderer = new PieRenderer(mActivity);
             mRenderOverlay.addRenderer(mPieRenderer);
         }
-        mMenuInitialized = true;
 
         if (mZoomRenderer == null) {
             mZoomRenderer = new ZoomRenderer(mActivity);
@@ -272,14 +274,17 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mGestures = new PreviewGestures(mActivity, this, mZoomRenderer, mPieRenderer);
             mRenderOverlay.setGestures(mGestures);
         }
-        mGestures.setCaptureUI(this); // need to handle touch
 
-        mGestures.setZoomEnabled(mSettingsManager.isZoomSupported(cameraIds));
         mGestures.setRenderOverlay(mRenderOverlay);
         mRenderOverlay.requestLayout();
 
-        initializeZoom(cameraIds);
         mActivity.setPreviewGestures(mGestures);
+    }
+
+    public void onCameraOpened(List<Integer> cameraIds) {
+        mGestures.setCaptureUI(this);
+        mGestures.setZoomEnabled(mSettingsManager.isZoomSupported(cameraIds));
+        initializeZoom(cameraIds);
     }
 
     public ViewGroup getSceneAndFilterLayout() {
@@ -956,6 +961,25 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+    public void hideUIWhileCountDown() {
+        hideCameraControls(true);
+        mGestures.setZoomOnly(true);
+    }
+
+    public void showUIAfterCountDown() {
+        hideCameraControls(false);
+        mGestures.setZoomOnly(false);
+    }
+
+    public void hideCameraControls(boolean hide) {
+        final int status = (hide) ? View.INVISIBLE : View.VISIBLE;
+        if (mMenuButton != null) mMenuButton.setVisibility(status);
+        if (mFrontBackSwitcher != null) mFrontBackSwitcher.setVisibility(status);
+        if (mSceneModeSwitcher != null) mSceneModeSwitcher.setVisibility(status);
+        if (mFilterModeSwitcher != null) mFilterModeSwitcher.setVisibility(status);
+        if (mSwitcher != null) mSwitcher.setVisibility(status);
+    }
+
     public void initializeControlByIntent() {
         mMenuButton = mRootView.findViewById(R.id.menu);
         mMenuButton.setOnClickListener(new View.OnClickListener() {
@@ -1107,8 +1131,34 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+
+    private void initializeCountDown() {
+        mActivity.getLayoutInflater().inflate(R.layout.count_down_to_capture,
+                (ViewGroup) mRootView, true);
+        mCountDownView = (CountDownView) (mRootView.findViewById(R.id.count_down_to_capture));
+        mCountDownView.setCountDownFinishedListener((CountDownView.OnCountDownFinishedListener) mModule);
+        mCountDownView.bringToFront();
+        mCountDownView.setOrientation(mOrientation);
+    }
+
+    public boolean isCountingDown() {
+        return mCountDownView != null && mCountDownView.isCountingDown();
+    }
+
+    public void cancelCountDown() {
+        if (mCountDownView == null) return;
+        mCountDownView.cancelCountDown();
+        showUIAfterCountDown();
+    }
+
+    public void startCountDown(int sec, boolean playSound) {
+        if (mCountDownView == null) initializeCountDown();
+        mCountDownView.startCountDown(sec, playSound);
+        hideUIWhileCountDown();
+    }
+
     public void onPause() {
-        // Clear UI.
+        cancelCountDown();
         collapseCameraControls();
     }
 
@@ -1216,6 +1266,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 }
             }
         }
+        if (mCountDownView != null)
+            mCountDownView.setOrientation(orientation);
         RotateTextToast.setOrientation(orientation);
         if (mZoomRenderer != null) {
             mZoomRenderer.setOrientation(orientation);
@@ -1257,6 +1309,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         if (mPieRenderer != null) {
             mPieRenderer.setBlockFocus(!previewFocused);
         }
+        if (!previewFocused && mCountDownView != null) mCountDownView.cancelCountDown();
     }
 
     public ViewGroup getMenuLayout() {
