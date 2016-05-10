@@ -37,12 +37,15 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Log;
+import android.util.Range;
+import android.util.Rational;
 import android.util.Size;
 
 import com.android.camera.ui.ListMenu;
 
 import org.codeaurora.snapcam.R;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -350,6 +353,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference sceneMode = mPreferenceGroup.findPreference(KEY_SCENE_MODE);
         ListPreference cameraIdPref = mPreferenceGroup.findPreference(KEY_CAMERA_ID);
         ListPreference pictureSize = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
+        ListPreference exposure = mPreferenceGroup.findPreference(KEY_EXPOSURE);
+        ListPreference iso = mPreferenceGroup.findPreference(KEY_ISO);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -376,6 +381,52 @@ public class SettingsManager implements ListMenu.SettingsListener {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     pictureSize, getSupportedPictureSize(cameraId));
         }
+
+        if (exposure != null) buildExposureCompensation(cameraId);
+
+        if (iso != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
+                    iso, getSupportedIso(cameraId));
+        }
+    }
+
+    private void buildExposureCompensation(int cameraId) {
+        Range<Integer> range = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .CONTROL_AE_COMPENSATION_RANGE);
+        int max = range.getUpper();
+        int min = range.getLower();
+        if (min == 0 && max == 0) {
+            removePreference(mPreferenceGroup, KEY_EXPOSURE);
+            return;
+        }
+        ListPreference pref = mPreferenceGroup.findPreference(KEY_EXPOSURE);
+        Rational rational = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .CONTROL_AE_COMPENSATION_STEP);
+        double step = rational.doubleValue();
+        int increment = 1;
+        while ((max - min) / increment > 10) {
+            increment++;
+        }
+        int start = min;
+        if (start < 0) {
+            while (Math.abs(start) % increment != 0) {
+                start++;
+            }
+        }
+        int size = 0;
+        for (int i = start; i <= max; i += increment) size++;
+        CharSequence entries[] = new CharSequence[size];
+        CharSequence entryValues[] = new CharSequence[size];
+        int count = 0;
+        for (int i = start; i <= max; i += increment, count++) {
+            entryValues[count] = Integer.toString(i);
+            StringBuilder builder = new StringBuilder();
+            if (i > 0) builder.append('+');
+            DecimalFormat format = new DecimalFormat("#.##");
+            entries[count] = builder.append(format.format(i * step)).toString();
+        }
+        pref.setEntries(entries);
+        pref.setEntryValues(entryValues);
     }
 
     private void buildCameraId() {
@@ -510,6 +561,22 @@ public class SettingsManager implements ListMenu.SettingsListener {
             modes.add("" + mode);
         }
         return modes;
+    }
+
+    private List<String> getSupportedIso(int cameraId) {
+        Range<Integer> range = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .SENSOR_INFO_SENSITIVITY_RANGE);
+        int max = range.getUpper();
+        int value = 50;
+        List<String> supportedIso = new ArrayList<>();
+        supportedIso.add("auto");
+        while (value <= max) {
+            if (range.contains(value)) {
+                supportedIso.add("" + value);
+            }
+            value += 50;
+        }
+        return supportedIso;
     }
 
     public interface Listener {
