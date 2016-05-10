@@ -750,12 +750,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             } else {
                 // No Clearsight
                 captureBuilder = mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-
-                // Orientation
-                int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
-                captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
             }
 
+            // Orientation
+            int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             captureBuilder.addTarget(getPreviewSurface(id));
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
@@ -855,7 +854,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     Size largest = Collections.max(
                         Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
                         new CompareSizesByArea());
-                    ClearSightImageProcessor.getInstance().init(largest.getWidth(), largest.getHeight(), mActivity);
+                    ClearSightImageProcessor.getInstance().init(
+                            largest.getWidth(), largest.getHeight(), mActivity, mOnMediaSavedListener);
                     ClearSightImageProcessor.getInstance().setCallback(this);
                 } else {
                     // No Clearsight
@@ -1345,6 +1345,10 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void onMediaSaveServiceConnected(MediaSaveService s) {
         if (mFirstTimeInitialized) {
             s.setListener(this);
+            ListPreference pref = mPreferenceGroup.findPreference(CameraSettings.KEY_CLEARSIGHT);
+            if(pref.getValue().equals(mActivity.getString(R.string.pref_camera_clearsight_value_on))) {
+                ClearSightImageProcessor.getInstance().setMediaSaveService(s);
+            }
         }
     }
 
@@ -1655,18 +1659,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
-    public void onClearSightSuccess(ClearsightImage csImage, YuvImage bayer, YuvImage mono) {
-        Log.d(TAG, "reprocess - processClearSight success");
-        mNamedImages.nameNewImage(System.currentTimeMillis());
-        NamedEntity name = mNamedImages.getNextNameEntity();
-        String title = (name == null) ? null : name.title;
-        long date = (name == null) ? -1 : name.date;
-
-        mActivity.getMediaSaveService().addMpoImage(
-                csImage, bayer, mono, null, null, title,
-                date, null, 0, mOnMediaSavedListener, mContentResolver,
-                "jpeg");
-
+    public void onClearSightSuccess() {
+        Log.d(TAG, "onClearSightSuccess");
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1680,21 +1674,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
-    public void onClearSightFailure(YuvImage bayer, YuvImage mono) {
-        if(bayer != null && mono != null) {
-            Log.d(TAG, "reprocess - processClearSight fail");
-            mNamedImages.nameNewImage(System.currentTimeMillis());
-            NamedEntity name = mNamedImages.getNextNameEntity();
-            String title = (name == null) ? null : name.title;
-            long date = (name == null) ? -1 : name.date;
-
-            Log.d(TAG, "reprocess - saving with bayer + mono mpo");
-
-            mActivity.getMediaSaveService().addMpoImage(null,
-                    bayer, mono, null, null, title, date, null, 0,
-                    mOnMediaSavedListener, mContentResolver, "jpeg");
-        }
-
+    public void onClearSightFailure() {
+        Log.d(TAG, "onClearSightFailure");
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1705,15 +1686,5 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         unlockFocus(BAYER_ID);
         unlockFocus(MONO_ID);
-    }
-
-    @Override
-    public CameraCaptureSession onReprocess(boolean bayer) {
-        return mCaptureSession[bayer?BAYER_ID:MONO_ID];
-    }
-
-    @Override
-    public MediaSaveService getMediaSaveService() {
-        return mActivity.getMediaSaveService();
     }
 }

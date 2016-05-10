@@ -29,15 +29,13 @@
 
 package org.codeaurora.snapcam.filter;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.graphics.ImageFormat;
 import android.graphics.Rect;
-import android.graphics.YuvImage;
+import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.util.Log;
@@ -62,11 +60,13 @@ public class ClearSightNativeEngine {
     private static final int VU_PLANE = 2;
 
     private static boolean mLibLoaded;
-    private static CamSystemCalibrationData mOtpCalibData;
+    private static byte[] mOtpCalibData;
     private static ClearSightNativeEngine mInstance;
 
     private Image mRefColorImage;
     private Image mRefMonoImage;
+    private TotalCaptureResult mRefColorResult;
+    private TotalCaptureResult mRefMonoResult;
     private ArrayList<SourceImage> mSrcColor = new ArrayList<SourceImage>();
     private ArrayList<SourceImage> mSrcMono = new ArrayList<SourceImage>();
 
@@ -85,7 +85,9 @@ public class ClearSightNativeEngine {
     }
 
     public static void setOtpCalibData(CamSystemCalibrationData calibData) {
-        mOtpCalibData = calibData;
+        String calibStr = calibData.toString();
+        Log.d(TAG, "OTP calibration data: \n" + calibStr);
+        mOtpCalibData = calibStr.getBytes();
     }
 
     public boolean isLibLoaded() {
@@ -97,6 +99,23 @@ public class ClearSightNativeEngine {
         mSrcMono.clear();
         setReferenceColorImage(null);
         setReferenceMonoImage(null);
+        setReferenceColorResult(null);
+        setReferenceMonoResult(null);
+    }
+
+    public void setReferenceResult(boolean color, TotalCaptureResult result) {
+        if (color)
+            setReferenceColorResult(result);
+        else
+            setReferenceMonoResult(result);
+    }
+
+    private void setReferenceColorResult(TotalCaptureResult result) {
+        mRefColorResult = result;
+    }
+
+    private void setReferenceMonoResult(TotalCaptureResult result) {
+        mRefMonoResult = result;
     }
 
     public void setReferenceImage(boolean color, Image image) {
@@ -143,6 +162,10 @@ public class ClearSightNativeEngine {
 
     public Image getReferenceImage(boolean color) {
         return color ? mRefColorImage : mRefMonoImage;
+    }
+
+    public TotalCaptureResult getReferenceResult(boolean color) {
+        return color ? mRefColorResult : mRefMonoResult;
     }
 
     public boolean registerImage(boolean color, Image image) {
@@ -229,30 +252,20 @@ public class ClearSightNativeEngine {
         Log.d(TAG, "processImage - dst size - y: "
                 + dstY.capacity() + " vu: " + dstVU.capacity());
 
-        String otp_string = mOtpCalibData.toString();
-        Log.d(TAG, "processImage - otp_calib: " + otp_string);
-
         boolean result = nativeClearSightProcess(numImages, srcColorY, srcColorVU,
                 metadataColor, mRefColorImage.getWidth(),
                 mRefColorImage.getHeight(),
                 colorPlanes[Y_PLANE].getRowStride(),
                 colorPlanes[VU_PLANE].getRowStride(), srcMonoY, metadataMono,
                 mRefMonoImage.getWidth(), mRefMonoImage.getHeight(),
-                monoPlanes[Y_PLANE].getRowStride(), otp_string.getBytes(), dstY, dstVU,
+                monoPlanes[Y_PLANE].getRowStride(), mOtpCalibData, dstY, dstVU,
                 colorPlanes[Y_PLANE].getRowStride(),
                 colorPlanes[VU_PLANE].getRowStride(), roiRect);
 
         if (result) {
             dstY.rewind();
             dstVU.rewind();
-            byte[] data = new byte[dstY.capacity() + dstVU.capacity()];
-            int[] strides = new int[] { colorPlanes[Y_PLANE].getRowStride(),
-                    colorPlanes[VU_PLANE].getRowStride() };
-            dstY.get(data, 0, dstY.capacity());
-            dstVU.get(data, dstY.capacity(), dstVU.capacity());
-            return new ClearsightImage(new YuvImage(data, ImageFormat.NV21,
-                    mRefColorImage.getWidth(), mRefColorImage.getHeight(),
-                    strides), roiRect);
+            return new ClearsightImage(dstY, dstVU, roiRect);
         } else {
             return null;
         }
@@ -286,11 +299,13 @@ public class ClearSightNativeEngine {
     }
 
     public static class ClearsightImage {
-        private YuvImage mImage;
+        public final ByteBuffer mYplane;
+        public final ByteBuffer mVUplane;
         private Rect mRoiRect;
 
-        ClearsightImage(YuvImage image, int[] rect) {
-            mImage = image;
+        ClearsightImage(ByteBuffer yPlane, ByteBuffer vuPlane, int[] rect) {
+            mYplane = yPlane;
+            mVUplane = vuPlane;
             mRoiRect = new Rect(rect[0], rect[1], rect[0] + rect[2], rect[1]
                     + rect[3]);
         }
@@ -299,23 +314,12 @@ public class ClearSightNativeEngine {
             return mRoiRect;
         }
 
-        public long getDataLength() {
-            return (mImage==null?0:mImage.getYuvData().length);
-        }
-
         public int getWidth() {
             return (mRoiRect.right - mRoiRect.left);
         }
 
         public int getHeight() {
             return (mRoiRect.bottom - mRoiRect.top);
-        }
-
-        public byte[] compressToJpeg() {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-            mImage.compressToJpeg(mRoiRect, 100, baos);
-            return baos.toByteArray();
         }
     }
 
