@@ -93,9 +93,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_ISO,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
-            SettingsManager.KEY_CAMERA2,
-            SettingsManager.KEY_DUAL_CAMERA,
-            SettingsManager.KEY_CLEARSIGHT
+            SettingsManager.KEY_CAMERA2
     };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_FLASH_MODE,
@@ -109,7 +107,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
             SettingsManager.KEY_CAMERA2,
-            SettingsManager.KEY_DUAL_CAMERA,
+            SettingsManager.KEY_MONO_ONLY,
             SettingsManager.KEY_CLEARSIGHT,
             SettingsManager.KEY_MONO_PREVIEW
     };
@@ -121,8 +119,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private AutoFitSurfaceView mSurfaceView2;
     private SurfaceHolder mSurfaceHolder;
     private SurfaceHolder mSurfaceHolder2;
-    private boolean surface1created = false;
-    private boolean surface2created = false;
     private int mOrientation;
     private RotateLayout mMenuLayout;
     private RotateLayout mSubMenuLayout;
@@ -135,6 +131,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private PreviewGestures mGestures;
     private boolean mUIhidden = false;
     private SettingsManager mSettingsManager;
+
+    private ImageView mThumbnail;
+
     private SurfaceHolder.Callback callback = new SurfaceHolder.Callback() {
 
         // SurfaceHolder callbacks
@@ -147,15 +146,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         public void surfaceCreated(SurfaceHolder holder) {
             Log.v(TAG, "surfaceCreated");
             mSurfaceHolder = holder;
-            if (surface2created) mModule.onPreviewUIReady();
-            surface1created = true;
+            mModule.onPreviewUIReady();
+            mActivity.updateThumbnail(mThumbnail);
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
             Log.v(TAG, "surfaceDestroyed");
             mSurfaceHolder = null;
-            surface1created = false;
             mModule.onPreviewUIDestroyed();
         }
     };
@@ -189,14 +187,11 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             mSurfaceHolder2 = holder;
-            if (surface1created) mModule.onPreviewUIReady();
-            surface2created = true;
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
             mSurfaceHolder2 = null;
-            surface2created = false;
         }
     };
 
@@ -490,14 +485,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                         startTime = System.currentTimeMillis();
                     } else if (event.getAction() == MotionEvent.ACTION_UP) {
                         if (System.currentTimeMillis() - startTime < CLICK_THRESHOLD) {
-                            mSettingsManager.setValueIndex(SettingsManager.KEY_SCENE_MODE, j);
-                            updateSceneModeIcon();
                             for (View v1 : views) {
                                 v1.setBackgroundResource(R.drawable.scene_mode_view_border);
                             }
                             View border = v.findViewById(R.id.border);
-                            border.setBackgroundResource(R.drawable
-                                    .scene_mode_view_border_selected);
+                            border.setBackgroundResource(R.drawable.scene_mode_view_border_selected);
+                            updateSceneModeIcon(j);
+                            mSettingsManager.setValueIndex(SettingsManager.KEY_SCENE_MODE, j);
                             removeSceneAndFilterMenu(true);
                         }
                     }
@@ -522,6 +516,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 SettingsManager.RESOURCE_TYPE_THUMBNAIL);
         int thumbnail = thumbnails[mSettingsManager.getValueIndex(SettingsManager
                 .KEY_SCENE_MODE)];
+        if (thumbnail == -1)
+            thumbnail = 0;
+        ((ImageView) mSceneModeSwitcher).setImageResource(thumbnail);
+    }
+
+    public void updateSceneModeIcon(int idx) {
+        int[] thumbnails = mSettingsManager.getResource(SettingsManager.KEY_SCENE_MODE,
+                SettingsManager.RESOURCE_TYPE_THUMBNAIL);
+        int thumbnail = thumbnails[idx];
         if (thumbnail == -1)
             thumbnail = 0;
         ((ImageView) mSceneModeSwitcher).setImageResource(thumbnail);
@@ -981,6 +984,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void initializeControlByIntent() {
+        mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+        mThumbnail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!CameraControls.isAnimating() && mModule.isTouchToFocusAllowed())
+                    mActivity.gotoGallery();
+            }
+        });
         mMenuButton = mRootView.findViewById(R.id.menu);
         mMenuButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -1131,7 +1142,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
-
     private void initializeCountDown() {
         mActivity.getLayoutInflater().inflate(R.layout.count_down_to_capture,
                 (ViewGroup) mRootView, true);
@@ -1163,8 +1173,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public boolean collapseCameraControls() {
-        // TODO: Mode switcher should behave like a popup and should hide itself when there
-        // is a touch outside of it.
         mSwitcher.closePopup();
         // Remove all the popups/dialog boxes
         boolean ret = false;
@@ -1336,15 +1344,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.Values values = setting.values;
             String value = (values.overriddenValue == null) ? values.value : values.overriddenValue;
             switch (key) {
-                case SettingsManager.KEY_CAMERA2:
-                    switchCameraMode(value);
-                    return;
-                case SettingsManager.KEY_CAMERA_ID:
-                case SettingsManager.KEY_DUAL_CAMERA:
-                case SettingsManager.KEY_CLEARSIGHT:
-                case SettingsManager.KEY_PICTURE_SIZE:
-                    mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
-                    return;
                 case SettingsManager.KEY_COLOR_EFFECT:
                     changeFilterModeControlIcon(value);
                     updateFilterModeIcon(values.overriddenValue == null);
@@ -1353,16 +1352,28 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
-    public void setPreviewSize(int width, int height) {
-        mSurfaceView.setAspectRatio(width, height);
+    public void hideSurfaceView() {
+        mSurfaceView.setVisibility(View.INVISIBLE);
+        mSurfaceView2.setVisibility(View.INVISIBLE);
     }
 
-    private void switchCameraMode(String value) {
-        if (value.equals("enable")) {
-            mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
+    public void showSurfaceView() {
+        mSurfaceView.setVisibility(View.VISIBLE);
+        mSurfaceView2.setVisibility(View.VISIBLE);
+    }
+
+    public void setSurfaceView(boolean show) {
+        if (show) {
+            mSurfaceView2.setVisibility(View.VISIBLE);
         } else {
-            mActivity.onModuleSelected(ModuleSwitcher.PHOTO_MODULE_INDEX);
+            mSurfaceView2.setVisibility(View.INVISIBLE);
         }
+    }
+
+    public void setPreviewSize(int width, int height) {
+        mSurfaceView.getHolder().setFixedSize(width, height);
+        mCameraControls.setPreviewRatio(0, true);
+        mSurfaceView.setAspectRatio(height, width);
     }
 
     @Override

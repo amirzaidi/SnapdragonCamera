@@ -113,7 +113,7 @@ public class ListMenu extends ListView
             if (position >= 0 && position < mEnabled.length) {
                 view.setEnabled(mEnabled[position]);
                 if (mForCamera2 && !mEnabled[position]) {
-                    view.overrideSettings(pref.getOffValue());
+                    view.overrideSettings(mSettingsManager.getValue(pref.getKey()));
                 }
             } else {
                 Log.w(TAG, "Invalid input: enabled list length, " + mEnabled.length

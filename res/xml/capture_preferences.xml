@@ -31,7 +31,7 @@
     xmlns:camera="http://schemas.android.com/apk/res/org.codeaurora.snapcam"
     camera:title="@string/pref_camera_settings_category">
     <IconListPreference
-        camera:defaultValue="@string/pref_camera_flashmode_default"
+        camera:defaultValue="@string/pref_camera2_flashmode_default"
         camera:entries="@array/pref_camera2_flashmode_entries"
         camera:entryValues="@array/pref_camera2_flashmode_entryvalues"
         camera:icons="@array/pref_camera2_flashmode_icons"
@@ -42,7 +42,7 @@
         camera:title="@string/pref_camera_flashmode_title"/>
 
     <IconListPreference
-        camera:defaultValue="@string/pref_camera_whitebalance_default"
+        camera:defaultValue="@string/pref_camera2_whitebalance_default"
         camera:entries="@array/pref_camera2_whitebalance_entries"
         camera:entryValues="@array/pref_camera2_whitebalance_entryvalues"
         camera:icons="@array/pref_camera2_whitebalance_icons"
@@ -87,12 +87,11 @@
         camera:title="@string/pref_camera2_camera2_title"/>
 
     <ListPreference
-        camera:defaultValue="@string/pref_camera2_dual_camera_default"
-        camera:dependencyList="@array/pref_camera2_dual_camera_dependencylist"
-        camera:entries="@array/pref_camera2_dual_camera_entries"
-        camera:entryValues="@array/pref_camera2_dual_camera_entryvalues"
-        camera:key="pref_camera2_dual_camera_key"
-        camera:title="@string/pref_camera2_dual_camera_title"/>
+        camera:defaultValue="@string/pref_camera2_mono_only_default"
+        camera:entries="@array/pref_camera2_mono_only_entries"
+        camera:entryValues="@array/pref_camera2_mono_only_entryvalues"
+        camera:key="pref_camera2_mono_only_key"
+        camera:title="@string/pref_camera2_mono_only_title"/>
 
     <ListPreference
         camera:defaultValue="@string/pref_camera2_mono_preview_default"
@@ -109,7 +108,7 @@
         camera:title="@string/pref_camera2_clearsight_title"/>
 
     <IconListPreference
-        camera:defaultValue="@string/pref_camera_coloreffect_default"
+        camera:defaultValue="@string/pref_camera2_coloreffect_default"
         camera:entries="@array/pref_camera2_coloreffect_entries"
         camera:entryValues="@array/pref_camera2_coloreffect_entryvalues"
         camera:key="pref_camera2_coloreffect_key"
@@ -120,7 +119,6 @@
 
     <IconListPreference
         camera:defaultValue="@string/pref_camera2_scenemode_default"
-        camera:dependencyList="@array/pref_camera2_scenemode_dependencylist"
         camera:entries="@array/pref_camera2_scenemode_entries"
         camera:entryValues="@array/pref_camera2_scenemode_entryvalues"
         camera:key="pref_camera2_scenemode_key"
@@ -179,4 +177,10 @@
         camera:key="pref_camera2_timer_key"
         camera:singleIcon="@drawable/ic_settings_countdowntimer"
         camera:title="@string/pref_camera_timer_title"/>
+
+    <ListPreference
+        camera:defaultValue="0"
+        camera:key="pref_camera2_initial_camera_key"
+        camera:entries="@array/pref_camera2_initial_camera_entries"
+        camera:entryValues="@array/pref_camera2_initial_camera_entryvalues"/>
 </PreferenceGroup>

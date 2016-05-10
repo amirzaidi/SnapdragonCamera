@@ -38,31 +38,36 @@
         <item>@string/pref_camera2_camera2_value_enable</item>
     </string-array>
 
-    <string-array name="pref_camera2_dual_camera_entries" translatable="true">
-        <item>@string/pref_camera2_dual_camera_entry_dual</item>
-        <item>@string/pref_camera2_dual_camera_entry_bayer</item>
-        <item>@string/pref_camera2_dual_camera_entry_mono</item>
+    <string-array name="pref_camera2_mono_only_entries" translatable="true">
+        <item>On</item>
+        <item>Off</item>
     </string-array>
 
-    <string-array name="pref_camera2_dual_camera_entryvalues" translatable="false">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
+    <string-array name="pref_camera2_mono_only_entryvalues" translatable="false">
+        <item>on</item>
+        <item>off</item>
     </string-array>
 
-    <string-array name="pref_camera2_dual_camera_dependencylist" translatable="false">
-        <item>pref_camera2_mono_preview_key</item>
-        <item>pref_camera2_clearsight_key</item>
+    <string-array name="pref_camera2_initial_camera_entries" translatable="true">
+        <item>Bayer</item>
+        <item>Mono</item>
+        <item>Front</item>
+    </string-array>
+
+    <string-array name="pref_camera2_initial_camera_entryvalues" translatable="false">
+        <item>bayer</item>
+        <item>mono</item>
+        <item>front</item>
     </string-array>
 
     <string-array name="pref_camera2_mono_preview_entries" translatable="true">
-        <item>@string/pref_camera2_mono_preview_entry_off</item>
         <item>@string/pref_camera2_mono_preview_entry_on</item>
+        <item>@string/pref_camera2_mono_preview_entry_off</item>
     </string-array>
 
     <string-array name="pref_camera2_mono_preview_entryvalues" translatable="false">
-        <item>@string/pref_camera2_mono_preview_value_off</item>
         <item>@string/pref_camera2_mono_preview_value_on</item>
+        <item>@string/pref_camera2_mono_preview_value_off</item>
     </string-array>
 
     <string-array name="pref_camera2_clearsight_entries" translatable="true">
@@ -75,18 +80,14 @@
         <item>@string/pref_camera2_clearsight_value_on</item>
     </string-array>
 
-    <string-array name="pref_camera2_scenemode_dependencylist" translatable="false">
-        <item>pref_camera2_coloreffect_key</item>
-        <item>pref_camera2_flashmode_key</item>
-        <item>pref_camera2_whitebalance_key</item>
-    </string-array>
-
     <!-- Refer to CONTROL_SCENE_MODE of Camera2 API for values
         -1 refers to ones not supported in Camera2 API
         0 is special case added for auto (meaning off)
+        -5 is for dual mode
     -->
     <string-array name="pref_camera2_scenemode_entryvalues" translatable="false">
         <item>0</item>
+        <item>-5</item>
         <item>18</item>
         <item>-1</item>
         <item>-1</item>
@@ -106,6 +107,7 @@
     <!-- Camera Preferences Scene Mode dialog box entries -->
     <string-array name="pref_camera2_scenemode_entries" translatable="false">
         <item>@string/pref_camera_scenemode_entry_auto</item>
+        <item>Dual</item>
         <item>@string/pref_camera_scenemode_entry_hdr</item>
         <item>@string/pref_camera_scenemode_entry_refocus</item>
         <item>@string/pref_camera_scenemode_entry_optizoom</item>
@@ -125,6 +127,7 @@
     <array name="pref_camera2_scenemode_thumbnails" translatable="false">
         <item>@drawable/ic_scene_mode_auto</item>
         <item>@drawable/ic_scene_mode_hdr</item>
+        <item>@drawable/ic_scene_mode_hdr</item>
         <item>@drawable/ic_scene_mode_refocus</item>
         <item>@drawable/ic_scene_mode_optizoom</item>
         <item>@drawable/ic_scene_mode_portrait</item>
@@ -140,51 +143,35 @@
         <item>@drawable/ic_scene_mode_smartauto</item>
     </array>
 
-    <string-array name="pref_camera2_scenemode_labels">
-        <item>@string/pref_camera_scenemode_label_action</item>
-        <item>@string/pref_camera_scenemode_label_night</item>
-        <item>@string/pref_camera_scenemode_label_auto</item>
-        <item>@string/pref_camera_scenemode_label_sunset</item>
-        <item>@string/pref_camera_scenemode_label_party</item>
-    </string-array>
-
-    <array name="pref_camera2_scenemode_icons">
-        <item>@drawable/ic_sce_action</item>
-        <item>@drawable/ic_sce_night</item>
-        <item>@drawable/ic_sce_off</item>
-        <item>@drawable/ic_sce_sunset</item>
-        <item>@drawable/ic_sce_party</item>
-    </array>
-
     <string-array name="pref_camera2_whitebalance_entryvalues" translatable="false">
+        <item>1</item>
         <item>2</item>
         <item>4</item>
-        <item>1</item>
         <item>5</item>
         <item>6</item>
     </string-array>
 
     <!-- Camera Preferences White Balance dialog box entries -->
     <string-array name="pref_camera2_whitebalance_entries" translatable="false">
+        <item>@string/pref_camera_whitebalance_entry_auto</item>
         <item>@string/pref_camera_whitebalance_entry_incandescent</item>
         <item>@string/pref_camera_whitebalance_entry_fluorescent</item>
-        <item>@string/pref_camera_whitebalance_entry_auto</item>
         <item>@string/pref_camera_whitebalance_entry_daylight</item>
         <item>@string/pref_camera_whitebalance_entry_cloudy</item>
     </string-array>
 
     <string-array name="pref_camera2_whitebalance_labels" translatable="false">
+        <item>@string/pref_camera_whitebalance_label_auto</item>
         <item>@string/pref_camera_whitebalance_label_incandescent</item>
         <item>@string/pref_camera_whitebalance_label_fluorescent</item>
-        <item>@string/pref_camera_whitebalance_label_auto</item>
         <item>@string/pref_camera_whitebalance_label_daylight</item>
         <item>@string/pref_camera_whitebalance_label_cloudy</item>
     </string-array>
 
     <array name="pref_camera2_whitebalance_icons" translatable="false">
+        <item>@drawable/ic_wb_auto</item>
         <item>@drawable/ic_wb_incandescent</item>
         <item>@drawable/ic_wb_fluorescent</item>
-        <item>@drawable/ic_wb_auto</item>
         <item>@drawable/ic_wb_sunlight</item>
         <item>@drawable/ic_wb_cloudy</item>
     </array>
@@ -287,9 +274,9 @@
     </string-array>
 
     <string-array name="pref_camera2_flashmode_entryvalues" translatable="false">
-        <item>off</item>
-        <item>auto</item>
-        <item>on</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
     </string-array>
 
     <array name="pref_camera2_flashmode_icons" translatable="false">

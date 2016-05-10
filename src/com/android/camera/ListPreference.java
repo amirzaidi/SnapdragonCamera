@@ -38,7 +38,7 @@ public class ListPreference extends CameraPreference {
     private static final String TAG = "ListPreference";
     private final String mKey;
     private String mValue;
-    private final CharSequence[] mDefaultValues;
+    public final CharSequence[] mDefaultValues;
 
     private CharSequence[] mEntries;
     private CharSequence[] mEntryValues;

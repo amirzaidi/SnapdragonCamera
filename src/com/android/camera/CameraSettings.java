@@ -1167,14 +1167,8 @@ public class CameraSettings {
     }
 
     public static int getInitialCameraId(SharedPreferences pref) {
-        int id = Integer.parseInt(pref.getString(KEY_CAMERA_ID, "0"));
-        if (id == CaptureModule.BAYER_ID) {
-            int mode = Integer.parseInt(pref.getString(SettingsManager.KEY_DUAL_CAMERA, "1"));
-            if (mode == CaptureModule.MONO_MODE) return CaptureModule.MONO_ID;
-            else return CaptureModule.BAYER_ID;
-        } else {
-            return CaptureModule.FRONT_ID;
-        }
+        String value = pref.getString(SettingsManager.KEY_INITIAL_CAMERA, "0");
+        return Integer.parseInt(value);
     }
 
     public static void writePreferredCameraId(SharedPreferences pref,

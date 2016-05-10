@@ -45,7 +45,7 @@ public class PersistUtil {
     }
 
     public static int getLongshotShotLimit() {
-        return SystemProperties.getInt(PERSIST_LONGSHOT_SHOT_LIMIT, 0);
+        return SystemProperties.getInt(PERSIST_LONGSHOT_SHOT_LIMIT, 20);
     }
 
 }
