@@ -246,11 +246,6 @@ public class CameraSettings {
     public static final String KEY_TS_MAKEUP_LEVEL_WHITEN  = "pref_camera_tsmakeup_whiten";
     public static final String KEY_TS_MAKEUP_LEVEL_CLEAN   = "pref_camera_tsmakeup_clean";
 
-    public static final String KEY_CAMERA2 = "pref_camera_camera2_key";
-    public static final String KEY_DUAL_CAMERA = "pref_camera_dual_camera_key";
-    public static final String KEY_MONO_PREVIEW = "pref_camera_mono_preview_key";
-    public static final String KEY_CLEARSIGHT = "pref_camera_clearsight_key";
-
     public static final String KEY_REFOCUS_PROMPT = "refocus-prompt";
 
     public static final String KEY_SHOW_MENU_HELP = "help_menu";
@@ -1035,7 +1030,7 @@ public class CameraSettings {
         return false;
     }
 
-    private void filterUnsupportedOptions(PreferenceGroup group,
+    public static void filterUnsupportedOptions(PreferenceGroup group,
             ListPreference pref, List<String> supported) {
 
         // Remove the preference if the parameter is not supported or there is
@@ -1064,7 +1059,7 @@ public class CameraSettings {
         resetIfInvalid(pref);
     }
 
-    private void resetIfInvalid(ListPreference pref) {
+    private static void resetIfInvalid(ListPreference pref) {
         // Set the value to the first entry if it is invalid.
         String value = pref.getValue();
         if (pref.findIndexOfValue(value) == NOT_FOUND) {
@@ -1169,6 +1164,17 @@ public class CameraSettings {
         String rearCameraId = Integer.toString(
                 CameraHolder.instance().getBackCameraId());
         return Integer.parseInt(pref.getString(KEY_CAMERA_ID, rearCameraId));
+    }
+
+    public static int getInitialCameraId(SharedPreferences pref) {
+        int id = Integer.parseInt(pref.getString(KEY_CAMERA_ID, "0"));
+        if (id == CaptureModule.BAYER_ID) {
+            int mode = Integer.parseInt(pref.getString(SettingsManager.KEY_DUAL_CAMERA, "1"));
+            if (mode == CaptureModule.MONO_MODE) return CaptureModule.MONO_ID;
+            else return CaptureModule.BAYER_ID;
+        } else {
+            return CaptureModule.FRONT_ID;
+        }
     }
 
     public static void writePreferredCameraId(SharedPreferences pref,

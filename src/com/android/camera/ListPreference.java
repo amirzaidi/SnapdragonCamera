@@ -42,6 +42,7 @@ public class ListPreference extends CameraPreference {
 
     private CharSequence[] mEntries;
     private CharSequence[] mEntryValues;
+    private CharSequence[] mDependencyList;
     private CharSequence[] mLabels;
     private boolean mLoaded = false;
 
@@ -73,6 +74,8 @@ public class ListPreference extends CameraPreference {
                 R.styleable.ListPreference_entryValues));
         setLabels(a.getTextArray(
                 R.styleable.ListPreference_labelList));
+        setDependencyList(a.getTextArray(
+                R.styleable.ListPreference_dependencyList));
         a.recycle();
     }
 
@@ -92,6 +95,10 @@ public class ListPreference extends CameraPreference {
         return mLabels;
     }
 
+    public CharSequence[] getDependencyList() {
+        return mDependencyList;
+    }
+
     public void setEntries(CharSequence entries[]) {
         mEntries = entries == null ? new CharSequence[0] : entries;
     }
@@ -104,6 +111,10 @@ public class ListPreference extends CameraPreference {
         mLabels = labels == null ? new CharSequence[0] : labels;
     }
 
+    public void setDependencyList(CharSequence dependencyList[]) {
+        mDependencyList = dependencyList == null ? new CharSequence[0] : dependencyList;
+    }
+
     public String getValue() {
         if (!mLoaded) {
             mValue = getSharedPreferences().getString(mKey,
@@ -111,6 +122,10 @@ public class ListPreference extends CameraPreference {
             mLoaded = true;
         }
         return mValue;
+    }
+
+    public String getOffValue() {
+        return mEntryValues[0].toString();
     }
 
     // Find the first value in mDefaultValues which is supported.

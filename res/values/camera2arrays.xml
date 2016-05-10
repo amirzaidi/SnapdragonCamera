@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2016, The Linux Foundation. All rights reserved.
+
+     Redistribution and use in source and binary forms, with or without
+     modification, are permitted provided that the following conditions are
+     met:
+      * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+      * Redistributions in binary form must reproduce the above
+        copyright notice, this list of conditions and the following
+        disclaimer in the documentation and/or other materials provided
+        with the distribution.
+      * Neither the name of The Linux Foundation nor the names of its
+        contributors may be used to endorse or promote products derived
+        from this software without specific prior written permission.
+
+     THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+     WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+     ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+     BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+     WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+     OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+     IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<resources>
+    <string-array name="pref_camera2_camera2_entries" translatable="true">
+        <item>@string/pref_camera2_camera2_entry_disable</item>
+        <item>@string/pref_camera2_camera2_entry_enable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_camera2_entryvalues" translatable="false">
+        <item>@string/pref_camera2_camera2_value_disable</item>
+        <item>@string/pref_camera2_camera2_value_enable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_dual_camera_entries" translatable="true">
+        <item>@string/pref_camera2_dual_camera_entry_dual</item>
+        <item>@string/pref_camera2_dual_camera_entry_bayer</item>
+        <item>@string/pref_camera2_dual_camera_entry_mono</item>
+    </string-array>
+
+    <string-array name="pref_camera2_dual_camera_entryvalues" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="pref_camera2_dual_camera_dependencylist" translatable="false">
+        <item>pref_camera2_mono_preview_key</item>
+        <item>pref_camera2_clearsight_key</item>
+    </string-array>
+
+    <string-array name="pref_camera2_mono_preview_entries" translatable="true">
+        <item>@string/pref_camera2_mono_preview_entry_off</item>
+        <item>@string/pref_camera2_mono_preview_entry_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_mono_preview_entryvalues" translatable="false">
+        <item>@string/pref_camera2_mono_preview_value_off</item>
+        <item>@string/pref_camera2_mono_preview_value_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_clearsight_entries" translatable="true">
+        <item>@string/pref_camera2_clearsight_entry_off</item>
+        <item>@string/pref_camera2_clearsight_entry_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_clearsight_entryvalues" translatable="false">
+        <item>@string/pref_camera2_clearsight_value_off</item>
+        <item>@string/pref_camera2_clearsight_value_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_scenemode_dependencylist" translatable="false">
+        <item>pref_camera2_coloreffect_key</item>
+        <item>pref_camera2_flashmode_key</item>
+        <item>pref_camera2_whitebalance_key</item>
+    </string-array>
+
+    <!-- Refer to CONTROL_SCENE_MODE of Camera2 API for values
+        -1 refers to ones not supported in Camera2 API
+        0 is special case added for auto (meaning off)
+    -->
+    <string-array name="pref_camera2_scenemode_entryvalues" translatable="false">
+        <item>0</item>
+        <item>18</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>3</item>
+        <item>4</item>
+        <item>13</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>15</item>
+        <item>10</item>
+        <item>5</item>
+        <item>8</item>
+        <item>9</item>
+        <item>-1</item>
+    </string-array>
+
+    <!-- Camera Preferences Scene Mode dialog box entries -->
+    <string-array name="pref_camera2_scenemode_entries" translatable="false">
+        <item>@string/pref_camera_scenemode_entry_auto</item>
+        <item>@string/pref_camera_scenemode_entry_hdr</item>
+        <item>@string/pref_camera_scenemode_entry_refocus</item>
+        <item>@string/pref_camera_scenemode_entry_optizoom</item>
+        <item>@string/pref_camera_scenemode_entry_portrait</item>
+        <item>@string/pref_camera_scenemode_entry_landscape</item>
+        <item>@string/pref_camera_scenemode_entry_sports</item>
+        <item>@string/pref_camera_scenemode_entry_flowers</item>
+        <item>@string/pref_camera_scenemode_entry_backlight</item>
+        <item>@string/pref_camera_scenemode_entry_candlelight</item>
+        <item>@string/pref_camera_scenemode_entry_sunset</item>
+        <item>@string/pref_camera_scenemode_entry_night</item>
+        <item>@string/pref_camera_scenemode_entry_beach</item>
+        <item>@string/pref_camera_scenemode_entry_snow</item>
+        <item>@string/pref_camera_scenemode_entry_asd</item>
+    </string-array>
+
+    <array name="pref_camera2_scenemode_thumbnails" translatable="false">
+        <item>@drawable/ic_scene_mode_auto</item>
+        <item>@drawable/ic_scene_mode_hdr</item>
+        <item>@drawable/ic_scene_mode_refocus</item>
+        <item>@drawable/ic_scene_mode_optizoom</item>
+        <item>@drawable/ic_scene_mode_portrait</item>
+        <item>@drawable/ic_scene_mode_landscape</item>
+        <item>@drawable/ic_scene_mode_sports</item>
+        <item>@drawable/ic_scene_mode_flower</item>
+        <item>@drawable/ic_scene_mode_backlight</item>
+        <item>@drawable/ic_scene_mode_candlelight</item>
+        <item>@drawable/ic_scene_mode_sunset</item>
+        <item>@drawable/ic_scene_mode_night</item>
+        <item>@drawable/ic_scene_mode_beach</item>
+        <item>@drawable/ic_scene_mode_snow</item>
+        <item>@drawable/ic_scene_mode_smartauto</item>
+    </array>
+
+    <string-array name="pref_camera2_scenemode_labels">
+        <item>@string/pref_camera_scenemode_label_action</item>
+        <item>@string/pref_camera_scenemode_label_night</item>
+        <item>@string/pref_camera_scenemode_label_auto</item>
+        <item>@string/pref_camera_scenemode_label_sunset</item>
+        <item>@string/pref_camera_scenemode_label_party</item>
+    </string-array>
+
+    <array name="pref_camera2_scenemode_icons">
+        <item>@drawable/ic_sce_action</item>
+        <item>@drawable/ic_sce_night</item>
+        <item>@drawable/ic_sce_off</item>
+        <item>@drawable/ic_sce_sunset</item>
+        <item>@drawable/ic_sce_party</item>
+    </array>
+
+    <string-array name="pref_camera2_whitebalance_entryvalues" translatable="false">
+        <item>2</item>
+        <item>4</item>
+        <item>1</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+
+    <!-- Camera Preferences White Balance dialog box entries -->
+    <string-array name="pref_camera2_whitebalance_entries" translatable="false">
+        <item>@string/pref_camera_whitebalance_entry_incandescent</item>
+        <item>@string/pref_camera_whitebalance_entry_fluorescent</item>
+        <item>@string/pref_camera_whitebalance_entry_auto</item>
+        <item>@string/pref_camera_whitebalance_entry_daylight</item>
+        <item>@string/pref_camera_whitebalance_entry_cloudy</item>
+    </string-array>
+
+    <string-array name="pref_camera2_whitebalance_labels" translatable="false">
+        <item>@string/pref_camera_whitebalance_label_incandescent</item>
+        <item>@string/pref_camera_whitebalance_label_fluorescent</item>
+        <item>@string/pref_camera_whitebalance_label_auto</item>
+        <item>@string/pref_camera_whitebalance_label_daylight</item>
+        <item>@string/pref_camera_whitebalance_label_cloudy</item>
+    </string-array>
+
+    <array name="pref_camera2_whitebalance_icons" translatable="false">
+        <item>@drawable/ic_wb_incandescent</item>
+        <item>@drawable/ic_wb_fluorescent</item>
+        <item>@drawable/ic_wb_auto</item>
+        <item>@drawable/ic_wb_sunlight</item>
+        <item>@drawable/ic_wb_cloudy</item>
+    </array>
+
+    <array name="pref_camera2_whitebalance_largeicons" translatable="false">
+        <item>@drawable/ic_wb_incandescent</item>
+        <item>@drawable/ic_wb_fluorescent</item>
+        <item>@drawable/ic_wb_auto</item>
+        <item>@drawable/ic_wb_sunlight</item>
+        <item>@drawable/ic_wb_cloudy</item>
+    </array>
+
+    <!-- Refer to CONTROL_EFFECT_MODE of Camera2 API for values
+        -1 refers to ones not supported in Camera2 API
+    -->
+    <string-array name="pref_camera2_coloreffect_entryvalues" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>4</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>8</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>-1</item>
+        <item>-1</item>
+    </string-array>
+
+    <string-array name="pref_camera2_coloreffect_icons" translatable="false">
+        <item>@drawable/ic_settings_filter</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+        <item>@drawable/ic_settings_filter_on</item>
+    </string-array>
+
+    <!-- Camera Preferences Color effect dialog box entries -->
+    <string-array name="pref_camera2_coloreffect_entries" translatable="false">
+        <item>@string/pref_camera_coloreffect_entry_none</item>
+        <item>@string/pref_camera_coloreffect_entry_mono</item>
+        <item>@string/pref_camera_coloreffect_entry_sepia</item>
+        <item>@string/pref_camera_coloreffect_entry_negative</item>
+        <item>@string/pref_camera_coloreffect_entry_solarize</item>
+        <item>@string/pref_camera_coloreffect_entry_posterize</item>
+        <item>@string/pref_camera_coloreffect_entry_aqua</item>
+        <item>@string/pref_camera_coloreffect_entry_emboss</item>
+        <item>@string/pref_camera_coloreffect_entry_sketch</item>
+        <item>@string/pref_camera_coloreffect_entry_neon</item>
+        <item>@string/pref_camera_coloreffect_entry_pastel</item>
+        <item>@string/pref_camera_coloreffect_entry_mosaic</item>
+        <item>@string/pref_camera_coloreffect_entry_redtint</item>
+        <item>@string/pref_camera_coloreffect_entry_bluetint</item>
+        <item>@string/pref_camera_coloreffect_entry_greentint</item>
+    </string-array>
+
+    <array name="pref_camera2_coloreffect_thumbnails" translatable="false">
+        <item>@drawable/thumb_filter_nofilter</item>
+        <item>@drawable/thumb_filter_monochrome</item>
+        <item>@drawable/thumb_filter_sepia</item>
+        <item>@drawable/thumb_filter_negative</item>
+        <item>@drawable/thumb_filter_solarize</item>
+        <item>@drawable/thumb_filter_posterize</item>
+        <item>@drawable/thumb_filter_aqua</item>
+        <item>@drawable/thumb_filter_emboss</item>
+        <item>@drawable/thumb_filter_sketch</item>
+        <item>@drawable/thumb_filter_neon</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+    </array>
+
+    <!-- Camera Preferences flash mode dialog box entries -->
+    <string-array name="pref_camera2_flashmode_entries" translatable="false">
+        <item>@string/pref_camera_flashmode_entry_off</item>
+        <item>@string/pref_camera_flashmode_entry_auto</item>
+        <item>@string/pref_camera_flashmode_entry_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_flashmode_labels" translatable="false">
+        <item>@string/pref_camera_flashmode_label_off</item>
+        <item>@string/pref_camera_flashmode_label_auto</item>
+        <item>@string/pref_camera_flashmode_label_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_flashmode_entryvalues" translatable="false">
+        <item>off</item>
+        <item>auto</item>
+        <item>on</item>
+    </string-array>
+
+    <array name="pref_camera2_flashmode_icons" translatable="false">
+        <item>@drawable/ic_flash_off_holo_light</item>
+        <item>@drawable/ic_flash_auto_holo_light</item>
+        <item>@drawable/ic_flash_on_holo_light</item>
+    </array>
+
+    <array name="pref_camera2_flashmode_largeicons" translatable="false">
+        <item>@drawable/ic_flash_off_holo_light</item>
+        <item>@drawable/ic_flash_auto_holo_light</item>
+        <item>@drawable/ic_flash_on_holo_light</item>
+    </array>
+
+    <!-- Camera Preference save path entries -->
+    <string-array name="pref_camera2_savepath_entries" translatable="false">
+        <item>@string/pref_camera_savepath_entry_0</item>
+        <item>@string/pref_camera_savepath_entry_1</item>
+    </string-array>
+
+    <string-array name="pref_camera2_savepath_entryvalues" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <!-- Camera Preferences Picture size dialog box entries -->
+    <string-array name="pref_camera2_picturesize_entries" translatable="false">
+        <item>@string/pref_camera_picturesize_entry_24mp</item>
+        <item>@string/pref_camera_picturesize_entry_21mp</item>
+        <item>@string/pref_camera_picturesize_entry_16mp</item>
+        <item>@string/pref_camera_picturesize_entry_16mp_wide</item>
+        <item>@string/pref_camera_picturesize_entry_13mp</item>
+        <item>@string/pref_camera_picturesize_entry_12mp</item>
+        <item>@string/pref_camera_picturesize_entry_8mp</item>
+        <item>@string/pref_camera_picturesize_entry_8mp</item>
+        <item>@string/pref_camera_picturesize_entry_square</item>
+        <item>@string/pref_camera_picturesize_entry_5mp</item>
+        <item>@string/pref_camera_picturesize_entry_5mp</item>
+        <item>@string/pref_camera_picturesize_entry_5mp</item>
+        <item>@string/pref_camera_picturesize_entry_4mp_wide</item>
+        <item>@string/pref_camera_picturesize_entry_3mp</item>
+        <item>@string/pref_camera_picturesize_entry_3mp</item>
+        <item>@string/pref_camera_picturesize_entry_1920x1080</item>
+        <item>@string/pref_camera_picturesize_entry_2mp</item>
+        <item>@string/pref_camera_picturesize_entry_2mp_wide</item>
+        <item>@string/pref_camera_picturesize_entry_1_5mp</item>
+        <item>@string/pref_camera_picturesize_entry_1_3mp</item>
+        <item>@string/pref_camera_picturesize_entry_1280x768</item>
+        <item>@string/pref_camera_picturesize_entry_1280x720</item>
+        <item>@string/pref_camera_picturesize_entry_1mp</item>
+        <item>@string/pref_camera_picturesize_entry_800x600</item>
+        <item>@string/pref_camera_picturesize_entry_800x480</item>
+        <item>@string/pref_camera_picturesize_entry_960x720</item>
+        <item>@string/pref_camera_picturesize_entry_720x480</item>
+        <item>@string/pref_camera_picturesize_entry_vga</item>
+        <item>@string/pref_camera_picturesize_entry_352x288</item>
+        <item>@string/pref_camera_picturesize_entry_qvga</item>
+        <item>@string/pref_camera_picturesize_entry_176x144</item>
+    </string-array>
+    <!-- When launching the camera app first time, we will set the picture
+         size to the first one in the list that is also supported by the
+         driver -->
+    <string-array name="pref_camera2_picturesize_entryvalues" translatable="false">
+        <item>5656x4242</item>
+        <item>5344x4008</item>
+        <item>4608x3456</item>
+        <item>5312x2988</item>
+        <item>4160x3120</item>
+        <item>4000x3000</item>
+        <item>3840x2160</item>
+        <item>3264x2448</item>
+        <item>2976x2976</item>
+        <item>2592x1944</item>
+        <item>2592x1936</item>
+        <item>2560x1920</item>
+        <item>2688x1512</item>
+        <item>2048x1536</item>
+        <item>2048x1520</item>
+        <item>1920x1080</item>
+        <item>1600x1200</item>
+        <item>1920x1088</item>
+        <item>1440x1080</item>
+        <item>1280x960</item>
+        <item>1280x768</item>
+        <item>1280x720</item>
+        <item>1024x768</item>
+        <item>800x600</item>
+        <item>800x480</item>
+        <item>960x720</item>
+        <item>720x480</item>
+        <item>640x480</item>
+        <item>352x288</item>
+        <item>320x240</item>
+        <item>176x144</item>
+    </string-array>
+
+    <!-- Camera Preferences focus mode dialog box entries -->
+    <string-array name="pref_camera2_focusmode_entries" translatable="false">
+        <item>@string/pref_camera_focusmode_entry_auto</item>
+        <item>@string/pref_camera_focusmode_entry_infinity</item>
+        <item>@string/pref_camera_focusmode_entry_macro</item>
+        <item>@string/pref_camera_focusmode_entry_normal</item>
+        <item>@string/pref_camera_focusmode_entry_continuous</item>
+    </string-array>
+
+    <string-array name="pref_camera2_focusmode_entryvalues" translatable="false">
+        <item>auto</item>
+        <item>infinity</item>
+        <item>macro</item>
+        <item>normal</item>
+        <item>continuous-picture</item>
+    </string-array>
+
+    <string-array name="pref_camera2_focusmode_labels" translatable="false">
+        <item>@string/pref_camera_focusmode_label_auto</item>
+        <item>@string/pref_camera_focusmode_label_infinity</item>
+        <item>@string/pref_camera_focusmode_label_macro</item>
+    </string-array>
+
+    <string-array name="pref_camera2_recordlocation_entryvalues" translatable="false">
+        <item>off</item>
+        <item>on</item>
+    </string-array>
+
+    <array name="pref_camera2_recordlocation_entries" translatable="false">
+        <item>@string/setting_off</item>
+        <item>@string/setting_on</item>
+    </array>
+
+    <array name="pref_camera2_recordlocation_labels" translatable="false">
+        <item>@string/pref_camera_location_label</item>
+        <item>@string/pref_camera_location_label</item>
+    </array>
+
+    <array name="pref_camera2_recordlocation_icons" translatable="false">
+        <item>@drawable/ic_location_off</item>
+        <item>@drawable/ic_location</item>
+    </array>
+
+    <array name="pref_camera2_recordlocation_largeicons" translatable="false">
+        <item>@drawable/ic_location_off</item>
+        <item>@drawable/ic_location</item>
+    </array>
+
+    <array name="pref_camera2_id_entries" translatable="false">
+        <item>@string/pref_camera_id_entry_back</item>
+        <item>@string/pref_camera_id_entry_front</item>
+    </array>
+
+    <array name="pref_camera2_id_labels" translatable="false">
+        <item>@string/pref_camera_id_label_back</item>
+        <item>@string/pref_camera_id_label_front</item>
+    </array>
+
+    <array name="pref_camera2_id_icons" translatable="false">
+        <item>@drawable/ic_switch_back</item>
+        <item>@drawable/ic_switch_front</item>
+    </array>
+
+    <array name="pref_camera2_id_largeicons" translatable="false">
+        <item>@drawable/ic_switch_back</item>
+        <item>@drawable/ic_switch_front</item>
+    </array>
+
+    <string-array name="pref_camera2_timer_sound_entries" translatable="false">
+        <item>@string/setting_off</item>
+        <item>@string/setting_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_timer_sound_entryvalues" translatable="false">
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
+    </string-array>
+
+    <!-- Icons for exposure compensation -->
+    <array name="pref_camera2_exposure_icons" translatable="false">
+        <item>@drawable/ic_exposure_n3</item>
+        <item>@drawable/ic_exposure_n2</item>
+        <item>@drawable/ic_exposure_n1</item>
+        <item>@drawable/ic_exposure_0</item>
+        <item>@drawable/ic_exposure_p1</item>
+        <item>@drawable/ic_exposure_p2</item>
+        <item>@drawable/ic_exposure_p3</item>
+    </array>
+
+    <!--  Labels for Countdown timer -->
+    <string-array name="pref_camera2_countdown_labels">
+        <item>@string/pref_camera_countdown_label_off</item>
+        <item>@string/pref_camera_countdown_label_one</item>
+        <item>@string/pref_camera_countdown_label_three</item>
+        <item>@string/pref_camera_countdown_label_ten</item>
+        <item>@string/pref_camera_countdown_label_fifteen</item>
+    </string-array>
+
+    <!-- Camera Preferences JPEG quality dialog box entries -->
+    <string-array name="pref_camera2_jpegquality_entries" translatable="false">
+        <item>@string/pref_camera_jpegquality_entry_0</item>
+        <item>@string/pref_camera_jpegquality_entry_1</item>
+        <item>@string/pref_camera_jpegquality_entry_2</item>
+    </string-array>
+
+    <string-array name="pref_camera2_jpegquality_entryvalues" translatable="false">
+        <item>55</item>
+        <item>85</item>
+        <item>100</item>
+    </string-array>
+
+    <!-- Rough estimates of jpeg compression ratio corresponding to qualities defined above. -->
+    <integer-array name="pref_camera2_jpegquality_compression_ratio">
+        <item>48</item>
+        <item>20</item>
+        <item>6</item>
+    </integer-array>
+
+    <!-- Camera Preferences ISO dialog box entries -->
+    <string-array name="pref_camera2_iso_entries">
+        <item>@string/pref_camera_iso_entry_auto</item>
+        <item>@string/pref_camera_iso_entry_isodeblur</item>
+        <item>@string/pref_camera_iso_entry_iso100</item>
+        <item>@string/pref_camera_iso_entry_iso200</item>
+        <item>@string/pref_camera_iso_entry_iso400</item>
+        <item>@string/pref_camera_iso_entry_iso800</item>
+        <item>@string/pref_camera_iso_entry_iso1600</item>
+    </string-array>
+
+    <!-- Do not localize entryvalues -->
+    <string-array name="pref_camera2_iso_entryvalues">
+        <item>@string/pref_camera_iso_value_auto</item>
+        <item>@string/pref_camera_iso_value_isodeblur</item>
+        <item>@string/pref_camera_iso_value_iso100</item>
+        <item>@string/pref_camera_iso_value_iso200</item>
+        <item>@string/pref_camera_iso_value_iso400</item>
+        <item>@string/pref_camera_iso_value_iso800</item>
+        <item>@string/pref_camera_iso_value_iso1600</item>
+    </string-array>
+
+    <!-- Camera Preferences Auto Exposure dialog box entries -->
+    <string-array name="pref_camera2_autoexposure_entries">
+        <item>@string/pref_camera_autoexposure_entry_frameaverage</item>
+        <item>@string/pref_camera_autoexposure_entry_centerweighted</item>
+        <item>@string/pref_camera_autoexposure_entry_spotmetering</item>
+    </string-array>
+
+    <!-- Do not localize entryvalues -->
+    <string-array name="pref_camera2_autoexposure_entryvalues">
+        <item>@string/pref_camera_autoexposure_value_frameaverage</item>
+        <item>@string/pref_camera_autoexposure_value_centerweighted</item>
+        <item>@string/pref_camera_autoexposure_value_spotmetering</item>
+    </string-array>
+
+    <!-- Camera Preferences Redeye Reduction dialog box entries -->
+    <string-array name="pref_camera2_redeyereduction_entries" translatable="false">
+        <item>@string/pref_camera_redeyereduction_entry_disable</item>
+        <item>@string/pref_camera_redeyereduction_entry_enable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_redeyereduction_entryvalues" translatable="false">
+        <item>disable</item>
+        <item>enable</item>
+    </string-array>
+
+    <!-- Camera Preferences Long Shot dialog box entries -->
+    <string-array name="pref_camera2_longshot_entries" translatable="false">
+        <item>@string/setting_off</item>
+        <item>@string/setting_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_longshot_entryvalues" translatable="false">
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
+    </string-array>
+
+    <string-array name="pref_camera2_filter_mode_entries" translatable="false">
+        <item>@string/pref_camera_filter_mode_entry_off</item>
+        <item>@string/pref_camera_filter_mode_entry_on</item>
+    </string-array>
+    <string-array name="pref_camera2_filter_mode_entryvalues" translatable="false">
+        <item>Off</item>
+        <item>On</item>
+    </string-array>
+
+    <string-array name="pref_camera2_filter_mode_icons" translatable="false">
+        <item>@drawable/ic_settings_filter</item>
+        <item>@drawable/ic_settings_filter_on</item>
+    </string-array>
+
+</resources>

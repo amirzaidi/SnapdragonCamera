@@ -136,8 +136,9 @@ public class ListSubMenu extends ListView implements
     public void onItemClick(AdapterView<?> parent, View view,
             int index, long id) {
         mPreference.setValueIndex(index);
-        if (mListener != null)
+        if (mListener != null) {
             mListener.onListPrefChanged(mPreference);
+        }
     }
 
     @Override

@@ -19,8 +19,6 @@
 
 package com.android.camera.ui;
 
-import java.util.ArrayList;
-
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -34,21 +32,40 @@ import android.widget.ListView;
 
 import com.android.camera.ListPreference;
 import com.android.camera.PreferenceGroup;
+import com.android.camera.SettingsManager;
+
 import org.codeaurora.snapcam.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /* A popup window that contains several camera settings. */
 public class ListMenu extends ListView
         implements ListMenuItem.Listener,
-        AdapterView.OnItemClickListener {
+        AdapterView.OnItemClickListener,
+        ListSubMenu.Listener {
     @SuppressWarnings("unused")
     private static final String TAG = "ListMenu";
     private int mHighlighted = -1;
     private Listener mListener;
+    private SettingsManager mSettingsManager;
     private ArrayList<ListPreference> mListItem = new ArrayList<ListPreference>();
 
     // Keep track of which setting items are disabled
     // e.g. White balance will be disabled when scene mode is set to non-auto
     private boolean[] mEnabled;
+    private boolean mForCamera2 = false;
+
+    @Override
+    public void onListPrefChanged(ListPreference pref) {
+        // listen from ListSubMenu
+        if (mListener != null) {
+            mListener.onSettingChanged(pref);
+        }
+        if (mSettingsManager != null) {
+            mSettingsManager.onSettingChanged(pref);
+        }
+    }
 
     static public interface Listener {
         public void onSettingChanged(ListPreference pref);
@@ -58,6 +75,11 @@ public class ListMenu extends ListView
         public void onPreferenceClicked(ListPreference pref, int y);
 
         public void onListMenuTouched();
+    }
+
+    static public interface SettingsListener {
+        // notify SettingsManager
+        public void onSettingChanged(ListPreference pref);
     }
 
     private class MoreSettingAdapter extends ArrayAdapter<ListPreference> {
@@ -90,6 +112,9 @@ public class ListMenu extends ListView
             view.setSettingChangedListener(ListMenu.this);
             if (position >= 0 && position < mEnabled.length) {
                 view.setEnabled(mEnabled[position]);
+                if (mForCamera2 && !mEnabled[position]) {
+                    view.overrideSettings(pref.getOffValue());
+                }
             } else {
                 Log.w(TAG, "Invalid input: enabled list length, " + mEnabled.length
                         + " position " + position);
@@ -109,12 +134,42 @@ public class ListMenu extends ListView
         }
     }
 
+    public void setSettingsManager(SettingsManager settingsManager) {
+        mSettingsManager = settingsManager;
+    }
+
     public void setSettingChangedListener(Listener listener) {
         mListener = listener;
     }
 
     public ListMenu(Context context, AttributeSet attrs) {
         super(context, attrs);
+    }
+
+    public void initializeForCamera2(String[] keys) {
+        mForCamera2 = true;
+        PreferenceGroup group = mSettingsManager.getPreferenceGroup();
+        List<String> disabledList = mSettingsManager.getDisabledList();
+        // Prepare the setting items.
+        for (int i = 0; i < keys.length; ++i) {
+            ListPreference pref = group.findPreference(keys[i]);
+            if (pref != null)
+                mListItem.add(pref);
+        }
+
+        ArrayAdapter<ListPreference> mListItemAdapter = new MoreSettingAdapter();
+        setAdapter(mListItemAdapter);
+        setOnItemClickListener(this);
+        setSelector(android.R.color.transparent);
+        // Initialize mEnabled
+        mEnabled = new boolean[mListItem.size()];
+        for (int i = 0; i < mEnabled.length; i++) {
+            mEnabled[i] = true;
+        }
+
+        for (String s: disabledList) {
+            setPreferenceEnabled(s, false);
+        }
     }
 
     public void initialize(PreferenceGroup group, String[] keys) {
