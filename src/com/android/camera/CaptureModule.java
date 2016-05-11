@@ -1557,8 +1557,13 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
-    public void onQueueStatus(boolean full) {
-        mUI.enableShutter(!full);
+    public void onQueueStatus(final boolean full) {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mUI.enableShutter(!full);
+            }
+        });
     }
 
     public void triggerFocusAtPoint(float x, float y, int id) {
