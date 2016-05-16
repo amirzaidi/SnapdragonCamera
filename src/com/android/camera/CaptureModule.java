@@ -20,8 +20,10 @@
 package com.android.camera;
 
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
@@ -385,7 +387,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (mPaused) {
                 return;
             }
-            if (isBackMode() && getMode() == DUAL_MODE && id == BAYER_ID) {
+            if (isBackCamera() && getCameraMode() == DUAL_MODE && id == BAYER_ID) {
                 Message msg = mCameraHandler.obtainMessage(OPEN_CAMERA, MONO_ID);
                 mCameraHandler.sendMessage(msg);
             }
@@ -442,14 +444,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         else return false;
     }
 
-    private boolean isBackMode() {
+    private boolean isBackCamera() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_CAMERA_ID);
         if (value == null) return true;
         if (Integer.parseInt(value) == BAYER_ID) return true;
         return false;
     }
 
-    private int getMode() {
+    private int getCameraMode() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (value != null && value.equals("-5")) return DUAL_MODE;
         value = mSettingsManager.getValue(SettingsManager.KEY_MONO_ONLY);
@@ -460,7 +462,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean isClearSightOn() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_CLEARSIGHT);
         if (value == null) return false;
-        return isBackMode() && getMode() == DUAL_MODE && value.equals("on");
+        return isBackCamera() && getCameraMode() == DUAL_MODE && value.equals("on");
     }
 
     public static int getQualityNumber(String jpegQuality) {
@@ -540,7 +542,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                         @Override
                         public void onConfigured(CameraCaptureSession cameraCaptureSession) {
-                            // The camera is already closed
                             if (mPaused || null == mCameraDevice[id]) {
                                 return;
                             }
@@ -548,7 +549,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                             mCaptureSession[id] = cameraCaptureSession;
                             initializePreviewConfiguration(id);
                             try {
-                                if (isBackMode() && getMode() == DUAL_MODE) {
+                                if (isBackCamera() && getCameraMode() == DUAL_MODE) {
                                     linkBayerMono(id);
                                     mIsLinked = true;
                                 }
@@ -566,7 +567,19 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                         @Override
                         public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                            Log.d(TAG, "cameracapturesession - onConfigureFailed");
+                            Log.e(TAG, "cameracapturesession - onConfigureFailed");
+                            new AlertDialog.Builder(mActivity)
+                                    .setTitle("Camera Initialization Failed")
+                                    .setMessage("Closing SnapdragonCamera")
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            closeCamera();
+                                            mActivity.finish();
+                                        }
+                                    })
+                                    .setCancelable(false)
+                                    .setIcon(android.R.drawable.ic_dialog_alert)
+                                    .show();
                         }
 
                         @Override
@@ -645,8 +658,9 @@ public class CaptureModule implements CameraModule, PhotoController,
      */
     private void takePicture() {
         Log.d(TAG, "takePicture");
-        if (isBackMode()) {
-            switch (getMode()) {
+        mUI.enableShutter(false);
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
                 case DUAL_MODE:
                     lockFocus(BAYER_ID);
                     lockFocus(MONO_ID);
@@ -967,6 +981,12 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id].build(),
                     mCaptureCallback, mCameraHandler);
             mTakingPicture[id] = false;
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mUI.enableShutter(true);
+                }
+            });
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -1168,12 +1188,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void setCurrentMode() {
-        mCurrentMode = isBackMode() ? getMode() : FRONT_MODE;
+        mCurrentMode = isBackCamera() ? getCameraMode() : FRONT_MODE;
     }
 
     @Override
     public void onResumeAfterSuper() {
-        Log.d(TAG, "onResume " + getMode());
+        Log.d(TAG, "onResume " + getCameraMode());
         mUI.showSurfaceView();
         mUI.setSwitcherIndex();
         mCameraIdList = new ArrayList<>();
@@ -1181,8 +1201,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         startBackgroundThread();
         Message msg = Message.obtain();
         msg.what = OPEN_CAMERA;
-        if (isBackMode()) {
-            switch (getMode()) {
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
                 case DUAL_MODE:
                 case BAYER_MODE:
                     msg.obj = BAYER_ID;
@@ -1252,8 +1272,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void onZoomChanged(float requestedZoom) {
         mZoomValue = requestedZoom;
 
-        if (isBackMode()) {
-            switch (getMode()) {
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
                 case DUAL_MODE:
                     applyZoomAndUpdate(BAYER_ID);
                     applyZoomAndUpdate(MONO_ID);
@@ -1271,8 +1291,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private boolean isInMode(int cameraId) {
-        if (isBackMode()) {
-            switch (getMode()) {
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
                 case DUAL_MODE:
                     return cameraId == BAYER_ID || cameraId == MONO_ID;
                 case BAYER_MODE:
@@ -1335,8 +1355,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "onSingleTapUp " + x + " " + y);
         mUI.setFocusPosition(x, y);
         mUI.onFocusStarted();
-        if (isBackMode()) {
-            switch (getMode()) {
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
                 case DUAL_MODE:
                     triggerFocusAtPoint(x, y, BAYER_ID);
                     triggerFocusAtPoint(x, y, MONO_ID);
@@ -1354,8 +1374,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private int getMainCameraId() {
-        if (isBackMode()) {
-            switch (getMode()) {
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
                 case DUAL_MODE:
                 case BAYER_MODE:
                     return BAYER_ID;
@@ -1408,8 +1428,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         Log.d(TAG, "onPreviewUIReady");
         mSurfaceReady = true;
-        if (isBackMode()) {
-            switch (getMode()) {
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
                 case DUAL_MODE:
                     createSession(BAYER_ID);
                     createSession(MONO_ID);
@@ -1523,7 +1543,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onShutterButtonLongClick() {
-        if (isBackMode() && getMode() == DUAL_MODE) return;
+        if (isBackCamera() && getCameraMode() == DUAL_MODE) return;
 
         String longshot = mSettingsManager.getValue(SettingsManager.KEY_LONGSHOT);
         if (longshot.equals("on")) {
@@ -1769,8 +1789,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private Surface getPreviewSurface(int id) {
-        if (isBackMode()) {
-            if (getMode() == DUAL_MODE && id == MONO_ID) {
+        if (isBackCamera()) {
+            if (getCameraMode() == DUAL_MODE && id == MONO_ID) {
                 return mUI.getSurfaceHolder2().getSurface();
             } else {
                 return mUI.getSurfaceHolder().getSurface();
@@ -1880,8 +1900,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     break;
             }
 
-            if (isBackMode()) {
-                switch (getMode()) {
+            if (isBackCamera()) {
+                switch (getCameraMode()) {
                     case BAYER_MODE:
                         updatePreviewBayer |= applyPreferenceToPreview(BAYER_ID, key, value);
                         break;
