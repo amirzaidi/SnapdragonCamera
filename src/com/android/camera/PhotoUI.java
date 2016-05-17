@@ -156,6 +156,7 @@ public class PhotoUI implements PieListener,
     private int mScreenRatio = CameraUtil.RATIO_UNKNOWN;
     private int mTopMargin = 0;
     private int mBottomMargin = 0;
+    private boolean mIsLayoutInitializedAlready = false;
 
     private int mOrientation;
     private float mScreenBrightness = 0.0f;
@@ -260,7 +261,7 @@ public class PhotoUI implements PieListener,
                 }
 
                 if (mOrientationResize != mPrevOrientationResize
-                        || mAspectRatioResize) {
+                        || mAspectRatioResize || !mIsLayoutInitializedAlready) {
                     layoutPreview(mAspectRatio);
                     mAspectRatioResize = false;
                 }
@@ -461,6 +462,7 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setLayoutParams(lp);
         }
+        mIsLayoutInitializedAlready = true;
     }
 
     public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
