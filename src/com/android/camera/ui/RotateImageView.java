@@ -16,6 +16,7 @@
 
 package com.android.camera.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -28,6 +29,7 @@ import android.util.AttributeSet;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
+import com.android.camera.util.CameraUtil;
 
 /**
  * A @{code ImageView} which can rotate it's content.
@@ -47,6 +49,8 @@ public class RotateImageView extends TwoStateImageView implements Rotatable {
 
     private long mAnimationStartTime = 0;
     private long mAnimationEndTime = 0;
+    private boolean mNaturalPortrait = CameraUtil.isDefaultToPortrait(
+                                              (Activity) getContext());
 
     public RotateImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -58,6 +62,19 @@ public class RotateImageView extends TwoStateImageView implements Rotatable {
 
     protected int getDegree() {
         return mTargetDegree;
+    }
+
+    private boolean isOrientationPortrait() {
+        int mapTo180Degree = (mCurrentDegree % 180);
+
+        // Assumging the devic's natural orientation is portrait and
+        // check if the current orienataion is within the landscape range
+        boolean isLandscape = ((mapTo180Degree > 45) &&
+                               (mapTo180Degree < 135));
+        if (mNaturalPortrait)
+          return !isLandscape;
+        else
+          return isLandscape;
     }
 
     // Rotate the view counter-clockwise
@@ -124,10 +141,17 @@ public class RotateImageView extends TwoStateImageView implements Rotatable {
 
         int saveCount = canvas.getSaveCount();
 
-        // Scale down the image first if required.
-        if ((getScaleType() == ImageView.ScaleType.FIT_CENTER) &&
-                ((width < w) || (height < h))) {
-            float ratio = Math.min((float) width / w, (float) height / h);
+        // Scale down or up the image first if required.
+        if (getScaleType() == ImageView.ScaleType.FIT_CENTER) {
+            float ratio;
+
+            // As camera layout is fixed to portrait, we need to
+            // swap canvas width and height when calculating the
+            // ratio for landscape mode.
+            if (isOrientationPortrait())
+                ratio = Math.min((float) width / w, (float) height / h);
+            else
+                ratio = Math.min((float) height / w, (float) width / h);
             canvas.scale(ratio, ratio, width / 2.0f, height / 2.0f);
         }
         canvas.translate(left + width / 2, top + height / 2);

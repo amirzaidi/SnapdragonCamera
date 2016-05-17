@@ -50,6 +50,7 @@
         style="@style/SwitcherButton"
         android:layout_gravity="bottom|left"
         android:layout_marginBottom="2dip"
+        android:scaleType="center"
         android:contentDescription="@string/accessibility_mode_picker" />
 
     <com.android.camera.ShutterButton
