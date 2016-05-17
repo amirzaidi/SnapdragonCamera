@@ -35,14 +35,17 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.provider.MediaStore.Video;
 import android.util.Log;
+
 import com.android.camera.PhotoModule;
 import com.android.camera.exif.ExifInterface;
 
 import java.io.File;
+
+import org.codeaurora.snapcam.filter.ClearSightNativeEngine.ClearsightImage;
+
 import com.android.camera.mpo.MpoData;
 import com.android.camera.mpo.MpoImageData;
 import com.android.camera.mpo.MpoInterface;
-import com.android.camera.util.ClearSightNativeEngine.ClearsightImage;
 
 /*
  * Service for saving images in the background thread.
