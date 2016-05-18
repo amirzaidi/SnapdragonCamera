@@ -90,7 +90,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_TIMER,
             SettingsManager.KEY_CAMERA_SAVEPATH,
             SettingsManager.KEY_LONGSHOT,
-            SettingsManager.KEY_ISO,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
             SettingsManager.KEY_CAMERA2
@@ -273,6 +272,12 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public ViewGroup getSceneAndFilterLayout() {
         return mSceneAndFilterLayout;
+    }
+
+    public void reInitUI() {
+        initializeSettingMenu();
+        initSceneModeButton();
+        initFilterModeButton();
     }
 
     // called from onResume but only the first time
@@ -987,7 +992,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mThumbnail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!CameraControls.isAnimating() && mModule.isTouchToFocusAllowed())
+                if (!CameraControls.isAnimating() && !mModule.isTakingPicture())
                     mActivity.gotoGallery();
             }
         });

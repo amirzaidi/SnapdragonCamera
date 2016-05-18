@@ -57,6 +57,9 @@ import java.util.Set;
 public class SettingsManager implements ListMenu.SettingsListener {
     public static final int RESOURCE_TYPE_THUMBNAIL = 0;
     public static final int RESOURCE_TYPE_LARGEICON = 1;
+    // Custom-Scenemodes start from 100
+    public static final int SCENE_MODE_DUAL_INT = 100;
+    public static final String SCENE_MODE_DUAL_STRING = "100";
     public static final String KEY_CAMERA_SAVEPATH = "pref_camera2_savepath_key";
     public static final String KEY_RECORD_LOCATION = "pref_camera2_recordlocation_key";
     public static final String KEY_JPEG_QUALITY = "pref_camera2_jpegquality_key";
@@ -80,7 +83,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_INITIAL_CAMERA = "pref_camera2_initial_camera_key";
     private static final String TAG = "SnapCam_SettingsManager";
     private static final List<CameraCharacteristics> mCharacteristics = new ArrayList<>();
-    private static final int NOT_FOUND = -1;
 
     private static SettingsManager sInstance;
 
@@ -636,6 +638,16 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return maxAfRegions != null && maxAfRegions > 0;
     }
 
+    public boolean isFixedFocus(int id) {
+        Float focusDistance = mCharacteristics.get(id).get(CameraCharacteristics
+                .LENS_INFO_MINIMUM_FOCUS_DISTANCE);
+        if (focusDistance == null || focusDistance == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public boolean isFlashSupported(int id) {
         return mCharacteristics.get(id).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) &&
                 mValuesMap.get(KEY_FLASH_MODE) != null;
@@ -667,7 +679,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 .CONTROL_AVAILABLE_SCENE_MODES);
         List<String> modes = new ArrayList<>();
         modes.add("0"); // need special case handle for auto scene mode
-        if (mIsMonoCameraPresent) modes.add("-5"); // need special case handle for dual mode
+        if (mIsMonoCameraPresent) modes.add(SCENE_MODE_DUAL_STRING); // need special case handle for dual mode
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }
@@ -730,7 +742,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
                         dependency.add(new KeyValue(KEY_CLEARSIGHT, "off"));
                         dependency.add(new KeyValue(KEY_MONO_PREVIEW, "off"));
                         break;
-                    case "-5":
+                    case SCENE_MODE_DUAL_STRING:
                         dependency.add(new KeyValue(KEY_LONGSHOT, "off"));
                         dependency.add(new KeyValue(KEY_MONO_ONLY, "off"));
                         break;
