@@ -30,8 +30,10 @@
 package com.android.camera;
 
 import android.hardware.camera2.CaptureResult;
+import android.util.Log;
 
 public class FocusStateListener {
+    private static final String TAG = "SnapCam_FocusStateListe";
     private CaptureUI mUI;
 
     public FocusStateListener(CaptureUI ui) {
@@ -41,24 +43,31 @@ public class FocusStateListener {
     public void onFocusStatusUpdate(int focusState) {
         switch (focusState) {
             case CaptureResult.CONTROL_AF_STATE_ACTIVE_SCAN:
+                Log.d(TAG, "CONTROL_AF_STATE_ACTIVE_SCAN onFocusStarted");
                 mUI.onFocusStarted();
                 break;
             case CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED:
-                mUI.onFocusSucceeded(true);
+                Log.d(TAG, "CONTROL_AF_STATE_FOCUSED_LOCKED onFocusSucceeded");
+                mUI.onFocusSucceeded(false);
                 break;
             case CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED:
-                mUI.onFocusFailed(true);
+                Log.d(TAG, "CONTROL_AF_STATE_NOT_FOCUSED_LOCKED onFocusFailed");
+                mUI.onFocusFailed(false);
                 break;
             case CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED:
+                Log.d(TAG, "CONTROL_AF_STATE_PASSIVE_FOCUSED onFocusSucceeded");
                 mUI.onFocusSucceeded(true);
                 break;
             case CaptureResult.CONTROL_AF_STATE_PASSIVE_SCAN:
+                Log.d(TAG, "CONTROL_AF_STATE_PASSIVE_SCAN onFocusStarted");
                 mUI.onFocusStarted();
                 break;
             case CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED:
+                Log.d(TAG, "CONTROL_AF_STATE_PASSIVE_UNFOCUSED onFocusFailed");
                 mUI.onFocusFailed(true);
                 break;
             case CaptureResult.CONTROL_AF_STATE_INACTIVE:
+                Log.d(TAG, "CONTROL_AF_STATE_INACTIVE clearFocus");
                 mUI.clearFocus();
                 break;
         }

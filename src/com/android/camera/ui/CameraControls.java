@@ -61,6 +61,9 @@ public class CameraControls extends RotatableLayout {
     private View mPreview;
     private View mSceneModeSwitcher;
     private View mFilterModeSwitcher;
+    private View mReviewDoneButton;
+    private View mReviewCancelButton;
+    private View mReviewRetakeButton;
     private ArrowTextView mRefocusToast;
 
     private int mSize;
@@ -314,13 +317,18 @@ public class CameraControls extends RotatableLayout {
 
         View retake = findViewById(R.id.btn_retake);
         if (retake != null) {
-            center(retake, shutter, rotation);
-            View cancel = findViewById(R.id.btn_cancel);
-            toLeft(cancel, shutter, rotation);
-            View done = findViewById(R.id.btn_done);
-            toRight(done, shutter, rotation);
-        }
+            mReviewRetakeButton = retake;
+            mReviewCancelButton = findViewById(R.id.btn_cancel);
+            mReviewDoneButton = findViewById(R.id.btn_done);
 
+            center(mReviewRetakeButton, shutter, rotation);
+            toLeft(mReviewCancelButton, shutter, rotation);
+            toRight(mReviewDoneButton, shutter, rotation);
+        } else {
+            mReviewRetakeButton = null;
+            mReviewCancelButton = null;
+            mReviewDoneButton = null;
+        }
         layoutRemaingPhotos();
     }
 
@@ -972,10 +980,14 @@ public class CameraControls extends RotatableLayout {
         View[] views = {
             mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
             TsMakeupManager.HAS_TS_MAKEUP ? mTsMakeupSwitcher : mHdrSwitcher,
-            mMenu, mShutter, mPreview, mSwitcher, mMute
+            mMenu, mShutter, mPreview, mSwitcher, mMute, mReviewRetakeButton,
+            mReviewCancelButton, mReviewDoneButton
         };
         for (View v : views) {
-            ((RotateImageView) v).setOrientation(orientation, animation);
+            if (v != null) {
+                ((RotateImageView) v).setOrientation(orientation,
+                                                     animation);
+            }
         }
         layoutRemaingPhotos();
     }

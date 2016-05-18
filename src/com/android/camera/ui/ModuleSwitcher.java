@@ -33,6 +33,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
@@ -203,6 +204,7 @@ public class ModuleSwitcher extends RotateImageView
         for (int i = mDrawIds.length - 1; i >= 0; i--) {
             RotateImageView item = new RotateImageView(getContext());
             item.setImageResource(mDrawIds[i]);
+            item.setScaleType(ImageView.ScaleType.CENTER);
             item.setBackgroundResource(R.drawable.bg_pressed);
             final int index = i;
             item.setOnClickListener(new OnClickListener() {

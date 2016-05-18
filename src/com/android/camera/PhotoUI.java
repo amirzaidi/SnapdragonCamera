@@ -156,6 +156,7 @@ public class PhotoUI implements PieListener,
     private int mScreenRatio = CameraUtil.RATIO_UNKNOWN;
     private int mTopMargin = 0;
     private int mBottomMargin = 0;
+    private boolean mIsLayoutInitializedAlready = false;
 
     private int mOrientation;
     private float mScreenBrightness = 0.0f;
@@ -260,7 +261,7 @@ public class PhotoUI implements PieListener,
                 }
 
                 if (mOrientationResize != mPrevOrientationResize
-                        || mAspectRatioResize) {
+                        || mAspectRatioResize || !mIsLayoutInitializedAlready) {
                     layoutPreview(mAspectRatio);
                     mAspectRatioResize = false;
                 }
@@ -333,8 +334,10 @@ public class PhotoUI implements PieListener,
         mMenuHelp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mMenuHelp.setVisibility(View.GONE);
-                mMenuHelp = null;
+                if (mMenuHelp != null) {
+                    mMenuHelp.setVisibility(View.GONE);
+                    mMenuHelp = null;
+                }
             }
         });
     }
@@ -459,6 +462,7 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setLayoutParams(lp);
         }
+        mIsLayoutInitializedAlready = true;
     }
 
     public void setSurfaceTextureSizeChangedListener(SurfaceTextureSizeChangedListener listener) {
@@ -984,7 +988,10 @@ public class PhotoUI implements PieListener,
     }
 
     public boolean sendTouchToPreviewMenu(MotionEvent ev) {
-        return mPreviewMenuLayout.dispatchTouchEvent(ev);
+        if (mPreviewMenuLayout != null) {
+            return mPreviewMenuLayout.dispatchTouchEvent(ev);
+        }
+        return false;
     }
 
     public boolean sendTouchToMenu(MotionEvent ev) {
@@ -1399,6 +1406,10 @@ public class PhotoUI implements PieListener,
         }
         if (mZoomRenderer != null) {
             mZoomRenderer.setOrientation(orientation);
+        }
+        if (mReviewImage != null) {
+            RotateImageView v = (RotateImageView) mReviewImage;
+            v.setOrientation(orientation, animation);
         }
     }
 
