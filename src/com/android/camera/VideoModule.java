@@ -1487,6 +1487,10 @@ public class VideoModule implements CameraModule,
         mProfile.audioCodec = mAudioEncoder;
         mProfile.duration = mMaxVideoDurationInMs;
 
+        if ((mProfile.audioCodec == MediaRecorder.AudioEncoder.AMR_NB) &&
+            !mCaptureTimeLapse && !isHFR) {
+            mProfile.fileFormat = MediaRecorder.OutputFormat.THREE_GPP;
+        }
         // Set params individually for HFR case, as we do not want to encode audio
         if ((isHFR || isHSR) && captureRate > 0) {
             if (isHSR) {
