@@ -30,6 +30,7 @@
 package com.android.camera;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
@@ -85,7 +86,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
     public static final String KEY_TIMER = "pref_camera2_timer_key";
     public static final String KEY_LONGSHOT = "pref_camera2_longshot_key";
-    public static final String KEY_INITIAL_CAMERA = "pref_camera2_initial_camera_key";
     private static final String TAG = "SnapCam_SettingsManager";
     private static final List<CameraCharacteristics> mCharacteristics = new ArrayList<>();
 
@@ -167,7 +167,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public void init() {
         Log.d(TAG, "SettingsManager init");
-        int cameraId = CameraSettings.getInitialCameraId(mPreferences);
+        int cameraId = getInitialCameraId(mPreferences);
         setLocalIdAndInitialize(cameraId);
     }
 
@@ -467,6 +467,15 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 return pref.getLargeIconIds();
         }
         return null;
+    }
+
+    public int getInitialCameraId(SharedPreferences pref) {
+        String value = pref.getString(SettingsManager.KEY_CAMERA_ID, "0");
+        int frontBackId = Integer.parseInt(value);
+        if (frontBackId == CaptureModule.FRONT_ID) return frontBackId;
+        String monoOnly = pref.getString(SettingsManager.KEY_MONO_ONLY, "off");
+        if (monoOnly.equals("off")) return frontBackId;
+        else return CaptureModule.MONO_ID;
     }
 
     private void filterPreferences(int cameraId) {
