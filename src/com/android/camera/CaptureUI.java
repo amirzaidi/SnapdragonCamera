@@ -96,6 +96,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_MAKEUP
     };
     String[] mDeveloperKeys = new String[]{
+            SettingsManager.KEY_REDEYE_REDUCTION,
             SettingsManager.KEY_MONO_ONLY,
             SettingsManager.KEY_CLEARSIGHT,
             SettingsManager.KEY_MONO_PREVIEW
