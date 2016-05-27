@@ -35,16 +35,21 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.codeaurora.snapcam.filter.ClearSightNativeEngine.CamSystemCalibrationData;
+import org.codeaurora.snapcam.filter.ClearSightNativeEngine.ClearsightImage;
+
+import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.InputConfiguration;
 import android.media.Image;
@@ -63,7 +68,6 @@ import android.view.Surface;
 import com.android.camera.MediaSaveService;
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
-import org.codeaurora.snapcam.filter.ClearSightNativeEngine.ClearsightImage;
 
 public class ClearSightImageProcessor {
     private static final String TAG = "ClearSightImageProcessor";
@@ -82,10 +86,10 @@ public class ClearSightImageProcessor {
     private static final int CAM_TYPE_MONO = 1;
     private static final int NUM_CAM = 2;
 
-    private static CaptureResult.Key<Byte> OTP_CALIB_BLOB =
-            new CaptureResult.Key<>(
+    private static CameraCharacteristics.Key<byte[]> OTP_CALIB_BLOB =
+            new CameraCharacteristics.Key<>(
                     "org.codeaurora.qcamera3.dualcam_calib_meta_data.dualcam_calib_meta_data_blob",
-                    Byte.class);
+                    byte[].class);
 
     private NamedImages mNamedImages;
     private ImageReader[] mImageReader = new ImageReader[NUM_CAM];
@@ -131,7 +135,7 @@ public class ClearSightImageProcessor {
         return mInstance;
     }
 
-    public void init(int width, int height) {
+    public void init(int width, int height, Context context) {
         mImageProcessThread = new HandlerThread("CameraImageProcess");
         mImageProcessThread.start();
         mImageReprocessThread = new HandlerThread("CameraImageReprocess");
@@ -144,6 +148,15 @@ public class ClearSightImageProcessor {
         mImageReader[CAM_TYPE_MONO] = createImageReader(CAM_TYPE_MONO, width, height);
         mReprocessImageReader[CAM_TYPE_BAYER] = createReprocImageReader(CAM_TYPE_BAYER, width, height);
         mReprocessImageReader[CAM_TYPE_MONO] = createReprocImageReader(CAM_TYPE_MONO, width, height);
+
+        CameraManager cm = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        try {
+            CameraCharacteristics cc = cm.getCameraCharacteristics("0");
+            byte[] blob = cc.get(OTP_CALIB_BLOB);
+            ClearSightNativeEngine.setOtpCalibData(CamSystemCalibrationData.createFromBytes(blob));
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     public void close() {
@@ -419,12 +432,17 @@ public class ClearSightImageProcessor {
                 // if timestamps are within threshold, keep frames
                 if (Math.abs(bayer.mImage.getTimestamp()
                         - mono.mImage.getTimestamp()) > mTimestampThresholdNs) {
-                    Log.d(TAG, "checkForValidFramePair - toss pair");
-                    // no match, toss
-                    bayer = mBayerFrames.poll();
-                    mono = mMonoFrames.poll();
-                    bayer.mImage.close();
-                    mono.mImage.close();
+                    if(bayer.mImage.getTimestamp() > mono.mImage.getTimestamp()) {
+                        Log.d(TAG, "checkForValidFramePair - toss mono");
+                        // no match, toss
+                        mono = mMonoFrames.poll();
+                        mono.mImage.close();
+                    } else {
+                        Log.d(TAG, "checkForValidFramePair - toss bayer");
+                        // no match, toss
+                        bayer = mBayerFrames.poll();
+                        bayer.mImage.close();
+                    }
                 }
             }
         }
@@ -447,16 +465,17 @@ public class ClearSightImageProcessor {
 
         private void processReprocess() {
             if(mCallback != null) {
-                if (mBayerFrames.size() != mMonoFrames.size()
+                if (mMonoFrames.isEmpty()
                         || mBayerFrames.isEmpty()) {
-                    Log.d(TAG, "processReprocess - frame size mismatch or empty");
+                    Log.d(TAG, "processReprocess - frames are empty");
                     releaseBayerFrames();
                     releaseMonoFrames();
                     mCallback.onClearSightFailure(null, null);
                     return;
                 } else {
-                    sendReprocessRequests(CAM_TYPE_BAYER);
-                    sendReprocessRequests(CAM_TYPE_MONO);
+                    int frameCount = Math.min(mMonoFrames.size(), mBayerFrames.size());
+                    sendReprocessRequests(CAM_TYPE_BAYER, frameCount);
+                    sendReprocessRequests(CAM_TYPE_MONO, frameCount);
                 }
             } else {
                 releaseBayerFrames();
@@ -464,7 +483,7 @@ public class ClearSightImageProcessor {
             }
         }
 
-        private void sendReprocessRequests(final int camId) {
+        private void sendReprocessRequests(final int camId, int frameCount) {
             CameraCaptureSession session = mCallback.onReprocess(camId == CAM_TYPE_BAYER);
             CameraDevice device = session.getDevice();
 
@@ -476,11 +495,12 @@ public class ClearSightImageProcessor {
                     frameQueue = mMonoFrames;
                 }
                 Log.d(TAG, "sendReprocessRequests - start cam: " + camId
-                        + " num frames: " + frameQueue.size());
+                        + " num frames: " + frameQueue.size()
+                        + " frameCount: " + frameCount);
 
                 ArrayList<CaptureRequest> reprocRequests = new ArrayList<CaptureRequest>(
                         frameQueue.size());
-                while (!frameQueue.isEmpty()) {
+                while (reprocRequests.size() < frameCount) {
                     ReprocessableImage reprocImg = frameQueue.poll();
 
                     CaptureRequest.Builder reprocRequest = device
@@ -490,6 +510,15 @@ public class ClearSightImageProcessor {
                     reprocRequests.add(reprocRequest.build());
 
                     mImageWriter[camId].queueInputImage(reprocImg.mImage);
+                }
+
+                if(!frameQueue.isEmpty()) {
+                    // clear remaining frames
+                    if (camId == CAM_TYPE_BAYER) {
+                        releaseBayerFrames();
+                    } else {
+                        releaseMonoFrames();
+                    }
                 }
 
                 mImageReprocessHandler.obtainMessage(MSG_START_CAPTURE, camId,
@@ -504,8 +533,6 @@ public class ClearSightImageProcessor {
                         super.onCaptureCompleted(session, request, result);
                         Log.d(TAG, "reprocess - onCaptureCompleted: "
                                 + camId);
-                        // TODO: parse OTP Calib data to be used in final CS
-                        // result.get(OTP_CALIB_BLOB);
                     }
 
                     @Override

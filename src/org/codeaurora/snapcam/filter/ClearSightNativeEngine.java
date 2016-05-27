@@ -31,6 +31,7 @@ package org.codeaurora.snapcam.filter;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,7 @@ import android.media.Image.Plane;
 import android.util.Log;
 
 public class ClearSightNativeEngine {
+    private static final boolean DEBUG = false;
     private static final String TAG = "ClearSightNativeEngine";
     static {
         try {
@@ -59,32 +61,8 @@ public class ClearSightNativeEngine {
     private static final int Y_PLANE = 0;
     private static final int VU_PLANE = 2;
 
-    // dummy OTP calib data
-    private static final String otp_calib = "Calibration OTP format version = 10301\n"
-            + "Main Native Sensor Resolution width = 4224px\n"
-            + "Main Native Sensor Resolution height = 3136px\n"
-            + "Main Calibration Resolution width = 1280px\n"
-            + "Main Calibration Resolution height = 950px\n"
-            + "Main Focal length ratio = 1.004896\n"
-            + "Aux Native Sensor Resolution width = 1600px\n"
-            + "Aux Native Sensor Resolution height = 1200px\n"
-            + "Aux Calibration Resolution width = 1280px\n"
-            + "Aux Calibration Resolution height = 960px\n"
-            + "Aux Focal length ratio = 1.000000\n"
-            + "Relative Rotation matrix [0] through [8] = 1.000000,-0.003008,0.000251,0.003073,1.000189,0.003329,0.019673,-0.003329,1.000284\n"
-            + "Relative Geometric surface parameters [0] through [31] = -0.307164,-0.879074,4.636152,0.297486,-0.157539,-6.889396,0.109467,-2.797022,-0.066306,-0.120142,0.196464,0.021974,2.905827,0.241197,0.048328,-5.116615,0.496533,-5.263813,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000\n"
-            + "Relative Principal point X axis offset (ox) = 0.000000px\n"
-            + "Relative Principal point Y axis offset (oy) = 0.000000px\n"
-            + "Relative position flag = 1\n"
-            + "Baseline distance = 20.000000mm\n"
-            + "Main sensor mirror and flip setting = 3\n"
-            + "Aux sensor mirror and flip setting = 3\n"
-            + "Module orientation during calibration = 0\n"
-            + "Rotation flag = 0\n"
-            + "Main Normalized Focal length = 1000.0px\n"
-            + "Aux Normalized Focal length = 1000.0px";
-
     private static boolean mLibLoaded;
+    private static CamSystemCalibrationData mOtpCalibData;
     private static ClearSightNativeEngine mInstance;
 
     private Image mRefColorImage;
@@ -104,6 +82,10 @@ public class ClearSightNativeEngine {
     public static ClearSightNativeEngine getInstance() {
         createInstance();
         return mInstance;
+    }
+
+    public static void setOtpCalibData(CamSystemCalibrationData calibData) {
+        mOtpCalibData = calibData;
     }
 
     public boolean isLibLoaded() {
@@ -133,7 +115,7 @@ public class ClearSightNativeEngine {
         mRefColorImage = reference;
 
         if (mRefColorImage != null) {
-            Log.e(TAG, "setRefColorImage");
+            Log.d(TAG, "setRefColorImage");
             mSrcColor.add(new SourceImage(mRefColorImage.getPlanes()[Y_PLANE]
                     .getBuffer(), mRefColorImage.getPlanes()[VU_PLANE]
                             .getBuffer(), new int[] { 0, 0, 0, 0, 0 }));
@@ -149,7 +131,7 @@ public class ClearSightNativeEngine {
         mRefMonoImage = reference;
 
         if (mRefMonoImage != null) {
-            Log.e(TAG, "setRefMonoImage");
+            Log.d(TAG, "setRefMonoImage");
             mSrcMono.add(new SourceImage(mRefMonoImage.getPlanes()[Y_PLANE]
                     .getBuffer(), null, new int[] { 0, 0, 0, 0, 0 }));
         }
@@ -206,7 +188,7 @@ public class ClearSightNativeEngine {
         // check data validity
         if (mSrcColor.size() != mSrcMono.size()) {
             // mis-match in num images
-            Log.e(TAG, "processImage - numImages mismatch - bayer: "
+            Log.d(TAG, "processImage - numImages mismatch - bayer: "
                     + mSrcColor.size() + ", mono: " + mSrcMono.size());
             return null;
         }
@@ -218,7 +200,7 @@ public class ClearSightNativeEngine {
         ByteBuffer[] srcMonoY = new ByteBuffer[numImages];
         int[][] metadataMono = new int[numImages][];
 
-        Log.e(TAG, "processImage - numImages: " + numImages);
+        Log.d(TAG, "processImage - numImages: " + numImages);
 
         for (int i = 0; i < numImages; i++) {
             SourceImage color = mSrcColor.get(i);
@@ -240,12 +222,15 @@ public class ClearSightNativeEngine {
                 .getBuffer().capacity());
         int[] roiRect = new int[4];
 
-        Log.e(TAG, "processImage - refImage size - y: "
+        Log.d(TAG, "processImage - refImage size - y: "
                 + colorPlanes[Y_PLANE].getBuffer().capacity()
                 + " vu: " + colorPlanes[VU_PLANE].getBuffer().capacity());
 
-        Log.e(TAG, "processImage - dst size - y: "
+        Log.d(TAG, "processImage - dst size - y: "
                 + dstY.capacity() + " vu: " + dstVU.capacity());
+
+        String otp_string = mOtpCalibData.toString();
+        Log.d(TAG, "processImage - otp_calib: " + otp_string);
 
         boolean result = nativeClearSightProcess(numImages, srcColorY, srcColorVU,
                 metadataColor, mRefColorImage.getWidth(),
@@ -253,7 +238,7 @@ public class ClearSightNativeEngine {
                 colorPlanes[Y_PLANE].getRowStride(),
                 colorPlanes[VU_PLANE].getRowStride(), srcMonoY, metadataMono,
                 mRefMonoImage.getWidth(), mRefMonoImage.getHeight(),
-                monoPlanes[Y_PLANE].getRowStride(), otp_calib.getBytes(), dstY, dstVU,
+                monoPlanes[Y_PLANE].getRowStride(), otp_string.getBytes(), dstY, dstVU,
                 colorPlanes[Y_PLANE].getRowStride(),
                 colorPlanes[VU_PLANE].getRowStride(), roiRect);
 
@@ -331,6 +316,192 @@ public class ClearSightNativeEngine {
 
             mImage.compressToJpeg(mRoiRect, 100, baos);
             return baos.toByteArray();
+        }
+    }
+
+    public static class CamSensorCalibrationData {
+        /* Focal length in pixels @ calibration resolution.*/
+        float normalized_focal_length;
+        /* Native sensor resolution W that was used to capture calibration image */
+        short native_sensor_resolution_width;
+        /* Native sensor resolution H that was used to capture calibration image */
+        short native_sensor_resolution_height;
+        /* Image size W used internally by calibration tool */
+        short calibration_sensor_resolution_width;
+        /* Image size H used internally by calibration tool */
+        short calibration_sensor_resolution_height;
+        /* Focal length ratio @ Calibration */
+        float focal_length_ratio;
+
+        private CamSensorCalibrationData() {}
+
+        public static CamSensorCalibrationData createFromBytes(byte[] bytes) {
+            final ByteBuffer buf = ByteBuffer.wrap(bytes);
+            return createFromByteBuff(buf);
+        }
+
+        public static CamSensorCalibrationData createFromByteBuff(ByteBuffer buf) {
+            final CamSensorCalibrationData data = new CamSensorCalibrationData();
+
+            data.normalized_focal_length = buf.getFloat();
+            data.native_sensor_resolution_width = buf.getShort();
+            data.native_sensor_resolution_height = buf.getShort();
+            data.calibration_sensor_resolution_width = buf.getShort();
+            data.calibration_sensor_resolution_height = buf.getShort();
+            data.focal_length_ratio = buf.getFloat();
+
+            return data;
+        }
+    }
+
+    public static class CamSystemCalibrationData {
+        private static final String[] CALIB_FMT_STRINGS = {
+            "Calibration OTP format version = %x\n",
+            "Main Native Sensor Resolution width = %dpx\n",
+            "Main Native Sensor Resolution height = %dpx\n",
+            "Main Calibration Resolution width = %dpx\n",
+            "Main Calibration Resolution height = %dpx\n",
+            "Main Focal length ratio = %f\n",
+            "Aux Native Sensor Resolution width = %dpx\n",
+            "Aux Native Sensor Resolution height = %dpx\n",
+            "Aux Calibration Resolution width = %dpx\n",
+            "Aux Calibration Resolution height = %dpx\n",
+            "Aux Focal length ratio = %f\n",
+            "Relative Rotation matrix [0] through [8] = %s\n",
+            "Relative Geometric surface parameters [0] through [31] = %s\n",
+            "Relative Principal point X axis offset (ox) = %fpx\n",
+            "Relative Principal point Y axis offset (oy) = %fpx\n",
+            "Relative position flag = %d\n",
+            "Baseline distance = %fmm\n",
+            "Main sensor mirror and flip setting = %d\n",
+            "Aux sensor mirror and flip setting = %d\n",
+            "Module orientation during calibration = %d\n",
+            "Rotation flag = %d\n",
+            "Main Normalized Focal length = %fpx\n",
+            "Aux Normalized Focal length = %fpx"
+        };
+
+        /* Version information */
+        int calibration_format_version;
+
+        /* Main Camera Sensor specific calibration */
+        CamSensorCalibrationData  main_cam_specific_calibration;
+        /* Aux Camera Sensor specific calibration */
+        CamSensorCalibrationData  aux_cam_specific_calibration;
+
+        /* Relative viewpoint matching matrix w.r.t Main */
+        float[] relative_rotation_matrix = new float[9];
+        /* Relative geometric surface description parameters */
+        float[] relative_geometric_surface_parameters = new float[32];
+
+        /* Relative offset of sensor center from optical axis along horizontal dimension */
+        float relative_principle_point_x_offset;
+        /* Relative offset of sensor center from optical axis along vertical dimension */
+        float relative_principle_point_y_offset;
+
+        /* 0=Main Camera is on the left of Aux; 1=Main Camera is on the right of Aux */
+        short relative_position_flag;
+        /* Camera separation in mm */
+        float relative_baseline_distance;
+
+        /* calibration orientation fields */
+        short main_sensor_mirror_and_flip_setting;
+        short aux_sensor_mirror_and_flip_setting;
+        short module_orientation_during_calibration;
+        short rotation_flag;
+
+        private CamSystemCalibrationData() {}
+
+        public static CamSystemCalibrationData createFromBytes(byte[] bytes) {
+            if(bytes == null)
+                return null;
+
+            final ByteBuffer buf = ByteBuffer.wrap(bytes);
+            buf.order(ByteOrder.LITTLE_ENDIAN);
+            CamSystemCalibrationData data = createFromByteBuff(buf);
+
+            if(DEBUG) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("OTP Calib Data:");
+                for(int i=0; i<bytes.length; i++) {
+                    if(i%16 == 0)
+                        sb.append("\n");
+                    sb.append(String.format("%02X ", bytes[i]));
+                }
+                Log.d(TAG, sb.toString());
+                Log.d(TAG, "Parsed OTP DATA:\n" + data.toString());
+            }
+
+            return data;
+        }
+
+        public static CamSystemCalibrationData createFromByteBuff(ByteBuffer buf) {
+            final CamSystemCalibrationData data = new CamSystemCalibrationData();
+
+            data.calibration_format_version = buf.getInt();
+            data.main_cam_specific_calibration = CamSensorCalibrationData.createFromByteBuff(buf);
+            data.aux_cam_specific_calibration = CamSensorCalibrationData.createFromByteBuff(buf);
+
+            for(int i=0; i<9; i++)
+                data.relative_rotation_matrix[i] = buf.getFloat();
+
+            for(int i=0; i<32; i++)
+                data.relative_geometric_surface_parameters[i] = buf.getFloat();
+
+            data.relative_principle_point_x_offset = buf.getFloat();
+            data.relative_principle_point_y_offset = buf.getFloat();
+            data.relative_position_flag = buf.getShort();
+            data.relative_baseline_distance = buf.getFloat();
+
+            data.main_sensor_mirror_and_flip_setting = buf.getShort();
+            data.aux_sensor_mirror_and_flip_setting = buf.getShort();
+            data.module_orientation_during_calibration = buf.getShort();
+            data.rotation_flag = buf.getShort();
+
+            return data;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format(CALIB_FMT_STRINGS[0], this.calibration_format_version));
+
+            sb.append(String.format(CALIB_FMT_STRINGS[1], this.main_cam_specific_calibration.native_sensor_resolution_width));
+            sb.append(String.format(CALIB_FMT_STRINGS[2], this.main_cam_specific_calibration.native_sensor_resolution_height));
+            sb.append(String.format(CALIB_FMT_STRINGS[3], this.main_cam_specific_calibration.calibration_sensor_resolution_width));
+            sb.append(String.format(CALIB_FMT_STRINGS[4], this.main_cam_specific_calibration.calibration_sensor_resolution_height));
+            sb.append(String.format(CALIB_FMT_STRINGS[5], this.main_cam_specific_calibration.focal_length_ratio));
+
+            sb.append(String.format(CALIB_FMT_STRINGS[6], this.aux_cam_specific_calibration.native_sensor_resolution_width));
+            sb.append(String.format(CALIB_FMT_STRINGS[7], this.aux_cam_specific_calibration.native_sensor_resolution_height));
+            sb.append(String.format(CALIB_FMT_STRINGS[8], this.aux_cam_specific_calibration.calibration_sensor_resolution_width));
+            sb.append(String.format(CALIB_FMT_STRINGS[9], this.aux_cam_specific_calibration.calibration_sensor_resolution_height));
+            sb.append(String.format(CALIB_FMT_STRINGS[10], this.aux_cam_specific_calibration.focal_length_ratio));
+
+            sb.append(String.format(CALIB_FMT_STRINGS[11], buildCommaSeparatedString(this.relative_rotation_matrix)));
+            sb.append(String.format(CALIB_FMT_STRINGS[12], buildCommaSeparatedString(this.relative_geometric_surface_parameters)));
+
+            sb.append(String.format(CALIB_FMT_STRINGS[13], this.relative_principle_point_x_offset));
+            sb.append(String.format(CALIB_FMT_STRINGS[14], this.relative_principle_point_y_offset));
+            sb.append(String.format(CALIB_FMT_STRINGS[15], this.relative_position_flag));
+            sb.append(String.format(CALIB_FMT_STRINGS[16], this.relative_baseline_distance));
+            sb.append(String.format(CALIB_FMT_STRINGS[17], this.main_sensor_mirror_and_flip_setting));
+            sb.append(String.format(CALIB_FMT_STRINGS[18], this.aux_sensor_mirror_and_flip_setting));
+            sb.append(String.format(CALIB_FMT_STRINGS[19], this.module_orientation_during_calibration));
+            sb.append(String.format(CALIB_FMT_STRINGS[20], this.rotation_flag));
+            sb.append(String.format(CALIB_FMT_STRINGS[21], this.main_cam_specific_calibration.normalized_focal_length));
+            sb.append(String.format(CALIB_FMT_STRINGS[22], this.aux_cam_specific_calibration.normalized_focal_length));
+
+            return sb.toString();
+        }
+
+        private String buildCommaSeparatedString(float[] array) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("%f", array[0]));
+            for(int i=1; i<array.length; i++) {
+                sb.append(String.format(",%f", array[i]));
+            }
+            return sb.toString();
         }
     }
 }
