@@ -16,7 +16,6 @@
 
 package com.android.camera;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.ByteOrder;
 
@@ -25,9 +24,6 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
-import android.hardware.camera2.TotalCaptureResult;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -36,13 +32,7 @@ import android.os.IBinder;
 import android.provider.MediaStore.Video;
 import android.util.Log;
 
-import com.android.camera.PhotoModule;
 import com.android.camera.exif.ExifInterface;
-
-import java.io.File;
-
-import org.codeaurora.snapcam.filter.ClearSightNativeEngine.ClearsightImage;
-
 import com.android.camera.mpo.MpoData;
 import com.android.camera.mpo.MpoImageData;
 import com.android.camera.mpo.MpoInterface;
@@ -101,9 +91,9 @@ public class MediaSaveService extends Service {
         return (mMemoryUse >= SAVE_TASK_MEMORY_LIMIT);
     }
 
-    public void addMpoImage(final ClearsightImage csImage,
-            final YuvImage bayerImg, final YuvImage monoImg,
-            TotalCaptureResult bayerResult, TotalCaptureResult monoResult,
+    public void addMpoImage(final byte[] csImage,
+            final byte[] bayerImg, final byte[] monoImg,
+            int width, int height,
             String title, long date, Location loc, int orientation,
             OnMediaSavedListener l, ContentResolver resolver,
             String pictureFormat) {
@@ -113,12 +103,12 @@ public class MediaSaveService extends Service {
         }
 
         MpoSaveTask t = new MpoSaveTask(csImage, bayerImg, monoImg,
-                bayerResult, monoResult, title, date, loc, orientation, l,
+                width, height, title, date, loc, orientation, l,
                 resolver, pictureFormat);
 
         long size = (csImage == null ? 0
-                : csImage.getDataLength())
-                + bayerImg.getYuvData().length + monoImg.getYuvData().length;
+                : csImage.length)
+                + bayerImg.length + monoImg.length;
         mMemoryUse += size;
         if (isQueueFull()) {
             onQueueFull();
@@ -181,23 +171,20 @@ public class MediaSaveService extends Service {
     }
 
     private class MpoSaveTask extends AsyncTask<Void, Void, Uri> {
-        private ClearsightImage csImage;
-        private YuvImage bayerImage;
-        private YuvImage monoImage;
+        private byte[] csImage;
+        private byte[] bayerImage;
+        private byte[] monoImage;
         private String title;
         private long date;
         private Location loc;
         private int width, height;
         private int orientation;
-        private TotalCaptureResult bayerResult;
-        private TotalCaptureResult monoResult;
         private ContentResolver resolver;
         private OnMediaSavedListener listener;
         private String pictureFormat;
 
-        public MpoSaveTask(ClearsightImage csImage, YuvImage bayerImg,
-                YuvImage monoImg, TotalCaptureResult bayerResult,
-                TotalCaptureResult monoResult, String title, long date,
+        public MpoSaveTask(byte[] csImage, byte[] bayerImg,
+                byte[] monoImg, int width, int height, String title, long date,
                 Location loc, int orientation, OnMediaSavedListener listener,
                 ContentResolver resolver, String pictureFormat) {
             this.csImage = csImage;
@@ -206,11 +193,9 @@ public class MediaSaveService extends Service {
             this.title = title;
             this.date = date;
             this.loc = loc;
-            this.width = bayerImg.getWidth();
-            this.height = bayerImg.getHeight();
+            this.width = width;
+            this.height = height;
             this.orientation = orientation;
-            this.bayerResult = bayerResult;
-            this.monoResult = monoResult;
             this.resolver = resolver;
             this.listener = listener;
             this.pictureFormat = pictureFormat;
@@ -220,23 +205,17 @@ public class MediaSaveService extends Service {
         protected Uri doInBackground(Void... v) {
             // encode jpeg and add exif for all images
             MpoData mpo = new MpoData();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bayerImage.compressToJpeg(new Rect(0, 0, bayerImage.getWidth(),
-                    bayerImage.getHeight()), 100, baos);
-            MpoImageData bayer = new MpoImageData(baos.toByteArray(),
+            MpoImageData bayer = new MpoImageData(bayerImage,
                     ByteOrder.BIG_ENDIAN);
 
-            baos.reset();
-            monoImage.compressToJpeg(new Rect(0, 0, monoImage.getWidth(),
-                    monoImage.getHeight()), 100, baos);
-            MpoImageData mono = new MpoImageData(baos.toByteArray(),
+            MpoImageData mono = new MpoImageData(monoImage,
                     ByteOrder.BIG_ENDIAN);
 
             if (csImage == null) {
                 mpo.addAuxiliaryMpoImage(mono);
                 mpo.setPrimaryMpoImage(bayer);
             } else {
-                MpoImageData cs = new MpoImageData(csImage.compressToJpeg(),
+                MpoImageData cs = new MpoImageData(csImage,
                         ByteOrder.BIG_ENDIAN);
 
                 mpo.addAuxiliaryMpoImage(bayer);
@@ -262,9 +241,9 @@ public class MediaSaveService extends Service {
                 listener.onMediaSaved(uri);
             boolean previouslyFull = isQueueFull();
             long size = (csImage == null ? 0
-                    : csImage.getDataLength())
-                    + bayerImage.getYuvData().length
-                    + monoImage.getYuvData().length;
+                    : csImage.length)
+                    + bayerImage.length
+                    + monoImage.length;
             mMemoryUse -= size;
             if (isQueueFull() != previouslyFull)
                 onQueueAvailable();
