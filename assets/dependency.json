@@ -1,0 +1,21 @@
+{
+  "pref_camera2_scenemode_key":
+  {
+    "_comment":"Copyright (c) 2016, The Linux Foundation. All rights reserved.\nNot a Contribution.\nCopyright (C) 2013 The Android Open Source Project\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\nhttp://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software\n    distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   See the License for the specific language governing permissions and\nlimitations under the License.",
+    "default":
+      {"pref_camera2_coloreffect_key":"0",
+      "pref_camera2_flashmode_key":"2",
+      "pref_camera2_whitebalance_key":"1",
+      "pref_camera2_exposure_key":"0",
+      "pref_camera2_clearsight_key":"off",
+      "pref_camera2_mono_preview_key":"off"}
+    ,
+    "100":
+      {"pref_camera2_longshot_key":"off",
+      "pref_camera2_mono_only_key":"off"}
+    ,
+    "0":
+      {"pref_camera2_clearsight_key":"off",
+      "pref_camera2_mono_preview_key":"off"}
+  }
+}
