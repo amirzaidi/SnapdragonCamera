@@ -150,6 +150,11 @@ public class SharpshooterFilter implements ImageFilter{
         return mIsSupported;
     }
 
+    @Override
+    public boolean isFrameListener() {
+        return false;
+    }
+
     public static boolean isSupportedStatic() {
         return mIsSupported;
     }

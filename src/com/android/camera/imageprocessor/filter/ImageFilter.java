@@ -71,4 +71,6 @@ public interface ImageFilter {
             this.stride = stride;
         }
     }
+
+    boolean isFrameListener();
 }

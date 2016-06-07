@@ -120,6 +120,11 @@ public class BeautificationFilter implements ImageFilter {
         return mIsSupported;
     }
 
+    @Override
+    public boolean isFrameListener() {
+        return false;
+    }
+
     private native int nativeBeautificationProcess(ByteBuffer yB, ByteBuffer vuB,
                         int width, int height, int stride, int fleft, int ftop, int fright, int fbottom);
 

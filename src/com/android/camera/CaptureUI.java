@@ -55,6 +55,7 @@ import com.android.camera.ui.RenderOverlay;
 import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
+import com.android.camera.ui.TrackingFocusRenderer;
 import com.android.camera.ui.ZoomRenderer;
 import com.android.camera.util.CameraUtil;
 
@@ -100,7 +101,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_FACE_DETECTION,
             SettingsManager.KEY_VIDEO_FLASH_MODE,
             SettingsManager.KEY_VIDEO_DURATION,
-            SettingsManager.KEY_VIDEO_QUALITY
+            SettingsManager.KEY_VIDEO_QUALITY,
+            SettingsManager.KEY_TRACKINGFOCUS
     };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_REDEYE_REDUCTION,
@@ -135,9 +137,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private PreviewGestures mGestures;
     private boolean mUIhidden = false;
     private SettingsManager mSettingsManager;
-
+    private TrackingFocusRenderer mTrackingFocusRenderer;
     private ImageView mThumbnail;
     private Camera2FaceView mFaceView;
+    private Point mDisplaySize = new Point();
 
     private SurfaceHolder.Callback callback = new SurfaceHolder.Callback() {
 
@@ -152,6 +155,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             Log.v(TAG, "surfaceCreated");
             mSurfaceHolder = holder;
             previewUIReady();
+            if(mTrackingFocusRenderer != null && mTrackingFocusRenderer.isVisible()) {
+                mTrackingFocusRenderer.setSurfaceDim(mSurfaceView.getLeft(), mSurfaceView.getTop(), mSurfaceView.getRight(), mSurfaceView.getBottom());
+            }
         }
 
         @Override
@@ -229,6 +235,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mModule.onPreviewUIDestroyed();
     }
 
+    public TrackingFocusRenderer getTrackingFocusRenderer() {
+        return mTrackingFocusRenderer;
+    }
+
+    public Point getDisplaySize() {
+        return mDisplaySize;
+    }
+
     public CaptureUI(CameraActivity activity, CaptureModule module, View parent) {
         mActivity = activity;
         mModule = module;
@@ -268,6 +282,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initFilterModeButton();
         initSceneModeButton();
         initSwitchCamera();
+
+        mTrackingFocusRenderer = new TrackingFocusRenderer(mActivity, mModule, this);
+        mRenderOverlay.addRenderer(mTrackingFocusRenderer);
+        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
+        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+            mTrackingFocusRenderer.setVisible(true);
+        } else {
+            mTrackingFocusRenderer.setVisible(false);
+        }
 
         mSwitcher = (ModuleSwitcher) mRootView.findViewById(R.id.camera_switcher);
         mSwitcher.setCurrentIndex(ModuleSwitcher.PHOTO_MODULE_INDEX);
@@ -316,11 +339,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
         mFaceView = (Camera2FaceView) mRootView.findViewById(R.id.face_view);
 
-        Point size = new Point();
-        mActivity.getWindowManager().getDefaultDisplay().getSize(size);
-        mScreenRatio = CameraUtil.determineRatio(size.x, size.y);
+        mActivity.getWindowManager().getDefaultDisplay().getSize(mDisplaySize);
+        mScreenRatio = CameraUtil.determineRatio(mDisplaySize.x, mDisplaySize.y);
         if (mScreenRatio == CameraUtil.RATIO_16_9) {
-            int l = size.x > size.y ? size.x : size.y;
+            int l = mDisplaySize.x > mDisplaySize.y ? mDisplaySize.x : mDisplaySize.y;
             int tm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_top_margin);
             int bm = mActivity.getResources().getDimensionPixelSize(R.dimen.preview_bottom_margin);
             mTopMargin = l / 4 * tm / (tm + bm);
@@ -366,6 +388,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initializeSettingMenu();
         initSceneModeButton();
         initFilterModeButton();
+        if(mTrackingFocusRenderer != null) {
+            mTrackingFocusRenderer.setVisible(true);
+        }
     }
 
     // called from onResume but only the first time
@@ -1319,6 +1344,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         cancelCountDown();
         collapseCameraControls();
         if (mFaceView != null) mFaceView.clear();
+        if(mTrackingFocusRenderer != null) {
+            mTrackingFocusRenderer.setVisible(false);
+        }
     }
 
     public boolean collapseCameraControls() {
@@ -1331,6 +1359,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     private FocusIndicator getFocusIndicator() {
+        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
+        if (trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+            if (mPieRenderer != null) {
+                mPieRenderer.clear();
+            }
+            return mTrackingFocusRenderer;
+        }
+
         return (mFaceView != null && mFaceView.faceExists()) ? mFaceView : mPieRenderer;
     }
 
