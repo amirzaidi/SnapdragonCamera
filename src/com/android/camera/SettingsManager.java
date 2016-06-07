@@ -518,6 +518,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (pictureSize != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     pictureSize, getSupportedPictureSize(cameraId));
+            CameraSettings.filterSimilarPictureSize(mPreferenceGroup, pictureSize);
         }
 
         if (exposure != null) buildExposureCompensation(cameraId);
