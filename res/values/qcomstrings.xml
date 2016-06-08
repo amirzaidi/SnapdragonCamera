@@ -956,11 +956,8 @@
     <string name="pref_camera2_camera2_value_enable" translatable="false">enable</string>
     <string name="pref_camera2_camera2_value_disable" translatable="false">disable</string>
 
-    <string name="pref_camera2_dual_camera_title" translatable="true">Dual Camera Mode</string>
-    <string name="pref_camera2_dual_camera_entry_dual" translatable="true">Dual-camera Linked</string>
-    <string name="pref_camera2_dual_camera_entry_bayer" translatable="true">Single Bayer Camera</string>
-    <string name="pref_camera2_dual_camera_entry_mono" translatable="true">Single Mono Camera</string>
-    <string name="pref_camera2_dual_camera_default" translatable="false">1</string>
+    <string name="pref_camera2_mono_only_title" translatable="true">Mono Only</string>
+    <string name="pref_camera2_mono_only_default" translatable="false">off</string>
 
     <string name="pref_camera2_mono_preview_title" translatable="true">Mono Preview</string>
     <string name="pref_camera2_mono_preview_entry_on" translatable="true">On</string>
@@ -970,7 +967,7 @@
     <string name="pref_camera2_mono_preview_value_off" translatable="false">off</string>
 
     <string name="pref_camera2_clearsight_title" translatable="true">ClearSight</string>
-    <string name="pref_camera2_clearsight_default" translatable="false">off</string>
+    <string name="pref_camera2_clearsight_default" translatable="false">on</string>
     <string name="pref_camera2_clearsight_entry_on" translatable="false">On</string>
     <string name="pref_camera2_clearsight_entry_off" translatable="false">Off</string>
 
@@ -981,5 +978,8 @@
     <string name="clearsight_capture_fail">ClearSight capture failed</string>
 
     <string name="pref_camera2_scenemode_default" translatable="false">0</string>
+    <string name="pref_camera2_whitebalance_default" translatable="false">1</string>
+    <string name="pref_camera2_coloreffect_default" translatable="false">0</string>
+    <string name="pref_camera2_flashmode_default" translatable="false">2</string>
 </resources>
 

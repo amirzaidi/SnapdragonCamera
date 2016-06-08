@@ -47,7 +47,9 @@ import org.codeaurora.snapcam.R;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +64,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_FLASH_MODE = "pref_camera2_flashmode_key";
     public static final String KEY_WHITE_BALANCE = "pref_camera2_whitebalance_key";
     public static final String KEY_CAMERA2 = "pref_camera2_camera2_key";
-    public static final String KEY_DUAL_CAMERA = "pref_camera2_dual_camera_key";
+    public static final String KEY_MONO_ONLY = "pref_camera2_mono_only_key";
     public static final String KEY_MONO_PREVIEW = "pref_camera2_mono_preview_key";
     public static final String KEY_CLEARSIGHT = "pref_camera2_clearsight_key";
     public static final String KEY_FILTER_MODE = "pref_camera2_filter_mode_key";
@@ -75,6 +77,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
     public static final String KEY_TIMER = "pref_camera2_timer_key";
     public static final String KEY_LONGSHOT = "pref_camera2_longshot_key";
+    public static final String KEY_INITIAL_CAMERA = "pref_camera2_initial_camera_key";
     private static final String TAG = "SnapCam_SettingsManager";
     private static final List<CameraCharacteristics> mCharacteristics = new ArrayList<>();
     private static final int NOT_FOUND = -1;
@@ -86,12 +89,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private Context mContext;
     private PreferenceGroup mPreferenceGroup;
     private ComboPreferences mPreferences;
-    private Map<String, List<String>> mDependendsOnMap;
+    private Map<String, Set<String>> mDependendsOnMap;
+    private boolean mIsMonoCameraPresent = false;
+    private boolean mIsFrontCameraPresent = false;
 
     private SettingsManager(Context context) {
         mListeners = new ArrayList<>();
-        mValuesMap = new HashMap<>();
-        mDependendsOnMap = new HashMap<>();
         mContext = context;
         mPreferences = new ComboPreferences(mContext);
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mContext);
@@ -100,10 +103,19 @@ public class SettingsManager implements ListMenu.SettingsListener {
         try {
             String[] cameraIdList = manager.getCameraIdList();
             for (int i = 0; i < cameraIdList.length; i++) {
-                //TODO: determine front/back/bayer/mono and their ids
                 String cameraId = cameraIdList[i];
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
+                Byte monoOnly = characteristics.get(CaptureModule.MetaDataMonoOnlyKey);
+                if (monoOnly == 1) {
+                    CaptureModule.MONO_ID = i;
+                    mIsMonoCameraPresent = true;
+                }
+                int facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                    CaptureModule.FRONT_ID = i;
+                    mIsFrontCameraPresent = true;
+                }
                 mCharacteristics.add(i, characteristics);
             }
         } catch (CameraAccessException e) {
@@ -138,6 +150,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public void onSettingChanged(ListPreference pref) {
         String key = pref.getKey();
         List changed = checkDependencyAndUpdate(key);
+        if (changed == null) return;
         notifyListeners(changed);
     }
 
@@ -159,7 +172,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         PreferenceInflater inflater = new PreferenceInflater(mContext);
         mPreferenceGroup =
                 (PreferenceGroup) inflater.inflate(R.xml.capture_preferences);
-
+        mValuesMap = new HashMap<>();
+        mDependendsOnMap = new HashMap<>();
         filterPreferences(cameraId);
         initDepedencyTable();
         initializeValueMap();
@@ -169,18 +183,30 @@ public class SettingsManager implements ListMenu.SettingsListener {
         for (int i = 0; i < mPreferenceGroup.size(); i++) {
             ListPreference pref = (ListPreference) mPreferenceGroup.get(i);
             String baseKey = pref.getKey();
-            CharSequence[] dependencyList = pref.getDependencyList();
+            CharSequence[] dependencyList = null;
+            if (!specialDepedency(baseKey)) dependencyList = pref.getDependencyList();
+            else {
+                List<KeyValue> keyValue = getSpecialDependencyList(pref);
+                if (keyValue.size() > 0) {
+                    dependencyList = new CharSequence[keyValue.size()];
+                    int k = 0;
+                    for (KeyValue kv: keyValue) {
+                        dependencyList[k++] = kv.key;
+                    }
+                }
+                pref.setDependencyList(dependencyList);
+            }
             if (dependencyList != null) {
                 for (int j = 0; j < dependencyList.length; j++) {
                     String key = dependencyList[j].toString();
                     pref = mPreferenceGroup.findPreference(key);
                     if (pref == null) continue; //filtered?
-                    List list = mDependendsOnMap.get(key);
-                    if (list == null) {
-                        list = new ArrayList<String>();
+                    Set set = mDependendsOnMap.get(key);
+                    if (set == null) {
+                        set = new HashSet<>();
                     }
-                    list.add(baseKey);
-                    mDependendsOnMap.put(key, list);
+                    set.add(baseKey);
+                    mDependendsOnMap.put(key, set);
                 }
             }
         }
@@ -191,25 +217,36 @@ public class SettingsManager implements ListMenu.SettingsListener {
         for (int i = 0; i < mPreferenceGroup.size(); i++) {
             ListPreference pref = (ListPreference) mPreferenceGroup.get(i);
             String key = pref.getKey();
-            if (mDependendsOnMap.get(key) != null) {
+            if (mDependendsOnMap.get(key) != null && mDependendsOnMap.get(key).size() != 0) {
                 processLater.add(key);
                 continue;
             }
             Values values = new Values(pref.getValue(), null);
             mValuesMap.put(pref.getKey(), values);
         }
-
         for (String keyToProcess : processLater) {
-            List<String> dependsOnList = mDependendsOnMap.get(keyToProcess);
+            Set<String> dependsOnSet = mDependendsOnMap.get(keyToProcess);
             boolean active = true;
-            for (String s : dependsOnList) {
-                if (isOptionOn(s)) active = false;
+            List<KeyValue> keyValue = null;
+            for (String s : dependsOnSet) {
+                if (specialDepedency(s) || isOptionOn(s)) {
+                    active = false;
+                    if (specialDepedency(s)) {
+                        keyValue = getSpecialDependencyList(s);
+                    }
+                }
                 break;
             }
             ListPreference pref = mPreferenceGroup.findPreference(keyToProcess);
             Values values = new Values(pref.getValue(), null);
             if (!active) {
-                values.overriddenValue = pref.getOffValue();
+                String offValue = pref.getOffValue();
+                if (keyValue != null) {
+                    String matchValue = getMatchingValue(keyToProcess, keyValue);
+                    if (matchValue != null)
+                        offValue = matchValue;
+                }
+                values.overriddenValue = offValue;
             }
             mValuesMap.put(keyToProcess, values);
         }
@@ -221,47 +258,126 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
         String key = changedPref.getKey();
         String value = changedPref.getValue();
+        boolean special = specialDepedency(changedPrefKey);
+        String prevValue = getValue(changedPrefKey);
+        if (value.equals(prevValue)) return null;
+
         boolean turnedOff = value.equals(changedPref.getOffValue());
+        boolean updateBackDependency = false;
         List<SettingState> changed = new ArrayList();
         Values values = new Values(value, null);
         mValuesMap.put(key, values);
         changed.add(new SettingState(key, values));
-        CharSequence[] dependencyList = changedPref.getDependencyList();
 
-        if (!turnedOff) { // turned on
-            if (dependencyList != null) {
-                for (int j = 0; j < dependencyList.length; j++) {
-                    key = dependencyList[j].toString();
-                    ListPreference pref = mPreferenceGroup.findPreference(key);
-                    if (pref == null) continue;
-                    values = mValuesMap.get(key);
-                    if (values != null && values.overriddenValue != null) continue;
-                    Values newValue = new Values(pref.getValue(), pref.getOffValue());
-                    mValuesMap.put(key, newValue);
-                    changed.add(new SettingState(key, newValue));
-                }
-            }
-        } else {
-            if (dependencyList != null) {
-                for (int j = 0; j < dependencyList.length; j++) {
-                    key = dependencyList[j].toString();
-                    List<String> dependsOnList = mDependendsOnMap.get(key);
-                    if (dependsOnList == null) continue;
-                    boolean active = true;
-                    for (String s : dependsOnList) {
-                        if (isOptionOn(s)) active = false;
-                        break;
-                    }
-                    if (active) {
-                        values = mValuesMap.get(key);
-                        values.overriddenValue = null;
-                        mValuesMap.put(key, values);
-                        changed.add(new SettingState(key, values));
-                    }
+        Set<CharSequence> turnOn = new HashSet<>();
+        Set<CharSequence> turnOff = new HashSet<>();
+
+        CharSequence[] originalDependencyList = changedPref.getDependencyList();
+        CharSequence[] dependencyList = null;
+        List<KeyValue> keyValue = null;
+        if (special) {
+            keyValue = getSpecialDependencyList(changedPref);
+            if (keyValue.size() > 0) {
+                dependencyList = new CharSequence[keyValue.size()];
+                int k = 0;
+                for (KeyValue kv : keyValue) {
+                    dependencyList[k++] = kv.key;
                 }
             }
         }
+
+        if (special) {
+            boolean same = Arrays.equals(originalDependencyList, dependencyList);
+            if (!same) {
+                changedPref.setDependencyList(dependencyList);
+                if (originalDependencyList != null)
+                    for (CharSequence c : originalDependencyList) {
+                        turnOn.add(c);
+                    }
+                if (dependencyList != null)
+                    for (CharSequence c : dependencyList) {
+                        turnOff.add(c);
+                    }
+
+                if (originalDependencyList != null)
+                    for (CharSequence c : originalDependencyList) {
+                        turnOff.remove(c);
+                    }
+                if (dependencyList != null)
+                    for (CharSequence c : dependencyList) {
+                        turnOn.remove(c);
+                    }
+                updateBackDependency = true;
+            }
+        } else {
+            if (originalDependencyList != null) {
+                for (CharSequence c : originalDependencyList) {
+                    if (turnedOff) turnOn.add(c);
+                    else turnOff.add(c);
+                }
+            }
+        }
+
+        for (CharSequence c : turnOn) {// turn back on
+            key = c.toString();
+            Set<String> dependsOnSet = mDependendsOnMap.get(key);
+            if (dependsOnSet == null) continue;
+            boolean active = true;
+            for (String s : dependsOnSet) {
+                if (s.equals(changedPrefKey)) continue;
+                if (isOptionOn(s)) active = false;
+                break;
+            }
+            if (active) {
+                values = mValuesMap.get(key);
+                if (values == null) continue;
+                values.overriddenValue = null;
+                mValuesMap.put(key, values);
+                changed.add(new SettingState(key, values));
+            }
+        }
+
+        for (CharSequence c : turnOff) {// turn off logic
+            key = c.toString();
+            ListPreference pref = mPreferenceGroup.findPreference(key);
+            if (pref == null) continue;
+            values = mValuesMap.get(key);
+            if (values == null) continue;
+            if (values != null && values.overriddenValue != null) continue;
+            String offValue = pref.getOffValue();
+            if (keyValue != null) {
+                String matchValue = getMatchingValue(key, keyValue);
+                if (matchValue != null)
+                    offValue = matchValue;
+            }
+            Values newValue = new Values(pref.getValue(), offValue);
+            mValuesMap.put(key, newValue);
+            changed.add(new SettingState(key, newValue));
+        }
+
+        if (updateBackDependency) {
+            updateBackDependency(changedPrefKey, turnOn, turnOff);
+        }
+
         return changed;
+    }
+
+    private void updateBackDependency(String key, Set<CharSequence> remove, Set<CharSequence>
+            add) {
+        for (CharSequence c : remove) {
+            String currentKey = c.toString();
+            Set<String> dependsOnSet = mDependendsOnMap.get(currentKey);
+            if (dependsOnSet != null) dependsOnSet.remove(key);
+        }
+        for (CharSequence c : add) {
+            String currentKey = c.toString();
+            Set<String> dependsOnSet = mDependendsOnMap.get(currentKey);
+            if (dependsOnSet == null) {
+                dependsOnSet = new HashSet<>();
+                mDependendsOnMap.put(currentKey, dependsOnSet);
+            }
+            dependsOnSet.add(key);
+        }
     }
 
     public void registerListener(Listener listener) {
@@ -311,11 +427,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     private void updateMapAndNotify(ListPreference pref) {
         String key = pref.getKey();
-        Values values = mValuesMap.get(key);
-        values.overriddenValue = null;
-        values.value = pref.getValue();
-        mValuesMap.put(key, values);
         List changed = checkDependencyAndUpdate(key);
+        if (changed == null) return;
         notifyListeners(changed);
     }
 
@@ -355,6 +468,9 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference pictureSize = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
         ListPreference exposure = mPreferenceGroup.findPreference(KEY_EXPOSURE);
         ListPreference iso = mPreferenceGroup.findPreference(KEY_ISO);
+        ListPreference clearsight = mPreferenceGroup.findPreference(KEY_CLEARSIGHT);
+        ListPreference monoPreview = mPreferenceGroup.findPreference(KEY_MONO_PREVIEW);
+        ListPreference monoOnly = mPreferenceGroup.findPreference(KEY_MONO_ONLY);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -387,6 +503,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (iso != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     iso, getSupportedIso(cameraId));
+        }
+
+        if (!mIsMonoCameraPresent) {
+            if (clearsight != null) removePreference(mPreferenceGroup, KEY_CLEARSIGHT);
+            if (monoPreview != null) removePreference(mPreferenceGroup, KEY_MONO_PREVIEW);
+            if (monoOnly != null) removePreference(mPreferenceGroup, KEY_MONO_ONLY);
+
         }
     }
 
@@ -431,16 +554,23 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     private void buildCameraId() {
         int numOfCameras = mCharacteristics.size();
-        if (numOfCameras < 2) {
+        if (!mIsFrontCameraPresent) {
             removePreference(mPreferenceGroup, KEY_CAMERA_ID);
+            return;
         }
 
         CharSequence[] entryValues = new CharSequence[numOfCameras];
+        CharSequence[] entries = new CharSequence[numOfCameras];
         //TODO: Modify this after bayer/mono/front/back determination is done
         entryValues[0] = "" + CaptureModule.BAYER_ID;
-        entryValues[1] = "" + CaptureModule.FRONT_ID;
+        entries[0] = "BACK";
+        if (mIsFrontCameraPresent) {
+            entryValues[1] = "" + CaptureModule.FRONT_ID;
+            entries[1] = "FRONT";
+        }
         ListPreference cameraIdPref = mPreferenceGroup.findPreference(KEY_CAMERA_ID);
         cameraIdPref.setEntryValues(entryValues);
+        cameraIdPref.setEntries(entries);
     }
 
     private boolean removePreference(PreferenceGroup group, String key) {
@@ -537,6 +667,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 .CONTROL_AVAILABLE_SCENE_MODES);
         List<String> modes = new ArrayList<>();
         modes.add("0"); // need special case handle for auto scene mode
+        if (mIsMonoCameraPresent) modes.add("-5"); // need special case handle for dual mode
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }
@@ -579,10 +710,66 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return supportedIso;
     }
 
+    private boolean specialDepedency(String key) {
+        return key.equals(KEY_SCENE_MODE);
+    }
+
+    private List<KeyValue> getSpecialDependencyList(String key) {
+        ListPreference pref = mPreferenceGroup.findPreference(key);
+     return   getSpecialDependencyList(pref);
+    }
+
+    private List<KeyValue> getSpecialDependencyList(ListPreference pref) {
+        String key = pref.getKey();
+        List<KeyValue> dependency = new ArrayList<>();
+        switch (key) {
+            case KEY_SCENE_MODE:
+                String value = pref.getValue();
+                switch (value) {
+                    case "0":
+                        dependency.add(new KeyValue(KEY_CLEARSIGHT, "off"));
+                        dependency.add(new KeyValue(KEY_MONO_PREVIEW, "off"));
+                        break;
+                    case "-5":
+                        dependency.add(new KeyValue(KEY_LONGSHOT, "off"));
+                        dependency.add(new KeyValue(KEY_MONO_ONLY, "off"));
+                        break;
+                    default:
+                        dependency.add(new KeyValue(KEY_COLOR_EFFECT, "0"));
+                        dependency.add(new KeyValue(KEY_FLASH_MODE, "2"));
+                        dependency.add(new KeyValue(KEY_WHITE_BALANCE, "1"));
+                        dependency.add(new KeyValue(KEY_EXPOSURE, "0"));
+                        dependency.add(new KeyValue(KEY_CLEARSIGHT, "off"));
+                        dependency.add(new KeyValue(KEY_MONO_PREVIEW, "off"));
+                        break;
+                }
+                break;
+        }
+        return dependency;
+    }
+
     public interface Listener {
         void onSettingsChanged(List<SettingState> settings);
     }
 
+    private String getMatchingValue(String key, List<KeyValue> keyValue) {
+        for (KeyValue kv: keyValue) {
+            if (key.equals(kv.key)) {
+                return kv.value;
+            }
+        }
+        return null;
+    }
+
+    static class KeyValue {
+        String key;
+        String value;
+
+        KeyValue(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
     static class Values {
         String value;
         String overriddenValue;
