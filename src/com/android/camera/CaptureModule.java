@@ -207,6 +207,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private int mJpegFileSizeEstimation;
     private boolean mFirstPreviewLoaded;
     private int[] mPrecaptureRequestHashCode = new int[MAX_NUM_CAM];
+    private int[] mLockRequestHashCode = new int[MAX_NUM_CAM];
 
     private class MediaSaveNotifyThread extends Thread {
         private Uri uri;
@@ -318,7 +319,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                     if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
                             CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState ||
                             CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED == afState) {
+                            CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED == afState ||
+                            (mLockRequestHashCode[id] == result.getRequest().hashCode() &&
+                                    afState == CaptureResult.CONTROL_AF_STATE_INACTIVE)) {
                         // CONTROL_AE_STATE can be null on some devices
                         if (aeState == null || (aeState == CaptureResult
                                 .CONTROL_AE_STATE_CONVERGED) && isFlashOff(id)) {
@@ -453,7 +456,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private int getCameraMode() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
-        if (value != null && value.equals("-5")) return DUAL_MODE;
+        if (value != null && value.equals(SettingsManager.SCENE_MODE_DUAL_STRING)) return DUAL_MODE;
         value = mSettingsManager.getValue(SettingsManager.KEY_MONO_ONLY);
         if (value == null || !value.equals("on")) return BAYER_MODE;
         return MONO_MODE;
@@ -696,9 +699,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             builder.addTarget(getPreviewSurface(id));
 
             applySettingsForLockFocus(builder, id);
-
+            CaptureRequest request = builder.build();
+            mLockRequestHashCode[id] = request.hashCode();
             mState[id] = STATE_WAITING_LOCK;
-            mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
+            mCaptureSession[id].capture(request, mCaptureCallback, mCameraHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -770,7 +774,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
             // Orientation
             int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, rotation));
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             captureBuilder.addTarget(getPreviewSurface(id));
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
@@ -1223,6 +1227,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             initializeSecondTime();
         }
+        mUI.reInitUI();
         mActivity.updateStorageSpaceAndHint();
         estimateJpegFileSize();
         mUI.enableShutter(true);
@@ -1388,11 +1393,25 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    public boolean isTouchToFocusAllowed() {
+    public boolean isTakingPicture() {
         for (int i = 0; i < mTakingPicture.length; i++) {
-            if (mTakingPicture[i]) return false;
+            if (mTakingPicture[i]) return true;
         }
+        return false;
+    }
+
+    private boolean isTouchToFocusAllowed() {
+        if (isTakingPicture() || isSceneModeOn()) return false;
         return true;
+    }
+
+    private boolean isSceneModeOn() {
+        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        if (scene == null) return false;
+        int mode = Integer.parseInt(scene);
+        if (mode != SettingsManager.SCENE_MODE_DUAL_INT && mode != CaptureRequest
+                .CONTROL_SCENE_MODE_DISABLED) return true;
+        return false;
     }
 
     @Override
@@ -1690,6 +1709,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 updatePreview = true;
                 applyFlash(mPreviewRequestBuilder[cameraId], cameraId);
                 break;
+            case SettingsManager.KEY_ISO:
+                updatePreview = true;
+                applyIso(mPreviewRequestBuilder[cameraId]);
+                break;
         }
         return updatePreview;
     }
@@ -1720,7 +1743,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (value == null) return;
         int mode = Integer.parseInt(value);
-        if (mode != CaptureRequest.CONTROL_SCENE_MODE_DISABLED && mode != -5) {
+        if (mode != CaptureRequest.CONTROL_SCENE_MODE_DISABLED && mode !=
+                SettingsManager.SCENE_MODE_DUAL_INT) {
             request.set(CaptureRequest.CONTROL_SCENE_MODE, mode);
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_USE_SCENE_MODE);
         } else {
@@ -1945,9 +1969,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private int mCurrentMode;
+
     private boolean checkNeedToRestart(String value) {
-        if (value.equals("-5") && mCurrentMode != DUAL_MODE) return true;
-        if (!value.equals("-5") && mCurrentMode == DUAL_MODE) return true;
+        if (value.equals(SettingsManager.SCENE_MODE_DUAL_STRING) && mCurrentMode != DUAL_MODE)
+            return true;
+        if (!value.equals(SettingsManager.SCENE_MODE_DUAL_STRING) && mCurrentMode == DUAL_MODE)
+            return true;
         return false;
     }
 

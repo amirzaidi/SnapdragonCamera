@@ -83,11 +83,11 @@
     <!-- Refer to CONTROL_SCENE_MODE of Camera2 API for values
         -1 refers to ones not supported in Camera2 API
         0 is special case added for auto (meaning off)
-        -5 is for dual mode
+        100 is for dual mode (Custom-Scenemodes start from 100)
     -->
     <string-array name="pref_camera2_scenemode_entryvalues" translatable="false">
         <item>0</item>
-        <item>-5</item>
+        <item>100</item>
         <item>18</item>
         <item>-1</item>
         <item>-1</item>
