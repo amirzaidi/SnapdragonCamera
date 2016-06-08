@@ -981,5 +981,6 @@
     <string name="pref_camera2_whitebalance_default" translatable="false">1</string>
     <string name="pref_camera2_coloreffect_default" translatable="false">0</string>
     <string name="pref_camera2_flashmode_default" translatable="false">2</string>
+    <string name="pref_camera2_makeup_title" translatable="true">Makeup</string>
 </resources>
 

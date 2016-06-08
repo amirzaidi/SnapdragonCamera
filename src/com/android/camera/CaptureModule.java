@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Camera;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -39,6 +40,7 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.Face;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CameraProfile;
@@ -53,6 +55,7 @@ import android.os.Message;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -60,7 +63,9 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.Toast;
 
+import com.android.camera.imageprocessor.filter.ImageFilter;
 import com.android.camera.imageprocessor.PostProcessor;
+import com.android.camera.imageprocessor.FrameProcessor;
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
 import com.android.camera.ui.CountDownView;
@@ -75,6 +80,7 @@ import org.codeaurora.snapcam.filter.ClearSightImageProcessor;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -197,6 +203,11 @@ public class CaptureModule implements CameraModule, PhotoController,
      * A {@link Handler} for running tasks in the background.
      */
     private PostProcessor mPostProcessor;
+    private FrameProcessor mFrameProcessor;
+    private Size mFrameProcPreviewOutputSize;
+    private Face[] mPreviewFaces = null;
+    private Face[] mStickyFaces = null;
+    private Rect mBayerCameraRegion;
     private Handler mCameraHandler;
     private Handler mImageAvailableHandler;
     private Handler mCaptureCallbackHandler;
@@ -302,6 +313,20 @@ public class CaptureModule implements CameraModule, PhotoController,
      * camera.
      */
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+
+
+    public Face[] getPreviewFaces() {
+        return mPreviewFaces;
+    }
+
+    public Face[] getStickyFaces() {
+        return mStickyFaces;
+    }
+
+    public Rect getCameraRegion() {
+        return mBayerCameraRegion;
+    }
+
     /**
      * A {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
      */
@@ -310,6 +335,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         private void process(CaptureResult result) {
             int id = (int) result.getRequest().getTag();
+
             if (!mFirstPreviewLoaded) {
                 mActivity.runOnUiThread(new Runnable() {
                     @Override
@@ -319,6 +345,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                 });
                 mFirstPreviewLoaded = true;
             }
+
+            Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
+            mPreviewFaces = faces;
+            if(faces != null && faces.length != 0) {
+                mStickyFaces = faces;
+            }
+
             switch (mState[id]) {
                 case STATE_PREVIEW: {
                     break;
@@ -540,17 +573,31 @@ public class CaptureModule implements CameraModule, PhotoController,
         mNamedImages = new NamedImages();
     }
 
+    public ArrayList<ImageFilter> getFrameFilters() {
+        if(mFrameProcessor == null) {
+            return new ArrayList<ImageFilter>();
+        } else {
+            return mFrameProcessor.getFrameFilters();
+        }
+    }
+
+    private void applyFaceDetect(CaptureRequest.Builder builder, int id) {
+        if(id == getMainCameraId()) {
+            builder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
+                    CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE);
+        }
+    }
+
     private void createSession(final int id) {
         if (mPaused || !mCameraOpened[id] || !mSurfaceReady) return;
         Log.d(TAG, "createSession " + id);
         List<Surface> list = new LinkedList<Surface>();
         try {
-            Surface surface = getPreviewSurface(id);
+            Surface surface = getPreviewSurfaceForSession(id);
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder[id] = mCameraDevice[id].createCaptureRequest(CameraDevice
                     .TEMPLATE_PREVIEW);
             mPreviewRequestBuilder[id].setTag(id);
-            mPreviewRequestBuilder[id].addTarget(surface);
 
             CameraCaptureSession.StateCallback captureSessionCallback =
                     new CameraCaptureSession.StateCallback() {
@@ -571,7 +618,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                                 // Finally, we start displaying the camera preview.
                                 mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                                         .build(), mCaptureCallback, mCameraHandler);
-
                                 if (isClearSightOn()) {
                                     ClearSightImageProcessor.getInstance().onCaptureSessionConfigured(id == BAYER_ID, cameraCaptureSession);
                                 }
@@ -603,12 +649,28 @@ public class CaptureModule implements CameraModule, PhotoController,
                         }
                     };
 
-            list.add(surface);
-
             if(isClearSightOn()) {
+                mPreviewRequestBuilder[id].addTarget(surface);
+                list.add(surface);
                 ClearSightImageProcessor.getInstance().createCaptureSession(
-                        id==BAYER_ID, mCameraDevice[id], list, captureSessionCallback);
+                        id == BAYER_ID, mCameraDevice[id], list, captureSessionCallback);
+            } else if (id == getMainCameraId()) {
+                if(mFrameProcessor.isFrameFilterEnabled()) {
+                    mFrameProcessor.init(mFrameProcPreviewOutputSize);
+                    mActivity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            mUI.getSurfaceHolder().setFixedSize(mFrameProcPreviewOutputSize.getHeight(), mFrameProcPreviewOutputSize.getWidth());
+                        }
+                    });
+                }
+                mFrameProcessor.setOutputSurface(surface);
+                mPreviewRequestBuilder[id].addTarget(mFrameProcessor.getInputSurface());
+                list.add(mFrameProcessor.getInputSurface());
+                list.add(mImageReader[id].getSurface());
+                mCameraDevice[id].createCaptureSession(list, captureSessionCallback, null);
             } else {
+                mPreviewRequestBuilder[id].addTarget(surface);
+                list.add(surface);
                 list.add(mImageReader[id].getSurface());
                 // Here, we create a CameraCaptureSession for camera preview.
                 mCameraDevice[id].createCaptureSession(list, captureSessionCallback, null);
@@ -659,6 +721,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
 
         mPostProcessor = new PostProcessor(mActivity, this);
+        mFrameProcessor = new FrameProcessor(mActivity, this);
 
         setCurrentMode();
         mContentResolver = mActivity.getContentResolver();
@@ -742,7 +805,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
             mControlAFMode = CaptureRequest.CONTROL_AF_MODE_AUTO;
             applySettingsForAutoFocus(builder, id);
-
             mState[id] = STATE_WAITING_TOUCH_FOCUS;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             setAFModeToPreview(id, mControlAFMode);
@@ -775,10 +837,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    /**
-     * Capture a still picture. This method should be called when we get a response in
-     * {@link #mCaptureCallback} from both {@link #lockFocus()}.
-     */
     private void captureStillPicture(final int id) {
         Log.d(TAG, "captureStillPicture " + id);
         try {
@@ -809,7 +867,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             if(csEnabled) {
                 ClearSightImageProcessor.getInstance().capture(
                         id==BAYER_ID, mCaptureSession[id], captureBuilder, mCaptureCallbackHandler);
-            } else if(id == BAYER_ID && mPostProcessor.isFilterOn()) {
+            } else if(id == getMainCameraId() && mPostProcessor.isFilterOn()) {
                 captureBuilder.addTarget(mImageReader[id].getSurface());
                 List<CaptureRequest> captureList = mPostProcessor.setRequiredImages(captureBuilder);
                 mCaptureSession[id].captureBurst(captureList, new CameraCaptureSession.CaptureCallback() {
@@ -940,22 +998,56 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void determineFrameProcPreviewOutputSize(List<Size> sizeList, float targetRatio) {
+        Display display = mActivity.getWindowManager().getDefaultDisplay();
+        Point ds = new Point();
+        display.getSize(ds);
+        int i=0, j=0, width, height;
+        float ratio;
+        for(; i < sizeList.size(); i++) {
+            width = sizeList.get(i).getHeight();
+            height = sizeList.get(i).getWidth();
+            ratio = (float)height/width;
+            if(ds.x >= width || ds.y >= height) {
+                if(j == 0) {
+                    j = i;
+                }
+                if(ratio < targetRatio + 0.2f && ratio > targetRatio - 0.2f) {
+                    break;
+                }
+            }
+        }
+        if(i == sizeList.size()) {
+            if(j != 0) {
+                mFrameProcPreviewOutputSize = sizeList.get(j);
+            } else {
+                mFrameProcPreviewOutputSize = sizeList.get(sizeList.size()-1);
+            }
+        } else {
+            mFrameProcPreviewOutputSize = sizeList.get(i);
+        }
+    }
     /**
      * Sets up member variables related to camera.
      *
      * @param width  The width of available size for camera preview
      * @param height The height of available size for camera preview
      */
-    private void setUpCameraOutputs(int imageFomat) {
+    private void setUpCameraOutputs(int imageFormat) {
         Log.d(TAG, "setUpCameraOutputs");
         CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
         try {
             String[] cameraIdList = manager.getCameraIdList();
             for (int i = 0; i < cameraIdList.length; i++) {
                 String cameraId = cameraIdList[i];
+
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
                 if (isInMode(i))
                     mCameraIdList.add(i);
+                if(i == getMainCameraId()) {
+                    mBayerCameraRegion = characteristics.get(CameraCharacteristics
+                            .SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+                }
                 StreamConfigurationMap map = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
@@ -971,10 +1063,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 if (i == getMainCameraId()) {
                     Point screenSize = new Point();
                     mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
-                    Size[] prevSizes = map.getOutputSizes(imageFomat);
-                    Size prevSize = getOptimalPreviewSize(size, prevSizes, screenSize.x,
+                    Size[] prevSizes = map.getOutputSizes(imageFormat);
+                    mFrameProcPreviewOutputSize = getOptimalPreviewSize(size, prevSizes, screenSize.x,
                             screenSize.y);
-                    mUI.setPreviewSize(prevSize.getWidth(), prevSize.getHeight());
+                    mUI.setPreviewSize(mFrameProcPreviewOutputSize.getWidth(), mFrameProcPreviewOutputSize.getHeight());
                 }
                 if (isClearSightOn()) {
                     ClearSightImageProcessor.getInstance().init(size.getWidth(), size.getHeight(),
@@ -982,11 +1074,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                     ClearSightImageProcessor.getInstance().setCallback(this);
                 } else {
                     // No Clearsight
-                    mImageReader[i] = ImageReader.newInstance(size.getWidth(), size.getHeight(),
-                            imageFomat, MAX_IMAGE_NUM);
-
-                    if(mPostProcessor.isFilterOn() && i == BAYER_ID) {
+                    mImageReader[i] = ImageReader.newInstance(size.getWidth(), size.getHeight(), imageFormat, MAX_IMAGE_NUM);
+                    if(mPostProcessor.isFilterOn() && i == getMainCameraId()) {
                         mImageReader[i].setOnImageAvailableListener(mPostProcessor, mImageAvailableHandler);
+//                        if(mFrameProcessor.isFrameFilterEnabled()) {
+//                            determineFrameProcPreviewOutputSize(Arrays.asList(map.getOutputSizes(imageFormat)),
+//                                    (float) size.getWidth() / (float) size.getHeight());
+//                        }
                     } else {
                         mImageReader[i].setOnImageAvailableListener(new ImageAvailableListener(i) {
                             @Override
@@ -1033,7 +1127,6 @@ public class CaptureModule implements CameraModule, PhotoController,
             builder.addTarget(getPreviewSurface(id));
 
             applySettingsForUnlockFocus(builder, id);
-
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             mState[id] = STATE_PREVIEW;
             mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
@@ -1068,6 +1161,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCameraOpenCloseLock.acquire();
             if(mPostProcessor != null) {
                 mPostProcessor.onClose();
+            }
+            if(mFrameProcessor != null) {
+                mFrameProcessor.onClose();
             }
             for (int i = 0; i < MAX_NUM_CAM; i++) {
                 if (null != mCaptureSession[i]) {
@@ -1113,6 +1209,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
         applyAFRegions(builder, id);
         applyCommonSettings(builder, id);
+        applyFaceDetect(builder, id);
     }
 
     private void applySettingsForCapture(CaptureRequest.Builder builder, int id) {
@@ -1125,12 +1222,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                 CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
         applyCommonSettings(builder, id);
+        applyFaceDetect(builder, id);
     }
 
     private void applySettingsForUnlockFocus(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
         applyCommonSettings(builder, id);
+        applyFaceDetect(builder, id);
     }
 
     private void applySettingsForAutoFocus(CaptureRequest.Builder builder, int id) {
@@ -1138,6 +1237,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 .CONTROL_AF_TRIGGER_START);
         applyAFRegions(builder, id);
         applyCommonSettings(builder, id);
+        applyFaceDetect(builder, id);
     }
 
     private void applyCommonSettings(CaptureRequest.Builder builder, int id) {
@@ -1254,6 +1354,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         mCurrentMode = isBackCamera() ? getCameraMode() : FRONT_MODE;
     }
 
+    private ArrayList<Integer> getFrameProcFilterId() {
+        String scene = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
+        ArrayList<Integer> filters = new ArrayList<Integer>();
+        if(scene != null && scene.equalsIgnoreCase("on")) {
+            filters.add(FrameProcessor.FILTER_MAKEUP);
+        }
+
+        return filters;
+    }
+
     private int getPostProcFilterId() {
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (scene != null) {
@@ -1280,6 +1390,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(mPostProcessor != null) {
             Log.d(TAG, "Chosen postproc filter id : "+getPostProcFilterId());
             mPostProcessor.onOpen(getPostProcFilterId());
+        }
+        if(mFrameProcessor != null) {
+            mFrameProcessor.onOpen(getFrameProcFilterId());
         }
         if(mPostProcessor.isFilterOn()) {
             setUpCameraOutputs(ImageFormat.YUV_420_888);
@@ -1551,7 +1664,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onPreviewUIDestroyed() {
-
     }
 
     @Override
@@ -1764,6 +1876,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest
                 .CONTROL_AF_TRIGGER_IDLE);
         applyCommonSettings(mPreviewRequestBuilder[id], id);
+        applyFaceDetect(mPreviewRequestBuilder[id], id);
     }
 
     public float getZoomValue() {
@@ -1816,6 +1929,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 applyIso(mPreviewRequestBuilder[cameraId]);
                 break;
         }
+        applyFaceDetect(mPreviewRequestBuilder[cameraId], cameraId);
         return updatePreview;
     }
 
@@ -1919,6 +2033,18 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (getCameraMode() == DUAL_MODE && id == MONO_ID) {
                 return mUI.getSurfaceHolder2().getSurface();
             } else {
+                return mFrameProcessor.getInputSurface();
+            }
+        } else {
+            return mFrameProcessor.getInputSurface();
+        }
+    }
+
+    private Surface getPreviewSurfaceForSession(int id) {
+        if (isBackCamera()) {
+            if (getCameraMode() == DUAL_MODE && id == MONO_ID) {
+                return mUI.getSurfaceHolder2().getSurface();
+            } else {
                 return mUI.getSurfaceHolder().getSurface();
             }
         } else {
@@ -2018,6 +2144,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case SettingsManager.KEY_MONO_PREVIEW:
                     if (count == 0) restart();
                     return;
+                case SettingsManager.KEY_MAKEUP:
+                    restart();
+                    return;
                 case SettingsManager.KEY_SCENE_MODE:
                     if (count == 0 && checkNeedToRestart(value)) {
                         restart();
@@ -2107,7 +2236,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             float prevRatio = (float) prevSize.getWidth() / prevSize.getHeight();
             if (Math.abs(prevRatio - ratio) < 0.01) {
                 // flip w and h
-                if (prevSize.getWidth() <= screenH && prevSize.getHeight() <= screenW) {
+                if (prevSize.getWidth() <= screenH && prevSize.getHeight() <= screenW &&
+                        prevSize.getWidth() <= pictureSize.getWidth() && prevSize.getHeight() <= pictureSize.getHeight()) {
                     return prevSize;
                 } else {
                     optimal = prevSize;

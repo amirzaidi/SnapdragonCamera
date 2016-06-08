@@ -68,6 +68,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_FOCUS_MODE = "pref_camera2_focusmode_key";
     public static final String KEY_FLASH_MODE = "pref_camera2_flashmode_key";
     public static final String KEY_WHITE_BALANCE = "pref_camera2_whitebalance_key";
+    public static final String KEY_MAKEUP = "pref_camera2_makeup_key";
     public static final String KEY_CAMERA2 = "pref_camera2_camera2_key";
     public static final String KEY_MONO_ONLY = "pref_camera2_mono_only_key";
     public static final String KEY_MONO_PREVIEW = "pref_camera2_mono_preview_key";
