@@ -151,4 +151,18 @@
         camera:key="pref_camera2_picturesize_key"
         camera:singleIcon="@drawable/ic_settings_picturesize"
         camera:title="@string/pref_camera_picturesize_title"/>
+
+    <IconListPreference
+        camera:defaultValue="@string/pref_exposure_default"
+        camera:key="pref_camera2_exposure_key"
+        camera:singleIcon="@drawable/ic_settings_exposure"
+        camera:title="@string/pref_exposure_title"/>
+
+    <IconListPreference
+        camera:defaultValue="@string/pref_camera_iso_default"
+        camera:entries="@array/pref_camera2_iso_entries"
+        camera:entryValues="@array/pref_camera2_iso_entryvalues"
+        camera:key="pref_camera2_iso_key"
+        camera:singleIcon="@drawable/ic_settings_iso"
+        camera:title="@string/pref_camera_iso_title"/>
 </PreferenceGroup>

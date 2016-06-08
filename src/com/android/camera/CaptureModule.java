@@ -960,6 +960,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
         applyWhiteBalance(builder);
+        applyExposure(builder);
+        applyIso(builder);
         applyColorEffect(builder);
         applySceneMode(builder);
         applyZoom(builder, id);
@@ -1431,6 +1433,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 updatePreview = true;
                 applySceneMode(mPreviewRequestBuilder[cameraId]);
                 break;
+            case SettingsManager.KEY_EXPOSURE:
+                updatePreview = true;
+                applyExposure(mPreviewRequestBuilder[cameraId]);
+                break;
         }
         return updatePreview;
     }
@@ -1467,6 +1473,21 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         }
+    }
+
+    private void applyExposure(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_EXPOSURE);
+        if (value == null) return;
+        int intValue = Integer.parseInt(value);
+        request.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, intValue);
+    }
+
+    private void applyIso(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_ISO);
+        if (value == null) return;
+        if (value.equals("auto")) return;
+        int intValue = Integer.parseInt(value);
+        request.set(CaptureRequest.SENSOR_SENSITIVITY, intValue);
     }
 
     private void applyColorEffect(CaptureRequest.Builder request) {
