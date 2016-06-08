@@ -775,6 +775,8 @@
     <string name="pref_camera_picturesize_entry_1280x720">HD720</string>
     <string name="pref_camera_picturesize_entry_800x600">SVGA</string>
     <string name="pref_camera_picturesize_entry_800x480">WVGA</string>
+    <string name="pref_camera_picturesize_entry_960x720">960 x 720</string>
+    <string name="pref_camera_picturesize_entry_720x480">720 x 480</string>
     <string name="pref_camera_picturesize_entry_352x288">CIF</string>
     <string name="pref_camera_picturesize_entry_176x144">QCIF</string>
 
@@ -947,41 +949,37 @@
     <string name="help_menu_switcher_2" translatable="true">between</string>
     <string name="help_menu_switcher_3" translatable="true">camera, video, and panorama</string>
 
-    <string name="pref_camera_camera2_title">Camera2 Mode</string>
-    <string name="pref_camera_camera2_default">disable</string>
-    <string name="pref_camera_camera2_entry_enable">Enable</string>
-    <string name="pref_camera_camera2_entry_disable">Disable</string>
+    <string name="pref_camera2_camera2_title" translatable="true">Camera2 Mode</string>
+    <string name="pref_camera2_camera2_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_camera2_entry_disable" translatable="true">Disable</string>
+    <string name="pref_camera2_camera2_default" translatable="false">disable</string>
+    <string name="pref_camera2_camera2_value_enable" translatable="false">enable</string>
+    <string name="pref_camera2_camera2_value_disable" translatable="false">disable</string>
 
-    <string name="pref_camera_camera2_value_enable">enable</string>
-    <string name="pref_camera_camera2_value_disable">disable</string>
+    <string name="pref_camera2_dual_camera_title" translatable="true">Dual Camera Mode</string>
+    <string name="pref_camera2_dual_camera_entry_dual" translatable="true">Dual-camera Linked</string>
+    <string name="pref_camera2_dual_camera_entry_bayer" translatable="true">Single Bayer Camera</string>
+    <string name="pref_camera2_dual_camera_entry_mono" translatable="true">Single Mono Camera</string>
+    <string name="pref_camera2_dual_camera_default" translatable="false">1</string>
 
-    <string name="pref_camera_dual_camera_title">Dual Camera Mode</string>
-    <string name="pref_camera_dual_camera_default">dual</string>
-    <string name="pref_camera_dual_camera_entry_dual">Dual-camera Linked</string>
-    <string name="pref_camera_dual_camera_entry_bayer">Single Bayer Camera</string>
-    <string name="pref_camera_dual_camera_entry_mono">Single Mono Camera</string>
+    <string name="pref_camera2_mono_preview_title" translatable="true">Mono Preview</string>
+    <string name="pref_camera2_mono_preview_entry_on" translatable="true">On</string>
+    <string name="pref_camera2_mono_preview_entry_off" translatable="true">Off</string>
+    <string name="pref_camera2_mono_preview_default" translatable="false">off</string>
+    <string name="pref_camera2_mono_preview_value_on" translatable="false">on</string>
+    <string name="pref_camera2_mono_preview_value_off" translatable="false">off</string>
 
-    <string name="pref_camera_dual_camera_value_dual">dual</string>
-    <string name="pref_camera_dual_camera_value_bayer">bayer</string>
-    <string name="pref_camera_dual_camera_value_mono">mono</string>
+    <string name="pref_camera2_clearsight_title" translatable="true">ClearSight</string>
+    <string name="pref_camera2_clearsight_default" translatable="false">off</string>
+    <string name="pref_camera2_clearsight_entry_on" translatable="false">On</string>
+    <string name="pref_camera2_clearsight_entry_off" translatable="false">Off</string>
 
-    <string name="pref_camera_mono_preview_title">Mono Preview</string>
-    <string name="pref_camera_mono_preview_default">off</string>
-    <string name="pref_camera_mono_preview_entry_on">On</string>
-    <string name="pref_camera_mono_preview_entry_off">Off</string>
-
-    <string name="pref_camera_mono_preview_value_on">on</string>
-    <string name="pref_camera_mono_preview_value_off">off</string>
-
-    <string name="pref_camera_clearsight_title">ClearSight</string>
-    <string name="pref_camera_clearsight_default" translatable="false">off</string>
-    <string name="pref_camera_clearsight_entry_on">On</string>
-    <string name="pref_camera_clearsight_entry_off">Off</string>
-
-    <string name="pref_camera_clearsight_value_on" translatable="false">on</string>
-    <string name="pref_camera_clearsight_value_off" translatable="false">off</string>
+    <string name="pref_camera2_clearsight_value_on" translatable="false">on</string>
+    <string name="pref_camera2_clearsight_value_off" translatable="false">off</string>
 
     <string name="clearsight_capture_success">ClearSight capture successful</string>
     <string name="clearsight_capture_fail">ClearSight capture failed</string>
+
+    <string name="pref_camera2_scenemode_default" translatable="false">0</string>
 </resources>
 

@@ -159,8 +159,6 @@ public class CameraActivity extends Activity
     /** Whether onResume should reset the view to the preview. */
     private boolean mResetToPreviewOnResume = true;
 
-    public static boolean CAMERA_2_ON = false;
-
     // Supported operations at FilmStripView. Different data has different
     // set of supported operations.
     private static final int SUPPORT_DELETE = 1 << 0;
@@ -1409,6 +1407,8 @@ public class CameraActivity extends Activity
 
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
 
+        SettingsManager.createInstance(this);
+
         LayoutInflater inflater = getLayoutInflater();
         View rootLayout = inflater.inflate(R.layout.camera, null, false);
         mCameraRootFrame = (FrameLayout)rootLayout.findViewById(R.id.camera_root_frame);
@@ -1443,10 +1443,9 @@ public class CameraActivity extends Activity
                 moduleIndex = ModuleSwitcher.PHOTO_MODULE_INDEX;
             }
         }
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-        CAMERA_2_ON = pref.getBoolean(CameraSettings.KEY_CAMERA2, false);
-        if (CAMERA_2_ON && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
+
+        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        if (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
 
         mOrientationListener = new MyOrientationEventListener(this);
@@ -1811,7 +1810,9 @@ public class CameraActivity extends Activity
 
     @Override
     public void onModuleSelected(int moduleIndex) {
-        if (moduleIndex == 0 && CAMERA_2_ON) moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
+        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        if (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
+            moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
         if (mCurrentModuleIndex == moduleIndex) {
             if (mCurrentModuleIndex != ModuleSwitcher.CAPTURE_MODULE_INDEX) {
                 return;
@@ -1879,6 +1880,8 @@ public class CameraActivity extends Activity
                 if(mCaptureModule == null) {
                     mCaptureModule = new CaptureModule();
                     mCaptureModule.init(this, mCameraCaptureModuleRootView);
+                } else {
+                    mCaptureModule.reinit();
                 }
                 mCurrentModule = mCaptureModule;
                 mCameraCaptureModuleRootView.setVisibility(View.VISIBLE);

@@ -40,11 +40,10 @@ public class RecordLocationPreference extends IconListPreference {
 
     @Override
     public String getValue() {
-        return get(getSharedPreferences(), mResolver) ? VALUE_ON : VALUE_OFF;
+        return get(getSharedPreferences()) ? VALUE_ON : VALUE_OFF;
     }
 
-    public static boolean get(
-            SharedPreferences pref, ContentResolver resolver) {
+    public static boolean get(SharedPreferences pref) {
         String value = pref.getString(
                 CameraSettings.KEY_RECORD_LOCATION, VALUE_NONE);
         return VALUE_ON.equals(value);

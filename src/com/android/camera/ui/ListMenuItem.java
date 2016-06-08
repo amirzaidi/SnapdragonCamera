@@ -159,4 +159,26 @@ public class ListMenuItem extends RelativeLayout {
                 setAlpha(0.3f);
         }
     }
+
+    public void setEnabled(boolean enable, String value) {
+        super.setEnabled(enable);
+        if (enable)
+            setAlpha(1f);
+        else
+            setAlpha(0.3f);
+        if (mTitle != null) {
+            mTitle.setEnabled(enable);
+            if (enable)
+                setAlpha(1f);
+            else
+                setAlpha(0.3f);
+        }
+        if (mEntry != null) {
+            mEntry.setEnabled(enable);
+            if (enable)
+                setAlpha(1f);
+            else
+                setAlpha(0.3f);
+        }
+    }
 }

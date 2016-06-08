@@ -843,47 +843,5 @@
         <item>@string/pref_camera_instant_capture_value_fast_aec</item>
         <item>@string/pref_camera_instant_capture_value_disable</item>
     </string-array>
-
-    <string-array name="pref_camera_camera2_entries" translatable="true">
-        <item>@string/pref_camera_camera2_entry_enable</item>
-        <item>@string/pref_camera_camera2_entry_disable</item>
-    </string-array>
-
-    <string-array name="pref_camera_camera2_entryvalues" translatable="false">
-        <item>@string/pref_camera_camera2_value_enable</item>
-        <item>@string/pref_camera_camera2_value_disable</item>
-    </string-array>
-
-    <string-array name="pref_camera_dual_camera_entries" translatable="true">
-        <item>@string/pref_camera_dual_camera_entry_dual</item>
-        <item>@string/pref_camera_dual_camera_entry_bayer</item>
-        <item>@string/pref_camera_dual_camera_entry_mono</item>
-    </string-array>
-
-    <string-array name="pref_camera_dual_camera_entryvalues" translatable="false">
-        <item>@string/pref_camera_dual_camera_value_dual</item>
-        <item>@string/pref_camera_dual_camera_value_bayer</item>
-        <item>@string/pref_camera_dual_camera_value_mono</item>
-    </string-array>
-
-    <string-array name="pref_camera_mono_preview_entries" translatable="true">
-        <item>@string/pref_camera_mono_preview_entry_on</item>
-        <item>@string/pref_camera_mono_preview_entry_off</item>
-    </string-array>
-
-    <string-array name="pref_camera_mono_preview_entryvalues" translatable="false">
-        <item>@string/pref_camera_mono_preview_value_on</item>
-        <item>@string/pref_camera_mono_preview_value_off</item>
-    </string-array>
-
-        <string-array name="pref_camera_clearsight_entries" translatable="true">
-        <item>@string/pref_camera_clearsight_entry_on</item>
-        <item>@string/pref_camera_clearsight_entry_off</item>
-    </string-array>
-
-    <string-array name="pref_camera_clearsight_entryvalues" translatable="false">
-        <item>@string/pref_camera_clearsight_value_on</item>
-        <item>@string/pref_camera_clearsight_value_off</item>
-    </string-array>
 </resources>
 

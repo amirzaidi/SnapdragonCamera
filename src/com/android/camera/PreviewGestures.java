@@ -55,7 +55,7 @@ public class PreviewGestures
     private boolean mEnabled;
     private boolean mZoomOnly;
     private GestureDetector mGestureDetector;
-    private CaptureMenu mCaptureMenu;
+    private CaptureUI mCaptureUI;
     private PhotoMenu mPhotoMenu;
     private VideoMenu mVideoMenu;
     private boolean waitUntilNextDown;
@@ -95,8 +95,8 @@ public class PreviewGestures
                 orientation = mPhotoMenu.getOrientation();
             else if (mVideoMenu != null)
                 orientation = mVideoMenu.getOrientation();
-            else if (mCaptureMenu != null)
-                orientation = mCaptureMenu.getOrientation();
+            else if (mCaptureUI != null)
+                orientation = mCaptureUI.getOrientation();
 
             if (isLeftSwipe(orientation, deltaX, deltaY)) {
                 waitUntilNextDown = true;
@@ -104,8 +104,8 @@ public class PreviewGestures
                     mPhotoMenu.openFirstLevel();
                 else if (mVideoMenu != null && !mVideoMenu.isMenuBeingShown())
                     mVideoMenu.openFirstLevel();
-                else if (mCaptureMenu != null && !mCaptureMenu.isMenuBeingShown())
-                    mCaptureMenu.openFirstLevel();
+                else if (mCaptureUI != null && !mCaptureUI.isMenuBeingShown())
+                    mCaptureUI.showSettingMenu();
                 return true;
             } else {
                 return onSingleTapUp(e2);
@@ -161,8 +161,8 @@ public class PreviewGestures
         return mEnabled;
     }
 
-    public void setCaptureMenu(CaptureMenu menu) {
-        mCaptureMenu = menu;
+    public void setCaptureUI(CaptureUI ui) {
+        mCaptureUI = ui;
     }
 
     public void setPhotoMenu(PhotoMenu menu) {
@@ -171,10 +171,6 @@ public class PreviewGestures
 
     public void setVideoMenu(VideoMenu menu) {
         mVideoMenu = menu;
-    }
-
-    public CaptureMenu getCaptureMenu() {
-        return mCaptureMenu;
     }
 
     public PhotoMenu getPhotoMenu() {
@@ -213,16 +209,17 @@ public class PreviewGestures
             return sendToPie(m);
         }
 
-        if (mCaptureMenu != null) {
-            if (mCaptureMenu.isMenuBeingShown()) {
-                if (!mCaptureMenu.isMenuBeingAnimated()) {
+        if (mCaptureUI != null) {
+            if (mCaptureUI.isMenuBeingShown()) {
+                if (!mCaptureUI.isMenuBeingAnimated()) {
                     waitUntilNextDown = true;
-                    mCaptureMenu.closeView();
+                    mCaptureUI.removeAllSettingMenu(true);
                 }
                 return true;
             }
-            if (mCaptureMenu.isPreviewMenuBeingShown()) {
+            if (mCaptureUI.isPreviewMenuBeingShown()) {
                 waitUntilNextDown = true;
+                mCaptureUI.removeSceneAndFilterMenu(true);
                 return true;
             }
         }

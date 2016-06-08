@@ -36,7 +36,8 @@
         <com.android.camera.ui.AutoFitSurfaceView
             android:id="@+id/mdp_preview_content"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
 
         <com.android.camera.ui.AutoFitSurfaceView
             android:id="@+id/mdp_preview_content2"
