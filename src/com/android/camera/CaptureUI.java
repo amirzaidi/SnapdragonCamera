@@ -23,6 +23,7 @@ import android.animation.Animator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.hardware.Camera.Face;
 import android.text.TextUtils;
@@ -42,6 +43,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.camera.ui.AutoFitSurfaceView;
+import com.android.camera.ui.Camera2FaceView;
 import com.android.camera.ui.CameraControls;
 import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.FocusIndicator;
@@ -95,6 +97,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_WHITE_BALANCE,
             SettingsManager.KEY_CAMERA2,
             SettingsManager.KEY_MAKEUP,
+            SettingsManager.KEY_FACE_DETECTION,
             SettingsManager.KEY_VIDEO_FLASH_MODE,
             SettingsManager.KEY_VIDEO_DURATION,
             SettingsManager.KEY_VIDEO_QUALITY
@@ -133,6 +136,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private SettingsManager mSettingsManager;
 
     private ImageView mThumbnail;
+    private Camera2FaceView mFaceView;
 
     private SurfaceHolder.Callback callback = new SurfaceHolder.Callback() {
 
@@ -239,6 +243,18 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mSurfaceView2.setZOrderMediaOverlay(true);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(callback);
+        mSurfaceView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right,
+                                       int bottom, int oldLeft, int oldTop, int oldRight,
+                                       int oldBottom) {
+                int width = right - left;
+                int height = bottom - top;
+                if (mFaceView != null) {
+                    mFaceView.onSurfaceTextureSizeChanged(width, height);
+                }
+            }
+        });
         mSurfaceHolder2 = mSurfaceView2.getHolder();
         mSurfaceHolder2.addCallback(callback2);
 
@@ -297,6 +313,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         muteButton.setVisibility(View.GONE);
 
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
+        mFaceView = (Camera2FaceView) mRootView.findViewById(R.id.face_view);
 
         Point size = new Point();
         mActivity.getWindowManager().getDefaultDisplay().getSize(size);
@@ -1302,6 +1319,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void onPause() {
         cancelCountDown();
         collapseCameraControls();
+        if (mFaceView != null) mFaceView.clear();
     }
 
     public boolean collapseCameraControls() {
@@ -1314,15 +1332,16 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     private FocusIndicator getFocusIndicator() {
-        return mPieRenderer;
+        return (mFaceView != null && mFaceView.faceExists()) ? mFaceView : mPieRenderer;
     }
 
     @Override
     public boolean hasFaces() {
-        return false;
+        return (mFaceView != null && mFaceView.faceExists());
     }
 
     public void clearFaces() {
+        if (mFaceView != null) mFaceView.clear();
     }
 
     @Override
@@ -1362,14 +1381,29 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void resumeFaceDetection() {
     }
 
-    public void onStartFaceDetection(int orientation, boolean mirror) {
+    public void onStartFaceDetection(int orientation, boolean mirror, Rect cameraBound) {
+        mFaceView.setBlockDraw(false);
+        mFaceView.clear();
+        mFaceView.setVisibility(View.VISIBLE);
+        mFaceView.setDisplayOrientation(orientation);
+        mFaceView.setMirror(mirror);
+        mFaceView.setCameraBound(cameraBound);
+        mFaceView.resume();
     }
 
     public void onStopFaceDetection() {
+        if (mFaceView != null) {
+            mFaceView.setBlockDraw(true);
+            mFaceView.clear();
+        }
     }
 
     @Override
     public void onFaceDetection(Face[] faces, CameraManager.CameraProxy camera) {
+    }
+
+    public void onFaceDetection(android.hardware.camera2.params.Face[] faces) {
+        mFaceView.setFaces(faces);
     }
 
     public Point getSurfaceViewSize() {
@@ -1415,6 +1449,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 mRecordingTimeRect.setOrientation(orientation, false);
             }
         }
+        if (mFaceView != null) {
+            mFaceView.setDisplayRotation(orientation);
+        }
         if (mCountDownView != null)
             mCountDownView.setOrientation(orientation);
         RotateTextToast.setOrientation(orientation);
@@ -1442,11 +1479,27 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mModule.onSingleTapUp(view, x, y);
     }
 
+    public boolean isOverSurfaceView(int[] xy) {
+        int x = xy[0];
+        int y = xy[1];
+        int[] surfaceViewLocation = new int[2];
+        mSurfaceView.getLocationInWindow(surfaceViewLocation);
+        int surfaceViewX = surfaceViewLocation[0];
+        int surfaceViewY = surfaceViewLocation[1];
+        xy[0] = x - surfaceViewX;
+        xy[1] = y - surfaceViewY;
+        return (x > surfaceViewX) && (x < surfaceViewX + mSurfaceView.getWidth())
+                && (y > surfaceViewY) && (y < surfaceViewY + mSurfaceView.getHeight());
+    }
+
     public void onPreviewFocusChanged(boolean previewFocused) {
         if (previewFocused) {
             showUI();
         } else {
             hideUI();
+        }
+        if (mFaceView != null) {
+            mFaceView.setBlockDraw(!previewFocused);
         }
         if (mGestures != null) {
             mGestures.setEnabled(previewFocused);
