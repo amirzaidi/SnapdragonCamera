@@ -1762,6 +1762,12 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onShutterButtonClick() {
+        if (mActivity.getStorageSpaceBytes() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
+            Log.i(TAG, "Not enough space or storage not ready. remaining="
+                    + mActivity.getStorageSpaceBytes());
+            return;
+        }
+
         String timer = mSettingsManager.getValue(SettingsManager.KEY_TIMER);
 
         int seconds = Integer.parseInt(timer);
