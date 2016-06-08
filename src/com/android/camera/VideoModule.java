@@ -1916,7 +1916,7 @@ public class VideoModule implements CameraModule,
         mMediaRecorderPausing = false;
         mRecordingStartTime = SystemClock.uptimeMillis();
         updateRecordingTime();
-        mMediaRecorder.resume();
+        mMediaRecorder.start();
     }
 
     private boolean stopVideoRecording() {
