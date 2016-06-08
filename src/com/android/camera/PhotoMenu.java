@@ -234,7 +234,7 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_MANUAL_EXPOSURE,
                 CameraSettings.KEY_MANUAL_WB,
                 CameraSettings.KEY_MANUAL_FOCUS,
-                CameraSettings.KEY_CAMERA2
+                SettingsManager.KEY_CAMERA2
         };
 
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);
@@ -731,6 +731,8 @@ public class PhotoMenu extends MenuController
                     mActivity.getString(R.string.pref_camera_advanced_feature_default));
 
             popup1.setPreferenceEnabled(CameraSettings.KEY_ADVANCED_FEATURES, false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_INSTANT_CAPTURE, false);
+
             if(!TsMakeupManager.HAS_TS_MAKEUP) {
                 if (mHdrSwitcher.getVisibility() == View.VISIBLE) {
                     buttonSetEnabled(mHdrSwitcher, true);
@@ -752,7 +754,7 @@ public class PhotoMenu extends MenuController
                 popup1.setPreferenceEnabled(CameraSettings.KEY_COLOR_EFFECT, false);
                 popup1.setPreferenceEnabled(CameraSettings.KEY_TOUCH_AF_AEC, false);
                 popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE, false);
-
+                popup1.setPreferenceEnabled(CameraSettings.KEY_INSTANT_CAPTURE, false);
                 setPreference(CameraSettings.KEY_CAMERA_HDR, mSettingOff);
                 if(!TsMakeupManager.HAS_TS_MAKEUP) {
                     if (mHdrSwitcher.getVisibility() == View.VISIBLE) {
@@ -1467,17 +1469,9 @@ public class PhotoMenu extends MenuController
         updateFilterModeIcon(pref, pref);
 
         super.onSettingChanged(pref);
-        if (same(pref, CameraSettings.KEY_CAMERA2, "enable")) {
-            SharedPreferences prefs = PreferenceManager
-                    .getDefaultSharedPreferences(mActivity);
-            prefs.edit().putBoolean(CameraSettings.KEY_CAMERA2, true).apply();
-            CameraActivity.CAMERA_2_ON = true;
+        if (same(pref, SettingsManager.KEY_CAMERA2, "enable")) {
             mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
-        } else if (notSame(pref, CameraSettings.KEY_CAMERA2, "enable")) {
-            SharedPreferences prefs = PreferenceManager
-                    .getDefaultSharedPreferences(mActivity);
-            prefs.edit().putBoolean(CameraSettings.KEY_CAMERA2, false).apply();
-            CameraActivity.CAMERA_2_ON = false;
+        } else if (notSame(pref, SettingsManager.KEY_CAMERA2, "enable")) {
             mActivity.onModuleSelected(ModuleSwitcher.PHOTO_MODULE_INDEX);
         }
     }

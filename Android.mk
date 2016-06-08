@@ -7,14 +7,12 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-v13
 LOCAL_STATIC_JAVA_LIBRARIES += xmp_toolkit
 
-
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_SRC_FILES += $(call all-java-files-under, src_pd)
 LOCAL_SRC_FILES += $(call all-java-files-under, src_pd_gcam)
+LOCAL_SRC_FILES += $(call all-renderscript-files-under, rs)
 
 LOCAL_RESOURCE_DIR += $(LOCAL_PATH)/res
-
-LOCAL_CERTIFICATE := platform
 
 include $(LOCAL_PATH)/version.mk
 LOCAL_AAPT_FLAGS := \
@@ -25,6 +23,7 @@ LOCAL_AAPT_FLAGS := \
 LOCAL_PACKAGE_NAME := SnapdragonCamera
 
 #LOCAL_SDK_VERSION := current
+LOCAL_RENDERSCRIPT_TARGET_API := 23
 
 LOCAL_OVERRIDES_PACKAGES := Camera2
 
@@ -34,9 +33,9 @@ LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 # the libraries in the APK, otherwise just put them in /system/lib and
 # leave them out of the APK
 ifneq (,$(TARGET_BUILD_APPS))
-  LOCAL_JNI_SHARED_LIBRARIES := libjni_snapcammosaic libjni_snapcamtinyplanet
+  LOCAL_JNI_SHARED_LIBRARIES := libjni_snapcammosaic libjni_snapcamtinyplanet libjni_imageutil
 else
-  LOCAL_REQUIRED_MODULES := libjni_snapcammosaic libjni_snapcamtinyplanet
+  LOCAL_REQUIRED_MODULES := libjni_snapcammosaic libjni_snapcamtinyplanet libjni_imageutil
 endif
 
 include $(BUILD_PACKAGE)

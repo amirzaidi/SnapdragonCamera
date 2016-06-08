@@ -159,8 +159,6 @@ public class CameraActivity extends Activity
     /** Whether onResume should reset the view to the preview. */
     private boolean mResetToPreviewOnResume = true;
 
-    public static boolean CAMERA_2_ON = false;
-
     // Supported operations at FilmStripView. Different data has different
     // set of supported operations.
     private static final int SUPPORT_DELETE = 1 << 0;
@@ -240,6 +238,7 @@ public class CameraActivity extends Activity
     public static int SETTING_LIST_WIDTH_2 = 250;
 
     private ImageView mThumbnail;
+    private UpdateThumbnailTask mUpdateThumbnailTask;
     private CircularDrawable mThumbnailDrawable;
     // FilmStripView.setDataAdapter fires 2 onDataLoaded calls before any data is actually loaded
     // Keep track of data request here to avoid creating useless UpdateThumbnailTask.
@@ -705,7 +704,9 @@ public class CameraActivity extends Activity
     }
 
     public void updateThumbnail(final byte[] jpegData) {
-        (new UpdateThumbnailTask(jpegData, false)).execute();
+        if (mUpdateThumbnailTask != null) mUpdateThumbnailTask.cancel(true);
+        mUpdateThumbnailTask = new UpdateThumbnailTask(jpegData, false);
+        mUpdateThumbnailTask.execute();
     }
 
     public void updateThumbnail(final Bitmap bitmap) {
@@ -1409,6 +1410,8 @@ public class CameraActivity extends Activity
 
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
 
+        SettingsManager.createInstance(this);
+
         LayoutInflater inflater = getLayoutInflater();
         View rootLayout = inflater.inflate(R.layout.camera, null, false);
         mCameraRootFrame = (FrameLayout)rootLayout.findViewById(R.id.camera_root_frame);
@@ -1443,16 +1446,15 @@ public class CameraActivity extends Activity
                 moduleIndex = ModuleSwitcher.PHOTO_MODULE_INDEX;
             }
         }
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-        CAMERA_2_ON = pref.getBoolean(CameraSettings.KEY_CAMERA2, false);
-        if (CAMERA_2_ON && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
+
+        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        if (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
 
         mOrientationListener = new MyOrientationEventListener(this);
-        setModuleFromIndex(moduleIndex);
-
         setContentView(R.layout.camera_filmstrip);
+        mFilmStripView = (FilmStripView) findViewById(R.id.filmstrip_view);
+        setModuleFromIndex(moduleIndex);
 
         mActionBar = getActionBar();
         mActionBar.addOnMenuVisibilityListener(this);
@@ -1482,7 +1484,7 @@ public class CameraActivity extends Activity
                 new CameraDataAdapter(new ColorDrawable(
                         getResources().getColor(R.color.photo_placeholder))),
                 mCameraPreviewData);
-        mFilmStripView = (FilmStripView) findViewById(R.id.filmstrip_view);
+
         mFilmStripView.setViewGap(
                 getResources().getDimensionPixelSize(R.dimen.camera_film_strip_gap));
         mPanoramaViewHelper = new PanoramaViewHelper(this);
@@ -1811,7 +1813,9 @@ public class CameraActivity extends Activity
 
     @Override
     public void onModuleSelected(int moduleIndex) {
-        if (moduleIndex == 0 && CAMERA_2_ON) moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
+        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        if (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
+            moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
         if (mCurrentModuleIndex == moduleIndex) {
             if (mCurrentModuleIndex != ModuleSwitcher.CAPTURE_MODULE_INDEX) {
                 return;
@@ -1879,6 +1883,8 @@ public class CameraActivity extends Activity
                 if(mCaptureModule == null) {
                     mCaptureModule = new CaptureModule();
                     mCaptureModule.init(this, mCameraCaptureModuleRootView);
+                } else {
+                    mCaptureModule.reinit();
                 }
                 mCurrentModule = mCaptureModule;
                 mCameraCaptureModuleRootView.setVisibility(View.VISIBLE);

@@ -1106,8 +1106,7 @@ public class VideoModule implements CameraModule,
 
         mOrientationManager.resume();
         // Initialize location service.
-        boolean recordLocation = RecordLocationPreference.get(mPreferences,
-                mContentResolver);
+        boolean recordLocation = RecordLocationPreference.get(mPreferences);
         mLocationManager.recordLocation(recordLocation);
 
         if (mPreviewing) {
@@ -1487,6 +1486,10 @@ public class VideoModule implements CameraModule,
         mProfile.audioCodec = mAudioEncoder;
         mProfile.duration = mMaxVideoDurationInMs;
 
+        if ((mProfile.audioCodec == MediaRecorder.AudioEncoder.AMR_NB) &&
+            !mCaptureTimeLapse && !isHFR) {
+            mProfile.fileFormat = MediaRecorder.OutputFormat.THREE_GPP;
+        }
         // Set params individually for HFR case, as we do not want to encode audio
         if ((isHFR || isHSR) && captureRate > 0) {
             if (isHSR) {
@@ -2701,8 +2704,7 @@ public class VideoModule implements CameraModule,
             // startPreview().
             if (mCameraDevice == null) return;
 
-            boolean recordLocation = RecordLocationPreference.get(
-                    mPreferences, mContentResolver);
+            boolean recordLocation = RecordLocationPreference.get(mPreferences);
             mLocationManager.recordLocation(recordLocation);
 
             readVideoPreferences();

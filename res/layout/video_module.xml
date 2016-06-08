@@ -70,8 +70,8 @@
             <com.android.camera.PauseButton android:id="@+id/video_pause"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:layout_marginLeft="70dp"
-                android:padding="23dp"
+                android:layout_marginLeft="50dp"
+                android:padding="38dp"
                 android:src="@drawable/btn_pause_recording"/>
             <include layout="@layout/viewfinder_labels_video"
                 android:id="@+id/labels" />
