@@ -96,17 +96,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_CAMERA2
     };
     String[] mDeveloperKeys = new String[]{
-            SettingsManager.KEY_FLASH_MODE,
-            SettingsManager.KEY_RECORD_LOCATION,
-            SettingsManager.KEY_PICTURE_SIZE,
-            SettingsManager.KEY_JPEG_QUALITY,
-            SettingsManager.KEY_TIMER,
-            SettingsManager.KEY_CAMERA_SAVEPATH,
-            SettingsManager.KEY_LONGSHOT,
-            SettingsManager.KEY_ISO,
-            SettingsManager.KEY_EXPOSURE,
-            SettingsManager.KEY_WHITE_BALANCE,
-            SettingsManager.KEY_CAMERA2,
             SettingsManager.KEY_MONO_ONLY,
             SettingsManager.KEY_CLEARSIGHT,
             SettingsManager.KEY_MONO_PREVIEW
@@ -870,8 +859,18 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mSettingMenu.setSettingsManager(mSettingsManager);
 
         String[] keys = mSettingKeys;
-        if (mActivity.isDeveloperMenuEnabled())
+        if (mActivity.isDeveloperMenuEnabled()) {
             keys = mDeveloperKeys;
+            String[] combined = new String[mSettingKeys.length + mDeveloperKeys.length];
+            int idx = 0;
+            for (String key: mSettingKeys) {
+                combined[idx++] = key;
+            }
+            for (String key: mDeveloperKeys) {
+                combined[idx++] = key;
+            }
+            keys = combined;
+        }
         mSettingMenu.initializeForCamera2(keys);
     }
 
