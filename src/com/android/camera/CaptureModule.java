@@ -54,6 +54,7 @@ import android.util.SparseIntArray;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
 import android.view.Surface;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.Toast;
 
@@ -203,6 +204,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private byte[] mLastJpegData;
     private int mJpegFileSizeEstimation;
     private boolean mFirstPreviewLoaded;
+    private int[] mPrecaptureRequestHashCode = new int[MAX_NUM_CAM];
 
     private class MediaSaveNotifyThread extends Thread {
         private Uri uri;
@@ -334,7 +336,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                             aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
                             aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
                             aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                        mState[id] = STATE_WAITING_NON_PRECAPTURE;
+                        if (mPrecaptureRequestHashCode[id] == result.getRequest().hashCode())
+                            mState[id] = STATE_WAITING_NON_PRECAPTURE;
                     }
                     break;
                 }
@@ -858,11 +861,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                     .TEMPLATE_PREVIEW);
             builder.setTag(id);
             builder.addTarget(getPreviewSurface(id));
-
             applySettingsForPrecapture(builder, id);
-
+            CaptureRequest request = builder.build();
+            mPrecaptureRequestHashCode[id] = request.hashCode();
             mState[id] = STATE_WAITING_PRECAPTURE;
-            mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
+            mCaptureSession[id].capture(request, mCaptureCallback, mCameraHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -895,6 +898,15 @@ public class CaptureModule implements CameraModule, PhotoController,
                         .KEY_PICTURE_SIZE);
 
                 Size size = parsePictureSize(pictureSize);
+
+                if (i == getMainCameraId()) {
+                    Point screenSize = new Point();
+                    mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
+                    Size[] prevSizes = map.getOutputSizes(SurfaceHolder.class);
+                    Size prevSize = getOptimalPreviewSize(size, prevSizes, screenSize.x,
+                            screenSize.y);
+                    mUI.setPreviewSize(prevSize.getWidth(), prevSize.getHeight());
+                }
                 if (isClearSightOn()) {
                     ClearSightImageProcessor.getInstance().init(size.getWidth(), size.getHeight(),
                             mActivity, mOnMediaSavedListener);
@@ -1163,9 +1175,6 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void onResumeAfterSuper() {
         Log.d(TAG, "onResume " + getMode());
         mUI.showSurfaceView();
-        String pictureSize = mSettingsManager.getValue(SettingsManager.KEY_PICTURE_SIZE);
-        Size size = parsePictureSize(pictureSize);
-        mUI.setPreviewSize(size.getWidth(), size.getHeight());
         mUI.setSwitcherIndex();
         mCameraIdList = new ArrayList<>();
         setUpCameraOutputs();
@@ -1936,6 +1945,24 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             mActivity.onModuleSelected(ModuleSwitcher.PHOTO_MODULE_INDEX);
         }
+    }
+
+    private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes, int screenW, int
+            screenH) {
+        Size optimal = prevSizes[0];
+        float ratio = (float) pictureSize.getWidth() / pictureSize.getHeight();
+        for (Size prevSize: prevSizes) {
+            float prevRatio = (float) prevSize.getWidth() / prevSize.getHeight();
+            if (Math.abs(prevRatio - ratio) < 0.01) {
+                // flip w and h
+                if (prevSize.getWidth() <= screenH && prevSize.getHeight() <= screenW) {
+                    return prevSize;
+                } else {
+                    optimal = prevSize;
+                }
+            }
+        }
+        return optimal;
     }
 
     /**
