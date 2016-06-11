@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import org.codeaurora.snapcam.R;
 
@@ -18,8 +19,6 @@ public class PermissionsActivity extends Activity {
     private static final String TAG = "PermissionsActivity";
 
     private static int PERMISSION_REQUEST_CODE = 1;
-    private static int RESULT_CODE_OK = 0;
-    private static int RESULT_CODE_FAILED = 1;
 
     private int mIndexPermissionRequestCamera;
     private int mIndexPermissionRequestMicrophone;
@@ -33,6 +32,7 @@ public class PermissionsActivity extends Activity {
     private boolean mFlagHasCameraPermission;
     private boolean mFlagHasMicrophonePermission;
     private boolean mFlagHasStoragePermission;
+    private boolean mCriticalPermissionDenied;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +42,12 @@ public class PermissionsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        mNumPermissionsToRequest = 0;
-        checkPermissions();
+        if (!mCriticalPermissionDenied) {
+            mNumPermissionsToRequest = 0;
+            checkPermissions();
+        } else {
+            mCriticalPermissionDenied = false;
+        }
     }
 
     private void checkPermissions() {
@@ -107,7 +111,6 @@ public class PermissionsActivity extends Activity {
             permissionsToRequest[permissionsRequestIndex] = Manifest.permission.ACCESS_COARSE_LOCATION;
             mIndexPermissionRequestLocation = permissionsRequestIndex;
         }
-
         requestPermissions(permissionsToRequest, PERMISSION_REQUEST_CODE);
     }
 
@@ -119,21 +122,21 @@ public class PermissionsActivity extends Activity {
             if (grantResults[mIndexPermissionRequestCamera] == PackageManager.PERMISSION_GRANTED) {
                 mFlagHasCameraPermission = true;
             } else {
-                handlePermissionsFailure();
+                mCriticalPermissionDenied = true;
             }
         }
         if (mShouldRequestMicrophonePermission) {
             if (grantResults[mIndexPermissionRequestMicrophone] == PackageManager.PERMISSION_GRANTED) {
                 mFlagHasMicrophonePermission = true;
             } else {
-                handlePermissionsFailure();
+                mCriticalPermissionDenied = true;
             }
         }
         if (mShouldRequestStoragePermission) {
             if (grantResults[mIndexPermissionRequestStorage] == PackageManager.PERMISSION_GRANTED) {
                 mFlagHasStoragePermission = true;
             } else {
-                handlePermissionsFailure();
+                mCriticalPermissionDenied = true;
             }
         }
 
@@ -147,6 +150,8 @@ public class PermissionsActivity extends Activity {
 
         if (mFlagHasCameraPermission && mFlagHasMicrophonePermission && mFlagHasStoragePermission) {
             handlePermissionsSuccess();
+        } else if (mCriticalPermissionDenied) {
+            handlePermissionsFailure();
         }
     }
 
