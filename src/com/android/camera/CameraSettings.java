@@ -251,6 +251,8 @@ public class CameraSettings {
 
     public static final String KEY_SHOW_MENU_HELP = "help_menu";
 
+    public static final String KEY_REQUEST_PERMISSION  = "request_permission";
+
     public static final String KEY_SELFIE_FLASH = "pref_selfie_flash_key";
 
     public static final String EXPOSURE_DEFAULT_VALUE = "0";
@@ -278,7 +280,13 @@ public class CameraSettings {
         //video encoders
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H263, "h263");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H264, "h264");
-        // VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.H265, "h265");
+        int h265 = ApiHelper.getIntFieldIfExists(MediaRecorder.VideoEncoder.class,
+                       "HEVC", null, MediaRecorder.VideoEncoder.DEFAULT);
+        if (h265 == MediaRecorder.VideoEncoder.DEFAULT) {
+            h265 = ApiHelper.getIntFieldIfExists(MediaRecorder.VideoEncoder.class,
+                       "H265", null, MediaRecorder.VideoEncoder.DEFAULT);
+        }
+        VIDEO_ENCODER_TABLE.put(h265, "h265");
         VIDEO_ENCODER_TABLE.put(MediaRecorder.VideoEncoder.MPEG_4_SP, "m4v");
 
         //video qualities

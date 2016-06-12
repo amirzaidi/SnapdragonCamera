@@ -1067,7 +1067,9 @@ public class PhotoUI implements PieListener,
         mReviewImage.setVisibility(View.GONE);
         mOnScreenIndicators.setVisibility(View.VISIBLE);
         mMenuButton.setVisibility(View.VISIBLE);
-        mMenu.hideTopMenu(false);
+        if (mMenu != null) {
+            mMenu.hideTopMenu(false);
+        }
         CameraUtil.fadeOut(mReviewDoneButton);
         mShutterButton.setVisibility(View.VISIBLE);
         CameraUtil.fadeOut(mReviewRetakeButton);

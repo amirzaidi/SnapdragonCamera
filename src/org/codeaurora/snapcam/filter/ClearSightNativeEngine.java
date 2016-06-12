@@ -157,7 +157,11 @@ public class ClearSightNativeEngine {
     }
 
     public boolean hasReferenceImage(boolean color) {
-        return !(color ? mSrcColor.isEmpty() : mSrcMono.isEmpty());
+        return (getImageCount(color) > 0);
+    }
+
+    public int getImageCount(boolean color) {
+        return color ? mSrcColor.size() : mSrcMono.size();
     }
 
     public Image getReferenceImage(boolean color) {
