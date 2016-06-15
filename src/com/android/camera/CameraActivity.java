@@ -1744,6 +1744,7 @@ public class CameraActivity extends Activity
             mWakeLock.release();
             Log.d(TAG, "wake lock release");
         }
+        SettingsManager.getInstance().destroyInstance();
         if (mCursor != null) {
             getContentResolver().unregisterContentObserver(mLocalImagesObserver);
             getContentResolver().unregisterContentObserver(mLocalVideosObserver);
