@@ -32,8 +32,10 @@ package com.android.camera.imageprocessor.filter;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Camera;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.Face;
+import android.os.Handler;
 import android.util.Log;
 import android.util.Size;
 
@@ -256,9 +258,24 @@ public class TrackingFocusFrameListener implements ImageFilter {
         return mIsSupported;
     }
 
+    public static boolean isSupportedStatic() {
+        return mIsSupported;
+    }
+
     @Override
     public boolean isFrameListener() {
         return true;
+    }
+
+    @Override
+    public boolean isManualMode() {
+        return false;
+    }
+
+    @Override
+    public void manualCapture(CaptureRequest.Builder builder, CameraCaptureSession captureSession,
+                              CameraCaptureSession.CaptureCallback callback, Handler handler) {
+
     }
 
     private native int nInit(int operationMode, int precision, int width, int height, int stride);

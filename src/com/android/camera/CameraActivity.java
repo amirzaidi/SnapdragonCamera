@@ -249,6 +249,7 @@ public class CameraActivity extends Activity
     private Cursor mCursor;
 
     private WakeLock mWakeLock;
+    private static final int REFOCUS_ACTIVITY_CODE = 1;
 
     private class MyOrientationEventListener
             extends OrientationEventListener {
@@ -573,6 +574,16 @@ public class CameraActivity extends Activity
                 intent.setClass(this, RefocusActivity.class);
                 intent.setData(uri);
                 startActivity(intent);
+                return;
+            }
+        }
+        if (mCurrentModule instanceof CaptureModule) {
+            if (((CaptureModule) mCurrentModule).isRefocus()) {
+                Intent intent = new Intent();
+                intent.setClass(this, RefocusActivity.class);
+                intent.setData(uri);
+                intent.setFlags(RefocusActivity.MAP_ROTATED);
+                startActivityForResult(intent, REFOCUS_ACTIVITY_CODE);
                 return;
             }
         }
@@ -1624,6 +1635,10 @@ public class CameraActivity extends Activity
         if (requestCode == REQ_CODE_DONT_SWITCH_TO_PREVIEW) {
             mResetToPreviewOnResume = false;
             mIsEditActivityInProgress = false;
+        } else if (requestCode == REFOCUS_ACTIVITY_CODE)  {
+            if(resultCode == RESULT_OK) {
+                mCaptureModule.setRefocusLastTaken(false);
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }

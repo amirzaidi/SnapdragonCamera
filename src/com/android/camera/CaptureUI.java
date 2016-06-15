@@ -42,6 +42,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.camera.imageprocessor.filter.BeautificationFilter;
+import com.android.camera.imageprocessor.filter.TrackingFocusFrameListener;
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.Camera2FaceView;
 import com.android.camera.ui.CameraControls;
@@ -61,6 +63,7 @@ import com.android.camera.util.CameraUtil;
 
 import org.codeaurora.snapcam.R;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -97,13 +100,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
             SettingsManager.KEY_CAMERA2,
-            SettingsManager.KEY_MAKEUP,
             SettingsManager.KEY_FACE_DETECTION,
             SettingsManager.KEY_VIDEO_FLASH_MODE,
             SettingsManager.KEY_VIDEO_DURATION,
             SettingsManager.KEY_VIDEO_QUALITY,
-            SettingsManager.KEY_TRACKINGFOCUS
-    };
+            SettingsManager.KEY_TRACKINGFOCUS,
+            SettingsManager.KEY_MAKEUP
+            };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_REDEYE_REDUCTION,
             SettingsManager.KEY_MONO_ONLY,
@@ -388,7 +391,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initializeSettingMenu();
         initSceneModeButton();
         initFilterModeButton();
-        if(mTrackingFocusRenderer != null) {
+        if (mTrackingFocusRenderer != null) {
             mTrackingFocusRenderer.setVisible(true);
         }
     }
@@ -1033,7 +1036,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
         String[] keys = mSettingKeys;
         if (mActivity.isDeveloperMenuEnabled()) {
-            keys = mDeveloperKeys;
             String[] combined = new String[mSettingKeys.length + mDeveloperKeys.length];
             int idx = 0;
             for (String key: mSettingKeys) {
@@ -1356,6 +1358,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         removeAllMenu();
         mCameraControls.showRefocusToast(false);
         return ret;
+    }
+
+    public void showRefocusToast(boolean show) {
+        mCameraControls.showRefocusToast(show);
     }
 
     private FocusIndicator getFocusIndicator() {

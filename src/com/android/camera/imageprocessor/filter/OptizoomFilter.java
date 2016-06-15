@@ -29,7 +29,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.android.camera.imageprocessor.filter;
 
 import android.graphics.Rect;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
+import android.os.Handler;
 import android.util.Log;
 
 import com.android.camera.CaptureModule;
@@ -130,6 +132,16 @@ public class OptizoomFilter implements ImageFilter{
     @Override
     public boolean isFrameListener() {
         return false;
+    }
+
+    @Override
+    public boolean isManualMode() {
+        return false;
+    }
+
+    @Override
+    public void manualCapture(CaptureRequest.Builder builder, CameraCaptureSession captureSession,
+                              CameraCaptureSession.CaptureCallback callback, Handler handler) {
     }
 
     public static boolean isSupportedStatic() {
