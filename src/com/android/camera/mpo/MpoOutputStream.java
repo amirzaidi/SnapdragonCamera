@@ -40,12 +40,16 @@ class MpoOutputStream extends FilterOutputStream {
 
     private static final int STATE_SOI = 0;
     private static final int STATE_FRAME_HEADER = 1;
+    private static final int STATE_SKIP_CROP = 2;
     private static final int STATE_JPEG_DATA = 3;
 
     private static final short TIFF_HEADER = 0x002A;
     private static final short TIFF_BIG_ENDIAN = 0x4d4d;
     private static final short TIFF_LITTLE_ENDIAN = 0x4949;
     private static final int MAX_EXIF_SIZE = 65535;
+
+    private static final String DC_CROP_INFO = "Qualcomm Dual Camera Attributes";
+    private static final int DC_CROP_INFO_BYTE_SIZE = DC_CROP_INFO.length();
 
     private MpoData mMpoData;
     private MpoImageData mCurrentImageData;
@@ -54,8 +58,10 @@ class MpoOutputStream extends FilterOutputStream {
     private int mByteToCopy;
     private byte[] mSingleByteArray = new byte[1];
     private ByteBuffer mBuffer = ByteBuffer.allocate(4);
+    private ByteBuffer mCropInfo = ByteBuffer.allocate(DC_CROP_INFO_BYTE_SIZE);
     private int mMpoOffsetStart = -1;
     private int mSize = 0;
+    private boolean mSkipCropData = false;
 
     protected MpoOutputStream(OutputStream ou) {
         super(new BufferedOutputStream(ou, STREAMBUFFER_SIZE));
@@ -77,19 +83,41 @@ class MpoOutputStream extends FilterOutputStream {
         mBuffer.rewind();
     }
 
-    private int requestByteToBuffer(int requestByteCount, byte[] buffer, int offset, int length) {
-        int byteNeeded = requestByteCount - mBuffer.position();
+    private int requestByteToBuffer(ByteBuffer buffer, int requestByteCount, byte[] data, int offset, int length) {
+        int byteNeeded = requestByteCount - buffer.position();
         int byteToRead = length > byteNeeded ? byteNeeded : length;
-        mBuffer.put(buffer, offset, byteToRead);
+        buffer.put(data, offset, byteToRead);
         return byteToRead;
+    }
+
+    private boolean isDualCamCropInfo() {
+        // first check length
+        if(mCropInfo.position() != DC_CROP_INFO_BYTE_SIZE) {
+            return false;
+        }
+
+        mCropInfo.rewind();
+        for(int i = 0; i < DC_CROP_INFO.length(); i++) {
+            char c = (char)mCropInfo.get(i);
+            //Log.d(TAG, "mCropInfo char @ " + (i) + ": " + c);
+            if(DC_CROP_INFO.charAt(i) != c)
+                return false;
+        }
+
+        return true;
     }
 
     void writeMpoFile() throws IOException {
         // check and write primary image
         mCurrentImageData = mMpoData.getPrimaryMpoImage();
+        // don't skip if primary == bayer
+        if(mMpoData.getAuxiliaryImageCount() > 1) {
+            mSkipCropData = true;
+        }
         write(mCurrentImageData.getJpegData());
         flush();
 
+        mSkipCropData = false;
         // check and write auxiliary images
         for (MpoImageData image : mMpoData.getAuxiliaryMpoImages()) {
             resetStates();
@@ -125,7 +153,7 @@ class MpoOutputStream extends FilterOutputStream {
             }
             switch (mState) {
             case STATE_SOI:
-                int byteRead = requestByteToBuffer(2, buffer, offset, length);
+                int byteRead = requestByteToBuffer(mBuffer, 2, buffer, offset, length);
                 offset += byteRead;
                 length -= byteRead;
                 if (mBuffer.position() < 2) {
@@ -141,12 +169,9 @@ class MpoOutputStream extends FilterOutputStream {
                 mBuffer.rewind();
                 break;
             case STATE_FRAME_HEADER:
-                // Copy APP1 if it exists
+                // Copy APP0 and APP1 if it exists
                 // Insert MPO data
-                // Copy remainder of image
-                byteRead = requestByteToBuffer(4, buffer, offset, length);
-                offset += byteRead;
-                length -= byteRead;
+                byteRead = requestByteToBuffer(mBuffer, 4, buffer, offset, length);
                 // Check if this image data doesn't contain SOF.
                 if (mBuffer.position() == 2) {
                     short tag = mBuffer.getShort();
@@ -165,8 +190,63 @@ class MpoOutputStream extends FilterOutputStream {
                     out.write(mBuffer.array(), 0, 4);
                     mSize += 4;
                     mByteToCopy = (mBuffer.getShort() & 0x0000ffff) - 2;
+                    offset += byteRead;
+                    length -= byteRead;
                 } else {
                     writeMpoData();
+                    if(mSkipCropData)
+                        mState = STATE_SKIP_CROP;
+                    else
+                        mState = STATE_JPEG_DATA;
+                }
+                mBuffer.rewind();
+                break;
+            case STATE_SKIP_CROP:
+                byteRead = requestByteToBuffer(mBuffer, 4, buffer, offset, length);
+                // Check if this image data doesn't contain SOF.
+                if (mBuffer.position() == 2) {
+                    short tag = mBuffer.getShort();
+                    if (tag == JpegHeader.EOI) {
+                        out.write(mBuffer.array(), 0, 2);
+                        mSize += 2;
+                        mBuffer.rewind();
+                    }
+                }
+                if (mBuffer.position() < 4) {
+                    return;
+                }
+
+                offset += byteRead;
+                length -= byteRead;
+                mBuffer.rewind();
+
+                marker = mBuffer.getShort();
+                if (!JpegHeader.isSofMarker(marker)) {
+                    // if not SOF, read first 31 bytes
+                    // try to match dual cam crop magic string
+                    byteRead = requestByteToBuffer(mCropInfo, DC_CROP_INFO_BYTE_SIZE, buffer, offset, length);
+                    if(isDualCamCropInfo()) {
+                        // if crop info, clear with 0
+                        out.write(mBuffer.array(), 0, 4);
+                        mSize += 4;
+
+                        int sizeToClear = mByteToSkip = (mBuffer.getShort() & 0x0000ffff) - 2;
+                        while(sizeToClear > 0) {
+                            out.write(0);
+                            mSize++;
+                            sizeToClear--;
+                        }
+                        mState = STATE_JPEG_DATA;
+                    } else {
+                        // else copy this block
+                        // and move on to next header
+                        out.write(mBuffer.array(), 0, 4);
+                        mSize += 4;
+                        mByteToCopy = (mBuffer.getShort() & 0x0000ffff) - 2;
+                    }
+                    mCropInfo.rewind();
+                } else {
+                    // SOF is reached, no crop info detected, skip
                     out.write(mBuffer.array(), 0, 4);
                     mSize += 4;
                     mState = STATE_JPEG_DATA;
