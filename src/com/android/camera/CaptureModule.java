@@ -564,6 +564,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         // are initialized.
         if (s != null) {
             s.setListener(this);
+            if (isClearSightOn()) {
+                ClearSightImageProcessor.getInstance().setMediaSaveService(s);
+            }
         }
 
         mNamedImages = new NamedImages();
@@ -577,6 +580,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         MediaSaveService s = mActivity.getMediaSaveService();
         if (s != null) {
             s.setListener(this);
+            if (isClearSightOn()) {
+                ClearSightImageProcessor.getInstance().setMediaSaveService(s);
+            }
         }
         mNamedImages = new NamedImages();
     }
@@ -1081,9 +1087,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mUI.setPreviewSize(mFrameProcPreviewOutputSize.getWidth(), mFrameProcPreviewOutputSize.getHeight());
                 }
                 if (isClearSightOn()) {
-                    ClearSightImageProcessor.getInstance().init(size.getWidth(), size.getHeight(),
-                            mActivity, mOnMediaSavedListener);
-                    ClearSightImageProcessor.getInstance().setCallback(this);
+                    if(i == getMainCameraId()) {
+                        ClearSightImageProcessor.getInstance().init(size.getWidth(), size.getHeight(),
+                                mActivity, mOnMediaSavedListener);
+                        ClearSightImageProcessor.getInstance().setCallback(this);
+                    }
                 } else {
                     // No Clearsight
                     mImageReader[i] = ImageReader.newInstance(size.getWidth(), size.getHeight(), imageFormat, MAX_IMAGE_NUM);
