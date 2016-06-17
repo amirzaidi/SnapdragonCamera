@@ -994,5 +994,14 @@
     <string name="pref_camera2_noise_reduction_value_off" translatable="false">off</string>
     <string name="pref_camera2_noise_reduction_value_fast" translatable="false">fast</string>
     <string name="pref_camera2_noise_reduction_value_high_quality" translatable="false">high-quality</string>
+
+    <string name="pref_camera2_videosnap_default" translatable="false">enable</string>
+    <string name="pref_camera2_videosnap_title" translatable="true">Auto Snapshot Size</string>
+
+    <string name="pref_camera2_videosnap_value_enable" translatable="true">enable</string>
+    <string name="pref_camera2_videosnap_value_disable" translatable="true">disable</string>
+
+    <string name="pref_camera2_videosnap_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_videosnap_entry_disable" translatable="true">Disable</string>
 </resources>
 
