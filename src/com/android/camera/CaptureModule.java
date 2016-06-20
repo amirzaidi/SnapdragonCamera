@@ -2038,7 +2038,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         .FLASH_MODE_OFF);
                 break;
             case CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH:
-                if (redeye.equals("disable")) {
+                if (redeye != null && redeye.equals("disable")) {
                     request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest
                             .CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
                 }

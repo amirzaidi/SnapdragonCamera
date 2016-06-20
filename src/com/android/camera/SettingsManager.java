@@ -36,6 +36,7 @@ import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Log;
 import android.util.Range;
@@ -497,6 +498,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference clearsight = mPreferenceGroup.findPreference(KEY_CLEARSIGHT);
         ListPreference monoPreview = mPreferenceGroup.findPreference(KEY_MONO_PREVIEW);
         ListPreference monoOnly = mPreferenceGroup.findPreference(KEY_MONO_ONLY);
+        ListPreference redeyeReduction = mPreferenceGroup.findPreference(KEY_REDEYE_REDUCTION);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -535,7 +537,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (clearsight != null) removePreference(mPreferenceGroup, KEY_CLEARSIGHT);
             if (monoPreview != null) removePreference(mPreferenceGroup, KEY_MONO_PREVIEW);
             if (monoOnly != null) removePreference(mPreferenceGroup, KEY_MONO_ONLY);
+        }
 
+        if (redeyeReduction != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
+                    redeyeReduction, getSupportedRedeyeReduction(cameraId));
         }
     }
 
@@ -696,6 +702,20 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
 
         return res;
+    }
+
+    private List<String> getSupportedRedeyeReduction(int cameraId) {
+        int[] flashModes = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .CONTROL_AE_AVAILABLE_MODES);
+        List<String> modes = new ArrayList<>();
+        for (int i = 0; i < flashModes.length; i++) {
+            if (flashModes[i] == CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE) {
+                modes.add("disable");
+                modes.add("enable");
+                break;
+            }
+        }
+        return modes;
     }
 
     private List<String> getSupportedWhiteBalanceModes(int cameraId) {
