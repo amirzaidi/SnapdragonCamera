@@ -1175,11 +1175,6 @@ public class CameraSettings {
         return Integer.parseInt(pref.getString(KEY_CAMERA_ID, rearCameraId));
     }
 
-    public static int getInitialCameraId(SharedPreferences pref) {
-        String value = pref.getString(SettingsManager.KEY_INITIAL_CAMERA, "0");
-        return Integer.parseInt(value);
-    }
-
     public static void writePreferredCameraId(SharedPreferences pref,
             int cameraId) {
         Editor editor = pref.edit();
