@@ -226,6 +226,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mFirstPreviewLoaded;
     private int[] mPrecaptureRequestHashCode = new int[MAX_NUM_CAM];
     private int[] mLockRequestHashCode = new int[MAX_NUM_CAM];
+    private final Handler mHandler = new MainHandler();
 
     private class MediaSaveNotifyThread extends Thread {
         private Uri uri;
@@ -340,7 +341,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CameraCaptureSession.CaptureCallback mCaptureCallback
             = new CameraCaptureSession.CaptureCallback() {
 
-        private void process(CaptureResult result) {
+        private void updateState(CaptureResult result) {
             int id = (int) result.getRequest().getTag();
 
             if (!mFirstPreviewLoaded) {
@@ -420,7 +421,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         CaptureResult partialResult) {
             int id = (int) partialResult.getRequest().getTag();
             if (id == getMainCameraId()) updateFocusStateChange(partialResult);
-            process(partialResult);
         }
 
         @Override
@@ -429,7 +429,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                        TotalCaptureResult result) {
             int id = (int) result.getRequest().getTag();
             if (id == getMainCameraId()) updateFocusStateChange(result);
-            process(result);
+            updateState(result);
         }
     };
 
@@ -1438,7 +1438,12 @@ public class CaptureModule implements CameraModule, PhotoController,
             initializeSecondTime();
         }
         mUI.reInitUI();
-        mActivity.updateStorageSpaceAndHint();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.updateStorageSpaceAndHint();
+            }
+        });
         estimateJpegFileSize();
         mUI.enableShutter(true);
     }
@@ -2117,7 +2122,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void updateFocusStateChange(CaptureResult result) {
-        final int resultAFState = result.get(CaptureResult.CONTROL_AF_STATE);
+        final Integer resultAFState = result.get(CaptureResult.CONTROL_AF_STATE);
+        if (resultAFState == null) return;
 
         // Report state change when AF state has changed.
         if (resultAFState != mLastResultAFState && mFocusStateListener != null) {
@@ -2334,5 +2340,15 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         unlockFocus(BAYER_ID);
         unlockFocus(MONO_ID);
+    }
+
+    /**
+     * This Handler is used to post message back onto the main thread of the
+     * application
+     */
+    private class MainHandler extends Handler {
+        public MainHandler() {
+            super(Looper.getMainLooper());
+        }
     }
 }
