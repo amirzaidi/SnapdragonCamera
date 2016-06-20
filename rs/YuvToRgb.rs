@@ -41,9 +41,9 @@ uchar4 __attribute__((kernel)) nv21ToRgb(uint32_t x, uint32_t y) {
     int vV = (int)(rsGetElementAt_uchar(gIn, index) & 0xFF ) -128;
     int uV = (int)(rsGetElementAt_uchar(gIn, index+1) & 0xFF ) -128;
 
-    int r = (int) (1.164f * yV  + 1.596f * vV );
-    int g = (int) (1.164f * yV  - 0.813f * vV  - 0.391f * uV);
-    int b = (int) (1.164f * yV  + 2.018f * uV );
+    int r = (int) (yV  + 1.370705f * vV );
+    int g = (int) (yV  - 0.698001f * vV  - 0.337633f* uV);
+    int b = (int) (yV  + 1.732446 * uV );
 
     r = r>255? 255 : r<0 ? 0 : r;
     g = g>255? 255 : g<0 ? 0 : g;

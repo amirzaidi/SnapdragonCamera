@@ -30,11 +30,13 @@
 package com.android.camera;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Log;
 import android.util.Range;
@@ -58,6 +60,8 @@ import java.util.Set;
 public class SettingsManager implements ListMenu.SettingsListener {
     public static final int RESOURCE_TYPE_THUMBNAIL = 0;
     public static final int RESOURCE_TYPE_LARGEICON = 1;
+    public static final int SCENE_MODE_NIGHT_INT = 5;
+
     // Custom-Scenemodes start from 100
     public static final int SCENE_MODE_DUAL_INT = 100;
     public static final int SCENE_MODE_OPTIZOOM_INT = 101;
@@ -83,12 +87,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
     public static final String KEY_TIMER = "pref_camera2_timer_key";
     public static final String KEY_LONGSHOT = "pref_camera2_longshot_key";
-    public static final String KEY_INITIAL_CAMERA = "pref_camera2_initial_camera_key";
     private static final String TAG = "SnapCam_SettingsManager";
-    private static final List<CameraCharacteristics> mCharacteristics = new ArrayList<>();
 
     private static SettingsManager sInstance;
-
+    private ArrayList<CameraCharacteristics> mCharacteristics;
     private ArrayList<Listener> mListeners;
     private Map<String, Values> mValuesMap;
     private Context mContext;
@@ -100,6 +102,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     private SettingsManager(Context context) {
         mListeners = new ArrayList<>();
+        mCharacteristics = new ArrayList<>();
         mContext = context;
         mPreferences = new ComboPreferences(mContext);
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mContext);
@@ -143,6 +146,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return sInstance;
     }
 
+    public void destroyInstance() {
+        if (sInstance != null) {
+            sInstance = null;
+        }
+    }
+
     public List<String> getDisabledList() {
         List<String> list = new ArrayList<>();
         Set<String> keySet = mValuesMap.keySet();
@@ -165,7 +174,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public void init() {
         Log.d(TAG, "SettingsManager init");
-        int cameraId = CameraSettings.getInitialCameraId(mPreferences);
+        int cameraId = getInitialCameraId(mPreferences);
         setLocalIdAndInitialize(cameraId);
     }
 
@@ -467,6 +476,15 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return null;
     }
 
+    public int getInitialCameraId(SharedPreferences pref) {
+        String value = pref.getString(SettingsManager.KEY_CAMERA_ID, "0");
+        int frontBackId = Integer.parseInt(value);
+        if (frontBackId == CaptureModule.FRONT_ID) return frontBackId;
+        String monoOnly = pref.getString(SettingsManager.KEY_MONO_ONLY, "off");
+        if (monoOnly.equals("off")) return frontBackId;
+        else return CaptureModule.MONO_ID;
+    }
+
     private void filterPreferences(int cameraId) {
         // filter unsupported preferences
         ListPreference whiteBalance = mPreferenceGroup.findPreference(KEY_WHITE_BALANCE);
@@ -480,6 +498,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference clearsight = mPreferenceGroup.findPreference(KEY_CLEARSIGHT);
         ListPreference monoPreview = mPreferenceGroup.findPreference(KEY_MONO_PREVIEW);
         ListPreference monoOnly = mPreferenceGroup.findPreference(KEY_MONO_ONLY);
+        ListPreference redeyeReduction = mPreferenceGroup.findPreference(KEY_REDEYE_REDUCTION);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -505,6 +524,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (pictureSize != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     pictureSize, getSupportedPictureSize(cameraId));
+            CameraSettings.filterSimilarPictureSize(mPreferenceGroup, pictureSize);
         }
 
         if (exposure != null) buildExposureCompensation(cameraId);
@@ -518,7 +538,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (clearsight != null) removePreference(mPreferenceGroup, KEY_CLEARSIGHT);
             if (monoPreview != null) removePreference(mPreferenceGroup, KEY_MONO_PREVIEW);
             if (monoOnly != null) removePreference(mPreferenceGroup, KEY_MONO_ONLY);
+        }
 
+        if (redeyeReduction != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
+                    redeyeReduction, getSupportedRedeyeReduction(cameraId));
         }
     }
 
@@ -665,10 +689,34 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = map.getOutputSizes(ImageFormat.JPEG);
         List<String> res = new ArrayList<>();
-        for (int i = 0; i < sizes.length; i++) {
-            res.add(sizes[i].toString());
+        if (sizes != null) {
+            for (int i = 0; i < sizes.length; i++) {
+                res.add(sizes[i].toString());
+            }
         }
+
+        Size[] highResSizes = map.getHighResolutionOutputSizes(ImageFormat.JPEG);
+        if (highResSizes != null) {
+            for (int i = 0; i < highResSizes.length; i++) {
+                res.add(highResSizes[i].toString());
+            }
+        }
+
         return res;
+    }
+
+    private List<String> getSupportedRedeyeReduction(int cameraId) {
+        int[] flashModes = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .CONTROL_AE_AVAILABLE_MODES);
+        List<String> modes = new ArrayList<>();
+        for (int i = 0; i < flashModes.length; i++) {
+            if (flashModes[i] == CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE) {
+                modes.add("disable");
+                modes.add("enable");
+                break;
+            }
+        }
+        return modes;
     }
 
     private List<String> getSupportedWhiteBalanceModes(int cameraId) {

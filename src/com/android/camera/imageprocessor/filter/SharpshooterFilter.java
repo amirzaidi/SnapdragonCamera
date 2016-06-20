@@ -29,8 +29,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.android.camera.imageprocessor.filter;
 
 import android.graphics.Rect;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
 import android.util.Log;
+import android.util.Range;
+import android.util.Rational;
 
 import com.android.camera.CaptureModule;
 
@@ -38,18 +42,20 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OptizoomFilter implements ImageFilter{
-    public static final int NUM_REQUIRED_IMAGE = 8;
+public class SharpshooterFilter implements ImageFilter{
+    public static final int NUM_REQUIRED_IMAGE = 5;
     private int mWidth;
     private int mHeight;
     private int mStrideY;
     private int mStrideVU;
-    private static String TAG = "OptizoomFilter";
+    private static String TAG = "SharpshooterFilter";
     private static final boolean DEBUG = false;
     private int temp;
     private static boolean mIsSupported = true;
     private ByteBuffer mOutBuf;
     private CaptureModule mModule;
+    private int mSenseValue = 0;
+    private long mExpoTime;
 
     private static void Log(String msg) {
         if(DEBUG) {
@@ -57,14 +63,30 @@ public class OptizoomFilter implements ImageFilter{
         }
     }
 
-    public OptizoomFilter(CaptureModule module) {
-       mModule = module;
+    public SharpshooterFilter(CaptureModule module) {
+        mModule = module;
     }
 
+    private void getSenseUpperValue() {
+        if(mSenseValue == 0) {
+            Range<Integer> sensRange = mModule.getMainCameraCharacteristics().get(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE);
+            mSenseValue = sensRange.getUpper();
+        }
+    }
     @Override
     public List<CaptureRequest> setRequiredImages(CaptureRequest.Builder builder) {
+        getSenseUpperValue();
+        mExpoTime = (mModule.getPreviewCaptureResult().get(CaptureResult.SENSOR_EXPOSURE_TIME)/2);
+        int isoValue = (mModule.getPreviewCaptureResult().get(CaptureResult.SENSOR_SENSITIVITY)).intValue()*2;
+        if(isoValue < mSenseValue) {
+            mSenseValue = isoValue;
+        }
+
         List<CaptureRequest> list = new ArrayList<CaptureRequest>();
         for(int i=0; i < NUM_REQUIRED_IMAGE; i++) {
+            builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+            builder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, new Long(mExpoTime));
+            builder.set(CaptureRequest.SENSOR_SENSITIVITY, mSenseValue);
             list.add(builder.build());
         }
         return list;
@@ -72,7 +94,7 @@ public class OptizoomFilter implements ImageFilter{
 
     @Override
     public String getStringName() {
-        return "OptizoomFilter";
+        return "SharpshooterFilter";
     }
 
     @Override
@@ -87,7 +109,7 @@ public class OptizoomFilter implements ImageFilter{
         mHeight = height/2*2;
         mStrideY = strideY/2*2;
         mStrideVU = strideVU/2*2;
-        mOutBuf = ByteBuffer.allocate(mStrideY*mHeight*6);  // YUV Buffer to hold (mWidth*2) X (mHeight*2)
+        mOutBuf = ByteBuffer.allocate(mStrideY*mHeight*3/2);
         Log("width: "+mWidth+" height: "+mHeight+" strideY: "+mStrideY+" strideVU: "+mStrideVU);
         nativeInit(mWidth, mHeight, mStrideY, mStrideVU,
                 0, 0, mWidth, mHeight, NUM_REQUIRED_IMAGE);
@@ -105,21 +127,22 @@ public class OptizoomFilter implements ImageFilter{
         Log("addImage");
         int yActualSize = bY.remaining();
         int vuActualSize = bVU.remaining();
-        nativeAddImage(bY, bVU, yActualSize, vuActualSize, imageNum);
+        int status = nativeAddImage(bY, bVU, yActualSize, vuActualSize, imageNum);
+        if(status != 0) {
+            Log.e(TAG, "Fail to add image");
+        }
     }
 
     @Override
     public ResultImage processImage() {
-        Log("processImage " + mModule.getZoomValue());
+        Log("processImage ");
         int[] roi = new int[4];
-        int status = nativeProcessImage(mOutBuf.array(), mModule.getZoomValue(), roi);
+        int status = nativeProcessImage(mOutBuf.array(), (int) (mExpoTime / 1000000), mSenseValue, roi);
         Log("processImage done");
         if(status < 0) { //In failure case, library will return the first image as it is.
-            Log.w(TAG, "Fail to process the optizoom. It only processes when zoomValue >= 1.5f");
-            return new ResultImage(mOutBuf, new Rect(roi[0], roi[1], roi[0]+roi[2], roi[1] + roi[3]), mWidth, mHeight, mStrideY);
-        } else { //In success case, it will return twice bigger width and height.
-            return new ResultImage(mOutBuf, new Rect(roi[0], roi[1], roi[0]+roi[2], roi[1] + roi[3]), mWidth*2, mHeight*2, mStrideY*2);
+            Log.w(TAG, "Fail to process the image.");
         }
+        return new ResultImage(mOutBuf, new Rect(roi[0], roi[1], roi[0]+roi[2], roi[1] + roi[3]), mWidth, mHeight, mStrideY);
     }
 
     @Override
@@ -135,13 +158,14 @@ public class OptizoomFilter implements ImageFilter{
                                    int roiX, int roiY, int roiW, int roiH, int numImages);
     private native int nativeDeinit();
     private native int nativeAddImage(ByteBuffer yB, ByteBuffer vuB, int ySize, int vuSize, int imageNum);
-    private native int nativeProcessImage(byte[] buffer, float zoomLvl, int[] roi);
+    private native int nativeProcessImage(byte[] buffer, int expoTime, int isoValue, int[] roi);
 
     static {
         try {
-            System.loadLibrary("jni_optizoom");
+            System.loadLibrary("jni_sharpshooter");
             mIsSupported = true;
         }catch(UnsatisfiedLinkError e) {
+            Log.d(TAG, e.toString());
             mIsSupported = false;
         }
     }

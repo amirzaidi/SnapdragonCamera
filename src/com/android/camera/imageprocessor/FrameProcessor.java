@@ -128,7 +128,7 @@ public class FrameProcessor {
         }
     }
 
-    private void createAllocation(int width, int height) {
+    private void createAllocation(int width, int height, int stridePad) {
         Type.Builder yuvTypeBuilder = new Type.Builder(mRs, Element.YUV(mRs));
         yuvTypeBuilder.setX(width);
         yuvTypeBuilder.setY(height);
@@ -141,6 +141,8 @@ public class FrameProcessor {
         mRsRotator.set_gOut(mProcessAllocation);
         mRsRotator.set_width(width);
         mRsRotator.set_height(height);
+        mRsRotator.set_pad(stridePad);
+        mRsRotator.set_gFlip(!mModule.isBackCamera());
         mRsYuvToRGB.set_gIn(mProcessAllocation);
         mRsYuvToRGB.set_width(height);
         mRsYuvToRGB.set_height(width);
@@ -266,6 +268,7 @@ public class FrameProcessor {
         int ySize;
         int stride;
         int height;
+        int width;
 
         public ProcessingTask() {
         }
@@ -288,6 +291,7 @@ public class FrameProcessor {
                     ByteBuffer bVU = image.getPlanes()[2].getBuffer();
                     if(yvuBytes == null) {
                         stride = image.getPlanes()[0].getRowStride();
+                        width = mSize.getWidth();
                         height = mSize.getHeight();
                         ySize = stride * mSize.getHeight();
                         yvuBytes = new byte[ySize*3/2];
@@ -314,7 +318,7 @@ public class FrameProcessor {
                     return;
                 }
                 if(mInputAllocation == null) {
-                    createAllocation(stride, height);
+                    createAllocation(stride, height, stride-width);
                 }
                 mInputAllocation.copyFrom(yvuBytes);
                 mRsRotator.forEach_rotate90andMerge(mInputAllocation);
