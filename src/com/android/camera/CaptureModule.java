@@ -863,9 +863,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 captureBuilder = mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             }
 
-            // Orientation
-            int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, rotation));
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, mOrientation));
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             captureBuilder.addTarget(getPreviewSurface(id));
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
