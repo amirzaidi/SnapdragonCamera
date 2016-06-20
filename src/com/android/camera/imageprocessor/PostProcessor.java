@@ -43,17 +43,24 @@ import android.widget.Toast;
 
 import com.android.camera.CameraActivity;
 import com.android.camera.CaptureModule;
+import com.android.camera.Exif;
 import com.android.camera.MediaSaveService;
 import com.android.camera.PhotoModule;
 import com.android.camera.SettingsManager;
+import com.android.camera.exif.ExifInterface;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
+import com.android.camera.imageprocessor.filter.SharpshooterFilter;
 import com.android.camera.ui.RotateTextToast;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
+
 import com.android.camera.imageprocessor.filter.ImageFilter;
+import com.android.camera.util.CameraUtil;
 
 public class PostProcessor implements ImageReader.OnImageAvailableListener{
 
@@ -62,7 +69,8 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     private static final String TAG = "PostProcessor";
     public static final int FILTER_NONE = 0;
     public static final int FILTER_OPTIZOOM = 1;
-    public static final int FILTER_MAX = 2;
+    public static final int FILTER_SHARPSHOOTER = 2;
+    public static final int FILTER_MAX = 3;
 
     private int mCurrentNumImage = 0;
     private ImageFilter mFilter;
@@ -80,7 +88,7 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     private WatchdogThread mWatchdog;
 
     //This is for the debug feature.
-    private static boolean DEBUG_FILTER = true;  //TODO: This has to be false before releasing.
+    private static boolean DEBUG_FILTER = false;
     private ImageFilter.ResultImage mDebugResultImage;
 
     @Override
@@ -258,6 +266,9 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                 case FILTER_OPTIZOOM:
                     mFilter = new OptizoomFilter(mController);
                     break;
+                case FILTER_SHARPSHOOTER:
+                    mFilter = new SharpshooterFilter(mController);
+                    break;
             }
         }
 
@@ -363,6 +374,20 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
             });
     }
 
+    private byte[] addExifTags(byte[] jpeg, int orientationInDegree) {
+        ExifInterface exif = new ExifInterface();
+        exif.addOrientationTag(orientationInDegree);
+        exif.addDateTimeStampTag(ExifInterface.TAG_DATE_TIME, System.currentTimeMillis(),
+                TimeZone.getDefault());
+        ByteArrayOutputStream jpegOut = new ByteArrayOutputStream();
+        try {
+            exif.writeExif(jpeg, jpegOut);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not write EXIF", e);
+        }
+        return jpegOut.toByteArray();
+    }
+
     private void clear() {
         mCurrentNumImage = 0;
     }
@@ -409,29 +434,32 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                             ) {
                         Log.e(TAG, "Processed outRoi is not within picture range");
                     } else {
+                        int orientation = CameraUtil.getJpegRotation(mController.getMainCameraId(), mController.getDisplayOrientation());
                         if(mFilter != null && DEBUG_FILTER) {
-                            bytes = nv21ToJpeg(mDebugResultImage);
+                            bytes = nv21ToJpeg(mDebugResultImage, orientation);
                             mActivity.getMediaSaveService().addImage(
                                     bytes, title + "_beforeApplyingFilter", date, null, mDebugResultImage.outRoi.width(), mDebugResultImage.outRoi.height(),
-                                    0, null, mediaSavedListener, contentResolver, "jpeg");
+                                    orientation, null, mediaSavedListener, contentResolver, "jpeg");
                         }
-                        bytes = nv21ToJpeg(resultImage);
-                        mController.updateThumbnailJpegData(bytes);
+                        bytes = nv21ToJpeg(resultImage, orientation);
                         mActivity.getMediaSaveService().addImage(
                                 bytes, title, date, null, resultImage.outRoi.width(), resultImage.outRoi.height(),
-                                0, null, mediaSavedListener, contentResolver, "jpeg");
+                                orientation, null, mediaSavedListener, contentResolver, "jpeg");
+                        mController.updateThumbnailJpegData(bytes);
                     }
                 }
             }
         });
     }
 
-    private byte[] nv21ToJpeg(ImageFilter.ResultImage resultImage) {
+    private byte[] nv21ToJpeg(ImageFilter.ResultImage resultImage, int orientation) {
         BitmapOutputStream bos = new BitmapOutputStream(1024);
         YuvImage im = new YuvImage(resultImage.outBuffer.array(), ImageFormat.NV21,
                                     resultImage.width, resultImage.height, new int[]{resultImage.stride, resultImage.stride});
         im.compressToJpeg(resultImage.outRoi, 50, bos);
-        return bos.getArray();
+        byte[] bytes = bos.getArray();
+        bytes = addExifTags(bytes, orientation);
+        return bytes;
     }
 
     private class BitmapOutputStream extends ByteArrayOutputStream {

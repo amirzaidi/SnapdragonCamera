@@ -68,6 +68,7 @@ import com.android.camera.imageprocessor.PostProcessor;
 import com.android.camera.imageprocessor.FrameProcessor;
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
+import com.android.camera.imageprocessor.filter.SharpshooterFilter;
 import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.RotateTextToast;
@@ -187,6 +188,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private SettingsManager mSettingsManager;
     private long SECONDARY_SERVER_MEM;
     private boolean mLongshotActive = false;
+    private CameraCharacteristics mMainCameraCharacteristics;
 
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -205,6 +207,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private PostProcessor mPostProcessor;
     private FrameProcessor mFrameProcessor;
     private Size mFrameProcPreviewOutputSize;
+    private CaptureResult mPreviewCaptureResult;
     private Face[] mPreviewFaces = null;
     private Face[] mStickyFaces = null;
     private Rect mBayerCameraRegion;
@@ -323,6 +326,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         return mStickyFaces;
     }
 
+    public CaptureResult getPreviewCaptureResult() {
+        return mPreviewCaptureResult;
+    }
+
     public Rect getCameraRegion() {
         return mBayerCameraRegion;
     }
@@ -351,6 +358,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             if(faces != null && faces.length != 0) {
                 mStickyFaces = faces;
             }
+            mPreviewCaptureResult = result;
 
             switch (mState[id]) {
                 case STATE_PREVIEW: {
@@ -492,7 +500,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         else return false;
     }
 
-    private boolean isBackCamera() {
+    public boolean isBackCamera() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_CAMERA_ID);
         if (value == null) return true;
         if (Integer.parseInt(value) == BAYER_ID) return true;
@@ -1027,6 +1035,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcPreviewOutputSize = sizeList.get(i);
         }
     }
+
+    public CameraCharacteristics getMainCameraCharacteristics() {
+        return mMainCameraCharacteristics;
+    }
+
     /**
      * Sets up member variables related to camera.
      *
@@ -1047,6 +1060,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 if(i == getMainCameraId()) {
                     mBayerCameraRegion = characteristics.get(CameraCharacteristics
                             .SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+                    mMainCameraCharacteristics = characteristics;
                 }
                 StreamConfigurationMap map = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -1364,21 +1378,13 @@ public class CaptureModule implements CameraModule, PhotoController,
         return filters;
     }
 
-    private int getPostProcFilterId() {
-        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
-        if (scene != null) {
-            int mode = Integer.parseInt(scene);
-            if (mode == SettingsManager.SCENE_MODE_OPTIZOOM_INT)
-                return PostProcessor.FILTER_OPTIZOOM;
+    private int getPostProcFilterId(int mode) {
+        if (mode == SettingsManager.SCENE_MODE_OPTIZOOM_INT) {
+            return PostProcessor.FILTER_OPTIZOOM;
+        } else if (mode == SettingsManager.SCENE_MODE_NIGHT_INT && SharpshooterFilter.isSupportedStatic()) {
+            return PostProcessor.FILTER_SHARPSHOOTER;
         }
         return PostProcessor.FILTER_NONE;
-    }
-
-    private boolean isPostProcFilter(String value) {
-        if(value.equalsIgnoreCase(SettingsManager.SCENE_MODE_OPTIZOOM_INT+"")) {
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -1388,12 +1394,19 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.setSwitcherIndex();
         mCameraIdList = new ArrayList<>();
         if(mPostProcessor != null) {
-            Log.d(TAG, "Chosen postproc filter id : "+getPostProcFilterId());
-            mPostProcessor.onOpen(getPostProcFilterId());
+            String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+            if (scene != null) {
+                int mode = Integer.parseInt(scene);
+                Log.d(TAG, "Chosen postproc filter id : " + getPostProcFilterId(mode));
+                mPostProcessor.onOpen(getPostProcFilterId(mode));
+            } else {
+                mPostProcessor.onOpen(PostProcessor.FILTER_NONE);
+            }
         }
         if(mFrameProcessor != null) {
             mFrameProcessor.onOpen(getFrameProcFilterId());
         }
+
         if(mPostProcessor.isFilterOn()) {
             setUpCameraOutputs(ImageFormat.YUV_420_888);
         } else {
@@ -1575,7 +1588,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private int getMainCameraId() {
+    public int getMainCameraId() {
         if (isBackCamera()) {
             switch (getCameraMode()) {
                 case DUAL_MODE:
@@ -1664,6 +1677,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onPreviewUIDestroyed() {
+        mSurfaceReady = false;
     }
 
     @Override
@@ -1698,6 +1712,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             mUI.onOrientationChanged();
             mUI.setOrientation(mOrientation, true);
         }
+    }
+
+    public int getDisplayOrientation() {
+        return mOrientation;
     }
 
     @Override
@@ -1959,6 +1977,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (value == null) return;
         int mode = Integer.parseInt(value);
+        if(getPostProcFilterId(mode) != PostProcessor.FILTER_NONE) {
+            request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+            return;
+        }
         if (mode != CaptureRequest.CONTROL_SCENE_MODE_DISABLED && mode !=
                 SettingsManager.SCENE_MODE_DUAL_INT) {
             request.set(CaptureRequest.CONTROL_SCENE_MODE, mode);
@@ -2203,7 +2225,8 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private boolean checkNeedToRestart(String value) {
         mPostProcessor.setFilter(PostProcessor.FILTER_NONE);
-        if (isPostProcFilter(value))
+        int mode = Integer.parseInt(value);
+        if (getPostProcFilterId(mode) != PostProcessor.FILTER_NONE)
             return true;
         if (value.equals(SettingsManager.SCENE_MODE_DUAL_STRING) && mCurrentMode != DUAL_MODE)
             return true;

@@ -708,7 +708,7 @@ public class CameraActivity extends Activity
 
     public void updateThumbnail(final byte[] jpegData) {
         if (mUpdateThumbnailTask != null) mUpdateThumbnailTask.cancel(true);
-        mUpdateThumbnailTask = new UpdateThumbnailTask(jpegData, false);
+        mUpdateThumbnailTask = new UpdateThumbnailTask(jpegData, true);
         mUpdateThumbnailTask.execute();
     }
 
