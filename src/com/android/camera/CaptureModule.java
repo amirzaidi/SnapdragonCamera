@@ -708,7 +708,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                         @Override
                         public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                            Log.e(TAG, "cameracapturesession - onConfigureFailed");
+                            Log.e(TAG, "cameracapturesession - onConfigureFailed "+id);
                             new AlertDialog.Builder(mActivity)
                                     .setTitle("Camera Initialization Failed")
                                     .setMessage("Closing SnapdragonCamera")
@@ -2725,9 +2725,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void addPreviewSurface(CaptureRequest.Builder builder, List<Surface> surfaceList, int id) {
         if (isBackCamera() && getCameraMode() == DUAL_MODE && id == MONO_ID) {
             if(surfaceList != null) {
-                surfaceList.add(mUI.getSurfaceHolder2().getSurface());
+                surfaceList.add(mUI.getMonoDummySurface());
             }
-            builder.addTarget(mUI.getSurfaceHolder2().getSurface());
+            builder.addTarget(mUI.getMonoDummySurface());
             return;
         } else {
             List<Surface> surfaces = mFrameProcessor.getInputSurfaces();
@@ -2744,7 +2744,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private Surface getPreviewSurfaceForSession(int id) {
         if (isBackCamera()) {
             if (getCameraMode() == DUAL_MODE && id == MONO_ID) {
-                return mUI.getSurfaceHolder2().getSurface();
+                return mUI.getMonoDummySurface();
             } else {
                 return mUI.getSurfaceHolder().getSurface();
             }
