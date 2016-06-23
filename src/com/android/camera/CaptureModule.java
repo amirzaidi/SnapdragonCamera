@@ -162,6 +162,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     CaptureRequest.Key<Integer> BayerMonoLinkSessionIdKey =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.dualcam_link_meta_data" +
                     ".related_camera_id", Integer.class);
+    public static CaptureRequest.Key<Byte> JpegCropEnableKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.enable",
+                    Byte.class);
+    public static CaptureRequest.Key<int[]> JpegCropRectKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.rect",
+                    int[].class);
     public static CameraCharacteristics.Key<Byte> MetaDataMonoOnlyKey =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.sensor_meta_data.is_mono_only",
                     Byte.class);
