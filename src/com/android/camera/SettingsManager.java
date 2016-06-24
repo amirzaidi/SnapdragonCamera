@@ -646,14 +646,21 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 .SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) > 1f;
     }
 
-    public boolean isAutoFocusSupported(List<Integer> ids) {
+    public boolean isAutoFocusRegionSupported(List<Integer> ids) {
         for (int id : ids) {
-            if (!isAutoFocusSupported(id))
+            if (!isAutoFocusRegionSupported(id))
                 return false;
         }
         return true;
     }
 
+    public boolean isAutoExposureRegionSupported(List<Integer> ids) {
+        for (int id : ids) {
+            if (!isAutoExposureRegionSupported(id))
+                return false;
+        }
+        return true;
+    }
 
     public boolean isZoomSupported(List<Integer> ids) {
         for (int id : ids) {
@@ -663,7 +670,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return true;
     }
 
-    public boolean isAutoFocusSupported(int id) {
+    public boolean isAutoExposureRegionSupported(int id) {
+        Integer maxAERegions = mCharacteristics.get(id).get(
+                CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
+        return maxAERegions != null && maxAERegions > 0;
+    }
+
+    public boolean isAutoFocusRegionSupported(int id) {
         Integer maxAfRegions = mCharacteristics.get(id).get(
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
         return maxAfRegions != null && maxAfRegions > 0;
