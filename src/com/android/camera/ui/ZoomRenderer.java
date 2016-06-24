@@ -50,7 +50,6 @@ public class ZoomRenderer extends OverlayRenderer
     private Rect mTextBounds;
     private int mOrientation;
     private boolean mCamera2 = false;
-    private float mZoomValue;
     private float mZoomMinValue;
     private float mZoomMaxValue;
 
@@ -98,8 +97,9 @@ public class ZoomRenderer extends OverlayRenderer
 
     public void setZoom(float zoomValue) {
         mCamera2 = true;
-        mZoomValue = zoomValue;
-        mCircleSize = (int) (mMinCircle + (mMaxCircle - mMinCircle) * (mZoomValue - mZoomMinValue) /
+        mZoomSig = (int) zoomValue;
+        mZoomFraction = (int)(zoomValue * 10) % 10;
+        mCircleSize = (int) (mMinCircle + (mMaxCircle - mMinCircle) * (zoomValue - mZoomMinValue) /
                 (mZoomMaxValue - mZoomMinValue));
     }
 
@@ -138,7 +138,6 @@ public class ZoomRenderer extends OverlayRenderer
         canvas.drawCircle((float) mCenterX, (float) mCenterY,
                 mCircleSize, mPaint);
         String txt = mZoomSig+"."+mZoomFraction+"x";
-        if (mCamera2) txt = "" + mZoomValue;
         mTextPaint.getTextBounds(txt, 0, txt.length(), mTextBounds);
         canvas.drawText(txt, mCenterX - mTextBounds.centerX(), mCenterY - mTextBounds.centerY(),
                 mTextPaint);
@@ -155,7 +154,6 @@ public class ZoomRenderer extends OverlayRenderer
             if (mCamera2) {
                 float zoom = mZoomMinValue + (mZoomMaxValue - mZoomMinValue) / (mMaxCircle -
                         mMinCircle) * (mCircleSize - mMinCircle);
-                zoom = ((int) (zoom * 10)) / 10.0f;
                 mListener.onZoomValueChanged(zoom);
             } else {
                 int zoom = mMinZoom + (int) ((mCircleSize - mMinCircle) * (mMaxZoom - mMinZoom) /
