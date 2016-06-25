@@ -1445,16 +1445,12 @@ public class PhotoUI implements PieListener,
             AlertDialog dialog = new AlertDialog.Builder(mActivity)
                 .setTitle(R.string.refocus_prompt_title)
                 .setMessage(R.string.refocus_prompt_message)
-                .setPositiveButton(R.string.dialog_ok,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int arg1) {
-                                SharedPreferences.Editor editor = prefs.edit();
-                                editor.putInt(CameraSettings.KEY_REFOCUS_PROMPT, 0);
-                                editor.apply();
-                            }
-                        })
+                .setPositiveButton(R.string.dialog_ok, null)
                 .show();
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putInt(CameraSettings.KEY_REFOCUS_PROMPT, 0);
+                editor.apply();
+
         }
     }
 
