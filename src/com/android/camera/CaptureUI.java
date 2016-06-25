@@ -136,15 +136,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         public void surfaceCreated(SurfaceHolder holder) {
             Log.v(TAG, "surfaceCreated");
             mSurfaceHolder = holder;
-            mModule.onPreviewUIReady();
-            mActivity.updateThumbnail(mThumbnail);
+            previewUIReady();
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
             Log.v(TAG, "surfaceDestroyed");
             mSurfaceHolder = null;
-            mModule.onPreviewUIDestroyed();
+            previewUIDestroyed();
         }
     };
 
@@ -172,18 +171,38 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         // SurfaceHolder callbacks
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            Log.v(TAG, "surfaceChanged2");
         }
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            Log.v(TAG, "surfaceCreated2");
             mSurfaceHolder2 = holder;
+            previewUIReady();
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+            Log.v(TAG, "surfaceDestroyed2");
             mSurfaceHolder2 = null;
+            previewUIDestroyed();
         }
     };
+
+    private void previewUIReady() {
+        if((mSurfaceHolder != null && mSurfaceHolder.getSurface().isValid()) &&
+                (mSurfaceView2.getVisibility() != View.VISIBLE ||
+                (mSurfaceView2.getVisibility() == View.VISIBLE &&
+                    mSurfaceHolder2 != null &&
+                    mSurfaceHolder2.getSurface().isValid()))) {
+            mModule.onPreviewUIReady();
+            mActivity.updateThumbnail(mThumbnail);
+        }
+    }
+
+    private void previewUIDestroyed() {
+        mModule.onPreviewUIDestroyed();
+    }
 
     public CaptureUI(CameraActivity activity, CaptureModule module, View parent) {
         mActivity = activity;
@@ -349,7 +368,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
                 int index = mSettingsManager.getValueIndex(SettingsManager.KEY_CAMERA_ID);
                 CharSequence[] entries = mSettingsManager.getEntries(SettingsManager.KEY_CAMERA_ID);
-                index = (index + 1) % entries.length;
+                do {
+                    index = (index + 1) % entries.length;
+                } while (entries[index] == null);
                 mSettingsManager.setValueIndex(SettingsManager.KEY_CAMERA_ID, index);
                 int[] largeIcons = mSettingsManager.getResource(SettingsManager.KEY_CAMERA_ID,
                         SettingsManager.RESOURCE_TYPE_LARGEICON);
