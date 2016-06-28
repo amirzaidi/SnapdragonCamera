@@ -80,6 +80,7 @@ import com.android.camera.imageprocessor.FrameProcessor;
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
 import com.android.camera.imageprocessor.filter.SharpshooterFilter;
+import com.android.camera.imageprocessor.filter.StillmoreFilter;
 import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.RotateTextToast;
@@ -1664,6 +1665,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             return PostProcessor.FILTER_SHARPSHOOTER;
         } else if (mode == SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
             return PostProcessor.FILTER_UBIFOCUS;
+        } else if (mode == SettingsManager.SCENE_MODE_AUTO_INT && StillmoreFilter.isSupportedStatic()) {
+            return PostProcessor.FILTER_STILLMORE;
         }
         return PostProcessor.FILTER_NONE;
     }

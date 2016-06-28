@@ -53,6 +53,7 @@ import com.android.camera.SettingsManager;
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.imageprocessor.filter.SharpshooterFilter;
+import com.android.camera.imageprocessor.filter.StillmoreFilter;
 import com.android.camera.imageprocessor.filter.UbifocusFilter;
 import com.android.camera.ui.RotateTextToast;
 
@@ -76,7 +77,8 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     public static final int FILTER_OPTIZOOM = 1;
     public static final int FILTER_SHARPSHOOTER = 2;
     public static final int FILTER_UBIFOCUS = 3;
-    public static final int FILTER_MAX = 4;
+    public static final int FILTER_STILLMORE = 4;
+    public static final int FILTER_MAX = 5;
 
     private int mCurrentNumImage = 0;
     private ImageFilter mFilter;
@@ -284,6 +286,9 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                     break;
                 case FILTER_UBIFOCUS:
                     mFilter = new UbifocusFilter(mController, mActivity);
+                    break;
+                case FILTER_STILLMORE:
+                    mFilter = new StillmoreFilter(mController);
                     break;
             }
         }
