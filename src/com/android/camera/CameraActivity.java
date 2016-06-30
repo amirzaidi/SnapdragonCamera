@@ -16,6 +16,8 @@
 
 package com.android.camera;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.Display;
 import android.graphics.Point;
 import android.Manifest;
@@ -1641,6 +1643,13 @@ public class CameraActivity extends Activity
         } else if (requestCode == REFOCUS_ACTIVITY_CODE)  {
             if(resultCode == RESULT_OK) {
                 mCaptureModule.setRefocusLastTaken(false);
+            }
+        } else if (requestCode == BestpictureActivity.BESTPICTURE_ACTIVITY_CODE)  {
+            if(resultCode == RESULT_OK) {
+                byte[] jpeg = data.getByteArrayExtra("thumbnail");
+                if(jpeg != null) {
+                    updateThumbnail(jpeg);
+                }
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);

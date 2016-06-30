@@ -158,8 +158,6 @@ public class CaptureModule implements CameraModule, PhotoController,
     // we can change it based on memory status or other requirements.
     private static final int LONGSHOT_CANCEL_THRESHOLD = 40 * 1024 * 1024;
 
-    private static final int MAX_IMAGE_NUM = 8;
-
     MeteringRectangle[][] mAFRegions = new MeteringRectangle[MAX_NUM_CAM][];
     MeteringRectangle[][] mAERegions = new MeteringRectangle[MAX_NUM_CAM][];
     CaptureRequest.Key<Byte> BayerMonoLinkEnableKey =
@@ -1266,7 +1264,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 } else {
                     // No Clearsight
                     mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
-                            mPictureSize.getHeight(), imageFormat, MAX_IMAGE_NUM);
+                            mPictureSize.getHeight(), imageFormat, PostProcessor.MAX_REQUIRED_IMAGE_NUM);
                     if((mPostProcessor.isFilterOn() || getFrameFilters().size() != 0)
                             && i == getMainCameraId()) {
                         mImageReader[i].setOnImageAvailableListener(mPostProcessor, mImageAvailableHandler);
@@ -1316,7 +1314,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mVideoSnapshotImageReader.close();
         }
         mVideoSnapshotImageReader = ImageReader.newInstance(mVideoSnapshotSize.getWidth(),
-                mVideoSnapshotSize.getHeight(), ImageFormat.JPEG, MAX_IMAGE_NUM);
+                mVideoSnapshotSize.getHeight(), ImageFormat.JPEG, mPostProcessor.MAX_REQUIRED_IMAGE_NUM);
         mVideoSnapshotImageReader.setOnImageAvailableListener(
                 new ImageReader.OnImageAvailableListener() {
                     @Override
@@ -1667,6 +1665,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             return PostProcessor.FILTER_UBIFOCUS;
         } else if (mode == SettingsManager.SCENE_MODE_AUTO_INT && StillmoreFilter.isSupportedStatic()) {
             return PostProcessor.FILTER_STILLMORE;
+        } else if (mode == SettingsManager.SCENE_MODE_BESTPICTURE_INT) {
+            return PostProcessor.FILTER_BESTPICTURE;
         }
         return PostProcessor.FILTER_NONE;
     }

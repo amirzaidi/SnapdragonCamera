@@ -45,6 +45,7 @@ import android.util.Rational;
 import android.util.Size;
 
 import com.android.camera.imageprocessor.filter.BeautificationFilter;
+import com.android.camera.imageprocessor.filter.BestpictureFilter;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.imageprocessor.filter.TrackingFocusFrameListener;
 import com.android.camera.imageprocessor.filter.UbifocusFilter;
@@ -77,6 +78,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final int SCENE_MODE_DUAL_INT = 100;
     public static final int SCENE_MODE_OPTIZOOM_INT = 101;
     public static final int SCENE_MODE_UBIFOCUS_INT = 102;
+    public static final int SCENE_MODE_BESTPICTURE_INT = 103;
     public static final String SCENE_MODE_DUAL_STRING = "100";
     public static final String KEY_CAMERA_SAVEPATH = "pref_camera2_savepath_key";
     public static final String KEY_RECORD_LOCATION = "pref_camera2_recordlocation_key";
@@ -846,6 +848,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (mIsMonoCameraPresent) modes.add(SCENE_MODE_DUAL_STRING); // need special case handle for dual mode
         if (OptizoomFilter.isSupportedStatic()) modes.add(SCENE_MODE_OPTIZOOM_INT + "");
         if (UbifocusFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_UBIFOCUS_INT + "");
+        if (BestpictureFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_BESTPICTURE_INT + "");
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }

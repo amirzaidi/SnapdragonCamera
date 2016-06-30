@@ -1023,5 +1023,8 @@
     <string name="pref_camera2_videosnap_entry_enable" translatable="true">Enable</string>
     <string name="pref_camera2_videosnap_entry_disable" translatable="true">Disable</string>
     <string name="pref_camera2_trackingfocus_title" translatable="true">Tracking Focus</string>
+    <string name="pref_camera_scenemode_entry_bestpicture" translatable="true">BestPicture</string>
+    <string name="bestpicture_done" translatable="true">DONE</string>
+    <string name="bestpicture_at_least_one_picture" translatable="true">At least, one picture has to be chosen.</string>
 </resources>
 
