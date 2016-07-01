@@ -3795,14 +3795,18 @@ public class PhotoModule
         if (refocusOn.equals(mSceneMode)) {
             try {
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
-                mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
-                mUI.showRefocusDialog();
+                if (mHandler.getLooper() == Looper.myLooper()) {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
+                    mUI.showRefocusDialog();
+                }
             } catch (NullPointerException e) {
             }
         } else if (optizoomOn.equals(mSceneMode)) {
             try {
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
-                mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, optizoomOn);
+                if (mHandler.getLooper() == Looper.myLooper()) {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, optizoomOn);
+                }
             } catch (NullPointerException e) {
             }
         } else if (mSceneMode == null) {
