@@ -1185,46 +1185,50 @@ public class CaptureModule implements CameraModule, PhotoController,
      */
     private void closeCamera() {
         Log.d(TAG, "closeCamera");
+        if(mPostProcessor != null) {
+            mPostProcessor.onClose();
+        }
+
+        if(mFrameProcessor != null) {
+            mFrameProcessor.onClose();
+        }
+
+        for (int i = 0; i < MAX_NUM_CAM; i++) {
+            if (null != mCaptureSession[i]) {
+                if (mIsLinked) {
+                    unLinkBayerMono(i);
+                    try {
+                        mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
+                                mCameraHandler);
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+                mCaptureSession[i].close();
+                mCaptureSession[i] = null;
+            }
+
+            if (null != mImageReader[i]) {
+                mImageReader[i].close();
+                mImageReader[i] = null;
+            }
+        }
+        /* no need to set this in the callback and handle asynchronously. This is the same
+        reason as why we release the semaphore here, not in camera close callback function
+        as we don't have to protect the case where camera open() gets called during camera
+        close(). The low level framework/HAL handles the synchronization for open()
+        happens after close() */
+        mIsLinked = false;
+
         try {
             mCameraOpenCloseLock.acquire();
-            if(mPostProcessor != null) {
-                mPostProcessor.onClose();
-            }
-            if(mFrameProcessor != null) {
-                mFrameProcessor.onClose();
-            }
             for (int i = 0; i < MAX_NUM_CAM; i++) {
-                if (null != mCaptureSession[i]) {
-                    if (mIsLinked) {
-                        unLinkBayerMono(i);
-                        try {
-                            mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
-                                    mCameraHandler);
-                        } catch (CameraAccessException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    mCaptureSession[i].close();
-                    mCaptureSession[i] = null;
-                }
-
-                if (null != mImageReader[i]) {
-                    mImageReader[i].close();
-                    mImageReader[i] = null;
-                }
-
                 if (null != mCameraDevice[i]) {
                     mCameraDevice[i].close();
                     mCameraDevice[i] = null;
                     mCameraOpened[i] = false;
                 }
             }
-            /* no need to set this in the callback and handle asynchronously. This is the same
-               reason as why we release the semaphore here, not in camera close callback function
-               as we don't have to protect the case where camera open() gets called during camera
-               close(). The low level framework/HAL handles the synchronization for open()
-               happens after close() */
-            mIsLinked = false;
         } catch (InterruptedException e) {
             mCameraOpenCloseLock.release();
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
