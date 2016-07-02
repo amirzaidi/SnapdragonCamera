@@ -64,6 +64,7 @@ import android.os.SystemProperties;
 import android.util.Log;
 import android.view.Surface;
 
+import com.android.camera.CaptureModule;
 import com.android.camera.MediaSaveService;
 import com.android.camera.MediaSaveService.OnMediaSavedListener;
 import com.android.camera.PhotoModule.NamedImages;
@@ -711,6 +712,15 @@ public class ClearSightImageProcessor {
                         CaptureRequest.EDGE_MODE_OFF);
                 reprocRequest.set(CaptureRequest.NOISE_REDUCTION_MODE,
                         CaptureRequest.NOISE_REDUCTION_MODE_OFF);
+
+                Rect cropRect = image.mImage.getCropRect();
+                if(cropRect != null &&
+                        !cropRect.isEmpty()) {
+                    // has crop rect. apply to jpeg request
+                    reprocRequest.set(CaptureModule.JpegCropEnableKey, (byte)1);
+                    reprocRequest.set(CaptureModule.JpegCropRectKey,
+                           new int[] {cropRect.left, cropRect.top, cropRect.width(), cropRect.height()});
+                }
 
                 mImageWriter[camType].queueInputImage(image.mImage);
 

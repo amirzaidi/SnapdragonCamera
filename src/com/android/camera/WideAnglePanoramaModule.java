@@ -301,7 +301,11 @@ public class WideAnglePanoramaModule
         mDialogPanoramaFailedString = appRes.getString(R.string.pano_dialog_panorama_failed);
         mDialogWaitingPreviousString = appRes.getString(R.string.pano_dialog_waiting_previous);
 
-        mPreferences = new ComboPreferences(mActivity);
+        mPreferences = ComboPreferences.get(mActivity);
+        if (mPreferences == null) {
+            mPreferences = new ComboPreferences(mActivity);
+        }
+
         mPreferences.setLocalId(mActivity, getPreferredCameraId(mPreferences));
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), activity);
         mLocationManager = new LocationManager(mActivity, null);
@@ -960,7 +964,11 @@ public class WideAnglePanoramaModule
     @Override
     public void onResumeBeforeSuper() {
         mPaused = false;
-        mPreferences = new ComboPreferences(mActivity);
+        mPreferences = ComboPreferences.get(mActivity);
+        if (mPreferences == null) {
+            mPreferences = new ComboPreferences(mActivity);
+        }
+
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
         mPreferences.setLocalId(mActivity, getPreferredCameraId(mPreferences));
         CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());

@@ -162,6 +162,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     CaptureRequest.Key<Integer> BayerMonoLinkSessionIdKey =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.dualcam_link_meta_data" +
                     ".related_camera_id", Integer.class);
+    public static CaptureRequest.Key<Byte> JpegCropEnableKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.enable",
+                    Byte.class);
+    public static CaptureRequest.Key<int[]> JpegCropRectKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.rect",
+                    int[].class);
     public static CameraCharacteristics.Key<Byte> MetaDataMonoOnlyKey =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.sensor_meta_data.is_mono_only",
                     Byte.class);
@@ -173,7 +179,6 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mAutoExposureRegionSupported;
     // The degrees of the device rotated clockwise from its natural orientation.
     private int mOrientation = OrientationEventListener.ORIENTATION_UNKNOWN;
-    private int mJpegQuality;
     private boolean mFirstTimeInitialized;
     private boolean mInitialized = false;
     private boolean mIsLinked = false;
@@ -1185,46 +1190,50 @@ public class CaptureModule implements CameraModule, PhotoController,
      */
     private void closeCamera() {
         Log.d(TAG, "closeCamera");
+        if(mPostProcessor != null) {
+            mPostProcessor.onClose();
+        }
+
+        if(mFrameProcessor != null) {
+            mFrameProcessor.onClose();
+        }
+
+        for (int i = 0; i < MAX_NUM_CAM; i++) {
+            if (null != mCaptureSession[i]) {
+                if (mIsLinked) {
+                    unLinkBayerMono(i);
+                    try {
+                        mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
+                                mCameraHandler);
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+                mCaptureSession[i].close();
+                mCaptureSession[i] = null;
+            }
+
+            if (null != mImageReader[i]) {
+                mImageReader[i].close();
+                mImageReader[i] = null;
+            }
+        }
+        /* no need to set this in the callback and handle asynchronously. This is the same
+        reason as why we release the semaphore here, not in camera close callback function
+        as we don't have to protect the case where camera open() gets called during camera
+        close(). The low level framework/HAL handles the synchronization for open()
+        happens after close() */
+        mIsLinked = false;
+
         try {
             mCameraOpenCloseLock.acquire();
-            if(mPostProcessor != null) {
-                mPostProcessor.onClose();
-            }
-            if(mFrameProcessor != null) {
-                mFrameProcessor.onClose();
-            }
             for (int i = 0; i < MAX_NUM_CAM; i++) {
-                if (null != mCaptureSession[i]) {
-                    if (mIsLinked) {
-                        unLinkBayerMono(i);
-                        try {
-                            mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
-                                    mCameraHandler);
-                        } catch (CameraAccessException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    mCaptureSession[i].close();
-                    mCaptureSession[i] = null;
-                }
-
-                if (null != mImageReader[i]) {
-                    mImageReader[i].close();
-                    mImageReader[i] = null;
-                }
-
                 if (null != mCameraDevice[i]) {
                     mCameraDevice[i].close();
                     mCameraDevice[i] = null;
                     mCameraOpened[i] = false;
                 }
             }
-            /* no need to set this in the callback and handle asynchronously. This is the same
-               reason as why we release the semaphore here, not in camera close callback function
-               as we don't have to protect the case where camera open() gets called during camera
-               close(). The low level framework/HAL handles the synchronization for open()
-               happens after close() */
-            mIsLinked = false;
         } catch (InterruptedException e) {
             mCameraOpenCloseLock.release();
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
@@ -1992,7 +2001,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void applyJpegQuality(CaptureRequest.Builder request) {
-        request.set(CaptureRequest.JPEG_QUALITY, (byte) mJpegQuality);
+        String value = mSettingsManager.getValue(SettingsManager.KEY_JPEG_QUALITY);
+        int jpegQuality = getQualityNumber(value);
+        request.set(CaptureRequest.JPEG_QUALITY, (byte) jpegQuality);
     }
 
     private void applyAFRegions(CaptureRequest.Builder request, int id) {
@@ -2213,7 +2224,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mActivity.updateStorageSpaceAndHint();
                     continue;
                 case SettingsManager.KEY_JPEG_QUALITY:
-                    mJpegQuality = getQualityNumber(value);
                     estimateJpegFileSize();
                     continue;
                 case SettingsManager.KEY_CAMERA2:

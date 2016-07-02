@@ -104,7 +104,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
         mListeners = new ArrayList<>();
         mCharacteristics = new ArrayList<>();
         mContext = context;
-        mPreferences = new ComboPreferences(mContext);
+        mPreferences = ComboPreferences.get(mContext);
+        if (mPreferences == null) {
+            mPreferences = new ComboPreferences(mContext);
+        }
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mContext);
 
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);

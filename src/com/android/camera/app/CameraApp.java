@@ -26,7 +26,7 @@ import com.android.camera.util.UsageStatistics;
 public class CameraApp extends Application {
     private static long mMaxSystemMemory;
     public static boolean mIsLowMemoryDevice = false;
-    private static final int LOW_MEMORY_DEVICE_THRESHOLD = 1024*1024*1024;
+    private static final long LOW_MEMORY_DEVICE_THRESHOLD = 2L*1024*1024*1024;
     @Override
     public void onCreate() {
         super.onCreate();

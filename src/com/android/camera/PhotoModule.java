@@ -544,7 +544,10 @@ public class PhotoModule
     }
 
     public void reinit() {
-        mPreferences = new ComboPreferences(mActivity);
+        mPreferences = ComboPreferences.get(mActivity);
+        if (mPreferences == null) {
+            mPreferences = new ComboPreferences(mActivity);
+        }
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), mActivity);
         mCameraId = getPreferredCameraId(mPreferences);
         mPreferences.setLocalId(mActivity, mCameraId);
@@ -555,7 +558,11 @@ public class PhotoModule
     public void init(CameraActivity activity, View parent) {
         mActivity = activity;
         mRootView = parent;
-        mPreferences = new ComboPreferences(mActivity);
+        mPreferences = ComboPreferences.get(mActivity);
+        if (mPreferences == null) {
+            mPreferences = new ComboPreferences(mActivity);
+        }
+
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal(), activity);
         mCameraId = getPreferredCameraId(mPreferences);
 
@@ -3788,14 +3795,18 @@ public class PhotoModule
         if (refocusOn.equals(mSceneMode)) {
             try {
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
-                mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
-                mUI.showRefocusDialog();
+                if (mHandler.getLooper() == Looper.myLooper()) {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, refocusOn);
+                    mUI.showRefocusDialog();
+                }
             } catch (NullPointerException e) {
             }
         } else if (optizoomOn.equals(mSceneMode)) {
             try {
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
-                mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, optizoomOn);
+                if (mHandler.getLooper() == Looper.myLooper()) {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, optizoomOn);
+                }
             } catch (NullPointerException e) {
             }
         } else if (mSceneMode == null) {
