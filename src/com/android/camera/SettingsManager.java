@@ -38,6 +38,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.MediaRecorder;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
@@ -45,6 +46,7 @@ import android.util.Size;
 
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.ui.ListMenu;
+import com.android.camera.util.SettingTranslation;
 
 import org.codeaurora.snapcam.R;
 
@@ -87,6 +89,16 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
     public static final String KEY_TIMER = "pref_camera2_timer_key";
     public static final String KEY_LONGSHOT = "pref_camera2_longshot_key";
+    public static final String KEY_VIDEO_DURATION = "pref_camera2_video_duration_key";
+    public static final String KEY_VIDEO_QUALITY = "pref_camera2_video_quality_key";
+    public static final String KEY_VIDEO_ENCODER = "pref_camera2_videoencoder_key";
+    public static final String KEY_AUDIO_ENCODER = "pref_camera2_audioencoder_key";
+    public static final String KEY_DIS = "pref_camera2_dis_key";
+    public static final String KEY_NOISE_REDUCTION = "pref_camera2_noise_reduction_key";
+    public static final String KEY_VIDEO_FLASH_MODE = "pref_camera2_video_flashmode_key";
+    public static final String KEY_VIDEO_ROTATION = "pref_camera2_video_rotation_key";
+    public static final String KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL =
+            "pref_camera2_video_time_lapse_frame_interval_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -502,6 +514,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference monoPreview = mPreferenceGroup.findPreference(KEY_MONO_PREVIEW);
         ListPreference monoOnly = mPreferenceGroup.findPreference(KEY_MONO_ONLY);
         ListPreference redeyeReduction = mPreferenceGroup.findPreference(KEY_REDEYE_REDUCTION);
+        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        ListPreference videoEncoder = mPreferenceGroup.findPreference(KEY_VIDEO_ENCODER);
+        ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
+        ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
+        ListPreference videoFlash = mPreferenceGroup.findPreference(KEY_VIDEO_FLASH_MODE);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -537,6 +554,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
                     iso, getSupportedIso(cameraId));
         }
 
+        if (iso != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
+                    videoQuality, getSupportedVideoSize(cameraId));
+        }
+
         if (!mIsMonoCameraPresent) {
             if (clearsight != null) removePreference(mPreferenceGroup, KEY_CLEARSIGHT);
             if (monoPreview != null) removePreference(mPreferenceGroup, KEY_MONO_PREVIEW);
@@ -546,6 +568,26 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (redeyeReduction != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     redeyeReduction, getSupportedRedeyeReduction(cameraId));
+        }
+
+        if (videoEncoder != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, videoEncoder,
+                    getSupportedVideoEncoders(videoEncoder.getEntryValues()));
+        }
+
+        if (audioEncoder != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, audioEncoder,
+                    getSupportedAudioEncoders(audioEncoder.getEntryValues()));
+        }
+
+        if (noiseReduction != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, noiseReduction,
+                    getSupportedNoiseReductionModes(cameraId));
+        }
+
+        if (videoFlash != null) {
+            if (!isFlashAvailable(cameraId))
+                removePreference(mPreferenceGroup, KEY_VIDEO_FLASH_MODE);
         }
     }
 
@@ -721,6 +763,23 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return res;
     }
 
+    public Size[] getSupportedOutputSize(int cameraId, Class cl) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return map.getOutputSizes(cl);
+    }
+
+    private List<String> getSupportedVideoSize(int cameraId) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size[] sizes = map.getOutputSizes(MediaRecorder.class);
+        List<String> res = new ArrayList<>();
+        for (int i = 0; i < sizes.length; i++) {
+            res.add(sizes[i].toString());
+        }
+        return res;
+    }
+
     private List<String> getSupportedRedeyeReduction(int cameraId) {
         int[] flashModes = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .CONTROL_AE_AVAILABLE_MODES);
@@ -768,6 +827,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return modes;
     }
 
+    private boolean isFlashAvailable(int cameraId) {
+        return mCharacteristics.get(cameraId).get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+    }
+
     public List<String> getSupportedColorEffects(int cameraId) {
         int[] flashModes = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .CONTROL_AVAILABLE_EFFECTS);
@@ -792,6 +855,37 @@ public class SettingsManager implements ListMenu.SettingsListener {
             value += 50;
         }
         return supportedIso;
+    }
+
+    private static List<String> getSupportedVideoEncoders(CharSequence[] strings) {
+        ArrayList<String> supported = new ArrayList<>();
+        for (CharSequence cs: strings) {
+            String s = cs.toString();
+            int value = SettingTranslation.getVideoEncoder(s.toString());
+            if (value != SettingTranslation.NOT_FOUND) supported.add(s.toString());
+        }
+        return supported;
+    }
+
+    private static List<String> getSupportedAudioEncoders(CharSequence[] strings) {
+        ArrayList<String> supported = new ArrayList<>();
+        for (CharSequence cs: strings) {
+            String s = cs.toString();
+            int value = SettingTranslation.getAudioEncoder(s);
+            if (value != SettingTranslation.NOT_FOUND) supported.add(s);
+        }
+        return supported;
+    }
+
+    public List<String> getSupportedNoiseReductionModes(int cameraId) {
+        int[] noiseReduction = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES);
+        List<String> modes = new ArrayList<>();
+        for (int mode : noiseReduction) {
+            String str = SettingTranslation.getNoiseReduction(mode);
+            if (str != null) modes.add(str);
+        }
+        return modes;
     }
 
     private boolean specialDepedency(String key) {

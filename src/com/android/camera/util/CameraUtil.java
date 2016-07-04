@@ -36,6 +36,7 @@ import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.location.Location;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
@@ -1168,4 +1169,62 @@ public class CameraUtil {
         return retRatio;
     }
 
+    public static String millisecondToTimeString(long milliSeconds, boolean displayCentiSeconds) {
+        long seconds = milliSeconds / 1000; // round down to compute seconds
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long remainderMinutes = minutes - (hours * 60);
+        long remainderSeconds = seconds - (minutes * 60);
+
+        StringBuilder timeStringBuilder = new StringBuilder();
+
+        // Hours
+        if (hours > 0) {
+            if (hours < 10) {
+                timeStringBuilder.append('0');
+            }
+            timeStringBuilder.append(hours);
+
+            timeStringBuilder.append(':');
+        }
+
+        // Minutes
+        if (remainderMinutes < 10) {
+            timeStringBuilder.append('0');
+        }
+        timeStringBuilder.append(remainderMinutes);
+        timeStringBuilder.append(':');
+
+        // Seconds
+        if (remainderSeconds < 10) {
+            timeStringBuilder.append('0');
+        }
+        timeStringBuilder.append(remainderSeconds);
+
+        // Centi seconds
+        if (displayCentiSeconds) {
+            timeStringBuilder.append('.');
+            long remainderCentiSeconds = (milliSeconds - seconds * 1000) / 10;
+            if (remainderCentiSeconds < 10) {
+                timeStringBuilder.append('0');
+            }
+            timeStringBuilder.append(remainderCentiSeconds);
+        }
+
+        return timeStringBuilder.toString();
+    }
+
+    public static String convertOutputFormatToMimeType(int outputFileFormat) {
+        if (outputFileFormat == MediaRecorder.OutputFormat.MPEG_4) {
+            return "video/mp4";
+        }
+        return "video/3gpp";
+    }
+
+    public static String convertOutputFormatToFileExt(int outputFileFormat) {
+        if (outputFileFormat == MediaRecorder.OutputFormat.MPEG_4) {
+            return ".mp4";
+        }
+        return ".3gp";
+    }
 }

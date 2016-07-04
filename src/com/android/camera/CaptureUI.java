@@ -67,7 +67,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         CameraManager.CameraFaceDetectionCallback,
         SettingsManager.Listener,
         ListMenu.Listener,
-        ListSubMenu.Listener {
+        ListSubMenu.Listener,
+        PauseButton.OnPauseButtonListener {
     private static final int HIGHLIGHT_COLOR = 0xff33b5e5;
     private static final String TAG = "SnapCam_CaptureUI";
     private static final int SETTING_MENU_NONE = 0;
@@ -93,13 +94,22 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_EXPOSURE,
             SettingsManager.KEY_WHITE_BALANCE,
             SettingsManager.KEY_CAMERA2,
-            SettingsManager.KEY_MAKEUP
+            SettingsManager.KEY_MAKEUP,
+            SettingsManager.KEY_VIDEO_FLASH_MODE,
+            SettingsManager.KEY_VIDEO_DURATION,
+            SettingsManager.KEY_VIDEO_QUALITY
     };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_REDEYE_REDUCTION,
             SettingsManager.KEY_MONO_ONLY,
             SettingsManager.KEY_CLEARSIGHT,
-            SettingsManager.KEY_MONO_PREVIEW
+            SettingsManager.KEY_MONO_PREVIEW,
+            SettingsManager.KEY_NOISE_REDUCTION,
+            SettingsManager.KEY_DIS,
+            SettingsManager.KEY_VIDEO_ENCODER,
+            SettingsManager.KEY_AUDIO_ENCODER,
+            SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
+            SettingsManager.KEY_VIDEO_ROTATION
     };
     private CameraActivity mActivity;
     private View mRootView;
@@ -148,6 +158,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     };
 
     private ShutterButton mShutterButton;
+    private ImageView mVideoButton;
     private RenderOverlay mRenderOverlay;
     private View mMenuButton;
     private ModuleSwitcher mSwitcher;
@@ -165,6 +176,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private View mFilterModeSwitcher;
     private View mSceneModeSwitcher;
     private View mFrontBackSwitcher;
+    private TextView mRecordingTimeView;
+    private LinearLayout mLabelsLinearLayout;
+    private View mTimeLapseLabel;
+    private RotateLayout mRecordingTimeRect;
+    private PauseButton mPauseButton;
+    private RotateImageView mMuteButton;
+
+    int mPreviewWidth;
+    int mPreviewHeight;
 
     private SurfaceHolder.Callback callback2 = new SurfaceHolder.Callback() {
 
@@ -224,6 +244,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
         mRenderOverlay = (RenderOverlay) mRootView.findViewById(R.id.render_overlay);
         mShutterButton = (ShutterButton) mRootView.findViewById(R.id.shutter_button);
+        mVideoButton = (ImageView) mRootView.findViewById(R.id.video_button);
         mFilterModeSwitcher = mRootView.findViewById(R.id.filter_mode_switcher);
         mSceneModeSwitcher = mRootView.findViewById(R.id.scene_mode_switcher);
         mFrontBackSwitcher = mRootView.findViewById(R.id.front_back_switcher);
@@ -245,6 +266,32 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             }
         });
         mMenuButton = mRootView.findViewById(R.id.menu);
+
+        mRecordingTimeView = (TextView) mRootView.findViewById(R.id.recording_time);
+        mRecordingTimeRect = (RotateLayout) mRootView.findViewById(R.id.recording_time_rect);
+        mTimeLapseLabel = mRootView.findViewById(R.id.time_lapse_label);
+        mLabelsLinearLayout = (LinearLayout) mRootView.findViewById(R.id.labels);
+        mPauseButton = (PauseButton) mRootView.findViewById(R.id.video_pause);
+        mPauseButton.setOnPauseButtonListener(this);
+
+        mMuteButton = (RotateImageView)mRootView.findViewById(R.id.mute_button);
+        mMuteButton.setVisibility(View.VISIBLE);
+        if(!mModule.isAudioMute()) {
+            mMuteButton.setImageResource(R.drawable.ic_unmuted_button);
+        } else {
+            mMuteButton.setImageResource(R.drawable.ic_muted_button);
+        }
+        mMuteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isEnabled = !mModule.isAudioMute();
+                mModule.setMute(isEnabled, true);
+                if (!isEnabled)
+                    mMuteButton.setImageResource(R.drawable.ic_unmuted_button);
+                else
+                    mMuteButton.setImageResource(R.drawable.ic_muted_button);
+            }
+        });
 
         RotateImageView muteButton = (RotateImageView) mRootView.findViewById(R.id.mute_button);
         muteButton.setVisibility(View.GONE);
@@ -283,6 +330,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mRenderOverlay.requestLayout();
 
         mActivity.setPreviewGestures(mGestures);
+        ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
+        mCameraControls.setPreviewRatio(0, true);
     }
 
     public void onCameraOpened(List<Integer> cameraIds) {
@@ -314,6 +363,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         });
         mShutterButton.setOnShutterButtonListener(mModule);
         mShutterButton.setVisibility(View.VISIBLE);
+        mVideoButton.setVisibility(View.VISIBLE);
+        mVideoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mModule.onVideoButtonClick();
+            }
+        });
+        mCameraControls.setPreviewRatio(0, true);
     }
 
     public void initializeZoom(List<Integer> ids) {
@@ -419,6 +476,53 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 }
             }
         });
+    }
+
+    public void showTimeLapseUI(boolean enable) {
+        if (mTimeLapseLabel != null) {
+            mTimeLapseLabel.setVisibility(enable ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    public void showRecordingUI(boolean recording) {
+        mMenuButton.setVisibility(recording ? View.GONE : View.VISIBLE);
+        if (recording) {
+            mVideoButton.setImageResource(R.drawable.shutter_button_video_stop);
+            hideSwitcher();
+            mRecordingTimeView.setText("");
+            ((ViewGroup)mRootView).addView(mRecordingTimeRect);
+            mMuteButton.setVisibility(View.VISIBLE);
+        } else {
+            mVideoButton.setImageResource(R.drawable.btn_new_shutter_video);
+            showSwitcher();
+            ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
+            mMuteButton.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void hideUIwhileRecording() {
+        mCameraControls.setWillNotDraw(true);
+        mFrontBackSwitcher.setVisibility(View.INVISIBLE);
+        mFilterModeSwitcher.setVisibility(View.INVISIBLE);
+        mSceneModeSwitcher.setVisibility(View.INVISIBLE);
+        mShutterButton.setVisibility(View.INVISIBLE);
+    }
+
+    public void showUIafterRecording() {
+        mCameraControls.setWillNotDraw(false);
+        mFrontBackSwitcher.setVisibility(View.VISIBLE);
+        mFilterModeSwitcher.setVisibility(View.VISIBLE);
+        mSceneModeSwitcher.setVisibility(View.VISIBLE);
+        mShutterButton.setVisibility(View.VISIBLE);
+    }
+
+    public void hideSwitcher() {
+        mSwitcher.closePopup();
+        mSwitcher.setVisibility(View.INVISIBLE);
+    }
+
+    public void showSwitcher() {
+        mSwitcher.setVisibility(View.VISIBLE);
     }
 
     public void setSwitcherIndex() {
@@ -1015,7 +1119,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mThumbnail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!CameraControls.isAnimating() && !mModule.isTakingPicture())
+                if (!CameraControls.isAnimating() && !mModule.isTakingPicture() &&
+                        !mModule.isRecordingVideo())
                     mActivity.gotoGallery();
             }
         });
@@ -1301,6 +1406,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 }
             }
         }
+        if (mRecordingTimeRect != null) {
+            if (orientation == 180) {
+                mRecordingTimeRect.setOrientation(0, false);
+                mRecordingTimeView.setRotation(180);
+            } else {
+                mRecordingTimeView.setRotation(0);
+                mRecordingTimeRect.setOrientation(orientation, false);
+            }
+        }
         if (mCountDownView != null)
             mCountDownView.setOrientation(orientation);
         RotateTextToast.setOrientation(orientation);
@@ -1364,6 +1478,34 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mShutterButton.setPressed(true);
     }
 
+    public void setRecordingTime(String text) {
+        mRecordingTimeView.setText(text);
+    }
+
+    public void setRecordingTimeTextColor(int color) {
+        mRecordingTimeView.setTextColor(color);
+    }
+
+    public void resetPauseButton() {
+        mRecordingTimeView.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_recording_indicator, 0, 0, 0);
+        mPauseButton.setPaused(false);
+    }
+
+    @Override
+    public void onButtonPause() {
+        mRecordingTimeView.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_pausing_indicator, 0, 0, 0);
+        mModule.onButtonPause();
+    }
+
+    @Override
+    public void onButtonContinue() {
+        mRecordingTimeView.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_recording_indicator, 0, 0, 0);
+        mModule.onButtonContinue();
+    }
+
     @Override
     public void onSettingsChanged(List<SettingsManager.SettingState> settings) {
         for (SettingsManager.SettingState setting : settings) {
@@ -1385,6 +1527,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void showSurfaceView() {
+        mSurfaceView.getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
+        mSurfaceView.setAspectRatio(mPreviewHeight, mPreviewWidth);
         mSurfaceView.setVisibility(View.VISIBLE);
         mSurfaceView2.setVisibility(View.VISIBLE);
     }
@@ -1397,10 +1541,12 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
-    public void setPreviewSize(int width, int height) {
-        mSurfaceView.getHolder().setFixedSize(width, height);
-        mCameraControls.setPreviewRatio(0, true);
-        mSurfaceView.setAspectRatio(height, width);
+    public boolean setPreviewSize(int width, int height) {
+        Log.d(TAG, "setPreviewSize " + width + " " + height);
+        boolean changed = (width != mPreviewWidth) || (height != mPreviewHeight);
+        mPreviewWidth = width;
+        mPreviewHeight = height;
+        return changed;
     }
 
     @Override
