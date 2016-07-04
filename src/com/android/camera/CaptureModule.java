@@ -388,7 +388,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CameraCaptureSession.CaptureCallback mCaptureCallback
             = new CameraCaptureSession.CaptureCallback() {
 
-        private void updateState(CaptureResult result) {
+        private void processCaptureResult(CaptureResult result) {
             int id = (int) result.getRequest().getTag();
 
             if (!mFirstPreviewLoaded) {
@@ -408,58 +408,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
             mPreviewCaptureResult = result;
 
-            switch (mState[id]) {
-                case STATE_PREVIEW: {
-                    break;
-                }
-                case STATE_WAITING_LOCK: {
-                    Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    Log.d(TAG, "STATE_WAITING_LOCK id: " + id + " afState:" + afState + " aeState:" + aeState);
-                    // AF_PASSIVE is added for continous auto focus mode
-                    if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED == afState ||
-                            (mLockRequestHashCode[id] == result.getRequest().hashCode() &&
-                                    afState == CaptureResult.CONTROL_AF_STATE_INACTIVE)) {
-                        // CONTROL_AE_STATE can be null on some devices
-                        if (aeState == null || (aeState == CaptureResult
-                                .CONTROL_AE_STATE_CONVERGED) && isFlashOff(id)) {
-                            mState[id] = STATE_PICTURE_TAKEN;
-                            captureStillPicture(id);
-                        } else {
-                            runPrecaptureSequence(id);
-                        }
-                    }
-                    break;
-                }
-                case STATE_WAITING_PRECAPTURE: {
-                    // CONTROL_AE_STATE can be null on some devices
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    Log.d(TAG, "STATE_WAITING_PRECAPTURE id: " + id + " aeState:" + aeState);
-                    if (aeState == null ||
-                            aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                            aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
-                            aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                        if (mPrecaptureRequestHashCode[id] == result.getRequest().hashCode())
-                            mState[id] = STATE_WAITING_NON_PRECAPTURE;
-                    }
-                    break;
-                }
-                case STATE_WAITING_NON_PRECAPTURE: {
-                    // CONTROL_AE_STATE can be null on some devices
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    Log.d(TAG, "STATE_WAITING_NON_PRECAPTURE id: " + id + " aeState:" + aeState);
-                    if (aeState == null || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
-                        mState[id] = STATE_PICTURE_TAKEN;
-                        captureStillPicture(id);
-                    }
-                    break;
-                }
-                case STATE_WAITING_TOUCH_FOCUS:
-                    break;
-            }
+            updateCaptureStateMachine(id, result);
         }
 
         @Override
@@ -468,6 +417,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         CaptureResult partialResult) {
             int id = (int) partialResult.getRequest().getTag();
             if (id == getMainCameraId()) updateFocusStateChange(partialResult);
+            Face[] faces = partialResult.get(CaptureResult.STATISTICS_FACES);
+            updateFaceView(faces);
         }
 
         @Override
@@ -476,7 +427,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                                        TotalCaptureResult result) {
             int id = (int) result.getRequest().getTag();
             if (id == getMainCameraId()) updateFocusStateChange(result);
-            updateState(result);
+            Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
+            updateFaceView(faces);
+            processCaptureResult(result);
         }
     };
 
@@ -539,6 +492,67 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
 
     };
+
+    private void updateCaptureStateMachine(int id, CaptureResult result) {
+        switch (mState[id]) {
+            case STATE_PREVIEW: {
+                break;
+            }
+            case STATE_WAITING_LOCK: {
+                Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
+                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                Log.d(TAG, "STATE_WAITING_LOCK id: " + id + " afState:" + afState + " aeState:" + aeState);
+                // AF_PASSIVE is added for continous auto focus mode
+                if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
+                        CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState ||
+                        CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED == afState ||
+                        CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED == afState ||
+                        (mLockRequestHashCode[id] == result.getRequest().hashCode() &&
+                                afState == CaptureResult.CONTROL_AF_STATE_INACTIVE)) {
+                    // CONTROL_AE_STATE can be null on some devices
+                    if (aeState == null || (aeState == CaptureResult
+                            .CONTROL_AE_STATE_CONVERGED) && isFlashOff(id)) {
+                        mState[id] = STATE_PICTURE_TAKEN;
+                        captureStillPicture(id);
+                    } else {
+                        runPrecaptureSequence(id);
+                    }
+                }
+                break;
+            }
+            case STATE_WAITING_PRECAPTURE: {
+                // CONTROL_AE_STATE can be null on some devices
+                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                Log.d(TAG, "STATE_WAITING_PRECAPTURE id: " + id + " aeState:" + aeState);
+                if (aeState == null ||
+                        aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
+                        aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
+                        aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
+                    if (mPrecaptureRequestHashCode[id] == result.getRequest().hashCode())
+                        mState[id] = STATE_WAITING_NON_PRECAPTURE;
+                }
+                break;
+            }
+            case STATE_WAITING_NON_PRECAPTURE: {
+                // CONTROL_AE_STATE can be null on some devices
+                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                Log.d(TAG, "STATE_WAITING_NON_PRECAPTURE id: " + id + " aeState:" + aeState);
+                if (aeState == null || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
+                    mState[id] = STATE_PICTURE_TAKEN;
+                    captureStillPicture(id);
+                }
+                break;
+            }
+            case STATE_WAITING_TOUCH_FOCUS:
+                break;
+        }
+    }
+
+    public void startFaceDetection() {
+            mUI.onStartFaceDetection(mDisplayOrientation,
+                    mSettingsManager.isFacingFront(getMainCameraId()),
+                    mSettingsManager.getSensorActiveArraySize(getMainCameraId()));
+    }
 
     private boolean isMonoPreviewOn() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_MONO_PREVIEW);
@@ -672,6 +686,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                             mCaptureSession[id] = cameraCaptureSession;
                             mPreviewSession = cameraCaptureSession;
                             initializePreviewConfiguration(id);
+                            setDisplayOrientation();
+                            updateFaceDetection();
                             try {
                                 if (isBackCamera() && getCameraMode() == DUAL_MODE) {
                                     linkBayerMono(id);
@@ -1324,6 +1340,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void applyCommonSettings(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
+        applyFaceDetection(builder);
         applyFlash(builder, id);
         applyWhiteBalance(builder);
         applyExposure(builder);
@@ -1409,6 +1426,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onPauseBeforeSuper() {
         mPaused = true;
+        mUI.onPause();
         if (mIsRecordingVideo) {
             stopRecordingVideo(getMainCameraId());
         }
@@ -1426,7 +1444,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.hideSurfaceView();
         mFirstPreviewLoaded = false;
         stopBackgroundThread();
-        mUI.onPause();
     }
 
     @Override
@@ -1530,6 +1547,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onConfigurationChanged(Configuration config) {
+        Log.v(TAG, "onConfigurationChanged");
         setDisplayOrientation();
     }
 
@@ -1653,7 +1671,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             return;
         }
         Log.d(TAG, "onSingleTapUp " + x + " " + y);
+        int[] newXY = {x, y};
+        if (!mUI.isOverSurfaceView(newXY)) return;
         mUI.setFocusPosition(x, y);
+        x = newXY[0];
+        y = newXY[1];
         mUI.onFocusStarted();
         if (isBackCamera()) {
             switch (getCameraMode()) {
@@ -1707,6 +1729,17 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mode != SettingsManager.SCENE_MODE_DUAL_INT && mode != CaptureRequest
                 .CONTROL_SCENE_MODE_DISABLED) return true;
         return false;
+    }
+
+    private void updateFaceView(final Face[] faces) {
+        if (faces != null) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mUI.onFaceDetection(faces);
+                }
+            });
+        }
     }
 
     @Override
@@ -2549,6 +2582,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void applyFaceDetection(CaptureRequest.Builder request) {
+            String value = mSettingsManager.getValue(SettingsManager.KEY_FACE_DETECTION);
+            if (value != null) {
+                request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
+                        CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE);
+            }
+    }
+
     private void applyFlash(CaptureRequest.Builder request, int id) {
         if (mSettingsManager.isFlashSupported(id)) {
             String value = mSettingsManager.getValue(SettingsManager.KEY_FLASH_MODE);
@@ -2701,6 +2742,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                     updatePictureSize();
                     if (count == 0) restart();
                     return;
+                case SettingsManager.KEY_FACE_DETECTION:
+                    updateFaceDetection();
+                    break;
                 case SettingsManager.KEY_CAMERA_ID:
                 case SettingsManager.KEY_MONO_ONLY:
                 case SettingsManager.KEY_CLEARSIGHT:
@@ -2762,6 +2806,21 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void updateFaceDetection() {
+        final String value = mSettingsManager.getValue(SettingsManager.KEY_FACE_DETECTION);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (value == null || value.equals("off")) mUI.onStopFaceDetection();
+                else {
+                    mUI.onStartFaceDetection(mDisplayOrientation,
+                            mSettingsManager.isFacingFront(getMainCameraId()),
+                            mSettingsManager.getSensorActiveArraySize(getMainCameraId()));
+                }
+            }
+        });
+    }
+
     private int mCurrentMode;
 
     private boolean checkNeedToRestart(String value) {
@@ -2794,6 +2853,9 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes, int screenW, int
             screenH) {
+        if (pictureSize.getWidth() <= screenH && pictureSize.getHeight() <= screenW) {
+            return pictureSize;
+        }
         Size optimal = prevSizes[0];
         float ratio = (float) pictureSize.getWidth() / pictureSize.getHeight();
         for (Size prevSize: prevSizes) {

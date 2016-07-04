@@ -103,6 +103,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_VIDEO_ROTATION = "pref_camera2_video_rotation_key";
     public static final String KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL =
             "pref_camera2_video_time_lapse_frame_interval_key";
+    public static final String KEY_FACE_DETECTION = "pref_camera2_facedetection_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -464,6 +465,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
         ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
         ListPreference videoFlash = mPreferenceGroup.findPreference(KEY_VIDEO_FLASH_MODE);
+        ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -533,6 +535,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (videoFlash != null) {
             if (!isFlashAvailable(cameraId))
                 removePreference(mPreferenceGroup, KEY_VIDEO_FLASH_MODE);
+        }
+
+        if (faceDetection != null) {
+            if (!isFaceDetectionSupported(cameraId))
+                removePreference(mPreferenceGroup, KEY_FACE_DETECTION);
         }
     }
 
@@ -680,6 +687,21 @@ public class SettingsManager implements ListMenu.SettingsListener {
         } else {
             return false;
         }
+    }
+
+    public boolean isFaceDetectionSupported(int id) {
+        int[] faceDetection = mCharacteristics.get(id).get
+                (CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES);
+        for (int value: faceDetection) {
+            if (value == CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE)
+                return true;
+        }
+        return false;
+    }
+
+    public boolean isFacingFront(int id) {
+        int facing = mCharacteristics.get(id).get(CameraCharacteristics.LENS_FACING);
+        return facing == CameraCharacteristics.LENS_FACING_FRONT;
     }
 
     public boolean isFlashSupported(int id) {

@@ -39,41 +39,41 @@ import org.codeaurora.camera.ExtendedFace;
 public class FaceView extends View
     implements FocusIndicator, Rotatable,
     PhotoUI.SurfaceTextureSizeChangedListener {
-    private static final String TAG = "CAM FaceView";
-    private final boolean LOGV = false;
+    protected static final String TAG = "CAM FaceView";
+    protected final boolean LOGV = false;
     // The value for android.hardware.Camera.setDisplayOrientation.
-    private int mDisplayOrientation;
+    protected int mDisplayOrientation;
     // The orientation compensation for the face indicator to make it look
     // correctly in all device orientations. Ex: if the value is 90, the
     // indicator should be rotated 90 degrees counter-clockwise.
-    private int mOrientation;
-    private boolean mMirror;
-    private boolean mPause;
-    private Matrix mMatrix = new Matrix();
-    private RectF mRect = new RectF();
+    protected int mOrientation;
+    protected boolean mMirror;
+    protected boolean mPause;
+    protected Matrix mMatrix = new Matrix();
+    protected RectF mRect = new RectF();
     // As face detection can be flaky, we add a layer of filtering on top of it
     // to avoid rapid changes in state (eg, flickering between has faces and
     // not having faces)
     private Face[] mFaces;
     private Face[] mPendingFaces;
-    private int mColor;
-    private final int mFocusingColor;
+    protected int mColor;
+    protected final int mFocusingColor;
     private final int mFocusedColor;
     private final int mFailColor;
-    private Paint mPaint;
-    private volatile boolean mBlocked;
+    protected Paint mPaint;
+    protected volatile boolean mBlocked;
 
-    private int mUncroppedWidth;
-    private int mUncroppedHeight;
+    protected int mUncroppedWidth;
+    protected int mUncroppedHeight;
 
     private final int smile_threashold_no_smile = 30;
     private final int smile_threashold_small_smile = 60;
     private final int blink_threshold = 60;
 
-    private static final int MSG_SWITCH_FACES = 1;
-    private static final int SWITCH_DELAY = 70;
+    protected static final int MSG_SWITCH_FACES = 1;
+    protected static final int SWITCH_DELAY = 70;
     private int mDisplayRotation = 0;
-    private boolean mStateSwitchPending = false;
+    protected boolean mStateSwitchPending = false;
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
