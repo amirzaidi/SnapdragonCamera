@@ -1449,6 +1449,14 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onResumeBeforeSuper() {
         mPaused = false;
+        for (int i = 0; i < MAX_NUM_CAM; i++) {
+            mCameraOpened[i] = false;
+            mTakingPicture[i] = false;
+        }
+        for (int i = 0; i < MAX_NUM_CAM; i++) {
+            mState[i] = STATE_PREVIEW;
+        }
+        mLongshotActive = false;
     }
 
     private void setCurrentMode() {
