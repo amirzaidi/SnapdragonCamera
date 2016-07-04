@@ -112,7 +112,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_VIDEO_ENCODER,
             SettingsManager.KEY_AUDIO_ENCODER,
             SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
-            SettingsManager.KEY_VIDEO_ROTATION
+            SettingsManager.KEY_VIDEO_ROTATION,
+            SettingsManager.KEY_AUTO_VIDEOSNAP_SIZE
     };
     private CameraActivity mActivity;
     private View mRootView;
@@ -522,7 +523,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         mFilterModeSwitcher.setVisibility(View.INVISIBLE);
         mSceneModeSwitcher.setVisibility(View.INVISIBLE);
-        mShutterButton.setVisibility(View.INVISIBLE);
     }
 
     public void showUIafterRecording() {
@@ -530,7 +530,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
-        mShutterButton.setVisibility(View.VISIBLE);
     }
 
     public void hideSwitcher() {

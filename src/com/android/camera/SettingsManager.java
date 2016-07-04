@@ -104,6 +104,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL =
             "pref_camera2_video_time_lapse_frame_interval_key";
     public static final String KEY_FACE_DETECTION = "pref_camera2_facedetection_key";
+    public static final String KEY_AUTO_VIDEOSNAP_SIZE = "pref_camera2_videosnap_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -728,6 +729,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
 
         return res;
+    }
+
+    public Size[] getSupportedOutputSize(int cameraId, int format) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return map.getOutputSizes(format);
     }
 
     public Size[] getSupportedOutputSize(int cameraId, Class cl) {

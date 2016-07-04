@@ -27,7 +27,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Camera;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -64,7 +63,6 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
-import android.util.SparseIntArray;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
@@ -95,12 +93,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -241,11 +237,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     private int[] mPrecaptureRequestHashCode = new int[MAX_NUM_CAM];
     private int[] mLockRequestHashCode = new int[MAX_NUM_CAM];
     private final Handler mHandler = new MainHandler();
-    private CameraCaptureSession mPreviewSession;
+    private CameraCaptureSession mCurrentSession;
     private Size mPreviewSize;
     private Size mPictureSize;
     private Size mVideoPreviewSize;
     private Size mVideoSize;
+    private Size mVideoSnapshotSize;
 
     private MediaRecorder mMediaRecorder;
     private boolean mIsRecordingVideo;
@@ -263,6 +260,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private long mRecordingStartTime;
     private long mRecordingTotalTime;
     private boolean mRecordingTimeCountsDown = false;
+    private ImageReader mVideoSnapshotImageReader;
 
     private class MediaSaveNotifyThread extends Thread {
         private Uri uri;
@@ -684,7 +682,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                             }
                             // When the session is ready, we start displaying the preview.
                             mCaptureSession[id] = cameraCaptureSession;
-                            mPreviewSession = cameraCaptureSession;
+                            mCurrentSession = cameraCaptureSession;
                             initializePreviewConfiguration(id);
                             setDisplayOrientation();
                             updateFaceDetection();
@@ -1054,6 +1052,50 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void captureVideoSnapshot(final int id) {
+        Log.d(TAG, "captureStillPicture " + id);
+        try {
+            if (null == mActivity || null == mCameraDevice[id]) {
+                warningToast("Camera is not ready yet to take a video snapshot.");
+                return;
+            }
+            CaptureRequest.Builder captureBuilder =
+                    mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_VIDEO_SNAPSHOT);
+
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, mOrientation));
+            applyVideoSnapshot(captureBuilder, id);
+
+            captureBuilder.addTarget(mVideoSnapshotImageReader.getSurface());
+
+            mCurrentSession.capture(captureBuilder.build(),
+                    new CameraCaptureSession.CaptureCallback() {
+
+                        @Override
+                        public void onCaptureCompleted(CameraCaptureSession session,
+                                                       CaptureRequest request,
+                                                       TotalCaptureResult result) {
+                            Log.d(TAG, "captureVideoSnapshot onCaptureCompleted: " + id);
+                        }
+
+                        @Override
+                        public void onCaptureFailed(CameraCaptureSession session,
+                                                    CaptureRequest request,
+                                                    CaptureFailure result) {
+                            Log.d(TAG, "captureVideoSnapshot onCaptureFailed: " + id);
+                        }
+
+                        @Override
+                        public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                                sequenceId, long frameNumber) {
+                            Log.d(TAG, "captureVideoSnapshot onCaptureSequenceCompleted: " + id);
+                        }
+                    }, mCaptureCallbackHandler);
+        } catch (CameraAccessException e) {
+            Log.d(TAG, "captureVideoSnapshot failed");
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Run the precapture sequence for capturing a still image. This method should be called when
      * we get a response in {@link #mCaptureCallback} from {@link #lockFocus()}.
@@ -1201,6 +1243,36 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void createVideoSnapshotImageReader() {
+        if (mVideoSnapshotImageReader != null) {
+            mVideoSnapshotImageReader.close();
+        }
+        mVideoSnapshotImageReader = ImageReader.newInstance(mVideoSnapshotSize.getWidth(),
+                mVideoSnapshotSize.getHeight(), ImageFormat.JPEG, MAX_IMAGE_NUM);
+        mVideoSnapshotImageReader.setOnImageAvailableListener(
+                new ImageReader.OnImageAvailableListener() {
+                    @Override
+                    public void onImageAvailable(ImageReader reader) {
+                        Image image = reader.acquireNextImage();
+                        mCaptureStartTime = System.currentTimeMillis();
+                        mNamedImages.nameNewImage(mCaptureStartTime);
+                        NamedEntity name = mNamedImages.getNextNameEntity();
+                        String title = (name == null) ? null : name.title;
+                        long date = (name == null) ? -1 : name.date;
+
+                        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                        byte[] bytes = new byte[buffer.remaining()];
+                        mLastJpegData = bytes;
+                        buffer.get(bytes);
+
+                        mActivity.getMediaSaveService().addImage(bytes, title, date,
+                                null, image.getWidth(), image.getHeight(), 0, null,
+                                mOnMediaSavedListener, mContentResolver, "jpeg");
+                        image.close();
+                    }
+                }, mImageAvailableHandler);
+    }
+
     /**
      * Unlock the focus. This method should be called when still image capture sequence is
      * finished.
@@ -1291,6 +1363,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mMediaRecorder.release();
                     mMediaRecorder = null;
                 }
+
+                if (null != mVideoSnapshotImageReader) {
+                    mVideoSnapshotImageReader.close();
+                    mVideoSnapshotImageReader = null;
+                }
             }
         } catch (InterruptedException e) {
             mCameraOpenCloseLock.release();
@@ -1335,6 +1412,13 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyAERegions(builder, id);
         applyCommonSettings(builder, id);
         applyFaceDetect(builder, id);
+    }
+
+    private void applyVideoSnapshot(CaptureRequest.Builder builder, int id) {
+        builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+        applyWhiteBalance(builder);
+        applyColorEffect(builder);
+        applyVideoFlash(builder);
     }
 
     private void applyCommonSettings(CaptureRequest.Builder builder, int id) {
@@ -1485,6 +1569,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void initializeValues() {
         updatePictureSize();
         updateVideoSize();
+        updateVideoSnapshotSize();
         updateTimeLapseSetting();
         estimateJpegFileSize();
         updateMaxVideoDuration();
@@ -1921,6 +2006,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes, screenSize.x, screenSize.y);
     }
 
+    private void updateVideoSnapshotSize() {
+        String auto = mSettingsManager.getValue(SettingsManager.KEY_AUTO_VIDEOSNAP_SIZE);
+        if (auto != null && auto.equals("enable")) {
+            Size[] sizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(), ImageFormat.JPEG);
+            mVideoSnapshotSize = getMaxSizeWithRatio(sizes, mVideoSize);
+        } else {
+            mVideoSnapshotSize = mPictureSize;
+        }
+    }
+
     private void updateMaxVideoDuration() {
         String minutesStr = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_DURATION);
         int minutes = Integer.parseInt(minutesStr);
@@ -1955,6 +2050,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         try {
             setUpMediaRecorder(cameraId);
+            createVideoSnapshotImageReader();
             final CaptureRequest.Builder mPreviewBuilder = mCameraDevice[cameraId]
                     .createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             List<Surface> surfaces = new ArrayList<>();
@@ -1964,6 +2060,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mPreviewBuilder.addTarget(previewSurface);
             surfaces.add(mMediaRecorder.getSurface());
             mPreviewBuilder.addTarget(mMediaRecorder.getSurface());
+            surfaces.add(mVideoSnapshotImageReader.getSurface());
 
             mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
                     .StateCallback() {
@@ -1971,10 +2068,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 @Override
                 public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                     Log.d(TAG, "StartRecordingVideo session onConfigured");
-                    mPreviewSession = cameraCaptureSession;
+                    mCurrentSession = cameraCaptureSession;
                     try {
                         setUpVideoCaptureRequestBuilder(mPreviewBuilder);
-                        mPreviewSession.setRepeatingRequest(mPreviewBuilder.build(), null, mCameraHandler);
+                        mCurrentSession.setRepeatingRequest(mPreviewBuilder.build(), null, mCameraHandler);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -2158,9 +2255,9 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void closePreviewSession() {
         Log.d(TAG, "closePreviewSession");
-        if (mPreviewSession != null) {
-            mPreviewSession.close();
-            mPreviewSession = null;
+        if (mCurrentSession != null) {
+            mCurrentSession.close();
+            mCurrentSession = null;
         }
     }
 
@@ -2298,22 +2395,26 @@ public class CaptureModule implements CameraModule, PhotoController,
             return;
         }
 
-        String timer = mSettingsManager.getValue(SettingsManager.KEY_TIMER);
-
-        int seconds = Integer.parseInt(timer);
-        // When shutter button is pressed, check whether the previous countdown is
-        // finished. If not, cancel the previous countdown and start a new one.
-        if (mUI.isCountingDown()) {
-            mUI.cancelCountDown();
-        }
-        if (seconds > 0) {
-            mUI.startCountDown(seconds, true);
+        if (mIsRecordingVideo) {
+            captureVideoSnapshot(getMainCameraId());
         } else {
-            if(mPostProcessor.isFilterOn() && mPostProcessor.isItBusy()) {
-                warningToast("It's still busy processing previous scene mode request.");
-                return;
+            String timer = mSettingsManager.getValue(SettingsManager.KEY_TIMER);
+
+            int seconds = Integer.parseInt(timer);
+            // When shutter button is pressed, check whether the previous countdown is
+            // finished. If not, cancel the previous countdown and start a new one.
+            if (mUI.isCountingDown()) {
+                mUI.cancelCountDown();
             }
-            takePicture();
+            if (seconds > 0) {
+                mUI.startCountDown(seconds, true);
+            } else {
+                if (mPostProcessor.isFilterOn() && mPostProcessor.isItBusy()) {
+                    warningToast("It's still busy processing previous scene mode request.");
+                    return;
+                }
+                takePicture();
+            }
         }
     }
 
@@ -2740,6 +2841,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case SettingsManager.KEY_VIDEO_QUALITY:
                     updateVideoSize();
                     continue;
+                case SettingsManager.KEY_AUTO_VIDEOSNAP_SIZE:
+                    updateVideoSnapshotSize();
+                    continue;
                 case SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL:
                     updateTimeLapseSetting();
                     continue;
@@ -2879,6 +2983,17 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         }
         return optimal;
+    }
+
+    private Size getMaxSizeWithRatio(Size[] sizes, Size reference) {
+        float ratio = (float) reference.getWidth() / reference.getHeight();
+        for (Size size: sizes) {
+            float prevRatio = (float) size.getWidth() / size.getHeight();
+            if (Math.abs(prevRatio - ratio) < 0.01) {
+                return size;
+            }
+        }
+        return sizes[0];
     }
 
     /**
