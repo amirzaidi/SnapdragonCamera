@@ -38,6 +38,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.MediaRecorder;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
@@ -45,14 +46,19 @@ import android.util.Size;
 
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.ui.ListMenu;
+import com.android.camera.util.SettingTranslation;
 
 import org.codeaurora.snapcam.R;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,6 +93,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
     public static final String KEY_TIMER = "pref_camera2_timer_key";
     public static final String KEY_LONGSHOT = "pref_camera2_longshot_key";
+    public static final String KEY_VIDEO_DURATION = "pref_camera2_video_duration_key";
+    public static final String KEY_VIDEO_QUALITY = "pref_camera2_video_quality_key";
+    public static final String KEY_VIDEO_ENCODER = "pref_camera2_videoencoder_key";
+    public static final String KEY_AUDIO_ENCODER = "pref_camera2_audioencoder_key";
+    public static final String KEY_DIS = "pref_camera2_dis_key";
+    public static final String KEY_NOISE_REDUCTION = "pref_camera2_noise_reduction_key";
+    public static final String KEY_VIDEO_FLASH_MODE = "pref_camera2_video_flashmode_key";
+    public static final String KEY_VIDEO_ROTATION = "pref_camera2_video_rotation_key";
+    public static final String KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL =
+            "pref_camera2_video_time_lapse_frame_interval_key";
+    public static final String KEY_FACE_DETECTION = "pref_camera2_facedetection_key";
+    public static final String KEY_AUTO_VIDEOSNAP_SIZE = "pref_camera2_videosnap_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -99,6 +117,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private Map<String, Set<String>> mDependendsOnMap;
     private boolean mIsMonoCameraPresent = false;
     private boolean mIsFrontCameraPresent = false;
+    private JSONObject mDependency;
 
     private SettingsManager(Context context) {
         mListeners = new ArrayList<>();
@@ -136,6 +155,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+
+        mDependency = parseJson("dependency.json");
     }
 
     public static SettingsManager createInstance(Context context) {
@@ -204,22 +225,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
         for (int i = 0; i < mPreferenceGroup.size(); i++) {
             ListPreference pref = (ListPreference) mPreferenceGroup.get(i);
             String baseKey = pref.getKey();
-            CharSequence[] dependencyList = null;
-            if (!specialDepedency(baseKey)) dependencyList = pref.getDependencyList();
-            else {
-                List<KeyValue> keyValue = getSpecialDependencyList(pref);
-                if (keyValue.size() > 0) {
-                    dependencyList = new CharSequence[keyValue.size()];
-                    int k = 0;
-                    for (KeyValue kv: keyValue) {
-                        dependencyList[k++] = kv.key;
-                    }
-                }
-                pref.setDependencyList(dependencyList);
-            }
-            if (dependencyList != null) {
-                for (int j = 0; j < dependencyList.length; j++) {
-                    String key = dependencyList[j].toString();
+            String value = pref.getValue();
+
+            JSONObject dependency = getDependencyList(baseKey, value);
+            if (dependency != null) {
+                Iterator<String> keys = dependency.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
                     pref = mPreferenceGroup.findPreference(key);
                     if (pref == null) continue; //filtered?
                     Set set = mDependendsOnMap.get(key);
@@ -238,37 +250,27 @@ public class SettingsManager implements ListMenu.SettingsListener {
         for (int i = 0; i < mPreferenceGroup.size(); i++) {
             ListPreference pref = (ListPreference) mPreferenceGroup.get(i);
             String key = pref.getKey();
-            if (mDependendsOnMap.get(key) != null && mDependendsOnMap.get(key).size() != 0) {
+            Set<String> set = mDependendsOnMap.get(key);
+            if (set != null && set.size() != 0) {
                 processLater.add(key);
-                continue;
             }
             Values values = new Values(pref.getValue(), null);
             mValuesMap.put(pref.getKey(), values);
         }
         for (String keyToProcess : processLater) {
             Set<String> dependsOnSet = mDependendsOnMap.get(keyToProcess);
-            boolean active = true;
-            List<KeyValue> keyValue = null;
-            for (String s : dependsOnSet) {
-                if (specialDepedency(s) || isOptionOn(s)) {
-                    active = false;
-                    if (specialDepedency(s)) {
-                        keyValue = getSpecialDependencyList(s);
-                    }
-                }
-                break;
+            String dependentKey = dependsOnSet.iterator().next();
+            String value = getValue(dependentKey);
+            JSONObject dependencyList = getDependencyList(dependentKey, value);
+
+            String newValue = null;
+            try {
+                newValue = dependencyList.getString(keyToProcess);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                continue;
             }
-            ListPreference pref = mPreferenceGroup.findPreference(keyToProcess);
-            Values values = new Values(pref.getValue(), null);
-            if (!active) {
-                String offValue = pref.getOffValue();
-                if (keyValue != null) {
-                    String matchValue = getMatchingValue(keyToProcess, keyValue);
-                    if (matchValue != null)
-                        offValue = matchValue;
-                }
-                values.overriddenValue = offValue;
-            }
+            Values values = new Values(getValue(keyToProcess), newValue);
             mValuesMap.put(keyToProcess, values);
         }
     }
@@ -277,114 +279,77 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference changedPref = mPreferenceGroup.findPreference(changedPrefKey);
         if (changedPref == null) return null;
 
-        String key = changedPref.getKey();
         String value = changedPref.getValue();
-        boolean special = specialDepedency(changedPrefKey);
         String prevValue = getValue(changedPrefKey);
         if (value.equals(prevValue)) return null;
 
-        boolean turnedOff = value.equals(changedPref.getOffValue());
-        boolean updateBackDependency = false;
         List<SettingState> changed = new ArrayList();
         Values values = new Values(value, null);
-        mValuesMap.put(key, values);
-        changed.add(new SettingState(key, values));
+        mValuesMap.put(changedPrefKey, values);
+        changed.add(new SettingState(changedPrefKey, values));
 
-        Set<CharSequence> turnOn = new HashSet<>();
-        Set<CharSequence> turnOff = new HashSet<>();
+        JSONObject map = getDependencyMapForKey(changedPrefKey);
+        if (map == null || getDependencyKey(map, value).equals(getDependencyKey(map,prevValue)))
+            return changed;
 
-        CharSequence[] originalDependencyList = changedPref.getDependencyList();
-        CharSequence[] dependencyList = null;
-        List<KeyValue> keyValue = null;
-        if (special) {
-            keyValue = getSpecialDependencyList(changedPref);
-            if (keyValue.size() > 0) {
-                dependencyList = new CharSequence[keyValue.size()];
-                int k = 0;
-                for (KeyValue kv : keyValue) {
-                    dependencyList[k++] = kv.key;
-                }
-            }
+        Set<String> turnOn = new HashSet<>();
+        Set<String> turnOff = new HashSet<>();
+
+        JSONObject dependencyList = getDependencyList(changedPrefKey, value);
+        JSONObject originalDependencyList = getDependencyList(changedPrefKey, prevValue);
+
+        Iterator<String> it = originalDependencyList.keys();
+        while (it.hasNext()) {
+            turnOn.add(it.next());
+        }
+        it = dependencyList.keys();
+        while (it.hasNext()) {
+            turnOff.add(it.next());
+        }
+        it = originalDependencyList.keys();
+        while (it.hasNext()) {
+            turnOff.remove(it.next());
+        }
+        it = dependencyList.keys();
+        while (it.hasNext()) {
+            turnOn.remove(it.next());
         }
 
-        if (special) {
-            boolean same = Arrays.equals(originalDependencyList, dependencyList);
-            if (!same) {
-                changedPref.setDependencyList(dependencyList);
-                if (originalDependencyList != null)
-                    for (CharSequence c : originalDependencyList) {
-                        turnOn.add(c);
-                    }
-                if (dependencyList != null)
-                    for (CharSequence c : dependencyList) {
-                        turnOff.add(c);
-                    }
+        for (String keyToTurnOn: turnOn) {
+            Set<String> dependsOnSet = mDependendsOnMap.get(keyToTurnOn);
+            if (dependsOnSet == null || dependsOnSet.size() == 0) continue;
 
-                if (originalDependencyList != null)
-                    for (CharSequence c : originalDependencyList) {
-                        turnOff.remove(c);
-                    }
-                if (dependencyList != null)
-                    for (CharSequence c : dependencyList) {
-                        turnOn.remove(c);
-                    }
-                updateBackDependency = true;
-            }
-        } else {
-            if (originalDependencyList != null) {
-                for (CharSequence c : originalDependencyList) {
-                    if (turnedOff) turnOn.add(c);
-                    else turnOff.add(c);
-                }
-            }
-        }
-
-        for (CharSequence c : turnOn) {// turn back on
-            key = c.toString();
-            Set<String> dependsOnSet = mDependendsOnMap.get(key);
-            if (dependsOnSet == null) continue;
-            boolean active = true;
-            for (String s : dependsOnSet) {
-                if (s.equals(changedPrefKey)) continue;
-                if (isOptionOn(s)) active = false;
-                break;
-            }
-            if (active) {
-                values = mValuesMap.get(key);
+                values = mValuesMap.get(keyToTurnOn);
                 if (values == null) continue;
                 values.overriddenValue = null;
-                mValuesMap.put(key, values);
-                changed.add(new SettingState(key, values));
-            }
+                mValuesMap.put(keyToTurnOn, values);
+                changed.add(new SettingState(keyToTurnOn, values));
         }
 
-        for (CharSequence c : turnOff) {// turn off logic
-            key = c.toString();
-            ListPreference pref = mPreferenceGroup.findPreference(key);
+        for (String keyToTurnOff: turnOff) {
+            ListPreference pref = mPreferenceGroup.findPreference(keyToTurnOff);
             if (pref == null) continue;
-            values = mValuesMap.get(key);
+            values = mValuesMap.get(keyToTurnOff);
             if (values == null) continue;
             if (values != null && values.overriddenValue != null) continue;
-            String offValue = pref.getOffValue();
-            if (keyValue != null) {
-                String matchValue = getMatchingValue(key, keyValue);
-                if (matchValue != null)
-                    offValue = matchValue;
+            String newValue = null;
+            try {
+                newValue = dependencyList.getString(keyToTurnOff);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                continue;
             }
-            Values newValue = new Values(pref.getValue(), offValue);
-            mValuesMap.put(key, newValue);
-            changed.add(new SettingState(key, newValue));
-        }
+            if (newValue == null) continue;
 
-        if (updateBackDependency) {
+            Values newValues = new Values(pref.getValue(), newValue);
+            mValuesMap.put(keyToTurnOff, newValues);
+            changed.add(new SettingState(keyToTurnOff, newValues));
+        }
             updateBackDependency(changedPrefKey, turnOn, turnOff);
-        }
-
         return changed;
     }
 
-    private void updateBackDependency(String key, Set<CharSequence> remove, Set<CharSequence>
-            add) {
+    private void updateBackDependency(String key, Set<String> remove, Set<String> add) {
         for (CharSequence c : remove) {
             String currentKey = c.toString();
             Set<String> dependsOnSet = mDependendsOnMap.get(currentKey);
@@ -453,12 +418,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
         notifyListeners(changed);
     }
 
-    private boolean isOptionOn(String key) {
-        ListPreference pref = mPreferenceGroup.findPreference(key);
-        Values values = mValuesMap.get(key);
-        return (values.overriddenValue == null && !pref.getValue().equals(pref.getOffValue()));
-    }
-
     public PreferenceGroup getPreferenceGroup() {
         return mPreferenceGroup;
     }
@@ -502,6 +461,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference monoPreview = mPreferenceGroup.findPreference(KEY_MONO_PREVIEW);
         ListPreference monoOnly = mPreferenceGroup.findPreference(KEY_MONO_ONLY);
         ListPreference redeyeReduction = mPreferenceGroup.findPreference(KEY_REDEYE_REDUCTION);
+        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        ListPreference videoEncoder = mPreferenceGroup.findPreference(KEY_VIDEO_ENCODER);
+        ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
+        ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
+        ListPreference videoFlash = mPreferenceGroup.findPreference(KEY_VIDEO_FLASH_MODE);
+        ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -537,6 +502,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
                     iso, getSupportedIso(cameraId));
         }
 
+        if (iso != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
+                    videoQuality, getSupportedVideoSize(cameraId));
+        }
+
         if (!mIsMonoCameraPresent) {
             if (clearsight != null) removePreference(mPreferenceGroup, KEY_CLEARSIGHT);
             if (monoPreview != null) removePreference(mPreferenceGroup, KEY_MONO_PREVIEW);
@@ -546,6 +516,31 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (redeyeReduction != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     redeyeReduction, getSupportedRedeyeReduction(cameraId));
+        }
+
+        if (videoEncoder != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, videoEncoder,
+                    getSupportedVideoEncoders(videoEncoder.getEntryValues()));
+        }
+
+        if (audioEncoder != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, audioEncoder,
+                    getSupportedAudioEncoders(audioEncoder.getEntryValues()));
+        }
+
+        if (noiseReduction != null) {
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, noiseReduction,
+                    getSupportedNoiseReductionModes(cameraId));
+        }
+
+        if (videoFlash != null) {
+            if (!isFlashAvailable(cameraId))
+                removePreference(mPreferenceGroup, KEY_VIDEO_FLASH_MODE);
+        }
+
+        if (faceDetection != null) {
+            if (!isFaceDetectionSupported(cameraId))
+                removePreference(mPreferenceGroup, KEY_FACE_DETECTION);
         }
     }
 
@@ -695,6 +690,21 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
     }
 
+    public boolean isFaceDetectionSupported(int id) {
+        int[] faceDetection = mCharacteristics.get(id).get
+                (CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES);
+        for (int value: faceDetection) {
+            if (value == CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE)
+                return true;
+        }
+        return false;
+    }
+
+    public boolean isFacingFront(int id) {
+        int facing = mCharacteristics.get(id).get(CameraCharacteristics.LENS_FACING);
+        return facing == CameraCharacteristics.LENS_FACING_FRONT;
+    }
+
     public boolean isFlashSupported(int id) {
         return mCharacteristics.get(id).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) &&
                 mValuesMap.get(KEY_FLASH_MODE) != null;
@@ -718,6 +728,29 @@ public class SettingsManager implements ListMenu.SettingsListener {
             }
         }
 
+        return res;
+    }
+
+    public Size[] getSupportedOutputSize(int cameraId, int format) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return map.getOutputSizes(format);
+    }
+
+    public Size[] getSupportedOutputSize(int cameraId, Class cl) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return map.getOutputSizes(cl);
+    }
+
+    private List<String> getSupportedVideoSize(int cameraId) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size[] sizes = map.getOutputSizes(MediaRecorder.class);
+        List<String> res = new ArrayList<>();
+        for (int i = 0; i < sizes.length; i++) {
+            res.add(sizes[i].toString());
+        }
         return res;
     }
 
@@ -768,6 +801,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return modes;
     }
 
+    private boolean isFlashAvailable(int cameraId) {
+        return mCharacteristics.get(cameraId).get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+    }
+
     public List<String> getSupportedColorEffects(int cameraId) {
         int[] flashModes = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .CONTROL_AVAILABLE_EFFECTS);
@@ -794,66 +831,41 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return supportedIso;
     }
 
-    private boolean specialDepedency(String key) {
-        return key.equals(KEY_SCENE_MODE);
-    }
-
-    private List<KeyValue> getSpecialDependencyList(String key) {
-        ListPreference pref = mPreferenceGroup.findPreference(key);
-     return   getSpecialDependencyList(pref);
-    }
-
-    private List<KeyValue> getSpecialDependencyList(ListPreference pref) {
-        String key = pref.getKey();
-        List<KeyValue> dependency = new ArrayList<>();
-        switch (key) {
-            case KEY_SCENE_MODE:
-                String value = pref.getValue();
-                switch (value) {
-                    case "0":
-                        dependency.add(new KeyValue(KEY_CLEARSIGHT, "off"));
-                        dependency.add(new KeyValue(KEY_MONO_PREVIEW, "off"));
-                        break;
-                    case SCENE_MODE_DUAL_STRING:
-                        dependency.add(new KeyValue(KEY_LONGSHOT, "off"));
-                        dependency.add(new KeyValue(KEY_MONO_ONLY, "off"));
-                        break;
-                    default:
-                        dependency.add(new KeyValue(KEY_COLOR_EFFECT, "0"));
-                        dependency.add(new KeyValue(KEY_FLASH_MODE, "2"));
-                        dependency.add(new KeyValue(KEY_WHITE_BALANCE, "1"));
-                        dependency.add(new KeyValue(KEY_EXPOSURE, "0"));
-                        dependency.add(new KeyValue(KEY_CLEARSIGHT, "off"));
-                        dependency.add(new KeyValue(KEY_MONO_PREVIEW, "off"));
-                        break;
-                }
-                break;
+    private static List<String> getSupportedVideoEncoders(CharSequence[] strings) {
+        ArrayList<String> supported = new ArrayList<>();
+        for (CharSequence cs: strings) {
+            String s = cs.toString();
+            int value = SettingTranslation.getVideoEncoder(s.toString());
+            if (value != SettingTranslation.NOT_FOUND) supported.add(s.toString());
         }
-        return dependency;
+        return supported;
+    }
+
+    private static List<String> getSupportedAudioEncoders(CharSequence[] strings) {
+        ArrayList<String> supported = new ArrayList<>();
+        for (CharSequence cs: strings) {
+            String s = cs.toString();
+            int value = SettingTranslation.getAudioEncoder(s);
+            if (value != SettingTranslation.NOT_FOUND) supported.add(s);
+        }
+        return supported;
+    }
+
+    public List<String> getSupportedNoiseReductionModes(int cameraId) {
+        int[] noiseReduction = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES);
+        List<String> modes = new ArrayList<>();
+        for (int mode : noiseReduction) {
+            String str = SettingTranslation.getNoiseReduction(mode);
+            if (str != null) modes.add(str);
+        }
+        return modes;
     }
 
     public interface Listener {
         void onSettingsChanged(List<SettingState> settings);
     }
 
-    private String getMatchingValue(String key, List<KeyValue> keyValue) {
-        for (KeyValue kv: keyValue) {
-            if (key.equals(kv.key)) {
-                return kv.value;
-            }
-        }
-        return null;
-    }
-
-    static class KeyValue {
-        String key;
-        String value;
-
-        KeyValue(String key, String value) {
-            this.key = key;
-            this.value = value;
-        }
-    }
     static class Values {
         String value;
         String overriddenValue;
@@ -874,4 +886,50 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
     }
 
+    private JSONObject parseJson(String fileName) {
+        String json;
+        try {
+            InputStream is = mContext.getAssets().open(fileName);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, "UTF-8");
+            return new JSONObject(json);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private JSONObject getDependencyMapForKey(String key) {
+        if (mDependency == null) return null;
+        try {
+            return mDependency.getJSONObject(key);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private JSONObject getDependencyList(String key, String value) {
+        JSONObject dependencyMap = getDependencyMapForKey(key);
+        if (dependencyMap == null) return null;
+        if (!dependencyMap.has(value)) value = "default";
+        value = getDependencyKey(dependencyMap, value);
+        try {
+            return dependencyMap.getJSONObject(value);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private String getDependencyKey(JSONObject dependencyMap, String value) {
+        if (!dependencyMap.has(value)) value = "default";
+        return value;
+    }
 }

@@ -1,5 +1,5 @@
 <!--
-    Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+    Copyright (c) 2012-2014, 2016, The Linux Foundation. All rights reserved.
 
     Not a Contribution.
 
@@ -981,6 +981,27 @@
     <string name="pref_camera2_whitebalance_default" translatable="false">1</string>
     <string name="pref_camera2_coloreffect_default" translatable="false">0</string>
     <string name="pref_camera2_flashmode_default" translatable="false">2</string>
+
     <string name="pref_camera2_makeup_title" translatable="true">Makeup</string>
+
+    <string name="pref_camera2_noise_reduction_default" translatable="false">off</string>
+    <string name="pref_camera2_noise_reduction_title" translatable="true">Noise Reduction</string>
+
+    <string name="pref_camera2_noise_reduction_entry_off" translatable="true">Off</string>
+    <string name="pref_camera2_noise_reduction_entry_fast" translatable="true">Fast</string>
+    <string name="pref_camera2_noise_reduction_entry_high_quality" translatable="true">High Quality</string>
+
+    <string name="pref_camera2_noise_reduction_value_off" translatable="false">off</string>
+    <string name="pref_camera2_noise_reduction_value_fast" translatable="false">fast</string>
+    <string name="pref_camera2_noise_reduction_value_high_quality" translatable="false">high-quality</string>
+
+    <string name="pref_camera2_videosnap_default" translatable="false">enable</string>
+    <string name="pref_camera2_videosnap_title" translatable="true">Auto Snapshot Size</string>
+
+    <string name="pref_camera2_videosnap_value_enable" translatable="true">enable</string>
+    <string name="pref_camera2_videosnap_value_disable" translatable="true">disable</string>
+
+    <string name="pref_camera2_videosnap_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_videosnap_entry_disable" translatable="true">Disable</string>
 </resources>
 
