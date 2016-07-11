@@ -1548,7 +1548,7 @@ public class VideoModule implements CameraModule,
 
             // Profiles advertizes bitrate corresponding to published framerate.
             // In case framerate is different, scale the bitrate
-            int scaledBitrate = mProfile.videoBitRate * targetFrameRate / mProfile.videoFrameRate;
+            int scaledBitrate = mProfile.videoBitRate * (targetFrameRate / mProfile.videoFrameRate);
             Log.i(TAG, "Scaled Video bitrate : " + scaledBitrate);
             mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
