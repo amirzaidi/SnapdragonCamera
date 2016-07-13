@@ -101,6 +101,7 @@ public class CameraSettings {
     public static final String KEY_BRIGHTNESS = "pref_camera_brightness_key";
     public static final String KEY_REDEYE_REDUCTION = "pref_camera_redeyereduction_key";
     public static final String KEY_SELFIE_MIRROR = "pref_camera_selfiemirror_key";
+    public static final String KEY_SHUTTER_SOUND = "pref_camera_shuttersound_key";
     public static final String KEY_CDS_MODE = "pref_camera_cds_mode_key";
     public static final String KEY_VIDEO_CDS_MODE = "pref_camera_video_cds_mode_key";
     public static final String KEY_TNR_MODE = "pref_camera_tnr_mode_key";

@@ -597,6 +597,15 @@
          <item>enable</item>
      </string-array>
 
+     <string-array name="pref_camera_shuttersound_entries" translatable="false">
+         <item>@string/pref_camera_shuttersound_entry_disable</item>
+         <item>@string/pref_camera_shuttersound_entry_enable</item>
+     </string-array>
+     <string-array name="pref_camera_shuttersound_entryvalues" translatable="false">
+         <item>disable</item>
+         <item>enable</item>
+     </string-array>
+
     <!-- Camera Preferences Selectable Zone AF dialog box entries -->
     <string-array name="pref_camera_selectablezoneaf_entries" translatable="false">
         <item>@string/pref_camera_selectablezoneaf_entry_auto</item>
