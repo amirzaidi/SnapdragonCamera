@@ -285,6 +285,13 @@
             camera:entries="@array/pref_camera_redeyereduction_entries"
             camera:singleIcon="@drawable/ic_settings_redeye"
             camera:entryValues="@array/pref_camera_redeyereduction_entryvalues" />
+    <IconListPreference
+            camera:key="pref_camera_selfiemirror_key"
+            camera:defaultValue="@string/pref_camera_selfiemirror_default"
+            camera:title="@string/pref_camera_selfiemirror_title"
+            camera:entries="@array/pref_camera_selfiemirror_entries"
+            camera:singleIcon="@drawable/ic_settings_selfiemirror"
+            camera:entryValues="@array/pref_camera_selfiemirror_entryvalues" />
     <ListPreference
             camera:key="pref_camera_selectablezoneaf_key"
             camera:defaultValue="@string/pref_camera_selectablezoneaf_default"

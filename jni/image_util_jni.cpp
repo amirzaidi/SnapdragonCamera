@@ -44,6 +44,8 @@ JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nat
          jint imageWidth, jint imageHeight, jint degree, jobjectArray outBuf);
 JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nativeNV21toRgb(
         JNIEnv *env, jobject thiz, jobjectArray yvuBuf, jobjectArray rgbBuf, jint width, jint height);
+JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipVerticalNV21(
+        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height);
 #ifdef __cplusplus
 }
 #endif
@@ -149,5 +151,33 @@ jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nativeNV21toR
             rgb_buf[(y*width + x) * 4 + 0] = (uint8_t)(r & 0xFF);
         }
     }
+    return 0;
+}
+
+jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipVerticalNV21(
+        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height)
+{
+    jbyte* imageDataNV21Array = env->GetByteArrayElements(yvuBytes, NULL);
+    uint8_t *buf = (uint8_t *)imageDataNV21Array;
+    int ysize = width * height;
+    uint8_t temp1, temp2;
+    for(int x=0; x < width; x++) {
+        for(int y=0; y < height/2; y++) {
+            temp1 = buf[y*width + x];
+            buf[y*width + x] = buf[(height-1-y)*width + x];
+            buf[(height-1-y)*width + x] = temp1;
+        }
+    }
+    for(int x=0; x < width; x+=2) {
+        for(int y=0; y < height/4; y++) {
+            temp1 = buf[ysize + y*width + x];
+            temp2 = buf[ysize + y*width + x + 1];
+            buf[ysize + y*width + x] = buf[ysize + (height/2-1-y)*width + x];
+            buf[ysize + y*width + x + 1] = buf[ysize + (height/2-1-y)*width + x + 1];
+            buf[ysize + (height/2-1-y)*width + x] = temp1;
+            buf[ysize + (height/2-1-y)*width + x + 1] = temp2;
+        }
+    }
+    env->ReleaseByteArrayElements(yvuBytes, imageDataNV21Array, JNI_ABORT);
     return 0;
 }

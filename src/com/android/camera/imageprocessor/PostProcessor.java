@@ -488,5 +488,9 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
         }
     }
 
+    private native int nativeFlipVerticalNV21(byte[] buf, int stride, int height);
 
+    static {
+        System.loadLibrary("jni_imageutil");
+    }
 }

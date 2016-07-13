@@ -24,7 +24,10 @@ import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
@@ -47,6 +50,7 @@ import android.os.Message;
 import android.os.MessageQueue;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
@@ -88,6 +92,7 @@ import android.text.TextUtils;
 import com.android.internal.util.MemInfoReader;
 import android.app.ActivityManager;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -1260,6 +1265,19 @@ public class PhotoModule
         }
     }
 
+    private byte[] flipJpeg(byte[] jpegData) {
+        Bitmap srcBitmap = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
+        Matrix m = new Matrix();
+        m.preScale(-1, 1);
+        Bitmap dstBitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(), srcBitmap.getHeight(), m, false);
+        dstBitmap.setDensity(DisplayMetrics.DENSITY_DEFAULT);
+        int size = dstBitmap.getWidth() * dstBitmap.getHeight();
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream(size);
+        dstBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+
+        return outStream.toByteArray();
+    }
+
     private final class JpegPictureCallback
             implements CameraPictureCallback {
         Location mLocation;
@@ -1269,7 +1287,7 @@ public class PhotoModule
         }
 
         @Override
-        public void onPictureTaken(final byte [] jpegData, CameraProxy camera) {
+        public void onPictureTaken(byte [] jpegData, CameraProxy camera) {
             mUI.stopSelfieFlash();
             mUI.enableShutter(true);
             if (mUI.isPreviewCoverVisible()) {
@@ -1361,6 +1379,16 @@ public class PhotoModule
             if (!mRefocus || (mRefocus && mReceivedSnapNum == 7)) {
                 ExifInterface exif = Exif.getExif(jpegData);
                 int orientation = Exif.getOrientation(exif);
+                if(mCameraId == CameraHolder.instance().getFrontCameraId()) {
+                    IconListPreference selfieMirrorPref = (IconListPreference) mPreferenceGroup
+                            .findPreference(CameraSettings.KEY_SELFIE_MIRROR);
+                    if (selfieMirrorPref != null && selfieMirrorPref.getValue() != null &&
+                            selfieMirrorPref.getValue().equalsIgnoreCase("enable")) {
+                        jpegData = flipJpeg(jpegData);
+                        exif = Exif.getExif(jpegData);
+                        exif.addOrientationTag(orientation);
+                    }
+                }
                 if (!mIsImageCaptureIntent) {
                     // Burst snapshot. Generate new image name.
                     if (mReceivedSnapNum > 1) {
@@ -1973,8 +2001,16 @@ public class PhotoModule
             mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, flashMode);
         }
 
-        if(mCameraId != CameraHolder.instance().getFrontCameraId())
+        if(mCameraId != CameraHolder.instance().getFrontCameraId()) {
             CameraSettings.removePreferenceFromScreen(mPreferenceGroup, CameraSettings.KEY_SELFIE_FLASH);
+            CameraSettings.removePreferenceFromScreen(mPreferenceGroup, CameraSettings.KEY_SELFIE_MIRROR);
+        } else {
+            ListPreference prefSelfieMirror = mPreferenceGroup.findPreference(CameraSettings.KEY_SELFIE_MIRROR);
+            if(prefSelfieMirror != null && prefSelfieMirror.getValue() != null
+                    && prefSelfieMirror.getValue().equalsIgnoreCase("enable")) {
+                mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, "off");
+            }
+        }
     }
 
     private void overrideCameraSettings(final String flashMode,
