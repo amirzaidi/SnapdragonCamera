@@ -21,6 +21,7 @@ LOCAL_AAPT_FLAGS := \
         --version-code $(version_code_package) \
 
 LOCAL_PACKAGE_NAME := SnapdragonCamera
+LOCAL_PRIVILEGED_MODULE := true
 
 #LOCAL_SDK_VERSION := current
 LOCAL_RENDERSCRIPT_TARGET_API := 23
