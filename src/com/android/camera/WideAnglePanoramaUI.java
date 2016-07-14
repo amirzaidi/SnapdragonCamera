@@ -639,7 +639,7 @@ public class WideAnglePanoramaUI implements
                 + progressLayout.getChildAt(0).getHeight() / 2;
 
         int[] x = { r / 2, r / 10, r * 9 / 10, r / 2 };
-        int[] y = { t / 2, (t + b1) / 2, (t + b1) / 2, b1 + pivotY };
+        int[] y = { t / 2 + pivotY, (t + b1) / 2, (t + b1) / 2, b1 + pivotY };
 
         int idx1, idx2;
         int g;
