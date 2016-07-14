@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2016, The Linux Foundation. All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+     * Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+       copyright notice, this list of conditions and the following
+       disclaimer in the documentation and/or other materials provided
+       with the distribution.
+     * Neither the name of The Linux Foundation nor the names of its
+       contributors may be used to endorse or promote products derived
+       from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="screen">
+    <PreferenceCategory
+        android:key="general"
+        android:layout="@layout/preferences_category"
+        android:title="GENERAL">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/gps_location"
+            android:key="pref_camera2_recordlocation_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera_recordlocation_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/face_detection"
+            android:key="pref_camera2_facedetection_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera_facedetection_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera_savepath_default"
+            android:entries="@array/pref_camera2_savepath_entries"
+            android:entryValues="@array/pref_camera2_savepath_entryvalues"
+            android:icon="@drawable/storage"
+            android:key="pref_camera2_savepath_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_savepath_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="photo"
+        android:layout="@layout/preferences_category"
+        android:title="STILL CAMERA">
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_timer_value_off"
+            android:entries="@array/pref_camera2_timer_entries"
+            android:entryValues="@array/pref_camera2_timer_entryvalues"
+            android:icon="@drawable/countdown_timer"
+            android:key="pref_camera2_timer_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_timer_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/continuous_shot"
+            android:key="pref_camera2_longshot_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera_longshot_title" />
+
+        <ListPreference
+            android:entries="@array/pref_camera2_picturesize_entries"
+            android:entryValues="@array/pref_camera2_picturesize_entryvalues"
+            android:icon="@drawable/picture_size"
+            android:key="pref_camera2_picturesize_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_picturesize_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera_jpegquality_default"
+            android:entries="@array/pref_camera2_jpegquality_entries"
+            android:entryValues="@array/pref_camera2_jpegquality_entryvalues"
+            android:icon="@drawable/picture_quality"
+            android:key="pref_camera2_jpegquality_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_jpegquality_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/ic_settings_redeye"
+            android:key="pref_camera2_redeyereduction_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera_redeyereduction_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_exposure_default"
+            android:icon="@drawable/exposure"
+            android:key="pref_camera2_exposure_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_exposure_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_whitebalance_default"
+            android:entries="@array/pref_camera2_whitebalance_entries"
+            android:entryValues="@array/pref_camera2_whitebalance_entryvalues"
+            android:icon="@drawable/white_balance"
+            android:key="pref_camera2_whitebalance_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_whitebalance_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/ic_settings_flash"
+            android:key="pref_selfie_flash_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_selfie_flash_title" />
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/shutter_sound"
+            android:key="pref_camera2_shutter_sound_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera2_shutter_sound_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_camera2_mono_only_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera2_mono_only_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_camera2_mono_preview_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera2_mono_preview_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_camera2_clearsight_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera2_clearsight_title" />
+
+        <ListPreference
+            android:defaultValue="false"
+            android:key="pref_camera2_mpo_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera2_mpo_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="video"
+        android:layout="@layout/preferences_category"
+        android:title="VIDEO CAMERA">
+        <ListPreference
+            android:entries="@array/pref_camera2_video_quality_entries"
+            android:entryValues="@array/pref_camera2_video_quality_entryvalues"
+            android:icon="@drawable/video_quality"
+            android:key="pref_camera2_video_quality_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_video_quality_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera_video_duration_default"
+            android:entries="@array/pref_camera2_video_duration_entries"
+            android:entryValues="@array/pref_camera2_video_duration_entryvalues"
+            android:icon="@drawable/video_duration"
+            android:key="pref_camera2_video_duration_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_video_duration_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/image_stabilization"
+            android:key="pref_camera2_dis_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera_dis_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/noise_reduction"
+            android:key="pref_camera2_noise_reduction_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera_noise_reduction_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera_videoencoder_default"
+            android:entries="@array/pref_camera2_videoencoder_entries"
+            android:entryValues="@array/pref_camera2_videoencoder_entryvalues"
+            android:icon="@drawable/video_encoding"
+            android:key="pref_camera2_videoencoder_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_videoencoder_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera_audioencoder_default"
+            android:entries="@array/pref_camera2_audioencoder_entries"
+            android:entryValues="@array/pref_camera2_audioencoder_entryvalues"
+            android:icon="@drawable/audio_encoding"
+            android:key="pref_camera2_audioencoder_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_audioencoder_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera_video_rotation_default"
+            android:entries="@array/pref_camera2_video_rotation_entries"
+            android:entryValues="@array/pref_camera2_video_rotation_entryvalues"
+            android:icon="@drawable/video_rotation"
+            android:key="pref_camera2_video_rotation_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_video_rotation_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_video_time_lapse_frame_interval_default"
+            android:entries="@array/pref_camera2_video_time_lapse_frame_interval_entries"
+            android:entryValues="@array/pref_camera2_video_time_lapse_frame_interval_entryvalues"
+            android:icon="@drawable/clock"
+            android:key="pref_camera2_video_time_lapse_frame_interval_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_video_time_lapse_frame_interval_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_videosnap_default"
+            android:entries="@array/pref_camera2_videosnap_entries"
+            android:entryValues="@array/pref_camera2_videosnap_entryvalues"
+            android:icon="@drawable/auto_snapshot_size"
+            android:key="pref_camera2_videosnap_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_videosnap_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera_hfr_default"
+            android:entries="@array/pref_camera_hfr_entries"
+            android:entryValues="@array/pref_camera_hfr_entryvalues"
+            android:icon="@drawable/ic_settings_fps"
+            android:key="pref_camera2_hfr_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_hfr_title" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/tracking_focus"
+            android:key="pref_camera2_trackingfocus_key"
+            android:layout="@layout/preference"
+            android:title="@string/pref_camera2_trackingfocus_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

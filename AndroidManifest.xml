@@ -70,6 +70,26 @@
                     android:value="com.android.camera.CameraActivity" />
         </activity>
 
+        <activity
+            android:theme="@style/Theme.OneUISettings"
+            android:name="com.android.camera.SettingsActivity"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:icon="@mipmap/ic_launcher_camera"
+            android:label="@string/snapcam_app_name"
+            android:launchMode="singleTop" >
+        </activity>
+
+        <activity
+            android:theme="@android:style/Theme.Material.Light.NoActionBar.Fullscreen"
+            android:name="com.android.camera.SceneModeActivity"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:icon="@mipmap/ic_launcher_camera"
+            android:label="@string/snapcam_app_name"
+            android:launchMode="singleTop" >
+        </activity>
+
         <activity-alias
             android:name="com.android.camera.CameraLauncher"
             android:icon="@mipmap/ic_launcher_camera"

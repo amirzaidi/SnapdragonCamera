@@ -20,7 +20,6 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.util.Log;
 
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.RenderOverlay;
@@ -189,16 +188,9 @@ public class PreviewGestures
         }
 
         if (mCaptureUI != null) {
-            if (mCaptureUI.isMenuBeingShown()) {
-                if (!mCaptureUI.isMenuBeingAnimated()) {
-                    waitUntilNextDown = true;
-                    mCaptureUI.removeAllSettingMenu(true);
-                }
-                return true;
-            }
             if (mCaptureUI.isPreviewMenuBeingShown()) {
                 waitUntilNextDown = true;
-                mCaptureUI.removeSceneAndFilterMenu(true);
+                mCaptureUI.removeFilterMenu(true);
                 return true;
             }
         }

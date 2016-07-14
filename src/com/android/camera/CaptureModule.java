@@ -1568,18 +1568,21 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyAERegions(builder, id);
         applyCommonSettings(builder, id);
         applyFaceDetect(builder, id);
+        applyFlash(builder, id);
     }
 
     private void applySettingsForCapture(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
         applyJpegQuality(builder);
         applyCommonSettings(builder, id);
+        applyFlash(builder, id);
     }
 
     private void applySettingsForPrecapture(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                 CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
         applyCommonSettings(builder, id);
+        applyFlash(builder, id);
         applyFaceDetect(builder, id);
     }
 
@@ -1609,7 +1612,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyVideoSnapshot(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
-        applyWhiteBalance(builder);
         applyColorEffect(builder);
         applyVideoFlash(builder);
     }
@@ -1618,7 +1620,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
         applyFaceDetection(builder);
-        applyFlash(builder, id);
         applyWhiteBalance(builder);
         applyExposure(builder);
         applyIso(builder);
@@ -1853,7 +1854,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         initializeValues();
         updatePreviewSize();
         mUI.showSurfaceView();
-        mUI.setSwitcherIndex();
         mCameraIdList = new ArrayList<>();
 
         if (mSound == null) {
@@ -2047,6 +2047,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         Log.d(TAG, "onSingleTapUp " + x + " " + y);
         int[] newXY = {x, y};
+        if (mUI.isOverControlRegion(newXY)) return;
         if (!mUI.isOverSurfaceView(newXY)) return;
         mUI.setFocusPosition(x, y);
         x = newXY[0];
@@ -2482,15 +2483,15 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyVideoStabilization(builder);
         applyNoiseReduction(builder);
         applyColorEffect(builder);
-        applyWhiteBalance(builder);
         applyVideoFlash(builder);
     }
 
     private void applyVideoFlash(CaptureRequest.Builder builder) {
-        String value = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_FLASH_MODE);
+        String value = mSettingsManager.getValue(SettingsManager.KEY_FLASH_MODE);
         if (value == null) return;
+        boolean flashOn = value.equals("on");
 
-        if (value.equals("torch")) {
+        if (flashOn) {
             builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
         } else {
             builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
@@ -2982,16 +2983,15 @@ public class CaptureModule implements CameraModule, PhotoController,
                 updatePreview = true;
                 applyExposure(mPreviewRequestBuilder[cameraId]);
                 break;
-            case SettingsManager.KEY_FLASH_MODE:
-                updatePreview = true;
-                applyFlash(mPreviewRequestBuilder[cameraId], cameraId);
-                break;
             case SettingsManager.KEY_ISO:
                 updatePreview = true;
                 applyIso(mPreviewRequestBuilder[cameraId]);
                 break;
+            case SettingsManager.KEY_FACE_DETECTION:
+                updatePreview = true;
+                applyFaceDetect(mPreviewRequestBuilder[cameraId], cameraId);
+                break;
         }
-        applyFaceDetect(mPreviewRequestBuilder[cameraId], cameraId);
         return updatePreview;
     }
 
@@ -3079,24 +3079,24 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void applyFlash(CaptureRequest.Builder request, String value) {
-        int mode = Integer.parseInt(value);
+        boolean flashOn = value.equals("on");
         String redeye = mSettingsManager.getValue(SettingsManager.KEY_REDEYE_REDUCTION);
-        request.set(CaptureRequest.CONTROL_AE_MODE, mode);
-        switch (mode) {
-            case CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH:
-                request.set(CaptureRequest.FLASH_MODE, CaptureRequest
-                        .FLASH_MODE_SINGLE);
-                break;
-            case CaptureRequest.CONTROL_AE_MODE_ON:
-                request.set(CaptureRequest.FLASH_MODE, CaptureRequest
-                        .FLASH_MODE_OFF);
-                break;
-            case CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH:
-                if (redeye != null && redeye.equals("disable")) {
-                    request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest
-                            .CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
-                }
-                break;
+        boolean redeyeOn = redeye != null && redeye.equals("on");
+
+        if (redeyeOn) {
+            request.set(CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
+        } else {
+            if (flashOn) {
+                request.set(CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
+                request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
+            } else {
+                request.set(CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON);
+                request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+            }
+
         }
     }
 
@@ -3405,14 +3405,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         onPauseAfterSuper();
         onResumeBeforeSuper();
         onResumeAfterSuper();
-    }
-
-    private void switchCameraMode(String value) {
-        if (value.equals("enable")) {
-            mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
-        } else {
-            mActivity.onModuleSelected(ModuleSwitcher.PHOTO_MODULE_INDEX);
-        }
     }
 
     private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes, int screenW, int

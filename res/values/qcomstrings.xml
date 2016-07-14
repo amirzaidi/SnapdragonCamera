@@ -999,7 +999,7 @@
     <string name="pref_camera2_scenemode_default" translatable="false">0</string>
     <string name="pref_camera2_whitebalance_default" translatable="false">1</string>
     <string name="pref_camera2_coloreffect_default" translatable="false">0</string>
-    <string name="pref_camera2_flashmode_default" translatable="false">2</string>
+    <string name="pref_camera2_flashmode_default" translatable="false">@string/setting_off_value</string>
 
     <string name="pref_camera2_makeup_title" translatable="true">Makeup</string>
 
@@ -1034,5 +1034,15 @@
     <string name="pref_camera2_shutter_sound_entry_on" translatable="true">On</string>
     <string name="pref_camera2_shutter_sound_entry_off" translatable="true">Off</string>
     <string name="pref_camera2_shutter_sound_title" translatable="true">Shutter Sound</string>
+
+    <string name="pref_camera2_timer_entry_off" translatable="false">Off</string>
+    <string name="pref_camera2_timer_entry_2sec" translatable="false">2 seconds</string>
+    <string name="pref_camera2_timer_entry_5sec" translatable="false">5 seconds</string>
+    <string name="pref_camera2_timer_entry_10sec" translatable="false">10 seconds</string>
+
+    <string name="pref_camera2_timer_value_off" translatable="false">0</string>
+    <string name="pref_camera2_timer_value_2sec" translatable="false">2</string>
+    <string name="pref_camera2_timer_value_5sec" translatable="false">5</string>
+    <string name="pref_camera2_timer_value_10sec" translatable="false">10</string>
 </resources>
 

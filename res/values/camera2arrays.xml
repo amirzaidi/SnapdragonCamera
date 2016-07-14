@@ -34,8 +34,8 @@
     </string-array>
 
     <string-array name="pref_camera2_camera2_entryvalues" translatable="false">
-        <item>@string/pref_camera2_camera2_value_disable</item>
-        <item>@string/pref_camera2_camera2_value_enable</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <string-array name="pref_camera2_mono_only_entries" translatable="true">
@@ -44,8 +44,8 @@
     </string-array>
 
     <string-array name="pref_camera2_mono_only_entryvalues" translatable="false">
-        <item>on</item>
-        <item>off</item>
+        <item>@string/setting_on_value</item>
+        <item>@string/setting_off_value</item>
     </string-array>
 
     <string-array name="pref_camera2_initial_camera_entries" translatable="true">
@@ -86,8 +86,8 @@
     </string-array>
 
     <string-array name="pref_camera2_mono_preview_entryvalues" translatable="false">
-        <item>@string/pref_camera2_mono_preview_value_on</item>
-        <item>@string/pref_camera2_mono_preview_value_off</item>
+        <item>@string/setting_on_value</item>
+        <item>@string/setting_off_value</item>
     </string-array>
 
     <string-array name="pref_camera2_clearsight_entries" translatable="true">
@@ -96,8 +96,8 @@
     </string-array>
 
     <string-array name="pref_camera2_clearsight_entryvalues" translatable="false">
-        <item>@string/pref_camera2_clearsight_value_off</item>
-        <item>@string/pref_camera2_clearsight_value_on</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <string-array name="pref_camera2_mpo_entries" translatable="true">
@@ -158,21 +158,21 @@
     </string-array>
 
     <array name="pref_camera2_scenemode_thumbnails" translatable="false">
-        <item>@drawable/ic_scene_mode_auto</item>
-        <item>@drawable/ic_scene_mode_hdr</item>
-        <item>@drawable/ic_scene_mode_hdr</item>
-        <item>@drawable/ic_scene_mode_refocus</item>
-        <item>@drawable/ic_scene_mode_optizoom</item>
-        <item>@drawable/ic_scene_mode_portrait</item>
-        <item>@drawable/ic_scene_mode_landscape</item>
-        <item>@drawable/ic_scene_mode_sports</item>
-        <item>@drawable/ic_scene_mode_flower</item>
-        <item>@drawable/ic_scene_mode_backlight</item>
-        <item>@drawable/ic_scene_mode_candlelight</item>
-        <item>@drawable/ic_scene_mode_sunset</item>
-        <item>@drawable/ic_scene_mode_night</item>
-        <item>@drawable/ic_scene_mode_beach</item>
-        <item>@drawable/ic_scene_mode_snow</item>
+        <item>@drawable/auto</item>
+        <item>@drawable/hdr</item>
+        <item>@drawable/hdr</item>
+        <item>@drawable/ubifocus</item>
+        <item>@drawable/optizoom</item>
+        <item>@drawable/portrait</item>
+        <item>@drawable/landscape</item>
+        <item>@drawable/sports</item>
+        <item>@drawable/flower</item>
+        <item>@drawable/backlight</item>
+        <item>@drawable/candlelight</item>
+        <item>@drawable/sunset</item>
+        <item>@drawable/night</item>
+        <item>@drawable/beach</item>
+        <item>@drawable/snow</item>
         <item>@drawable/ic_scene_mode_smartauto</item>
         <item>@drawable/pick_the_best_photo</item>
     </array>
@@ -297,31 +297,26 @@
     <!-- Camera Preferences flash mode dialog box entries -->
     <string-array name="pref_camera2_flashmode_entries" translatable="false">
         <item>@string/pref_camera_flashmode_entry_off</item>
-        <item>@string/pref_camera_flashmode_entry_auto</item>
         <item>@string/pref_camera_flashmode_entry_on</item>
     </string-array>
 
     <string-array name="pref_camera2_flashmode_labels" translatable="false">
         <item>@string/pref_camera_flashmode_label_off</item>
-        <item>@string/pref_camera_flashmode_label_auto</item>
         <item>@string/pref_camera_flashmode_label_on</item>
     </string-array>
 
     <string-array name="pref_camera2_flashmode_entryvalues" translatable="false">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <array name="pref_camera2_flashmode_icons" translatable="false">
         <item>@drawable/ic_flash_off_holo_light</item>
-        <item>@drawable/ic_flash_auto_holo_light</item>
         <item>@drawable/ic_flash_on_holo_light</item>
     </array>
 
     <array name="pref_camera2_flashmode_largeicons" translatable="false">
         <item>@drawable/ic_flash_off_holo_light</item>
-        <item>@drawable/ic_flash_auto_holo_light</item>
         <item>@drawable/ic_flash_on_holo_light</item>
     </array>
 
@@ -431,8 +426,8 @@
     </string-array>
 
     <string-array name="pref_camera2_recordlocation_entryvalues" translatable="false">
-        <item>off</item>
-        <item>on</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <array name="pref_camera2_recordlocation_entries" translatable="false">
@@ -566,8 +561,8 @@
     </string-array>
 
     <string-array name="pref_camera2_redeyereduction_entryvalues" translatable="false">
-        <item>disable</item>
-        <item>enable</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <!-- Camera Preferences Long Shot dialog box entries -->
@@ -586,8 +581,8 @@
         <item>@string/pref_camera_filter_mode_entry_on</item>
     </string-array>
     <string-array name="pref_camera2_filter_mode_entryvalues" translatable="false">
-        <item>Off</item>
-        <item>On</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <string-array name="pref_camera2_filter_mode_icons" translatable="false">
@@ -668,8 +663,8 @@
     </string-array>
 
     <string-array name="pref_camera2_dis_entryvalues"  translatable="false">
-        <item>@string/pref_camera_dis_value_disable</item>
-        <item>@string/pref_camera_dis_value_enable</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <string-array name="pref_camera2_noise_reduction_entries" translatable="false">
@@ -816,8 +811,8 @@ for time lapse recording -->
     </string-array>
 
     <string-array name="pref_camera2_facedetection_entryvalues" translatable="false">
-        <item>off</item>
-        <item>on</item>
+        <item>@string/setting_off_value</item>
+        <item>@string/setting_on_value</item>
     </string-array>
 
     <string-array name="pref_camera2_videosnap_entries" translatable="true">
@@ -826,8 +821,22 @@ for time lapse recording -->
     </string-array>
 
     <string-array name="pref_camera2_videosnap_entryvalues" translatable="false">
-        <item>@string/pref_camera2_videosnap_value_enable</item>
-        <item>@string/pref_camera2_videosnap_value_disable</item>
+        <item>@string/setting_on_value</item>
+        <item>@string/setting_off_value</item>
+    </string-array>
+
+    <string-array name="pref_camera2_timer_entries" translatable="false">
+        <item>@string/pref_camera2_timer_entry_off</item>
+        <item>@string/pref_camera2_timer_entry_2sec</item>
+        <item>@string/pref_camera2_timer_entry_5sec</item>
+        <item>@string/pref_camera2_timer_entry_10sec</item>
+    </string-array>
+
+    <string-array name="pref_camera2_timer_entryvalues" translatable="false">
+        <item>@string/pref_camera2_timer_value_off</item>
+        <item>@string/pref_camera2_timer_value_2sec</item>
+        <item>@string/pref_camera2_timer_value_5sec</item>
+        <item>@string/pref_camera2_timer_value_10sec</item>
     </string-array>
 
     <string-array name="pref_camera2_shutter_sound_entries" translatable="true">

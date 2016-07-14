@@ -109,7 +109,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_AUDIO_ENCODER = "pref_camera2_audioencoder_key";
     public static final String KEY_DIS = "pref_camera2_dis_key";
     public static final String KEY_NOISE_REDUCTION = "pref_camera2_noise_reduction_key";
-    public static final String KEY_VIDEO_FLASH_MODE = "pref_camera2_video_flashmode_key";
     public static final String KEY_VIDEO_ROTATION = "pref_camera2_video_rotation_key";
     public static final String KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL =
             "pref_camera2_video_time_lapse_frame_interval_key";
@@ -132,6 +131,15 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private boolean mIsFrontCameraPresent = false;
     private JSONObject mDependency;
     private int mCameraId;
+    private Set<String> mFilteredKeys;
+
+    public Map<String, Values> getValuesMap() {
+        return mValuesMap;
+    }
+
+    public Set<String> getFilteredKeys() {
+        return mFilteredKeys;
+    }
 
     private SettingsManager(Context context) {
         mListeners = new ArrayList<>();
@@ -232,6 +240,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 (PreferenceGroup) inflater.inflate(R.xml.capture_preferences);
         mValuesMap = new HashMap<>();
         mDependendsOnMap = new HashMap<>();
+        mFilteredKeys = new HashSet<>();
         filterPreferences(cameraId);
         initDepedencyTable();
         initializeValueMap();
@@ -452,6 +461,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return pref.getEntries();
     }
 
+    public CharSequence[] getEntryValues(String key) {
+        ListPreference pref = mPreferenceGroup.findPreference(key);
+        return pref.getEntryValues();
+    }
+
     public int[] getResource(String key, int type) {
         IconListPreference pref = (IconListPreference) mPreferenceGroup.findPreference(key);
         switch (type) {
@@ -505,49 +519,65 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference videoEncoder = mPreferenceGroup.findPreference(KEY_VIDEO_ENCODER);
         ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
         ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
-        ListPreference videoFlash = mPreferenceGroup.findPreference(KEY_VIDEO_FLASH_MODE);
         ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
         ListPreference makeup = mPreferenceGroup.findPreference(KEY_MAKEUP);
         ListPreference trackingfocus = mPreferenceGroup.findPreference(KEY_TRACKINGFOCUS);
         ListPreference hfr = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
 
         if (whiteBalance != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    whiteBalance, getSupportedWhiteBalanceModes(cameraId));
+            if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
+                mFilteredKeys.add(whiteBalance.getKey());
+            }
         }
+
         if (flashMode != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    flashMode, getSupportedFlashModes(cameraId));
+            if (!isFlashAvailable(mCameraId)) {
+                removePreference(mPreferenceGroup, KEY_FLASH_MODE);
+                mFilteredKeys.add(flashMode.getKey());
+            }
         }
 
         if (colorEffect != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    colorEffect, getSupportedColorEffects(cameraId));
+            if (filterUnsupportedOptions(colorEffect, getSupportedColorEffects(cameraId))) {
+                mFilteredKeys.add(colorEffect.getKey());
+            }
         }
 
         if (sceneMode != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    sceneMode, getSupportedSceneModes(cameraId));
+            if (filterUnsupportedOptions(sceneMode, getSupportedSceneModes(cameraId))) {
+                mFilteredKeys.add(sceneMode.getKey());
+            }
         }
 
         if (cameraIdPref != null) buildCameraId();
 
         if (pictureSize != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    pictureSize, getSupportedPictureSize(cameraId));
-            CameraSettings.filterSimilarPictureSize(mPreferenceGroup, pictureSize);
+            if (filterUnsupportedOptions(pictureSize, getSupportedPictureSize(cameraId))) {
+                mFilteredKeys.add(pictureSize.getKey());
+            } else {
+                if (CameraSettings.filterSimilarPictureSize(mPreferenceGroup, pictureSize)) {
+                    mFilteredKeys.add(pictureSize.getKey());
+                }
+            }
         }
 
         if (exposure != null) buildExposureCompensation(cameraId);
 
         if (iso != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    iso, getSupportedIso(cameraId));
+            if (filterUnsupportedOptions(iso, getSupportedIso(cameraId))) {
+                mFilteredKeys.add(iso.getKey());
+            }
         }
 
         if (videoQuality != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     videoQuality, getSupportedVideoSize(cameraId));
+        }
+
+        if (iso != null) {
+            if (filterUnsupportedOptions(videoQuality, getSupportedVideoSize(cameraId))) {
+                mFilteredKeys.add(redeyeReduction.getKey());
+            }
         }
 
         if (!mIsMonoCameraPresent) {
@@ -558,33 +588,36 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
 
         if (redeyeReduction != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    redeyeReduction, getSupportedRedeyeReduction(cameraId));
+            if (filterUnsupportedOptions(redeyeReduction, getSupportedRedeyeReduction(cameraId))) {
+                mFilteredKeys.add(redeyeReduction.getKey());
+            }
         }
 
         if (videoEncoder != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, videoEncoder,
-                    getSupportedVideoEncoders(videoEncoder.getEntryValues()));
+            if (filterUnsupportedOptions(videoEncoder,
+                    getSupportedVideoEncoders(videoEncoder.getEntryValues()))) {
+                mFilteredKeys.add(videoEncoder.getKey());
+            }
         }
 
         if (audioEncoder != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, audioEncoder,
-                    getSupportedAudioEncoders(audioEncoder.getEntryValues()));
+            if (filterUnsupportedOptions(audioEncoder,
+                    getSupportedAudioEncoders(audioEncoder.getEntryValues()))) {
+                mFilteredKeys.add(audioEncoder.getKey());
+            }
         }
 
         if (noiseReduction != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup, noiseReduction,
-                    getSupportedNoiseReductionModes(cameraId));
-        }
-
-        if (videoFlash != null) {
-            if (!isFlashAvailable(cameraId))
-                removePreference(mPreferenceGroup, KEY_VIDEO_FLASH_MODE);
+            if (filterUnsupportedOptions(noiseReduction,
+                    getSupportedNoiseReductionModes(cameraId))) {
+                mFilteredKeys.add(noiseReduction.getKey());
+            }
         }
 
         if (faceDetection != null) {
-            if (!isFaceDetectionSupported(cameraId))
+            if (!isFaceDetectionSupported(cameraId)) {
                 removePreference(mPreferenceGroup, KEY_FACE_DETECTION);
+            }
         }
 
         if (makeup != null) {
@@ -643,6 +676,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
         pref.setEntries(entries);
         pref.setEntryValues(entryValues);
+    }
+
+    public CharSequence[] getExposureCompensationEntries() {
+          ListPreference pref = mPreferenceGroup.findPreference(KEY_EXPOSURE);
+        if (pref == null) return null;
+        return pref.getEntries();
+    }
+
+    public CharSequence[] getExposureCompensationEntryValues() {
+        ListPreference pref = mPreferenceGroup.findPreference(KEY_EXPOSURE);
+        if (pref == null) return null;
+        return pref.getEntryValues();
     }
 
     private void buildCameraId() {
@@ -747,6 +792,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     }
 
     private boolean removePreference(PreferenceGroup group, String key) {
+        mFilteredKeys.add(key);
         for (int i = 0, n = group.size(); i < n; i++) {
             CameraPreference child = group.get(i);
             if (child instanceof PreferenceGroup) {
@@ -938,8 +984,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         List<String> modes = new ArrayList<>();
         for (int i = 0; i < flashModes.length; i++) {
             if (flashModes[i] == CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE) {
-                modes.add("disable");
-                modes.add("enable");
+                modes.add("off");
+                modes.add("on");
                 break;
             }
         }
@@ -1040,6 +1086,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (str != null) modes.add(str);
         }
         return modes;
+    }
+
+    private boolean filterUnsupportedOptions(ListPreference pref, List<String> supported) {
+        return CameraSettings.filterUnsupportedOptions(mPreferenceGroup, pref, supported);
     }
 
     public interface Listener {
