@@ -1258,13 +1258,14 @@ public class PhotoModule
         public void onPictureTaken(final byte [] jpegData, CameraProxy camera) {
             mUI.stopSelfieFlash();
             mUI.enableShutter(true);
+            if (mUI.isPreviewCoverVisible()) {
+                 // When take picture request is sent before starting preview, onPreviewFrame()
+                 // callback doesn't happen so removing preview cover here, instead.
+                 mUI.hidePreviewCover();
+            }
             if (mInstantCaptureSnapShot == true) {
                 Log.v(TAG, "Instant capture picture taken!");
                 mInstantCaptureSnapShot = false;
-
-                // When take picture request is sent before starting preview, onPreviewFrame()
-                // callback doesn't happen so removing preview cover here, instead.
-                mUI.hidePreviewCover();
             }
             if (mPaused) {
                 return;

@@ -1247,6 +1247,15 @@ public class PhotoUI implements PieListener,
         }
     }
 
+    public boolean isPreviewCoverVisible() {
+        if ((mPreviewCover != null) &&
+            (mPreviewCover.getVisibility() == View.VISIBLE)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void onPause() {
         cancelCountDown();
 
