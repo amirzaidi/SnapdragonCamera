@@ -529,6 +529,13 @@ public class ClearSightImageProcessor {
                             .createReprocessCaptureRequest(reprocImg.mCaptureResult);
                     reprocRequest.addTarget(mImageReader[camId]
                             .getSurface());
+                    reprocRequest.set(CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE,
+                            CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY);
+                    reprocRequest.set(CaptureRequest.EDGE_MODE,
+                            CaptureRequest.EDGE_MODE_HIGH_QUALITY);
+                    reprocRequest.set(CaptureRequest.NOISE_REDUCTION_MODE,
+                            CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY);
+
                     if(reprocRequests.size() == 0) {
                         reprocRequest.setTag(new Object());
                     }
