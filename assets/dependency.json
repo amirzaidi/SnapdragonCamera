@@ -53,5 +53,12 @@
     "off":{},
     "on":
       {"pref_camera2_mpo_key":"on"}
+  },
+  "pref_camera2_video_time_lapse_frame_interval_key":
+  {
+    "default":
+    {"pref_camera2_hfr_key":"off"}
+    ,
+    "0":{}
   }
 }

@@ -35,6 +35,7 @@ import android.graphics.RectF;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
@@ -62,6 +63,7 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -270,6 +272,10 @@ public class CaptureModule implements CameraModule, PhotoController,
     private long mRecordingTotalTime;
     private boolean mRecordingTimeCountsDown = false;
     private ImageReader mVideoSnapshotImageReader;
+    private Range mHighSpeedFPSRange;
+    private boolean mHighSpeedCapture = false;
+    private boolean mHighSpeedCaptureSlowMode = false; //HFR
+    private int mHighSpeedCaptureRate;
 
     private class MediaSaveNotifyThread extends Thread {
         private Uri uri;
@@ -2160,35 +2166,78 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcessor.setOutputSurface(surface);
             mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
             addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
-            surfaces.add(mVideoSnapshotImageReader.getSurface());
+            if (!mHighSpeedCapture) surfaces.add(mVideoSnapshotImageReader.getSurface());
+            else mPreviewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
 
-            mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
-                    .StateCallback() {
+            if (!mHighSpeedCapture) {
+                mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
+                        .StateCallback() {
 
-                @Override
-                public void onConfigured(CameraCaptureSession cameraCaptureSession) {
-                    Log.d(TAG, "StartRecordingVideo session onConfigured");
-                    mCurrentSession = cameraCaptureSession;
-                    try {
-                        setUpVideoCaptureRequestBuilder(mPreviewBuilder);
-                        mCurrentSession.setRepeatingRequest(mPreviewBuilder.build(), null, mCameraHandler);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
+                    @Override
+                    public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                        Log.d(TAG, "StartRecordingVideo session onConfigured");
+                        mCurrentSession = cameraCaptureSession;
+                        try {
+                            setUpVideoCaptureRequestBuilder(mPreviewBuilder);
+                            mCurrentSession.setRepeatingRequest(mPreviewBuilder.build(), null, mCameraHandler);
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        }
+                        mMediaRecorder.start();
+                        mUI.clearFocus();
+                        mUI.resetPauseButton();
+                        mRecordingTotalTime = 0L;
+                        mRecordingStartTime = SystemClock.uptimeMillis();
+                        mUI.showRecordingUI(true);
+                        updateRecordingTime();
                     }
-                    mMediaRecorder.start();
-                    mUI.clearFocus();
-                    mUI.resetPauseButton();
-                    mRecordingTotalTime = 0L;
-                    mRecordingStartTime = SystemClock.uptimeMillis();
-                    mUI.showRecordingUI(true);
-                    updateRecordingTime();
-                }
 
-                @Override
-                public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                    Toast.makeText(mActivity, "Video Failed", Toast.LENGTH_SHORT).show();
-                }
-            }, null);
+                    @Override
+                    public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                        Toast.makeText(mActivity, "Video Failed", Toast.LENGTH_SHORT).show();
+                    }
+                }, null);
+            } else {
+                mCameraDevice[cameraId].createConstrainedHighSpeedCaptureSession(surfaces, new
+                        CameraConstrainedHighSpeedCaptureSession.StateCallback() {
+
+                            @Override
+                            public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                                mCurrentSession = cameraCaptureSession;
+                                CameraConstrainedHighSpeedCaptureSession session =
+                                        (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
+                                try {
+                                    List list = session
+                                            .createHighSpeedRequestList(mPreviewBuilder.build());
+                                    session.setRepeatingBurst(list, null, mCameraHandler);
+                                } catch (CameraAccessException e) {
+                                    Log.e(TAG, "Failed to start high speed video recording "
+                                            + e.getMessage());
+                                    e.printStackTrace();
+                                } catch (IllegalArgumentException e) {
+                                    Log.e(TAG, "Failed to start high speed video recording "
+                                            + e.getMessage());
+                                    e.printStackTrace();
+                                } catch (IllegalStateException e) {
+                                    Log.e(TAG, "Failed to start high speed video recording "
+                                            + e.getMessage());
+                                    e.printStackTrace();
+                                }
+                                mMediaRecorder.start();
+                                mUI.clearFocus();
+                                mUI.resetPauseButton();
+                                mRecordingTotalTime = 0L;
+                                mRecordingStartTime = SystemClock.uptimeMillis();
+                                mUI.showRecordingUI(true);
+                                updateRecordingTime();
+                            }
+
+                            @Override
+                            public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                                Toast.makeText(mActivity, "Failed", Toast.LENGTH_SHORT).show();
+                            }
+                        }, null);
+            }
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -2204,6 +2253,19 @@ public class CaptureModule implements CameraModule, PhotoController,
         mTimeBetweenTimeLapseFrameCaptureMs = time;
         mCaptureTimeLapse = mTimeBetweenTimeLapseFrameCaptureMs != 0;
         mUI.showTimeLapseUI(mCaptureTimeLapse);
+    }
+
+    private void updateHFRSetting() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+        if (value == null) return;
+        if (value.equals("off")) {
+            mHighSpeedCapture = false;
+        } else {
+            mHighSpeedCapture = true;
+            String mode = value.substring(0, 3);
+            mHighSpeedCaptureSlowMode = mode.equals("hsr");
+            mHighSpeedCaptureRate = Integer.parseInt(value.substring(3));
+        }
     }
 
     private void setUpVideoCaptureRequestBuilder(CaptureRequest.Builder builder) {
@@ -2429,8 +2491,11 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "setUpMediaRecorder");
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         int size = CameraSettings.VIDEO_QUALITY_TABLE.get(videoSize);
-        if (mCaptureTimeLapse)
+        if (mCaptureTimeLapse) {
             size = CameraSettings.getTimeLapseQualityFor(size);
+        }
+        updateHFRSetting();
+        boolean hfr = mHighSpeedCapture && !mHighSpeedCaptureSlowMode;
         mProfile = CamcorderProfile.get(cameraId, size);
 
         int videoEncoder = SettingTranslation
@@ -2440,7 +2505,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         int outputFormat = MediaRecorder.OutputFormat.MPEG_4;
 
-        if (!mCaptureTimeLapse) {
+        if (!mCaptureTimeLapse && !hfr) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
@@ -2457,7 +2522,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mMediaRecorder.setVideoSize(mProfile.videoFrameWidth, mProfile.videoFrameHeight);
         }
         mMediaRecorder.setVideoEncoder(videoEncoder);
-        if (!mCaptureTimeLapse) {
+        if (!mCaptureTimeLapse && !hfr) {
             mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
             mMediaRecorder.setAudioChannels(mProfile.audioChannels);
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
@@ -2467,7 +2532,21 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mCaptureTimeLapse) {
             double fps = 1000 / (double) mTimeBetweenTimeLapseFrameCaptureMs;
             mMediaRecorder.setCaptureRate(fps);
+        }  else if (mHighSpeedCapture) {
+            mHighSpeedFPSRange = new Range(mHighSpeedCaptureRate, mHighSpeedCaptureRate);
+            int fps = (int) mHighSpeedFPSRange.getUpper();
+            mMediaRecorder.setCaptureRate(fps);
+            if (mHighSpeedCaptureSlowMode) {
+                mMediaRecorder.setVideoFrameRate(30);
+            } else {
+                mMediaRecorder.setVideoFrameRate(fps);
+            }
+
+            int scaledBitrate = mProfile.videoBitRate * fps / mProfile.videoFrameRate;
+            Log.i(TAG, "Scaled Video bitrate : " + scaledBitrate);
+            mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
+
         Location loc = mLocationManager.getCurrentLocation();
         if (loc != null) {
             mMediaRecorder.setLocation((float) loc.getLatitude(),
