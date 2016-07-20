@@ -39,7 +39,8 @@
     ,
     "100":
       {"pref_camera2_longshot_key":"off",
-      "pref_camera2_mono_only_key":"off"}
+      "pref_camera2_mono_only_key":"off",
+      "pref_camera2_flashmode_key":"1"}
     ,
     "0":
       {"pref_camera2_clearsight_key":"off",
