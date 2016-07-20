@@ -216,6 +216,9 @@ public class VideoModule implements CameraModule,
     private boolean mFaceDetectionEnabled = false;
     private boolean mFaceDetectionStarted = false;
 
+    private static final boolean PERSIST_4K_NO_LIMIT =
+            android.os.SystemProperties.getBoolean("persist.camcorder.4k.nolimit", false);
+
     private final MediaSaveService.OnMediaSavedListener mOnVideoSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
                 @Override
@@ -2223,7 +2226,7 @@ public class VideoModule implements CameraModule,
         Log.v(TAG, "DIS value =" + disMode);
         mIsDISEnabled = disMode.equals("enable");
 
-        if (is4KEnabled()) {
+        if (is4KEnabled() && !PERSIST_4K_NO_LIMIT) {
             if (isSupported(mActivity.getString(R.string.pref_camera_dis_value_disable),
                     CameraSettings.getSupportedDISModes(mParameters))) {
                 mParameters.set(CameraSettings.KEY_QC_DIS_MODE,
@@ -2701,7 +2704,8 @@ public class VideoModule implements CameraModule,
 
     @Override
     public void onSharedPreferenceChanged(ListPreference pref) {
-        if (pref != null && CameraSettings.KEY_VIDEO_QUALITY.equals(pref.getKey())) {
+        if (pref != null && CameraSettings.KEY_VIDEO_QUALITY.equals(pref.getKey())
+            && !PERSIST_4K_NO_LIMIT) {
             String videoQuality = pref.getValue();
             if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(videoQuality)) {
                 int quality = CameraSettings.VIDEO_QUALITY_TABLE.get(videoQuality);
