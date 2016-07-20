@@ -29,9 +29,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.android.camera.imageprocessor;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
 import android.media.Image;
 import android.media.ImageReader;
@@ -50,9 +53,11 @@ import com.android.camera.SettingsManager;
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.imageprocessor.filter.SharpshooterFilter;
+import com.android.camera.imageprocessor.filter.UbifocusFilter;
 import com.android.camera.ui.RotateTextToast;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -70,7 +75,8 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     public static final int FILTER_NONE = 0;
     public static final int FILTER_OPTIZOOM = 1;
     public static final int FILTER_SHARPSHOOTER = 2;
-    public static final int FILTER_MAX = 3;
+    public static final int FILTER_UBIFOCUS = 3;
+    public static final int FILTER_MAX = 4;
 
     private int mCurrentNumImage = 0;
     private ImageFilter mFilter;
@@ -86,6 +92,7 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     private Image[] mImages;
     private PhotoModule.NamedImages mNamedImages;
     private WatchdogThread mWatchdog;
+    private int mOrientation = 0;
 
     //This is for the debug feature.
     private static boolean DEBUG_FILTER = false;
@@ -139,11 +146,17 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
         }
     }
 
+    public boolean isManualMode() {
+        return mFilter.isManualMode();
+    }
+
+    public void manualCapture(CaptureRequest.Builder builder, CameraCaptureSession captureSession,
+                              CameraCaptureSession.CaptureCallback callback, Handler handler) throws CameraAccessException {
+        mFilter.manualCapture(builder, captureSession, callback, handler);
+    }
+
     public boolean isFilterOn() {
-        if(mFilter != null) {
-            return true;
-        }
-        if(mController.getFrameFilters().size() != 0) {
+        if (mFilter != null) {
             return true;
         }
         return false;
@@ -269,6 +282,9 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                 case FILTER_SHARPSHOOTER:
                     mFilter = new SharpshooterFilter(mController);
                     break;
+                case FILTER_UBIFOCUS:
+                    mFilter = new UbifocusFilter(mController, mActivity);
+                    break;
             }
         }
 
@@ -333,6 +349,7 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
             if(mWatchdog != null) {
                 mWatchdog.startMonitor();
             }
+            mOrientation = CameraUtil.getJpegRotation(mController.getMainCameraId(), mController.getDisplayOrientation());
         }
         if(mFilter != null && mCurrentNumImage >= mFilter.getNumRequiredImage()) {
             return;
@@ -374,7 +391,7 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
             });
     }
 
-    private byte[] addExifTags(byte[] jpeg, int orientationInDegree) {
+    public static byte[] addExifTags(byte[] jpeg, int orientationInDegree) {
         ExifInterface exif = new ExifInterface();
         exif.addOrientationTag(orientationInDegree);
         exif.addDateTimeStampTag(ExifInterface.TAG_DATE_TIME, System.currentTimeMillis(),
@@ -434,17 +451,16 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                             ) {
                         Log.e(TAG, "Processed outRoi is not within picture range");
                     } else {
-                        int orientation = CameraUtil.getJpegRotation(mController.getMainCameraId(), mController.getDisplayOrientation());
                         if(mFilter != null && DEBUG_FILTER) {
-                            bytes = nv21ToJpeg(mDebugResultImage, orientation);
+                            bytes = nv21ToJpeg(mDebugResultImage, mOrientation);
                             mActivity.getMediaSaveService().addImage(
                                     bytes, title + "_beforeApplyingFilter", date, null, mDebugResultImage.outRoi.width(), mDebugResultImage.outRoi.height(),
-                                    orientation, null, mediaSavedListener, contentResolver, "jpeg");
+                                    mOrientation, null, mediaSavedListener, contentResolver, "jpeg");
                         }
-                        bytes = nv21ToJpeg(resultImage, orientation);
+                        bytes = nv21ToJpeg(resultImage, mOrientation);
                         mActivity.getMediaSaveService().addImage(
                                 bytes, title, date, null, resultImage.outRoi.width(), resultImage.outRoi.height(),
-                                orientation, null, mediaSavedListener, contentResolver, "jpeg");
+                                mOrientation, null, mediaSavedListener, contentResolver, "jpeg");
                         mController.updateThumbnailJpegData(bytes);
                     }
                 }

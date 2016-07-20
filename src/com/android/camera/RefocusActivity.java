@@ -30,6 +30,7 @@ package com.android.camera;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import android.animation.Animator;
@@ -43,6 +44,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.net.Uri;
@@ -50,11 +52,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.FrameLayout;
+
+import com.android.camera.exif.ExifInterface;
 
 import org.codeaurora.snapcam.R;
 
@@ -77,19 +82,27 @@ public class RefocusActivity extends Activity {
     private int mCurrentImage = -1;
     private int mRequestedImage = -1;
     private LoadImageTask mLoadImageTask;
+    private boolean mMapRotated = false;
+    private int mOrientation = 0;
+    public static final int MAP_ROTATED = 1;
+    private String mFilesPath;
 
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        mFilesPath = getFilesDir()+"";
+        if(getIntent().getFlags() == MAP_ROTATED) {
+            mMapRotated = true;
+            mFilesPath = getFilesDir()+"/Ubifocus";
+        }
 
         new Thread(new Runnable() {
             public void run() {
-                mDepthMap = new DepthMap(getFilesDir() + "/DepthMapImage.y");
+                mDepthMap = new DepthMap(mFilesPath + "/DepthMapImage.y");
             }
         }).start();
 
         mUri = getIntent().getData();
-        setResult(RESULT_CANCELED, new Intent());
 
         setContentView(R.layout.refocus_editor);
         mIndicator = (Indicator) findViewById(R.id.refocus_indicator);
@@ -129,6 +142,7 @@ public class RefocusActivity extends Activity {
         findViewById(R.id.refocus_cancel).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
+                setResult(RESULT_CANCELED, new Intent());
                 finish();
             }
         });
@@ -137,11 +151,12 @@ public class RefocusActivity extends Activity {
             @Override
             public void onClick(final View v) {
                 if (mRequestedImage != NAMES.length - 1) {
-                    new SaveImageTask().execute(getFilesDir() + "/" + NAMES[mRequestedImage]
+                    new SaveImageTask().execute(mFilesPath + "/" + NAMES[mRequestedImage]
                             + ".jpg");
                 } else {
                     finish();
                 }
+                setResult(RESULT_OK, new Intent());
             }
         });
 
@@ -163,7 +178,7 @@ public class RefocusActivity extends Activity {
             if (depth != mCurrentImage) {
                 mCurrentImage = depth;
                 mLoadImageTask = new LoadImageTask();
-                mLoadImageTask.execute(getFilesDir() + "/" + NAMES[depth] + ".jpg");
+                mLoadImageTask.execute(mFilesPath + "/" + NAMES[depth] + ".jpg");
             }
         }
     }
@@ -202,11 +217,16 @@ public class RefocusActivity extends Activity {
             final BitmapFactory.Options o = new BitmapFactory.Options();
             o.inJustDecodeBounds = true;
             BitmapFactory.decodeFile(path[0], o);
-
+            ExifInterface exif = new ExifInterface();
+            mOrientation = 0;
+            try {
+                exif.readExif(path[0]);
+                mOrientation = Exif.getOrientation(exif);
+            } catch (IOException e) {
+            }
             int h = o.outHeight;
             int w = o.outWidth;
             int sample = 1;
-
             if (h > mHeight || w > mWidth) {
                 while (h / sample / 2 > mHeight && w / sample / 2 > mWidth) {
                     sample *= 2;
@@ -215,7 +235,14 @@ public class RefocusActivity extends Activity {
 
             o.inJustDecodeBounds = false;
             o.inSampleSize = sample;
-            return BitmapFactory.decodeFile(path[0], o);
+            Bitmap bitmap = BitmapFactory.decodeFile(path[0], o);
+            if (mOrientation != 0) {
+                Matrix matrix = new Matrix();
+                matrix.setRotate(mOrientation);
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0,
+                        bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+            }
+            return bitmap;
         }
 
         protected void onPostExecute(Bitmap result) {
@@ -258,6 +285,21 @@ public class RefocusActivity extends Activity {
 
             int newX = (int) (x * mWidth);
             int newY = (int) (y * mHeight);
+            if(mMapRotated) {
+                if(mOrientation == 0) {
+                    newX = (int) (x * mWidth);
+                    newY = (int) (y * mHeight);
+                } if(mOrientation == 90) {
+                    newX = (int) ((y) * mWidth);
+                    newY = (int) ((1 - x) * mHeight);
+                } else if (mOrientation == 180) {
+                    newX = (int) ((1-x) * mWidth);
+                    newY = (int) ((1-y) * mHeight);
+                } else if (mOrientation == 270) {
+                    newX = (int) ((1-y) * mWidth);
+                    newY = (int) ((x) * mHeight);
+                }
+            }
 
             int[] hist = new int[256];
             for (int i = 0; i < 256; i++) {

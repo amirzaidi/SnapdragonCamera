@@ -29,7 +29,10 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.android.camera.imageprocessor.filter;
 
 import android.graphics.Rect;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
+import android.os.Handler;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -41,6 +44,7 @@ public interface ImageFilter {
 
     String getStringName();
 
+    /* This is used for auto mode burst picture */
     int getNumRequiredImage();
 
     void init(int width, int height, int strideY, int strideVU);
@@ -72,5 +76,13 @@ public interface ImageFilter {
         }
     }
 
+    /* Whether it is post proc filter or frame proc filter */
     boolean isFrameListener();
+
+    /* Whether it will use burst capture or manual capture */
+    boolean isManualMode();
+
+    /* if it's manual mode, this function has to be implemented */
+    void manualCapture(CaptureRequest.Builder builder, CameraCaptureSession captureSession,
+                       CameraCaptureSession.CaptureCallback callback, Handler handler) throws CameraAccessException;
 }
