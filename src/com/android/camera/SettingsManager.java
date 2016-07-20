@@ -79,6 +79,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_FLASH_MODE = "pref_camera2_flashmode_key";
     public static final String KEY_WHITE_BALANCE = "pref_camera2_whitebalance_key";
     public static final String KEY_MAKEUP = "pref_camera2_makeup_key";
+    public static final String KEY_TRACKINGFOCUS = "pref_camera2_trackingfocus_key";
     public static final String KEY_CAMERA2 = "pref_camera2_camera2_key";
     public static final String KEY_MONO_ONLY = "pref_camera2_mono_only_key";
     public static final String KEY_MONO_PREVIEW = "pref_camera2_mono_preview_key";
@@ -219,6 +220,17 @@ public class SettingsManager implements ListMenu.SettingsListener {
         filterPreferences(cameraId);
         initDepedencyTable();
         initializeValueMap();
+        checkInitialDependency(cameraId);
+    }
+
+    private void checkInitialDependency(int cameraId) {
+        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        if (videoQuality != null) {
+            String scene = getValue(SettingsManager.KEY_MAKEUP);
+            if(scene != null && scene.equalsIgnoreCase("on")) {
+                updateVideoQualityMenu(cameraId, 640, 480);
+            }
+        }
     }
 
     private void initDepedencyTable() {
@@ -447,6 +459,20 @@ public class SettingsManager implements ListMenu.SettingsListener {
         else return CaptureModule.MONO_ID;
     }
 
+    public void updateVideoQualityMenu(int cameraId, int maxWidth, int maxHeight) {
+        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        if (videoQuality != null) {
+            List<String> sizes;
+            if(maxWidth < 0 && maxHeight < 0) {
+                sizes = getSupportedVideoSize(cameraId);
+            } else {
+                sizes = getSupportedVideoSize(cameraId, maxWidth, maxHeight);
+            }
+            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
+                    videoQuality, sizes);
+        }
+    }
+
     private void filterPreferences(int cameraId) {
         // filter unsupported preferences
         ListPreference whiteBalance = mPreferenceGroup.findPreference(KEY_WHITE_BALANCE);
@@ -502,7 +528,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
                     iso, getSupportedIso(cameraId));
         }
 
-        if (iso != null) {
+        if (videoQuality != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     videoQuality, getSupportedVideoSize(cameraId));
         }
@@ -750,6 +776,19 @@ public class SettingsManager implements ListMenu.SettingsListener {
         List<String> res = new ArrayList<>();
         for (int i = 0; i < sizes.length; i++) {
             res.add(sizes[i].toString());
+        }
+        return res;
+    }
+
+    private List<String> getSupportedVideoSize(int cameraId, int maxWidth, int maxHeight) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size[] sizes = map.getOutputSizes(MediaRecorder.class);
+        List<String> res = new ArrayList<>();
+        for (int i = 0; i < sizes.length; i++) {
+            if(sizes[i].getWidth() <= maxWidth && sizes[i].getHeight() <= maxHeight) {
+                res.add(sizes[i].toString());
+            }
         }
         return res;
     }

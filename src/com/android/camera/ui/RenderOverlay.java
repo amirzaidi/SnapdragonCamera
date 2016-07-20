@@ -92,6 +92,14 @@ public class RenderOverlay extends FrameLayout {
         if (mGestures != null) {
             if (!mGestures.isEnabled()) return false;
             mGestures.dispatchTouch(m);
+            return true;
+        }
+        if (mTouchClients != null) {
+            boolean res = false;
+            for (Renderer client : mTouchClients) {
+                res |= client.onTouchEvent(m);
+            }
+            return res;
         }
         return true;
     }

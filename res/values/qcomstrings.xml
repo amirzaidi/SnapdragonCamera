@@ -1003,5 +1003,6 @@
 
     <string name="pref_camera2_videosnap_entry_enable" translatable="true">Enable</string>
     <string name="pref_camera2_videosnap_entry_disable" translatable="true">Disable</string>
+    <string name="pref_camera2_trackingfocus_title" translatable="true">Tracking Focus</string>
 </resources>
 
