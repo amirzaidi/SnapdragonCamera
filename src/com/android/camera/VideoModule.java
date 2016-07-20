@@ -79,6 +79,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.HashMap;
+import java.lang.reflect.Method;
 
 public class VideoModule implements CameraModule,
     VideoController,
@@ -102,6 +103,9 @@ public class VideoModule implements CameraModule,
     private static final int SDCARD_SIZE_LIMIT = 4000 * 1024 * 1024;
 
     private static final long SHUTTER_BUTTON_TIMEOUT = 0L; // 0ms
+
+    public static final boolean HAS_RESUME_SUPPORTED =
+            Build.VERSION.SDK_INT > Build.VERSION_CODES.M;
 
     /**
      * An unpublished intent flag requesting to start recording straight away
@@ -1930,7 +1934,16 @@ public class VideoModule implements CameraModule,
         mMediaRecorderPausing = false;
         mRecordingStartTime = SystemClock.uptimeMillis();
         updateRecordingTime();
-        mMediaRecorder.start();
+        if (!HAS_RESUME_SUPPORTED){
+            mMediaRecorder.start();
+        } else {
+            try {
+                Method resumeRec = Class.forName("android.media.MediaRecorder").getMethod("resume");
+                resumeRec.invoke(mMediaRecorder);
+            } catch (Exception e) {
+                Log.v(TAG, "resume method not implemented");
+            }
+        }
     }
 
     private boolean stopVideoRecording() {
