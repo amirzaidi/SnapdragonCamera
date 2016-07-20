@@ -896,6 +896,24 @@ public class WideAnglePanoramaModule
     }
 
     @Override
+    public void waitingLocationPermissionResult(boolean result) {
+        mLocationManager.waitingLocationPermissionResult(result);
+    }
+
+    @Override
+    public void enableRecordingLocation(boolean enable) {
+        String value = (enable ? RecordLocationPreference.VALUE_ON
+                        : RecordLocationPreference.VALUE_OFF);
+        if (mPreferences != null) {
+            mPreferences.edit()
+                .putString(CameraSettings.KEY_RECORD_LOCATION, value)
+                .apply();
+        }
+
+        mLocationManager.recordLocation(enable);
+    }
+
+    @Override
     public void onPauseBeforeSuper() {
         mPaused = true;
         if (mLocationManager != null) mLocationManager.recordLocation(false);

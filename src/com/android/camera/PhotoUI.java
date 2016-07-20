@@ -84,7 +84,6 @@ public class PhotoUI implements PieListener,
         PreviewGestures.SingleTapListener,
         FocusUI,
         SurfaceHolder.Callback,
-        LocationManager.Listener,
         CameraRootView.MyDisplayListener,
         CameraManager.CameraFaceDetectionCallback {
 
@@ -686,41 +685,6 @@ public class PhotoUI implements PieListener,
         muteButton.setVisibility(View.GONE);
     }
 
-    public void showLocationDialog() {
-        mLocationDialog = new AlertDialog.Builder(mActivity)
-                .setTitle(R.string.remember_location_title)
-                .setMessage(R.string.remember_location_prompt)
-                .setPositiveButton(R.string.remember_location_yes,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int arg1) {
-                                mController.enableRecordingLocation(true);
-                                mLocationDialog = null;
-                            }
-                        })
-                .setNegativeButton(R.string.remember_location_no,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int arg1) {
-                                dialog.cancel();
-                            }
-                        })
-                .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialog) {
-                        mController.enableRecordingLocation(false);
-                        mLocationDialog = null;
-                    }
-                })
-                .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        mActivity.setSystemBarsVisibility(false);
-                    }
-                })
-                .show();
-    }
-
     public void initializeZoom(Camera.Parameters params) {
         if ((params == null) || !params.isZoomSupported()
                 || (mZoomRenderer == null)) return;
@@ -735,12 +699,6 @@ public class PhotoUI implements PieListener,
             mZoomRenderer.setOnZoomChangeListener(new ZoomChangeListener());
         }
     }
-
-    @Override
-    public void showGpsOnScreenIndicator(boolean hasSignal) { }
-
-    @Override
-    public void hideGpsOnScreenIndicator() { }
 
     public void overrideSettings(final String ... keyvalues) {
         if (mMenu == null)
