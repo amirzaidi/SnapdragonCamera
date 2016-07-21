@@ -119,21 +119,24 @@ public class PermissionsActivity extends Activity {
                                            String permissions[], int[] grantResults) {
 
         if (mShouldRequestCameraPermission) {
-            if (grantResults[mIndexPermissionRequestCamera] == PackageManager.PERMISSION_GRANTED) {
+            if ((grantResults.length >= mIndexPermissionRequestCamera + 1) &&
+                (grantResults[mIndexPermissionRequestCamera] == PackageManager.PERMISSION_GRANTED)) {
                 mFlagHasCameraPermission = true;
             } else {
                 mCriticalPermissionDenied = true;
             }
         }
         if (mShouldRequestMicrophonePermission) {
-            if (grantResults[mIndexPermissionRequestMicrophone] == PackageManager.PERMISSION_GRANTED) {
+            if ((grantResults.length >= mIndexPermissionRequestMicrophone + 1) &&
+                (grantResults[mIndexPermissionRequestMicrophone] == PackageManager.PERMISSION_GRANTED)) {
                 mFlagHasMicrophonePermission = true;
             } else {
                 mCriticalPermissionDenied = true;
             }
         }
         if (mShouldRequestStoragePermission) {
-            if (grantResults[mIndexPermissionRequestStorage] == PackageManager.PERMISSION_GRANTED) {
+            if ((grantResults.length >= mIndexPermissionRequestStorage + 1) &&
+                (grantResults[mIndexPermissionRequestStorage] == PackageManager.PERMISSION_GRANTED)) {
                 mFlagHasStoragePermission = true;
             } else {
                 mCriticalPermissionDenied = true;
@@ -141,7 +144,8 @@ public class PermissionsActivity extends Activity {
         }
 
         if (mShouldRequestLocationPermission) {
-            if (grantResults[mIndexPermissionRequestLocation] == PackageManager.PERMISSION_GRANTED) {
+            if ((grantResults.length >= mIndexPermissionRequestLocation + 1) &&
+                (grantResults[mIndexPermissionRequestLocation] == PackageManager.PERMISSION_GRANTED)) {
                 // Do nothing
             } else {
                 // Do nothing
