@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.graphics.Rect;
+import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.Image.Plane;
@@ -256,13 +257,20 @@ public class ClearSightNativeEngine {
         Log.d(TAG, "processImage - dst size - y: "
                 + dstY.capacity() + " vu: " + dstVU.capacity());
 
+        int iso = mRefMonoResult.get(CaptureResult.SENSOR_SENSITIVITY);
+        long exposure = mRefMonoResult.get(CaptureResult.SENSOR_EXPOSURE_TIME);
+        // capture result stores exposure time in NS and we need MS.
+        exposure /= 100000;
+
+        Log.d(TAG, "processImage - iso: " + iso + " exposure ms: " + exposure);
         boolean result = nativeClearSightProcess(numImages, srcColorY, srcColorVU,
                 metadataColor, mRefColorImage.getWidth(),
                 mRefColorImage.getHeight(),
                 colorPlanes[Y_PLANE].getRowStride(),
                 colorPlanes[VU_PLANE].getRowStride(), srcMonoY, metadataMono,
                 mRefMonoImage.getWidth(), mRefMonoImage.getHeight(),
-                monoPlanes[Y_PLANE].getRowStride(), mOtpCalibData, dstY, dstVU,
+                monoPlanes[Y_PLANE].getRowStride(), mOtpCalibData,
+                (int)exposure, iso, dstY, dstVU,
                 colorPlanes[Y_PLANE].getRowStride(),
                 colorPlanes[VU_PLANE].getRowStride(), roiRect);
 
@@ -287,8 +295,8 @@ public class ClearSightNativeEngine {
             int[][] metadataColor, int srcColorWidth, int srcColorHeight,
             int srcColorStrideY, int srcColorStrideVU, ByteBuffer[] srcMonoY,
             int[][] metadataMono, int srcMonoWidth, int srcMonoHeight,
-            int srcMonoStrideY, byte[] otp, ByteBuffer dstY, ByteBuffer dstVU,
-            int dstStrideY, int dstStrideVU, int[] roiRect);
+            int srcMonoStrideY, byte[] otp, int exposureMs, int iso,
+            ByteBuffer dstY, ByteBuffer dstVU, int dstStrideY, int dstStrideVU, int[] roiRect);
 
     private class SourceImage {
         ByteBuffer mY;
