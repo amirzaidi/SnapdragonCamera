@@ -44,6 +44,7 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -67,6 +68,7 @@ import com.android.camera.ui.RenderOverlay;
 import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
+import com.android.camera.ui.SelfieFlashView;
 import com.android.camera.ui.TrackingFocusRenderer;
 import com.android.camera.ui.ZoomRenderer;
 import com.android.camera.util.CameraUtil;
@@ -100,6 +102,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private static final int ANIMATION_DURATION = 300;
     private static final int CLICK_THRESHOLD = 200;
     String[] mSettingKeys = new String[]{
+            SettingsManager.KEY_SELFIE_FLASH,
             SettingsManager.KEY_FLASH_MODE,
             SettingsManager.KEY_RECORD_LOCATION,
             SettingsManager.KEY_PICTURE_SIZE,
@@ -156,6 +159,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private ImageView mThumbnail;
     private Camera2FaceView mFaceView;
     private Point mDisplaySize = new Point();
+    private SelfieFlashView mSelfieView;
+    private float mScreenBrightness = 0.0f;
 
     private SurfaceHolder.Callback callbackMono = new SurfaceHolder.Callback() {
         // SurfaceHolder callbacks
@@ -1672,6 +1677,32 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                     break;
             }
         }
+    }
+
+    public void startSelfieFlash() {
+        if (mSelfieView == null)
+            mSelfieView = (SelfieFlashView) (mRootView.findViewById(R.id.selfie_flash));
+        mSelfieView.bringToFront();
+        mSelfieView.open();
+        mScreenBrightness = setScreenBrightness(1F);
+    }
+
+    public void stopSelfieFlash() {
+        if (mSelfieView == null)
+            mSelfieView = (SelfieFlashView) (mRootView.findViewById(R.id.selfie_flash));
+        mSelfieView.close();
+        if (mScreenBrightness != 0.0f)
+            setScreenBrightness(mScreenBrightness);
+    }
+
+    private float setScreenBrightness(float brightness) {
+        float originalBrightness;
+        Window window = mActivity.getWindow();
+        WindowManager.LayoutParams layout = window.getAttributes();
+        originalBrightness = layout.screenBrightness;
+        layout.screenBrightness = brightness;
+        window.setAttributes(layout);
+        return originalBrightness;
     }
 
     public void hideSurfaceView() {

@@ -116,6 +116,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_FACE_DETECTION = "pref_camera2_facedetection_key";
     public static final String KEY_AUTO_VIDEOSNAP_SIZE = "pref_camera2_videosnap_key";
     public static final String KEY_VIDEO_HIGH_FRAME_RATE = "pref_camera2_hfr_key";
+    public static final String KEY_SELFIE_FLASH = "pref_selfie_flash_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -599,6 +600,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
         if (hfr != null) {
             buildHFR();
+        }
+
+        if (!mIsFrontCameraPresent || !isFacingFront(mCameraId)) {
+            removePreference(mPreferenceGroup, KEY_SELFIE_FLASH);
         }
     }
 

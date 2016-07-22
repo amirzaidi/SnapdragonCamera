@@ -65,12 +65,10 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
-import android.view.Display;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
@@ -276,6 +274,24 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mHighSpeedCapture = false;
     private boolean mHighSpeedCaptureSlowMode = false; //HFR
     private int mHighSpeedCaptureRate;
+
+    private static final int SELFIE_FLASH_DURATION = 680;
+
+    private class SelfieThread extends Thread {
+        public void run() {
+            try {
+                Thread.sleep(SELFIE_FLASH_DURATION);
+                mActivity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        takePicture();
+                    }
+                });
+            } catch(InterruptedException e) {
+            }
+            selfieThread = null;
+        }
+    }
+    private SelfieThread selfieThread;
 
     private class MediaSaveNotifyThread extends Thread {
         private Uri uri;
@@ -1376,6 +1392,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    mUI.stopSelfieFlash();
                     mUI.enableShutter(true);
                 }
             });
@@ -1605,6 +1622,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mIsRecordingVideo) {
             stopRecordingVideo(getMainCameraId());
         }
+        if (selfieThread != null) {
+            selfieThread.interrupt();
+        }
+        mUI.stopSelfieFlash();
     }
 
     @Override
@@ -1946,10 +1967,27 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void checkSelfieFlashAndTakePicture() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_SELFIE_FLASH);
+        if (value == null) {
+            takePicture();
+            return;
+        }
+        if (value.equals("on") && getMainCameraId() == FRONT_ID) {
+            mUI.startSelfieFlash();
+            if (selfieThread == null) {
+                selfieThread = new SelfieThread();
+                selfieThread.start();
+            }
+        } else {
+            takePicture();
+        }
+    }
+
     @Override
     public void onCountDownFinished() {
         mUI.showUIAfterCountDown();
-        takePicture();
+        checkSelfieFlashAndTakePicture();
     }
 
     @Override
@@ -2602,7 +2640,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     warningToast("It's still busy processing previous scene mode request.");
                     return;
                 }
-                takePicture();
+                checkSelfieFlashAndTakePicture();
             }
         }
     }

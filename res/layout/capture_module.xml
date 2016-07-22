@@ -27,7 +27,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center">
-
+    <include layout="@layout/selfie_flash_view" />
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
