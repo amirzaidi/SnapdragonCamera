@@ -100,6 +100,17 @@
         <item>@string/pref_camera2_clearsight_value_on</item>
     </string-array>
 
+    <string-array name="pref_camera2_mpo_entries" translatable="true">
+        <item>@string/pref_camera2_mpo_entry_off</item>
+        <item>@string/pref_camera2_mpo_entry_on</item>
+    </string-array>
+
+    <string-array name="pref_camera2_mpo_entryvalues" translatable="false">
+        <item>@string/pref_camera2_mpo_value_off</item>
+        <item>@string/pref_camera2_mpo_value_on</item>
+    </string-array>
+
+
     <!-- Refer to CONTROL_SCENE_MODE of Camera2 API for values
         -1 refers to ones not supported in Camera2 API
         0 is special case added for auto (meaning off)
