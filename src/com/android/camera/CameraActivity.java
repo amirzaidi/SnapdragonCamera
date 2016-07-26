@@ -158,6 +158,9 @@ public class CameraActivity extends Activity
     private static final int HIDE_ACTION_BAR = 1;
     private static final long SHOW_ACTION_BAR_TIMEOUT_MS = 3000;
 
+    /** Permission request code */
+    private static final int PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 1;
+
     /** Whether onResume should reset the view to the preview. */
     private boolean mResetToPreviewOnResume = true;
 
@@ -1881,6 +1884,37 @@ public class CameraActivity extends Activity
 
     public boolean isSecureCamera() {
         return mSecureCamera;
+    }
+
+    public void requestLocationPermission() {
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            Log.v(TAG, "Request Location permission");
+            mCurrentModule.waitingLocationPermissionResult(true);
+            requestPermissions(
+                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+            String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                 mCurrentModule.waitingLocationPermissionResult(false);
+                if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.v(TAG, "Location permission is granted");
+                    mCurrentModule.enableRecordingLocation(true);
+                } else {
+                    Log.w(TAG, "Location permission is denied");
+                    mCurrentModule.enableRecordingLocation(false);
+                }
+                break;
+            }
+        }
     }
 
     @Override

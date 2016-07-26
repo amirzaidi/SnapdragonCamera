@@ -80,7 +80,6 @@ import java.util.Set;
 
 public class CaptureUI implements FocusOverlayManager.FocusUI,
         PreviewGestures.SingleTapListener,
-        LocationManager.Listener,
         CameraManager.CameraFaceDetectionCallback,
         SettingsManager.Listener,
         ListMenu.Listener,
@@ -1571,16 +1570,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public int getOrientation() {
         return mOrientation;
-    }
-
-    @Override
-    public void showGpsOnScreenIndicator(boolean hasSignal) {
-
-    }
-
-    @Override
-    public void hideGpsOnScreenIndicator() {
-
     }
 
     @Override

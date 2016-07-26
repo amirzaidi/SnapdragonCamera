@@ -901,6 +901,11 @@ public class VideoMenu extends MenuController
             setPreference(CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL, defaultValue);
         }
 
+        if (notSame(pref, CameraSettings.KEY_RECORD_LOCATION, "off")) {
+            mActivity.requestLocationPermission();
+        }
+
+
         super.onSettingChanged(pref);
     }
 

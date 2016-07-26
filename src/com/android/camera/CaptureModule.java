@@ -104,7 +104,8 @@ import java.util.concurrent.TimeUnit;
 
 public class CaptureModule implements CameraModule, PhotoController,
         MediaSaveService.Listener, ClearSightImageProcessor.Callback,
-        SettingsManager.Listener, CountDownView.OnCountDownFinishedListener {
+        SettingsManager.Listener, LocationManager.Listener,
+        CountDownView.OnCountDownFinishedListener {
     public static final int DUAL_MODE = 0;
     public static final int BAYER_MODE = 1;
     public static final int MONO_MODE = 2;
@@ -855,7 +856,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.initializeControlByIntent();
 
         mFocusStateListener = new FocusStateListener(mUI);
-        mLocationManager = new LocationManager(mActivity, mUI);
+        mLocationManager = new LocationManager(mActivity, this);
         Storage.setSaveSDCard(mSettingsManager.getValue(SettingsManager
                 .KEY_CAMERA_SAVEPATH).equals("1"));
     }
@@ -1884,8 +1885,16 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
-    public void enableRecordingLocation(boolean enable) {
+    public void waitingLocationPermissionResult(boolean result) {
+        mLocationManager.waitingLocationPermissionResult(result);
+    }
 
+    @Override
+    public void enableRecordingLocation(boolean enable) {
+        String value = (enable ? RecordLocationPreference.VALUE_ON
+                               : RecordLocationPreference.VALUE_OFF);
+        mSettingsManager.setValue(SettingsManager.KEY_RECORD_LOCATION, value);
+        mLocationManager.recordLocation(enable);
     }
 
     @Override
@@ -3134,5 +3143,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 }
             }
         }
+    }
+
+    @Override
+    public void onErrorListener(int error) {
+        enableRecordingLocation(false);
     }
 }
