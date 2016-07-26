@@ -90,6 +90,9 @@ public class VideoMenu extends MenuController
     private static final int CLICK_THRESHOLD = 200;
     private int previewMenuSize;
 
+    private static final boolean PERSIST_4K_NO_LIMIT =
+            android.os.SystemProperties.getBoolean("persist.camcorder.4k.nolimit", false);
+
     public VideoMenu(CameraActivity activity, VideoUI ui) {
         super(activity);
         mUI = ui;
@@ -683,11 +686,12 @@ public class VideoMenu extends MenuController
         }
     }
     private void overrideMenuFor4K() {
-        if(mUI.is4KEnabled()) {
+        if(mUI.is4KEnabled() && !PERSIST_4K_NO_LIMIT) {
+
             mListMenu.setPreferenceEnabled(
-                    CameraSettings.KEY_DIS,false);
+                     CameraSettings.KEY_DIS,false);
             mListMenu.overrideSettings(
-                    CameraSettings.KEY_DIS, "disable");
+                     CameraSettings.KEY_DIS, "disable");
 
             mListMenu.setPreferenceEnabled(
                     CameraSettings.KEY_SEE_MORE, false);
