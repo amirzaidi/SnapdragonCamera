@@ -120,7 +120,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_VIDEO_QUALITY,
             SettingsManager.KEY_TRACKINGFOCUS,
             SettingsManager.KEY_MAKEUP,
-            SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL
+            SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
+            SettingsManager.KEY_SHUTTER_SOUND
     };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_REDEYE_REDUCTION,

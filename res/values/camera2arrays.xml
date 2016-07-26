@@ -829,4 +829,14 @@ for time lapse recording -->
         <item>@string/pref_camera2_videosnap_value_enable</item>
         <item>@string/pref_camera2_videosnap_value_disable</item>
     </string-array>
+
+    <string-array name="pref_camera2_shutter_sound_entries" translatable="true">
+        <item>@string/pref_camera2_shutter_sound_entry_on</item>
+        <item>@string/pref_camera2_shutter_sound_entry_off</item>
+    </string-array>
+
+    <string-array name="pref_camera2_shutter_sound_entryvalues" translatable="false">
+        <item>@string/pref_camera2_shutter_sound_value_on</item>
+        <item>@string/pref_camera2_shutter_sound_value_off</item>
+    </string-array>
 </resources>

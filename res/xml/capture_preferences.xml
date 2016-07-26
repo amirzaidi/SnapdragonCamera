@@ -303,4 +303,11 @@
         camera:key="pref_selfie_flash_key"
         camera:singleIcon="@drawable/ic_settings_flash"
         camera:title="@string/pref_selfie_flash_title" />
+
+    <ListPreference
+        camera:defaultValue="@string/pref_camera2_shutter_sound_default"
+        camera:entries="@array/pref_camera2_shutter_sound_entries"
+        camera:entryValues="@array/pref_camera2_shutter_sound_entryvalues"
+        camera:key="pref_camera2_shutter_sound_key"
+        camera:title="@string/pref_camera2_shutter_sound_title" />
 </PreferenceGroup>

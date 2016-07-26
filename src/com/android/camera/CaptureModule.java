@@ -52,6 +52,7 @@ import android.media.CamcorderProfile;
 import android.media.CameraProfile;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaActionSound;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -277,6 +278,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private int mHighSpeedCaptureRate;
 
     private static final int SELFIE_FLASH_DURATION = 680;
+
+    private MediaActionSound mSound;
 
     private class SelfieThread extends Thread {
         public void run() {
@@ -1061,6 +1064,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 warningToast("Camera is not ready yet to take a picture.");
                 return;
             }
+            checkAndPlayShutterSound(id);
 
             final boolean csEnabled = isClearSightOn();
             CaptureRequest.Builder captureBuilder;
@@ -1187,6 +1191,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 warningToast("Camera is not ready yet to take a video snapshot.");
                 return;
             }
+            checkAndPlayShutterSound(id);
             CaptureRequest.Builder captureBuilder =
                     mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_VIDEO_SNAPSHOT);
 
@@ -1623,6 +1628,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mIsRecordingVideo) {
             stopRecordingVideo(getMainCameraId());
         }
+        if (mSound != null) {
+            mSound.release();
+            mSound = null;
+        }
         if (selfieThread != null) {
             selfieThread.interrupt();
         }
@@ -1754,6 +1763,11 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.showSurfaceView();
         mUI.setSwitcherIndex();
         mCameraIdList = new ArrayList<>();
+
+        if (mSound == null) {
+            mSound = new MediaActionSound();
+        }
+
         if(mPostProcessor != null) {
             String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
             if (scene != null) {
@@ -3008,6 +3022,15 @@ public class CaptureModule implements CameraModule, PhotoController,
                 builder.addTarget(surface);
             }
             return;
+        }
+    }
+
+    private void checkAndPlayShutterSound(int id) {
+        if (id == getMainCameraId()) {
+            String value = mSettingsManager.getValue(SettingsManager.KEY_SHUTTER_SOUND);
+            if (value != null && value.equals("on")) {
+                mSound.play(MediaActionSound.SHUTTER_CLICK);
+            }
         }
     }
 
