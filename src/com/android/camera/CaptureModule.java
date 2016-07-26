@@ -72,6 +72,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
+import com.android.camera.exif.ExifInterface;
+import com.android.camera.Exif;
 import com.android.camera.imageprocessor.filter.ImageFilter;
 import com.android.camera.imageprocessor.PostProcessor;
 import com.android.camera.imageprocessor.FrameProcessor;
@@ -1287,8 +1289,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     byte[] bytes = getJpegData(image);
                                     mLastJpegData = bytes;
 
+                                    ExifInterface exif = Exif.getExif(bytes);
+                                    int orientation = Exif.getOrientation(exif);
+
                                     mActivity.getMediaSaveService().addImage(bytes, title, date,
-                                            null, image.getWidth(), image.getHeight(), 0, null,
+                                            null, image.getWidth(), image.getHeight(), orientation, null,
                                             mOnMediaSavedListener, mContentResolver, "jpeg");
                                     image.close();
                                 }
@@ -1327,8 +1332,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mLastJpegData = bytes;
                         buffer.get(bytes);
 
+                        ExifInterface exif = Exif.getExif(bytes);
+                        int orientation = Exif.getOrientation(exif);
+
                         mActivity.getMediaSaveService().addImage(bytes, title, date,
-                                null, image.getWidth(), image.getHeight(), 0, null,
+                                null, image.getWidth(), image.getHeight(), orientation, null,
                                 mOnMediaSavedListener, mContentResolver, "jpeg");
                         image.close();
                     }
@@ -3222,9 +3230,12 @@ public class CaptureModule implements CameraModule, PhotoController,
             byte[] monoBytes = getJpegData(monoImage);
 
             mLastJpegData = bayerBytes;
+            ExifInterface exif = Exif.getExif(bayerBytes);
+            int orientation = Exif.getOrientation(exif);
+
             mActivity.getMediaSaveService().addMpoImage(
                     null, bayerBytes, monoBytes, width, height, title,
-                    date, null, 0, mOnMediaSavedListener, mContentResolver, "jpeg");
+                    date, null, orientation, mOnMediaSavedListener, mContentResolver, "jpeg");
 
             bayerImage.close();
             bayerImage = null;
