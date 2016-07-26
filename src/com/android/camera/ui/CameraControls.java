@@ -87,7 +87,6 @@ public class CameraControls extends RotatableLayout {
     private static final int ANIME_DURATION = 300;
     private float[][] mLocX = new float[4][11];
     private float[][] mLocY = new float[4][11];
-    private boolean[] mTempEnabled = new boolean[11];
     private boolean mLocSet = false;
     private boolean mHideRemainingPhoto = false;
     private LinearLayout mRemainingPhotos;
@@ -223,10 +222,9 @@ public class CameraControls extends RotatableLayout {
                 mHdrSwitcher.setPressed(false);
             }
             mSceneModeSwitcher.setPressed(false);
-            mFilterModeSwitcher.setPressed(false);
-        } else {
-            mTempEnabled[FILTER_MODE_INDEX] = mFilterModeSwitcher.isEnabled();
         }
+
+
         ((ShutterButton) mShutter).enableTouch(enable);
         mVideoShutter.setClickable(enable);
         ((ModuleSwitcher) mSwitcher).enableTouch(enable);
@@ -240,7 +238,7 @@ public class CameraControls extends RotatableLayout {
         }
         mSceneModeSwitcher.setEnabled(enable);
         mPreview.setEnabled(enable);
-        mFilterModeSwitcher.setEnabled(enable && mTempEnabled[FILTER_MODE_INDEX]);
+
     }
 
     private void markVisibility() {
