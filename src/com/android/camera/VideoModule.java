@@ -2338,9 +2338,6 @@ public class VideoModule implements CameraModule,
                     mParameters.set(CameraSettings.KEY_VIDEO_HSR, hfrRate);
                 }
             }
-            if(mVideoEncoder != MediaRecorder.VideoEncoder.H264) {
-                mUnsupportedHFRVideoCodec = true;
-            }
         } else {
             mParameters.setVideoHighFrameRate("off");
             mParameters.set(CameraSettings.KEY_VIDEO_HSR, "off");
