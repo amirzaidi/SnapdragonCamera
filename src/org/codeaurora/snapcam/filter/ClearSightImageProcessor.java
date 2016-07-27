@@ -83,7 +83,7 @@ public class ClearSightImageProcessor {
     private static final String PERSIST_DUMP_YUV_KEY = "persist.camera.cs.dumpyuv";
 
     private static final long DEFAULT_TIMESTAMP_THRESHOLD_MS = 10;
-    private static final int DEFAULT_IMAGES_TO_BURST = 5;
+    private static final int DEFAULT_IMAGES_TO_BURST = 4;
 
     private static final int MSG_START_CAPTURE = 0;
     private static final int MSG_NEW_IMG = 1;
