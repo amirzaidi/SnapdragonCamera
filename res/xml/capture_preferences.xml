@@ -273,4 +273,10 @@
         camera:entryValues="@array/pref_camera2_videosnap_entryvalues"
         camera:key="pref_camera2_videosnap_key"
         camera:title="@string/pref_camera2_videosnap_title" />
+    <ListPreference
+        camera:defaultValue="off"
+        camera:key="pref_camera2_trackingfocus_key"
+        camera:entries="@array/pref_camera2_trackingfocus_entries"
+        camera:entryValues="@array/pref_camera2_trackingfocus_entryvalues"
+        camera:title="@string/pref_camera2_trackingfocus_title"/>
 </PreferenceGroup>

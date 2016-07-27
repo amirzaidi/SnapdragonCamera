@@ -79,11 +79,13 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.HashMap;
+import java.lang.reflect.Method;
 
 public class VideoModule implements CameraModule,
     VideoController,
     CameraPreference.OnPreferenceChangedListener,
     ShutterButton.OnShutterButtonListener,
+    LocationManager.Listener,
     MediaRecorder.OnErrorListener,
     MediaRecorder.OnInfoListener {
 
@@ -102,6 +104,9 @@ public class VideoModule implements CameraModule,
     private static final int SDCARD_SIZE_LIMIT = 4000 * 1024 * 1024;
 
     private static final long SHUTTER_BUTTON_TIMEOUT = 0L; // 0ms
+
+    public static final boolean HAS_RESUME_SUPPORTED =
+            Build.VERSION.SDK_INT > Build.VERSION_CODES.M;
 
     /**
      * An unpublished intent flag requesting to start recording straight away
@@ -211,6 +216,9 @@ public class VideoModule implements CameraModule,
 
     private boolean mFaceDetectionEnabled = false;
     private boolean mFaceDetectionStarted = false;
+
+    private static final boolean PERSIST_4K_NO_LIMIT =
+            android.os.SystemProperties.getBoolean("persist.camcorder.4k.nolimit", false);
 
     private final MediaSaveService.OnMediaSavedListener mOnVideoSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
@@ -512,7 +520,7 @@ public class VideoModule implements CameraModule,
         mUI.setPrefChangedListener(this);
 
         mQuickCapture = mActivity.getIntent().getBooleanExtra(EXTRA_QUICK_CAPTURE, false);
-        mLocationManager = new LocationManager(mActivity, null);
+        mLocationManager = new LocationManager(mActivity, this);
 
         mUI.setOrientationIndicator(0, false);
         setDisplayOrientation();
@@ -524,6 +532,23 @@ public class VideoModule implements CameraModule,
         initializeVideoControl();
         mPendingSwitchCameraId = -1;
     }
+
+    @Override
+    public void waitingLocationPermissionResult(boolean result) {
+        mLocationManager.waitingLocationPermissionResult(result);
+    }
+
+    @Override
+    public void enableRecordingLocation(boolean enable) {
+        String value = (enable ? RecordLocationPreference.VALUE_ON
+                        : RecordLocationPreference.VALUE_OFF);
+        if (mPreferences != null) {
+            mPreferences.edit()
+                .putString(CameraSettings.KEY_RECORD_LOCATION, value)
+                .apply();
+        }
+        mLocationManager.recordLocation(enable);
+     }
 
     // SingleTapListener
     // Preview area is touched. Take a picture.
@@ -1930,7 +1955,16 @@ public class VideoModule implements CameraModule,
         mMediaRecorderPausing = false;
         mRecordingStartTime = SystemClock.uptimeMillis();
         updateRecordingTime();
-        mMediaRecorder.start();
+        if (!HAS_RESUME_SUPPORTED){
+            mMediaRecorder.start();
+        } else {
+            try {
+                Method resumeRec = Class.forName("android.media.MediaRecorder").getMethod("resume");
+                resumeRec.invoke(mMediaRecorder);
+            } catch (Exception e) {
+                Log.v(TAG, "resume method not implemented");
+            }
+        }
     }
 
     private boolean stopVideoRecording() {
@@ -2210,7 +2244,7 @@ public class VideoModule implements CameraModule,
         Log.v(TAG, "DIS value =" + disMode);
         mIsDISEnabled = disMode.equals("enable");
 
-        if (is4KEnabled()) {
+        if (is4KEnabled() && !PERSIST_4K_NO_LIMIT) {
             if (isSupported(mActivity.getString(R.string.pref_camera_dis_value_disable),
                     CameraSettings.getSupportedDISModes(mParameters))) {
                 mParameters.set(CameraSettings.KEY_QC_DIS_MODE,
@@ -2324,9 +2358,6 @@ public class VideoModule implements CameraModule,
                 } else {
                     mParameters.set(CameraSettings.KEY_VIDEO_HSR, hfrRate);
                 }
-            }
-            if(mVideoEncoder != MediaRecorder.VideoEncoder.H264) {
-                mUnsupportedHFRVideoCodec = true;
             }
         } else {
             mParameters.setVideoHighFrameRate("off");
@@ -2688,7 +2719,8 @@ public class VideoModule implements CameraModule,
 
     @Override
     public void onSharedPreferenceChanged(ListPreference pref) {
-        if (pref != null && CameraSettings.KEY_VIDEO_QUALITY.equals(pref.getKey())) {
+        if (pref != null && CameraSettings.KEY_VIDEO_QUALITY.equals(pref.getKey())
+            && !PERSIST_4K_NO_LIMIT) {
             String videoQuality = pref.getValue();
             if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(videoQuality)) {
                 int quality = CameraSettings.VIDEO_QUALITY_TABLE.get(videoQuality);
@@ -3037,4 +3069,11 @@ public class VideoModule implements CameraModule,
             mUI.onStopFaceDetection();
         }
     }
+
+    @Override
+    public void onErrorListener(int error) {
+        enableRecordingLocation(false);
+    }
+
 }
+

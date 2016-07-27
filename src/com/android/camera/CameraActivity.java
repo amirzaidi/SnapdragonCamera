@@ -158,6 +158,9 @@ public class CameraActivity extends Activity
     private static final int HIDE_ACTION_BAR = 1;
     private static final long SHOW_ACTION_BAR_TIMEOUT_MS = 3000;
 
+    /** Permission request code */
+    private static final int PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 1;
+
     /** Whether onResume should reset the view to the preview. */
     private boolean mResetToPreviewOnResume = true;
 
@@ -249,6 +252,7 @@ public class CameraActivity extends Activity
     private Cursor mCursor;
 
     private WakeLock mWakeLock;
+    private static final int REFOCUS_ACTIVITY_CODE = 1;
 
     private class MyOrientationEventListener
             extends OrientationEventListener {
@@ -573,6 +577,16 @@ public class CameraActivity extends Activity
                 intent.setClass(this, RefocusActivity.class);
                 intent.setData(uri);
                 startActivity(intent);
+                return;
+            }
+        }
+        if (mCurrentModule instanceof CaptureModule) {
+            if (((CaptureModule) mCurrentModule).isRefocus()) {
+                Intent intent = new Intent();
+                intent.setClass(this, RefocusActivity.class);
+                intent.setData(uri);
+                intent.setFlags(RefocusActivity.MAP_ROTATED);
+                startActivityForResult(intent, REFOCUS_ACTIVITY_CODE);
                 return;
             }
         }
@@ -1624,6 +1638,10 @@ public class CameraActivity extends Activity
         if (requestCode == REQ_CODE_DONT_SWITCH_TO_PREVIEW) {
             mResetToPreviewOnResume = false;
             mIsEditActivityInProgress = false;
+        } else if (requestCode == REFOCUS_ACTIVITY_CODE)  {
+            if(resultCode == RESULT_OK) {
+                mCaptureModule.setRefocusLastTaken(false);
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -1866,6 +1884,37 @@ public class CameraActivity extends Activity
 
     public boolean isSecureCamera() {
         return mSecureCamera;
+    }
+
+    public void requestLocationPermission() {
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            Log.v(TAG, "Request Location permission");
+            mCurrentModule.waitingLocationPermissionResult(true);
+            requestPermissions(
+                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+            String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                 mCurrentModule.waitingLocationPermissionResult(false);
+                if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.v(TAG, "Location permission is granted");
+                    mCurrentModule.enableRecordingLocation(true);
+                } else {
+                    Log.w(TAG, "Location permission is denied");
+                    mCurrentModule.enableRecordingLocation(false);
+                }
+                break;
+            }
+        }
     }
 
     @Override

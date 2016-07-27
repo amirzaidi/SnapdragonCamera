@@ -30,14 +30,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.android.camera.imageprocessor;
 
 import android.app.Activity;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Handler;
@@ -45,21 +38,23 @@ import android.os.HandlerThread;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicYuvToRGB;
 import android.renderscript.Type;
-import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+import android.widget.Toast;
 
 import com.android.camera.CaptureModule;
-import com.android.camera.PhotoModule;
+import com.android.camera.SettingsManager;
 import com.android.camera.imageprocessor.filter.BeautificationFilter;
 import com.android.camera.imageprocessor.filter.ImageFilter;
-import com.android.camera.util.CameraUtil;
+import com.android.camera.imageprocessor.filter.TrackingFocusFrameListener;
+import com.android.camera.ui.RotateTextToast;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Semaphore;
+import org.codeaurora.snapcam.R;
 
 public class FrameProcessor {
 
@@ -67,13 +62,17 @@ public class FrameProcessor {
     private Allocation mInputAllocation;
     private Allocation mProcessAllocation;
     private Allocation mOutputAllocation;
+    private Allocation mVideoOutputAllocation;
 
     private HandlerThread mProcessingThread;
     private Handler mProcessingHandler;
     private HandlerThread mOutingThread;
     private Handler mOutingHandler;
+    private HandlerThread mListeningThread;
+    private Handler mListeningHandler;
 
-    public ProcessingTask mTask;
+    private ProcessingTask mTask;
+    private ListeningTask mListeningTask;
     private RenderScript mRs;
     private Activity mActivity;
     ScriptC_YuvToRgb mRsYuvToRGB;
@@ -84,10 +83,13 @@ public class FrameProcessor {
     private ArrayList<ImageFilter> mPreviewFilters;
     private ArrayList<ImageFilter> mFinalFilters;
     private Surface mSurfaceAsItIs;
+    private Surface mVideoSurfaceAsItIs;
     private boolean mIsActive = false;
     public static final int FILTER_NONE = 0;
     public static final int FILTER_MAKEUP = 1;
+    public static final int LISTENER_TRACKING_FOCUS = 2;
     private CaptureModule mModule;
+    private boolean mIsVideoOn = false;
 
     public FrameProcessor(Activity activity, CaptureModule module) {
         mActivity = activity;
@@ -97,6 +99,7 @@ public class FrameProcessor {
     }
 
     public void init(Size previewDim) {
+        mIsActive = true;
         mSize = previewDim;
         synchronized (mAllocationLock) {
             mRs = RenderScript.create(mActivity);
@@ -122,6 +125,13 @@ public class FrameProcessor {
                 mOutingHandler = new Handler(mOutingThread.getLooper());
             }
 
+            if(mListeningThread == null) {
+                mListeningThread = new HandlerThread("FrameListeningThread");
+                mListeningThread.start();
+                mListeningHandler = new Handler(mListeningThread.getLooper());
+            }
+
+            mListeningTask = new ListeningTask();
             mTask = new ProcessingTask();
             mInputImageReader.setOnImageAvailableListener(mTask, mProcessingHandler);
             mIsAllocationEverUsed = false;
@@ -153,12 +163,12 @@ public class FrameProcessor {
     }
 
     private void cleanFilterSet() {
-        if(mPreviewFilters != null) {
+        if (mPreviewFilters != null) {
             for (ImageFilter filter : mPreviewFilters) {
                 filter.deinit();
             }
         }
-        if(mFinalFilters != null) {
+        if (mFinalFilters != null) {
             for (ImageFilter filter : mFinalFilters) {
                 filter.deinit();
             }
@@ -168,25 +178,29 @@ public class FrameProcessor {
     }
 
     public void onOpen(ArrayList<Integer> filterIds) {
-        mIsActive = true;
-        synchronized (mAllocationLock) {
-            cleanFilterSet();
-            if (filterIds != null) {
-                for (Integer i : filterIds) {
-                    addFilter(i.intValue());
-                }
+        cleanFilterSet();
+        if (filterIds != null) {
+            for (Integer i : filterIds) {
+                addFilter(i.intValue());
             }
         }
     }
 
     private void addFilter(int filterId) {
-        if(filterId == FILTER_MAKEUP) {
-            ImageFilter filter = new BeautificationFilter(mModule);
-            if(filter.isSupported()) {
-                mPreviewFilters.add(filter);
+        ImageFilter filter = null;
+        if (filterId == FILTER_MAKEUP) {
+            filter = new BeautificationFilter(mModule);
+        } else if (filterId == LISTENER_TRACKING_FOCUS) {
+            filter = new TrackingFocusFrameListener(mModule);
+        }
+
+        if (filter != null && filter.isSupported()) {
+            mPreviewFilters.add(filter);
+            if (!filter.isFrameListener()) {
                 mFinalFilters.add(filter);
             }
         }
+
     }
 
     public void onClose() {
@@ -202,6 +216,9 @@ public class FrameProcessor {
                 if (mProcessAllocation != null) {
                     mProcessAllocation.destroy();
                 }
+                if (mVideoOutputAllocation != null) {
+                    mVideoOutputAllocation.destroy();
+                }
             }
             if (mRs != null) {
                 mRs.destroy();
@@ -210,6 +227,7 @@ public class FrameProcessor {
             mProcessAllocation = null;
             mOutputAllocation = null;
             mInputAllocation = null;
+            mVideoOutputAllocation = null;
         }
         if (mProcessingThread != null) {
             mProcessingThread.quitSafely();
@@ -229,6 +247,15 @@ public class FrameProcessor {
             } catch (InterruptedException e) {
             }
         }
+        if (mListeningThread != null) {
+            mListeningThread.quitSafely();
+            try {
+                mListeningThread.join();
+                mListeningThread = null;
+                mListeningHandler = null;
+            } catch (InterruptedException e) {
+            }
+        }
         for(ImageFilter filter : mPreviewFilters) {
             filter.deinit();
         }
@@ -237,29 +264,72 @@ public class FrameProcessor {
         }
     }
 
-    public Surface getInputSurface() {
-        if(mPreviewFilters.size() == 0) {
-            return mSurfaceAsItIs;
-        }
+    private Surface getReaderSurface() {
         synchronized (mAllocationLock) {
-            if (mInputImageReader == null)
+            if (mInputImageReader == null) {
                 return null;
+            }
             return mInputImageReader.getSurface();
         }
     }
 
+    public List<Surface> getInputSurfaces() {
+        List<Surface> surfaces = new ArrayList<Surface>();
+        if(mPreviewFilters.size() == 0 && mFinalFilters.size() == 0) {
+            surfaces.add(mSurfaceAsItIs);
+            if(mIsVideoOn) {
+                surfaces.add(mVideoSurfaceAsItIs);
+            }
+        } else if (mFinalFilters.size() == 0) {
+            surfaces.add(mSurfaceAsItIs);
+            if(mIsVideoOn) {
+                surfaces.add(mVideoSurfaceAsItIs);
+            }
+            surfaces.add(getReaderSurface());
+        } else {
+            surfaces.add(getReaderSurface());
+        }
+        return surfaces;
+    }
+
     public boolean isFrameFilterEnabled() {
-        if(mPreviewFilters.size() == 0) {
+        if(mFinalFilters.size() == 0) {
             return false;
         }
         return true;
     }
 
     public void setOutputSurface(Surface surface) {
-        if(mPreviewFilters.size() == 0) {
-            mSurfaceAsItIs = surface;
-        } else {
+        mSurfaceAsItIs = surface;
+        if(mFinalFilters.size() != 0) {
             mOutputAllocation.setSurface(surface);
+        }
+    }
+
+    public void setVideoOutputSurface(Surface surface) {
+        if(surface == null) {
+            synchronized (mAllocationLock) {
+                if (mVideoOutputAllocation != null) {
+                    mVideoOutputAllocation.destroy();
+                }
+                mVideoOutputAllocation = null;
+            }
+            mIsVideoOn = false;
+            return;
+        }
+        mVideoSurfaceAsItIs = surface;
+        mIsVideoOn = true;
+        if(mFinalFilters.size() != 0) {
+            synchronized (mAllocationLock) {
+                if (mVideoOutputAllocation == null) {
+                    Type.Builder rgbTypeBuilder = new Type.Builder(mRs, Element.RGBA_8888(mRs));
+                    rgbTypeBuilder.setX(mSize.getHeight());
+                    rgbTypeBuilder.setY(mSize.getWidth());
+                    mVideoOutputAllocation = Allocation.createTyped(mRs, rgbTypeBuilder.create(),
+                            Allocation.USAGE_SCRIPT | Allocation.USAGE_IO_OUTPUT);
+                }
+                mVideoOutputAllocation.setSurface(surface);
+            }
         }
     }
 
@@ -276,12 +346,14 @@ public class FrameProcessor {
         @Override
         public void onImageAvailable(ImageReader reader) {
             synchronized (mAllocationLock) {
-                if(mOutputAllocation == null)
+                if(mOutputAllocation == null) {
                     return;
+                }
                 try {
                     Image image = reader.acquireLatestImage();
-                    if(image == null)
+                    if(image == null) {
                         return;
+                    }
                     if(!mIsActive) {
                         image.close();
                         return;
@@ -289,23 +361,35 @@ public class FrameProcessor {
                     mIsAllocationEverUsed = true;
                     ByteBuffer bY = image.getPlanes()[0].getBuffer();
                     ByteBuffer bVU = image.getPlanes()[2].getBuffer();
-                    if(yvuBytes == null) {
+                    if(yvuBytes == null || width != mSize.getWidth() || height != mSize.getHeight()) {
                         stride = image.getPlanes()[0].getRowStride();
                         width = mSize.getWidth();
                         height = mSize.getHeight();
                         ySize = stride * mSize.getHeight();
                         yvuBytes = new byte[ySize*3/2];
                     }
+                    boolean needToFeedSurface = false;
                     //Start processing yvu buf
                     for (ImageFilter filter : mPreviewFilters) {
-                        filter.init(mSize.getWidth(), mSize.getHeight(), stride, stride);
-                        filter.addImage(bY, bVU, 0, new Boolean(true));
+                        if(filter.isFrameListener()) {
+                            if (mListeningTask.setParam(filter, bY, bVU, mSize.getWidth(), mSize.getHeight(), stride)) {
+                                mListeningHandler.post(mListeningTask);
+                            }
+                        } else {
+                            filter.init(mSize.getWidth(), mSize.getHeight(), stride, stride);
+                            filter.addImage(bY, bVU, 0, new Boolean(true));
+                            needToFeedSurface = true;
+                        }
+                        bY.rewind();
+                        bVU.rewind();
                     }
                     //End processing yvu buf
-                    bY.get(yvuBytes, 0, bY.remaining());
-                    bVU.get(yvuBytes, ySize, bVU.remaining());
+                    if(needToFeedSurface) {
+                        bY.get(yvuBytes, 0, bY.remaining());
+                        bVU.get(yvuBytes, ySize, bVU.remaining());
+                        mOutingHandler.post(this);
+                    }
                     image.close();
-                    mOutingHandler.post(this);
                 } catch (IllegalStateException e) {
                 }
             }
@@ -318,12 +402,68 @@ public class FrameProcessor {
                     return;
                 }
                 if(mInputAllocation == null) {
-                    createAllocation(stride, height, stride-width);
+                    createAllocation(stride, height, stride - width);
                 }
                 mInputAllocation.copyFrom(yvuBytes);
                 mRsRotator.forEach_rotate90andMerge(mInputAllocation);
                 mRsYuvToRGB.forEach_nv21ToRgb(mOutputAllocation);
                 mOutputAllocation.ioSend();
+                if(mVideoOutputAllocation != null) {
+                    mVideoOutputAllocation.copyFrom(mOutputAllocation);
+                    mVideoOutputAllocation.ioSend();
+                }
+            }
+        }
+    }
+
+    class ListeningTask implements Runnable {
+
+        ImageFilter mFilter;
+        ByteBuffer mBY = null, mBVU = null;
+        int mWidth, mHeight, mStride;
+        int bYSize, bVUSize;
+        Semaphore mMutureLock = new Semaphore(1);
+
+        public boolean setParam(ImageFilter filter, ByteBuffer bY, ByteBuffer bVU, int width, int height, int stride) {
+            if(!mIsActive) {
+                return false;
+            }
+            if (!mMutureLock.tryAcquire()) {
+                return false;
+            }
+            mFilter = filter;
+            if (mBY == null || bYSize != bY.remaining()) {
+                bYSize = bY.remaining();
+                mBY = ByteBuffer.allocateDirect(bYSize);
+            }
+            if (mBVU == null || bVUSize != bVU.remaining()) {
+                bVUSize = bVU.remaining();
+                mBVU = ByteBuffer.allocateDirect(bVUSize);
+            }
+            mBY.rewind();
+            mBVU.rewind();
+            mBY.put(bY);
+            mBVU.put(bVU);
+            mWidth = width;
+            mHeight = height;
+            mStride = stride;
+            mMutureLock.release();
+            return true;
+        }
+
+        @Override
+        public void run() {
+            try {
+                if (!mIsActive) {
+                    return;
+                }
+                mMutureLock.acquire();
+                mBY.rewind();
+                mBVU.rewind();
+                mFilter.init(mWidth, mHeight, mStride, mStride);
+                mFilter.addImage(mBY, mBVU, 0, new Boolean(true));
+                mMutureLock.release();
+            } catch (InterruptedException e) {
             }
         }
     }
