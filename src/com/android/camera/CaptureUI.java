@@ -119,8 +119,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_VIDEO_DURATION,
             SettingsManager.KEY_VIDEO_QUALITY,
             SettingsManager.KEY_TRACKINGFOCUS,
-            SettingsManager.KEY_MAKEUP
-            };
+            SettingsManager.KEY_MAKEUP,
+            SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL
+    };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_REDEYE_REDUCTION,
             SettingsManager.KEY_MONO_ONLY,
@@ -131,7 +132,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_DIS,
             SettingsManager.KEY_VIDEO_ENCODER,
             SettingsManager.KEY_AUDIO_ENCODER,
-            SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
             SettingsManager.KEY_VIDEO_ROTATION,
             SettingsManager.KEY_AUTO_VIDEOSNAP_SIZE
     };
