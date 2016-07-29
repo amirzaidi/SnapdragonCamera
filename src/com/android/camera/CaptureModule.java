@@ -250,6 +250,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CameraCaptureSession mCurrentSession;
     private Size mPreviewSize;
     private Size mPictureSize;
+    private Size mVideoPreviewSize;
     private Size mVideoSize;
     private Size mVideoSnapshotSize;
 
@@ -2141,6 +2142,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updateVideoSize() {
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         mVideoSize = parsePictureSize(videoSize);
+        Point screenSize = new Point();
+        mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
+        Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
+                MediaRecorder.class);
+        mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes, screenSize.x, screenSize.y);
     }
 
     private void updateVideoSnapshotSize() {
@@ -2179,7 +2185,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         closePreviewSession();
         mFrameProcessor.onClose();
-        boolean changed = mUI.setPreviewSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+        boolean changed = mUI.setPreviewSize(mVideoPreviewSize.getWidth(),
+                mVideoPreviewSize.getHeight());
         if (changed) {
             mUI.hideSurfaceView();
             mUI.showSurfaceView();
@@ -2193,17 +2200,24 @@ public class CaptureModule implements CameraModule, PhotoController,
             List<Surface> surfaces = new ArrayList<>();
 
             Surface surface = getPreviewSurfaceForSession(cameraId);
-            mFrameProcessor.init(mVideoSize);
+
             if(mFrameProcessor.isFrameFilterEnabled()) {
+                mFrameProcessor.init(mVideoSize);
                 mActivity.runOnUiThread(new Runnable() {
                     public void run() {
                         mUI.getSurfaceHolder().setFixedSize(mVideoSize.getHeight(), mVideoSize.getWidth());
                     }
                 });
+                mFrameProcessor.setOutputSurface(surface);
+                mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
+                addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
+            } else {
+                surfaces.add(surface);
+                mPreviewBuilder.addTarget(surface);
+                surfaces.add(mMediaRecorder.getSurface());
+                mPreviewBuilder.addTarget(mMediaRecorder.getSurface());
             }
-            mFrameProcessor.setOutputSurface(surface);
-            mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
-            addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
+
             if (!mHighSpeedCapture) surfaces.add(mVideoSnapshotImageReader.getSurface());
             else mPreviewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
 
