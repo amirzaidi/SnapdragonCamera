@@ -693,6 +693,7 @@ public class PhotoMenu extends MenuController
             popup1.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE, false);
             popup1.setPreferenceEnabled(CameraSettings.KEY_WHITE_BALANCE, false);
             popup1.setPreferenceEnabled(CameraSettings.KEY_EXPOSURE, false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_QC_CHROMA_FLASH, false);
         }
         if ((autohdr != null) && autohdr.equals("enable")) {
             popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE, false);
@@ -1452,6 +1453,18 @@ public class PhotoMenu extends MenuController
             ListPreference lp = mPreferenceGroup
                     .findPreference(CameraSettings.KEY_ADVANCED_FEATURES);
             if (lp != null && optizoomOn.equals(lp.getValue())) {
+                setPreference(CameraSettings.KEY_ADVANCED_FEATURES,
+                        mActivity.getString(R.string.pref_camera_advanced_feature_default));
+            }
+        }
+
+        String chromaFlashOn = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_chromaflash_on);
+        if (notSame(pref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)) {
+            ListPreference lp = mPreferenceGroup
+                    .findPreference(CameraSettings.KEY_ADVANCED_FEATURES);
+            if (lp != null && chromaFlashOn.equals(lp.getValue())) {
+                setPreference(CameraSettings.KEY_QC_CHROMA_FLASH, mSettingOff);
                 setPreference(CameraSettings.KEY_ADVANCED_FEATURES,
                         mActivity.getString(R.string.pref_camera_advanced_feature_default));
             }
