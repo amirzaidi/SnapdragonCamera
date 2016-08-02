@@ -789,7 +789,11 @@ public class PhotoMenu extends MenuController
                 || (notSame(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff))) {
             buttonSetEnabled(mFilterModeSwitcher, false);
             changeFilterModeControlIcon("none");
-        } else {
+        } else if (same(scenePref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO)
+                && (same(hdrPref, CameraSettings.KEY_CAMERA_HDR, mSettingOff)
+                    || !hdrPref.getKey().equals(CameraSettings.KEY_CAMERA_HDR))) {
+            //mFilterModeSwitcher can be enabled only when scene mode is set to auto
+            // and HDR is set to off,
             buttonSetEnabled(mFilterModeSwitcher, true);
         }
     }
@@ -821,7 +825,6 @@ public class PhotoMenu extends MenuController
                         .findPreference(prefKey);
                 if (pref == null)
                     return;
-
                 if (prefKey.equals(CameraSettings.KEY_CAMERA_ID)) {
                     // Hide the camera control while switching the camera.
                     // The camera control will be added back when
