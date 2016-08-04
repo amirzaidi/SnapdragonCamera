@@ -176,6 +176,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static CaptureRequest.Key<int[]> JpegCropRectKey =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.rect",
                     int[].class);
+    public static CaptureRequest.Key<int[]> JpegRoiRectKey =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.roi",
+                    int[].class);
     public static CameraCharacteristics.Key<Byte> MetaDataMonoOnlyKey =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.sensor_meta_data.is_mono_only",
                     Byte.class);
@@ -1285,7 +1288,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                 if (isClearSightOn()) {
                     if(i == getMainCameraId()) {
-                        ClearSightImageProcessor.getInstance().init(mPictureSize.getWidth(),
+                        ClearSightImageProcessor.getInstance().init(map, mPictureSize.getWidth(),
                                 mPictureSize.getHeight(), mActivity, mOnMediaSavedListener);
                         ClearSightImageProcessor.getInstance().setCallback(this);
                     }
@@ -3339,20 +3342,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     public TrackingFocusRenderer getTrackingForcusRenderer() {
         return mUI.getTrackingFocusRenderer();
-    }
-
-    /**
-     * Compares two {@code Size}s based on their areas.
-     */
-    static class CompareSizesByArea implements Comparator<Size> {
-
-        @Override
-        public int compare(Size lhs, Size rhs) {
-            // We cast here to ensure the multiplications won't overflow
-            return Long.signum((long) lhs.getWidth() * lhs.getHeight() -
-                    (long) rhs.getWidth() * rhs.getHeight());
-        }
-
     }
 
     private class MyCameraHandler extends Handler {
