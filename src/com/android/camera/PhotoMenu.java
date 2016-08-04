@@ -1478,6 +1478,12 @@ public class PhotoMenu extends MenuController
                     mActivity.getString(R.string.pref_camera_coloreffect_default));
         }
 
+        String stillMoreOn = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_stillmore_on);
+        if (same(pref, CameraSettings.KEY_ADVANCED_FEATURES, stillMoreOn)) {
+           setPreference(CameraSettings.KEY_FLASH_MODE, Parameters.FLASH_MODE_OFF);
+        }
+
         ListPreference autoHdrPref = mPreferenceGroup.findPreference(CameraSettings.KEY_AUTO_HDR);
         if (autoHdrPref != null && autoHdrPref.getValue().equalsIgnoreCase("enable")) {
             mHdrSwitcher.setVisibility(View.GONE);
