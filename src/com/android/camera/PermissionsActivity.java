@@ -33,16 +33,20 @@ public class PermissionsActivity extends Activity {
     private boolean mFlagHasMicrophonePermission;
     private boolean mFlagHasStoragePermission;
     private boolean mCriticalPermissionDenied;
+    private Intent mIntent;
+    private boolean mIsReturnResult;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mIntent = getIntent();
+        mIsReturnResult = false;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (!mCriticalPermissionDenied) {
+        if (!mCriticalPermissionDenied && !mIsReturnResult) {
             mNumPermissionsToRequest = 0;
             checkPermissions();
         } else {
@@ -156,9 +160,16 @@ public class PermissionsActivity extends Activity {
     }
 
     private void handlePermissionsSuccess() {
-        Intent intent = new Intent(this, CameraActivity.class);
-        startActivity(intent);
-        finish();
+        if (mIntent != null) {
+           mIsReturnResult = true;
+           mIntent.setClass(this, CameraActivity.class);
+           startActivityForResult(mIntent, 1);
+        } else {
+           mIsReturnResult = false;
+           Intent intent = new Intent(this, CameraActivity.class);
+           startActivity(intent);
+           finish();
+        }
     }
 
     private void handlePermissionsFailure() {
@@ -182,5 +193,12 @@ public class PermissionsActivity extends Activity {
                     }
                 })
                 .show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        setResult(resultCode, data);
+        finish();
     }
 }
