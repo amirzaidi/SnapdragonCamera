@@ -144,6 +144,10 @@ public class CaptureModule implements CameraModule, PhotoController,
      * Camera state: Waiting for the touch-to-focus to converge.
      */
     private static final int STATE_WAITING_TOUCH_FOCUS = 5;
+    /**
+     * Camera state: Focus and exposure has been locked and converged.
+     */
+    private static final int STATE_AF_AE_LOCKED = 6;
     private static final String TAG = "SnapCam_CaptureModule";
 
     // Used for check memory status for longshot mode
@@ -516,8 +520,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     // CONTROL_AE_STATE can be null on some devices
                     if (aeState == null || (aeState == CaptureResult
                             .CONTROL_AE_STATE_CONVERGED) && isFlashOff(id)) {
-                        mState[id] = STATE_PICTURE_TAKEN;
-                        captureStillPicture(id);
+                        checkAfAeStatesAndCapture(id);
                     } else {
                         runPrecaptureSequence(id);
                     }
@@ -542,13 +545,28 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 Log.d(TAG, "STATE_WAITING_NON_PRECAPTURE id: " + id + " aeState:" + aeState);
                 if (aeState == null || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
-                    mState[id] = STATE_PICTURE_TAKEN;
-                    captureStillPicture(id);
+                    checkAfAeStatesAndCapture(id);
                 }
                 break;
             }
             case STATE_WAITING_TOUCH_FOCUS:
                 break;
+        }
+    }
+
+    private void checkAfAeStatesAndCapture(int id) {
+        if(isBackCamera() && getCameraMode() == DUAL_MODE) {
+            mState[id] = STATE_AF_AE_LOCKED;
+            if(mState[BAYER_ID] == STATE_AF_AE_LOCKED &&
+                    mState[MONO_ID] == STATE_AF_AE_LOCKED) {
+                mState[BAYER_ID] = STATE_PICTURE_TAKEN;
+                mState[MONO_ID] = STATE_PICTURE_TAKEN;
+                captureStillPicture(BAYER_ID);
+                captureStillPicture(MONO_ID);
+            }
+        } else {
+            mState[id] = STATE_PICTURE_TAKEN;
+            captureStillPicture(id);
         }
     }
 
