@@ -601,8 +601,8 @@ public class CameraActivity extends Activity
             try {
                 Log.w(TAG, "Gallery not found");
                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(intent);
                 intent.putExtra(KEY_FROM_SNAPCAM, true);
+                startActivity(intent);
             } catch (ActivityNotFoundException e) {
                 Log.w(TAG, "No Activity could be found to open image or video");
             }
