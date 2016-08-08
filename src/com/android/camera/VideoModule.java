@@ -1810,7 +1810,11 @@ public class VideoModule implements CameraModule,
         mUI.cancelAnimations();
         mUI.setSwipingEnabled(false);
         mUI.hideUIwhileRecording();
-
+        // When recording request is sent before starting preview, onPreviewFrame()
+        // callback doesn't happen so removing preview cover here, instead.
+        if (mUI.isPreviewCoverVisible()) {
+            mUI.hidePreviewCover();
+        }
         mActivity.updateStorageSpaceAndHint();
         if (mActivity.getStorageSpaceBytes() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
             Log.v(TAG, "Storage issue, ignore the start request");
