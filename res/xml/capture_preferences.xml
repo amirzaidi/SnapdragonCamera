@@ -107,6 +107,13 @@
         camera:key="pref_camera2_clearsight_key"
         camera:title="@string/pref_camera2_clearsight_title"/>
 
+    <ListPreference
+        camera:defaultValue="@string/pref_camera2_mpo_default"
+        camera:entries="@array/pref_camera2_mpo_entries"
+        camera:entryValues="@array/pref_camera2_mpo_entryvalues"
+        camera:key="pref_camera2_mpo_key"
+        camera:title="@string/pref_camera2_mpo_title"/>
+
     <IconListPreference
         camera:defaultValue="@string/pref_camera2_coloreffect_default"
         camera:entries="@array/pref_camera2_coloreffect_entries"
