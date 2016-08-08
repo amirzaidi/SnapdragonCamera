@@ -29,6 +29,7 @@
 
 package org.codeaurora.snapcam.filter;
 
+import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -65,6 +66,8 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.android.camera.CaptureModule;
+import com.android.camera.Exif;
+import com.android.camera.exif.ExifInterface;
 import com.android.camera.MediaSaveService;
 import com.android.camera.MediaSaveService.OnMediaSavedListener;
 import com.android.camera.PhotoModule.NamedImages;
@@ -821,11 +824,15 @@ public class ClearSightImageProcessor {
                 height = mClearSightImage.getHeight();
             }
 
+            byte[] bayerBytes = getJpegData(mBayerImage);
+            ExifInterface exif = Exif.getExif(bayerBytes);
+            int orientation = Exif.getOrientation(exif);
+
             mMediaSaveService.addMpoImage(
                     getJpegData(mClearSightImage),
-                    getJpegData(mBayerImage),
+                    bayerBytes,
                     getJpegData(mMonoImage), width, height, title,
-                    date, null, 0, mMediaSavedListener,
+                    date, null, orientation, mMediaSavedListener,
                     mMediaSaveService.getContentResolver(), "jpeg");
 
             mBayerImage.close();
