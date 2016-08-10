@@ -652,6 +652,7 @@ public class ClearSightImageProcessor {
                     + mNumImagesToProcess[CAM_TYPE_BAYER] + " mono count: "
                     + mNumImagesToProcess[CAM_TYPE_MONO]);
 
+            ClearSightNativeEngine.getInstance().initProcessImage();
             ClearSightNativeEngine.ClearsightImage csImage = ClearSightNativeEngine
                     .getInstance().processImage();
 

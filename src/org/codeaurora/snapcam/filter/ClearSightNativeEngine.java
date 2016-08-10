@@ -56,7 +56,7 @@ public class ClearSightNativeEngine {
         }
     }
 
-    private static final int METADATA_SIZE = 5;
+    private static final int METADATA_SIZE = 6;
     private static final int Y_PLANE = 0;
     private static final int VU_PLANE = 2;
 
@@ -64,6 +64,10 @@ public class ClearSightNativeEngine {
     private static byte[] mOtpCalibData;
     private static ClearSightNativeEngine mInstance;
 
+    private int mYSize;
+    private int mVUSize;
+    private int mYStride;
+    private int mVUStride;
     private Image mRefColorImage;
     private Image mRefMonoImage;
     private TotalCaptureResult mRefColorResult;
@@ -89,6 +93,14 @@ public class ClearSightNativeEngine {
         String calibStr = calibData.toString();
         Log.d(TAG, "OTP calibration data: \n" + calibStr);
         mOtpCalibData = calibStr.getBytes();
+    }
+
+    public void setImageSizeStride(Image image) {
+        Plane[] planes = image.getPlanes();
+        mYSize = planes[Y_PLANE].getBuffer().capacity();
+        mVUSize = planes[VU_PLANE].getBuffer().capacity();
+        mYStride = planes[Y_PLANE].getRowStride();
+        mVUStride = planes[VU_PLANE].getRowStride();
     }
 
     public boolean isLibLoaded() {
@@ -136,9 +148,10 @@ public class ClearSightNativeEngine {
 
         if (mRefColorImage != null) {
             Log.d(TAG, "setRefColorImage");
+            setImageSizeStride(mRefColorImage);
             mSrcColor.add(new SourceImage(mRefColorImage.getPlanes()[Y_PLANE]
                     .getBuffer(), mRefColorImage.getPlanes()[VU_PLANE]
-                            .getBuffer(), new int[] { 0, 0, 0, 0, 0 }));
+                            .getBuffer(), new float[] { 0, 0, 0, 0, 0, 0 }));
         }
     }
 
@@ -153,7 +166,7 @@ public class ClearSightNativeEngine {
         if (mRefMonoImage != null) {
             Log.d(TAG, "setRefMonoImage");
             mSrcMono.add(new SourceImage(mRefMonoImage.getPlanes()[Y_PLANE]
-                    .getBuffer(), null, new int[] { 0, 0, 0, 0, 0 }));
+                    .getBuffer(), null, new float[] { 0, 0, 0, 0, 0, 0 }));
         }
     }
 
@@ -198,7 +211,7 @@ public class ClearSightNativeEngine {
             vuRowStride = planes[VU_PLANE].getRowStride();
         }
 
-        int[] metadata = new int[METADATA_SIZE];
+        float[] metadata = new float[METADATA_SIZE];
 
         boolean result = nativeClearSightRegisterImage(refY,
                 yBuf, vuBuf, image.getWidth(), image.getHeight(),
@@ -212,21 +225,21 @@ public class ClearSightNativeEngine {
         return result;
     }
 
-    public ClearsightImage processImage() {
+    public boolean initProcessImage() {
         // check data validity
         if (mSrcColor.size() != mSrcMono.size()) {
             // mis-match in num images
             Log.d(TAG, "processImage - numImages mismatch - bayer: "
                     + mSrcColor.size() + ", mono: " + mSrcMono.size());
-            return null;
+            return false;
         }
 
         int numImages = mSrcColor.size();
         ByteBuffer[] srcColorY = new ByteBuffer[numImages];
         ByteBuffer[] srcColorVU = new ByteBuffer[numImages];
-        int[][] metadataColor = new int[numImages][];
+        float[][] metadataColor = new float[numImages][];
         ByteBuffer[] srcMonoY = new ByteBuffer[numImages];
-        int[][] metadataMono = new int[numImages][];
+        float[][] metadataMono = new float[numImages][];
 
         Log.d(TAG, "processImage - numImages: " + numImages);
 
@@ -244,18 +257,10 @@ public class ClearSightNativeEngine {
 
         Plane[] colorPlanes = mRefColorImage.getPlanes();
         Plane[] monoPlanes = mRefMonoImage.getPlanes();
-        ByteBuffer dstY = ByteBuffer.allocateDirect(colorPlanes[Y_PLANE]
-                .getBuffer().capacity());
-        ByteBuffer dstVU = ByteBuffer.allocateDirect(colorPlanes[VU_PLANE]
-                .getBuffer().capacity());
-        int[] roiRect = new int[4];
 
         Log.d(TAG, "processImage - refImage size - y: "
                 + colorPlanes[Y_PLANE].getBuffer().capacity()
                 + " vu: " + colorPlanes[VU_PLANE].getBuffer().capacity());
-
-        Log.d(TAG, "processImage - dst size - y: "
-                + dstY.capacity() + " vu: " + dstVU.capacity());
 
         int iso = mRefMonoResult.get(CaptureResult.SENSOR_SENSITIVITY);
         long exposure = mRefMonoResult.get(CaptureResult.SENSOR_EXPOSURE_TIME);
@@ -263,16 +268,27 @@ public class ClearSightNativeEngine {
         exposure /= 100000;
 
         Log.d(TAG, "processImage - iso: " + iso + " exposure ms: " + exposure);
-        boolean result = nativeClearSightProcess(numImages, srcColorY, srcColorVU,
+        return nativeClearSightProcessInit(numImages, srcColorY, srcColorVU,
                 metadataColor, mRefColorImage.getWidth(),
                 mRefColorImage.getHeight(),
                 colorPlanes[Y_PLANE].getRowStride(),
                 colorPlanes[VU_PLANE].getRowStride(), srcMonoY, metadataMono,
                 mRefMonoImage.getWidth(), mRefMonoImage.getHeight(),
                 monoPlanes[Y_PLANE].getRowStride(), mOtpCalibData,
-                (int)exposure, iso, dstY, dstVU,
-                colorPlanes[Y_PLANE].getRowStride(),
-                colorPlanes[VU_PLANE].getRowStride(), roiRect);
+                (int)exposure, iso);
+    }
+
+    public ClearsightImage processImage() {
+        // check data validity
+        ByteBuffer dstY = ByteBuffer.allocateDirect(mYSize);
+        ByteBuffer dstVU = ByteBuffer.allocateDirect(mVUSize);
+        int[] roiRect = new int[4];
+
+        Log.d(TAG, "processImage - dst size - y: "
+                + dstY.capacity() + " vu: " + dstVU.capacity());
+
+        boolean result = nativeClearSightProcess(dstY, dstVU,
+                mYStride, mVUStride, roiRect);
 
         if (result) {
             dstY.rewind();
@@ -283,27 +299,27 @@ public class ClearSightNativeEngine {
         }
     }
 
-    private native final boolean nativeConfigureClearSight(float brIntensity, float sharpenIntensity);
-
     private native final boolean nativeClearSightRegisterImage(ByteBuffer refY,
             ByteBuffer srcY, ByteBuffer srcVU, int width, int height,
             int strideY, int strideVU, ByteBuffer dstY, ByteBuffer dstVU,
-            int[] metadata);
+            float[] metadata);
 
-    private native final boolean nativeClearSightProcess(int numImagePairs,
+    private native final boolean nativeClearSightProcessInit(int numImagePairs,
             ByteBuffer[] srcColorY, ByteBuffer[] srcColorVU,
-            int[][] metadataColor, int srcColorWidth, int srcColorHeight,
+            float[][] metadataColor, int srcColorWidth, int srcColorHeight,
             int srcColorStrideY, int srcColorStrideVU, ByteBuffer[] srcMonoY,
-            int[][] metadataMono, int srcMonoWidth, int srcMonoHeight,
-            int srcMonoStrideY, byte[] otp, int exposureMs, int iso,
-            ByteBuffer dstY, ByteBuffer dstVU, int dstStrideY, int dstStrideVU, int[] roiRect);
+            float[][] metadataMono, int srcMonoWidth, int srcMonoHeight,
+            int srcMonoStrideY, byte[] otp, int exposureMs, int iso);
+
+    private native final boolean nativeClearSightProcess(ByteBuffer dstY,
+            ByteBuffer dstVU, int dstStrideY, int dstStrideVU, int[] roiRect);
 
     private class SourceImage {
         ByteBuffer mY;
         ByteBuffer mVU;
-        int[] mMetadata;
+        float[] mMetadata;
 
-        SourceImage(ByteBuffer y, ByteBuffer vu, int[] metadata) {
+        SourceImage(ByteBuffer y, ByteBuffer vu, float[] metadata) {
             mY = y;
             mVU = vu;
             mMetadata = metadata;
