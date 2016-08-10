@@ -1268,7 +1268,11 @@ public class VideoModule implements CameraModule,
         mCameraDevice.setZoomChangeListener(null);
         mCameraDevice.setErrorCallback(null);
         mCameraDevice.setFaceDetectionCallback(null, null);
-        CameraHolder.instance().release();
+        if (mActivity.isForceReleaseCamera()) {
+            CameraHolder.instance().strongRelease();
+        } else {
+            CameraHolder.instance().release();
+        }
         mCameraDevice = null;
         mPreviewing = false;
         mSnapshotInProgress = false;
