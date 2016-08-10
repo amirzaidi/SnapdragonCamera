@@ -35,7 +35,8 @@
       "pref_camera2_whitebalance_key":"1",
       "pref_camera2_exposure_key":"0",
       "pref_camera2_clearsight_key":"off",
-      "pref_camera2_mono_preview_key":"off"}
+      "pref_camera2_mono_preview_key":"off",
+      "pref_camera2_mpo_key":"off"}
     ,
     "100":
       {"pref_camera2_longshot_key":"off",
@@ -44,6 +45,13 @@
     ,
     "0":
       {"pref_camera2_clearsight_key":"off",
-      "pref_camera2_mono_preview_key":"off"}
+      "pref_camera2_mono_preview_key":"off",
+      "pref_camera2_mpo_key":"off"}
+  },
+  "pref_camera2_clearsight_key":
+  {
+    "off":{},
+    "on":
+      {"pref_camera2_mpo_key":"on"}
   }
 }

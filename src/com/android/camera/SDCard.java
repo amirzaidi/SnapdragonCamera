@@ -28,8 +28,10 @@
 
 package com.android.camera;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.os.UserHandle;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.storage.StorageVolume;
 import android.os.storage.StorageManager;
@@ -42,8 +44,8 @@ public class SDCard {
 
     private StorageManager mStorageManager = null;
     private StorageVolume mVolume = null;
-    private String path = null;
-    private String rawpath = null;
+    private String mPath = null;
+    private String mRawpath = null;
     private static SDCard sSDCard;
 
     public boolean isWriteable() {
@@ -59,20 +61,20 @@ public class SDCard {
         if (mVolume == null) {
             return null;
         }
-        if (path == null) {
-            path = mVolume.getPath() + "/DCIM/Camera";
+        if (mPath == null) {
+            mPath = mVolume.getPath() + "/DCIM/Camera";
         }
-        return path;
+        return mPath;
     }
 
     public String getRawDirectory() {
         if (mVolume == null) {
             return null;
         }
-        if (rawpath == null) {
-            rawpath = mVolume.getPath() + "/DCIM/Camera/raw";
+        if (mRawpath == null) {
+            mRawpath = mVolume.getPath() + "/DCIM/Camera/raw";
         }
-        return rawpath;
+        return mRawpath;
     }
 
     public static void initialize(Context context) {
@@ -92,13 +94,32 @@ public class SDCard {
     private SDCard(Context context) {
         try {
             mStorageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-            final StorageVolume[] volumes = mStorageManager.getVolumeList();
-            if (volumes.length > VOLUME_SDCARD_INDEX) {
-                mVolume = volumes[VOLUME_SDCARD_INDEX];
-            }
+            initVolume();
+            registerMediaBroadcastreceiver(context);
         } catch (Exception e) {
             Log.e(TAG, "couldn't talk to MountService", e);
         }
     }
 
+    private void initVolume() {
+        final StorageVolume[] volumes = mStorageManager.getVolumeList();
+        mVolume = (volumes.length > VOLUME_SDCARD_INDEX) ?
+                volumes[VOLUME_SDCARD_INDEX] : null;
+        mPath = null;
+        mRawpath = null;
+    }
+
+    private void registerMediaBroadcastreceiver(Context context) {
+        IntentFilter filter = new IntentFilter(Intent.ACTION_MEDIA_MOUNTED);
+        filter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        filter.addDataScheme("file");
+        context.registerReceiver(mMediaBroadcastReceiver , filter);
+    }
+
+    private BroadcastReceiver mMediaBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            initVolume();
+        }
+    };
 }

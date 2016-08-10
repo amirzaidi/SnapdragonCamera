@@ -220,6 +220,9 @@ public class VideoModule implements CameraModule,
     private static final boolean PERSIST_4K_NO_LIMIT =
             android.os.SystemProperties.getBoolean("persist.camcorder.4k.nolimit", false);
 
+    private static final int PERSIST_EIS_MAX_FPS =
+            android.os.SystemProperties.getInt("persist.camcorder.eis.maxfps", 30);
+
     private final MediaSaveService.OnMediaSavedListener mOnVideoSavedListener =
             new MediaSaveService.OnMediaSavedListener() {
                 @Override
@@ -1807,7 +1810,11 @@ public class VideoModule implements CameraModule,
         mUI.cancelAnimations();
         mUI.setSwipingEnabled(false);
         mUI.hideUIwhileRecording();
-
+        // When recording request is sent before starting preview, onPreviewFrame()
+        // callback doesn't happen so removing preview cover here, instead.
+        if (mUI.isPreviewCoverVisible()) {
+            mUI.hidePreviewCover();
+        }
         mActivity.updateStorageSpaceAndHint();
         if (mActivity.getStorageSpaceBytes() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
             Log.v(TAG, "Storage issue, ignore the start request");
@@ -2523,8 +2530,14 @@ public class VideoModule implements CameraModule,
                     CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
                     mActivity.getString(R.string.pref_video_time_lapse_frame_interval_default));
              int timeLapseInterval = Integer.parseInt(frameIntervalStr);
+             int rate = 0;
+             if (!hfr.equals("off"))
+                 rate = Integer.parseInt(hfr);
+             else
+                 rate = Integer.parseInt(hsr);
+             Log.v(TAG, "rate = "+rate);
              if ( (timeLapseInterval != 0) ||
-                  (disMode.equals("enable")) ||
+                  (disMode.equals("enable") && (rate > PERSIST_EIS_MAX_FPS)) ||
                   ((hdr != null) && (!hdr.equals("off"))) ) {
                 Log.v(TAG,"HDR/DIS/Time Lapse ON for HFR/HSR selection, turning HFR/HSR off");
                 mParameters.setVideoHighFrameRate("off");

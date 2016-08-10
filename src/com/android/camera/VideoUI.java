@@ -145,6 +145,15 @@ public class VideoUI implements PieRenderer.PieListener,
         }
     }
 
+    public boolean isPreviewCoverVisible() {
+        if ((mPreviewCover != null) &&
+            (mPreviewCover.getVisibility() == View.VISIBLE)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private class SettingsPopup extends PopupWindow {
         public SettingsPopup(View popup) {
             super(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
