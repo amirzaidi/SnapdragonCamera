@@ -720,6 +720,7 @@ public class PhotoModule
         Log.v(TAG, "Start to switch camera. id=" + mPendingSwitchCameraId);
         mCameraId = mPendingSwitchCameraId;
         mPendingSwitchCameraId = -1;
+        mSnapshotOnIdle = false;
         setCameraId(mCameraId);
 
         // from onPause
