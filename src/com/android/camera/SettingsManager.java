@@ -418,8 +418,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public void setValue(String key, String value) {
         ListPreference pref = mPreferenceGroup.findPreference(key);
-        pref.setValue(value);
-        updateMapAndNotify(pref);
+        if (pref != null) {
+            pref.setValue(value);
+            updateMapAndNotify(pref);
+        }
     }
 
     public void setValueIndex(String key, int index) {

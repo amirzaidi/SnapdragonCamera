@@ -656,6 +656,12 @@ public class PhotoModule
     }
 
     @Override
+    public void setPreferenceForTest(String key, String value) {
+        mUI.setPreference(key, value);
+        onSharedPreferenceChanged();
+    }
+
+    @Override
     public void onPreviewUIReady() {
         if (mPaused || mCameraDevice == null) {
             return;
@@ -4875,7 +4881,7 @@ public class PhotoModule
     public void onErrorListener(int error) {
         enableRecordingLocation(false);
     }
-
+    
 }
 
 /* Below is no longer needed, except to get rid of compile error

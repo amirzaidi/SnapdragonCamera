@@ -914,6 +914,11 @@ public class WideAnglePanoramaModule
     }
 
     @Override
+    public void setPreferenceForTest(String key, String value) {
+
+    }
+
+    @Override
     public void onPauseBeforeSuper() {
         mPaused = true;
         if (mLocationManager != null) mLocationManager.recordLocation(false);
