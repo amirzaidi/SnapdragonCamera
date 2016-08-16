@@ -1482,9 +1482,17 @@ public class PhotoModule
                             onCaptureDone();
                         }
                     }
-                    if(!mLongshotActive)
-                        mActivity.updateStorageSpaceAndHint();
-                    mUI.updateRemainingPhotos(--mRemainingPhotos);
+                    if(!mLongshotActive) {
+                        mActivity.updateStorageSpaceAndHint(
+                                new CameraActivity.OnStorageUpdateDoneListener() {
+                            @Override
+                            public void onStorageUpdateDone(long storageSpace) {
+                                mUI.updateRemainingPhotos(--mRemainingPhotos);
+                            }
+                        });
+                    } else {
+                        mUI.updateRemainingPhotos(--mRemainingPhotos);
+                    }
                     long now = System.currentTimeMillis();
                     mJpegCallbackFinishTime = now - mJpegPictureCallbackTime;
                     Log.v(TAG, "mJpegCallbackFinishTime = "
