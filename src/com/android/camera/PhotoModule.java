@@ -1702,6 +1702,12 @@ public class PhotoModule
             mUI.enableShutter(false);
         }
 
+        if (!isShutterSoundOn()) {
+            mCameraDevice.enableShutterSound(false);
+        } else {
+            mCameraDevice.enableShutterSound(!mRefocus);
+        }
+
         if (mCameraState == LONGSHOT) {
             mLongShotCaptureCountLimit = SystemProperties.getInt(
                                     "persist.camera.longshot.shotnum", 0);
@@ -1718,12 +1724,6 @@ public class PhotoModule
                         new JpegPictureCallback(loc));
             }
         } else {
-            if (!isShutterSoundOn()) {
-                mCameraDevice.enableShutterSound(false);
-            } else {
-                mCameraDevice.enableShutterSound(!mRefocus);
-            }
-
             mCameraDevice.takePicture(mHandler,
                     new ShutterCallback(!animateBefore),
                     mRawPictureCallback, mPostViewPictureCallback,
