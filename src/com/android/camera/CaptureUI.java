@@ -1491,6 +1491,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     @Override
     public void onFocusFailed(boolean timeOut) {
+        FocusIndicator indicator = getFocusIndicator();
+        if (indicator != null) indicator.showFail(timeOut);
 
     }
 
