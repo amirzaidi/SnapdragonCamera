@@ -406,6 +406,8 @@ public class ClearSightImageProcessor {
 
         private SparseLongArray mReprocessingFrames = new SparseLongArray();
         private SparseLongArray mReprocessedFrames = new SparseLongArray();
+        private int mReprocessedBayerCount;
+        private int mReprocessedMonoCount;
         private NamedEntity mNamedEntity;
         private int[] mNumImagesToProcess = new int[NUM_CAM];
         private boolean mCaptureDone;
@@ -419,6 +421,8 @@ public class ClearSightImageProcessor {
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 mCaptureDone = false;
+                mReprocessedBayerCount = 0;
+                mReprocessedMonoCount = 0;
                 mNumImagesToProcess[msg.arg1] = msg.arg2;
                 mNamedImages.nameNewImage(System.currentTimeMillis());
                 mNamedEntity = mNamedImages.getNextNameEntity();
@@ -638,15 +642,15 @@ public class ClearSightImageProcessor {
 
             Image image = (Image) msg.obj;
             long ts = image.getTimestamp();
-            Log.d(TAG, "processNewReprocessImage - ts: " + ts);
+            Log.d(TAG, "processNewReprocessImage - cam: " + msg.arg1 + ", ts: " + ts);
+            int frameCount = isBayer?++mReprocessedBayerCount:++mReprocessedMonoCount;
 
             if(mDumpImages) {
                 saveDebugImageAsJpeg(mMediaSaveService, image, isBayer, mNamedEntity,
-                        ClearSightNativeEngine.getInstance().getImageCount(isBayer));
+                        frameCount, ts/1000000);
             }
             if(mDumpYUV) {
-                saveDebugImageAsNV21(image, isBayer, mNamedEntity,
-                        ClearSightNativeEngine.getInstance().getImageCount(isBayer));
+                saveDebugImageAsNV21(image, isBayer, mNamedEntity, frameCount, ts/1000000);
             }
 
             if (!ClearSightNativeEngine.getInstance()
@@ -959,10 +963,10 @@ public class ClearSightImageProcessor {
     }
 
     public void saveDebugImageAsJpeg(MediaSaveService service, byte[] data,
-            int width, int height, boolean isBayer, NamedEntity namedEntity, int count) {
-        String type = isBayer?"bayer":"mono";
+            int width, int height, boolean isBayer, NamedEntity namedEntity, int count, long ts) {
+        String type = isBayer?"b":"m";
         long date = (namedEntity == null) ? -1 : namedEntity.date;
-        String title = String.format("%s_%s_%02d", namedEntity.title, type, count);
+        String title = String.format("%s_%s%02d_%d", namedEntity.title, type, count, ts);
 
         service.addImage(data, title, date, null,
                 width, height, 0, null, null,
@@ -970,33 +974,33 @@ public class ClearSightImageProcessor {
     }
 
     public void saveDebugImageAsJpeg(MediaSaveService service, YuvImage image, boolean isBayer,
-            NamedEntity namedEntity, int count) {
+            NamedEntity namedEntity, int count, long ts) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         image.compressToJpeg(
                 new Rect(0, 0, image.getWidth(), image.getHeight()), 100, baos);
 
         saveDebugImageAsJpeg(service, baos.toByteArray(), image.getWidth(), image.getHeight(),
-                isBayer, namedEntity, count);
+                isBayer, namedEntity, count, ts);
     }
 
     public void saveDebugImageAsJpeg(MediaSaveService service, Image image, boolean isBayer,
-            NamedEntity namedEntity, int count) {
+            NamedEntity namedEntity, int count, long ts) {
         if(image.getFormat() == ImageFormat.YUV_420_888)
-            saveDebugImageAsJpeg(service, createYuvImage(image), isBayer, namedEntity, count);
+            saveDebugImageAsJpeg(service, createYuvImage(image), isBayer, namedEntity, count, ts);
         else if (image.getFormat() == ImageFormat.JPEG) {
             saveDebugImageAsJpeg(service, getJpegData(image), image.getWidth(), image.getHeight(),
-                    isBayer, namedEntity, count);
+                    isBayer, namedEntity, count, ts);
         }
     }
 
-    public void saveDebugImageAsNV21(Image image, boolean isBayer, NamedEntity namedEntity, int count) {
+    public void saveDebugImageAsNV21(Image image, boolean isBayer, NamedEntity namedEntity, int count, long ts) {
         if(image.getFormat() != ImageFormat.YUV_420_888) {
             Log.d(TAG, "saveDebugImageAsNV21 - invalid param");
         }
 
-        String type = isBayer?"bayer":"mono";
-        String title = String.format("%s_%dx%d_NV21_%s_%02d", namedEntity.title,
-                image.getWidth(), image.getHeight(), type, count);
+        String type = isBayer?"b":"m";
+        String title = String.format("%s_%dx%d_NV21_%s%02d_%d", namedEntity.title,
+                image.getWidth(), image.getHeight(), type, count, ts);
 
         YuvImage yuv = createYuvImage(image);
         String path = Storage.generateFilepath(title, "yuv");
