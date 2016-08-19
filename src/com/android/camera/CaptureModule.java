@@ -1460,7 +1460,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcessor.onClose();
         }
 
-        for (int i = 0; i < MAX_NUM_CAM; i++) {
+        // Close camera starting with AUX first
+        for (int i = MAX_NUM_CAM-1; i >= 0; i--) {
             if (null != mCaptureSession[i]) {
                 if (mIsLinked && mCamerasOpened) {
                     unLinkBayerMono(i);
@@ -1489,7 +1490,8 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         try {
             mCameraOpenCloseLock.acquire();
-            for (int i = 0; i < MAX_NUM_CAM; i++) {
+            // Close camera starting with AUX first
+            for (int i = MAX_NUM_CAM-1; i >= 0; i--) {
                 if (null != mCameraDevice[i]) {
                     mCameraDevice[i].close();
                     mCameraDevice[i] = null;
