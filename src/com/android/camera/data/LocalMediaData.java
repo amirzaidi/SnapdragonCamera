@@ -206,10 +206,12 @@ public abstract class LocalMediaData implements LocalData {
             LocalDataAdapter adapter) {
         v.setScaleType(ImageView.ScaleType.FIT_XY);
         v.setImageDrawable(placeHolder);
-
-        BitmapLoadTask task = getBitmapLoadTask(v, decodeWidth, decodeHeight,
-                ctx.getContentResolver(), adapter);
-        task.execute();
+/*
+ * Remove loading bitmaps for this adapter as we no longer use it.
+ */
+//        BitmapLoadTask task = getBitmapLoadTask(v, decodeWidth, decodeHeight,
+//                ctx.getContentResolver(), adapter);
+//        task.execute();
         return v;
     }
 

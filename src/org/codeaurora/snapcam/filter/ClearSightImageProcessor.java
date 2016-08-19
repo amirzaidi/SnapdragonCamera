@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.codeaurora.snapcam.filter.ClearSightNativeEngine.CamSystemCalibrationData;
+import org.codeaurora.snapcam.filter.ClearSightNativeEngine.ClearsightImage;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
@@ -187,7 +188,8 @@ public class ClearSightImageProcessor {
         try {
             CameraCharacteristics cc = cm.getCameraCharacteristics("0");
             byte[] blob = cc.get(OTP_CALIB_BLOB);
-            ClearSightNativeEngine.setOtpCalibData(CamSystemCalibrationData.createFromBytes(blob));
+            ClearSightNativeEngine.getInstance().init(mNumFrameCount*2,
+                    width, height, CamSystemCalibrationData.createFromBytes(blob));
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -261,6 +263,7 @@ public class ClearSightImageProcessor {
         mCaptureSessions[CAM_TYPE_BAYER] = null;
         mMediaSaveService = null;
         mMediaSavedListener = null;
+        ClearSightNativeEngine.getInstance().close();
     }
 
     public void setCallback(Callback callback) {
@@ -466,9 +469,10 @@ public class ClearSightImageProcessor {
         private void processNewCaptureEvent(Message msg) {
              // Toss extra frames
             if(mCaptureDone) {
-                Log.d(TAG, "processNewCaptureEvent - captureDone - we already have required frame pairs");
+                Log.d(TAG, "processNewCaptureEvent - captureDone - we already have required frame pairs " + msg.arg1);
                 if(msg.what == MSG_NEW_IMG) {
                     Image image = (Image) msg.obj;
+                    Log.d(TAG, "processNewCaptureEvent - captureDone - tossed frame ts: " + image.getTimestamp());
                     image.close();
                 }
                 return;
@@ -684,15 +688,8 @@ public class ClearSightImageProcessor {
                 saveDebugImageAsNV21(image, isBayer, mNamedEntity, frameCount, ts/1000000);
             }
 
-            if (!ClearSightNativeEngine.getInstance()
-                    .hasReferenceImage(isBayer)) {
-                // reference not yet set
-                ClearSightNativeEngine.getInstance().setReferenceImage(isBayer,
-                        image);
-            } else {
-                mClearsightRegisterHandler.obtainMessage(MSG_NEW_IMG,
-                        msg.arg1, 0, msg.obj).sendToTarget();
-            }
+            mClearsightRegisterHandler.obtainMessage(MSG_NEW_IMG,
+                    msg.arg1, 0, msg.obj).sendToTarget();
 
             mReprocessingFrames.removeAt(mReprocessingFrames.indexOfValue(ts));
             checkReprocessDone();
@@ -761,10 +758,16 @@ public class ClearSightImageProcessor {
             boolean isBayer = (msg.arg1 == CAM_TYPE_BAYER);
             Image image = (Image)msg.obj;
 
-            // if ref images set, register this image
-            if(ClearSightNativeEngine.getInstance().registerImage(
-                    isBayer, image) == false) {
-                Log.w(TAG, "registerImage : terminal error with input image");
+            if (!ClearSightNativeEngine.getInstance()
+                    .hasReferenceImage(isBayer)) {
+                // reference not yet set
+                ClearSightNativeEngine.getInstance().setReferenceImage(isBayer, image);
+            } else {
+                // if ref images set, register this image
+                if(ClearSightNativeEngine.getInstance().registerImage(
+                        isBayer, image) == false) {
+                    Log.w(TAG, "registerImage : terminal error with input image");
+                }
             }
         }
     }
@@ -797,20 +800,16 @@ public class ClearSightImageProcessor {
                 if(mCallback != null)
                     mCallback.onClearSightSuccess();
 
-                ClearSightNativeEngine.ClearsightImage csImage = ClearSightNativeEngine.getInstance().processImage();
-                if(csImage != null) {
-                    Log.d(TAG, "reprocess - processClearSight, roiRect: "
-                            + csImage.getRoiRect().toString());
+                Image encodeImage = mImageWriter[CAM_TYPE_BAYER].dequeueInputImage();
+                ClearSightNativeEngine.ClearsightImage csImage = new ClearsightImage(encodeImage);
+                encodeImage.setTimestamp(csTs);
 
+                if(ClearSightNativeEngine.getInstance().processImage(csImage)) {
                     clearSightEncode = true;
-                    Image encodeImage = mImageWriter[CAM_TYPE_BAYER].dequeueInputImage();
-                    encodeImage.setCropRect(csImage.getRoiRect());
-                    encodeImage.setTimestamp(csTs);
-                    Plane[] planes = encodeImage.getPlanes();
-                    planes[0].getBuffer().put(csImage.mYplane);
-                    planes[2].getBuffer().put(csImage.mVUplane);
-
                     sendReprocessRequest(csRequest, encodeImage, CAM_TYPE_BAYER);
+                } else {
+                    csImage = null;
+                    encodeImage.close();
                 }
             } else {
                 if(mCallback != null)
