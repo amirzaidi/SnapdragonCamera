@@ -45,6 +45,7 @@ import android.util.Rational;
 import android.util.Size;
 
 import com.android.camera.imageprocessor.filter.BeautificationFilter;
+import com.android.camera.imageprocessor.filter.BestpictureFilter;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.imageprocessor.filter.TrackingFocusFrameListener;
 import com.android.camera.imageprocessor.filter.UbifocusFilter;
@@ -69,12 +70,15 @@ import java.util.Set;
 public class SettingsManager implements ListMenu.SettingsListener {
     public static final int RESOURCE_TYPE_THUMBNAIL = 0;
     public static final int RESOURCE_TYPE_LARGEICON = 1;
+
+    public static final int SCENE_MODE_AUTO_INT = 0;
     public static final int SCENE_MODE_NIGHT_INT = 5;
 
     // Custom-Scenemodes start from 100
     public static final int SCENE_MODE_DUAL_INT = 100;
     public static final int SCENE_MODE_OPTIZOOM_INT = 101;
     public static final int SCENE_MODE_UBIFOCUS_INT = 102;
+    public static final int SCENE_MODE_BESTPICTURE_INT = 103;
     public static final String SCENE_MODE_DUAL_STRING = "100";
     public static final String KEY_CAMERA_SAVEPATH = "pref_camera2_savepath_key";
     public static final String KEY_RECORD_LOCATION = "pref_camera2_recordlocation_key";
@@ -111,6 +115,9 @@ public class SettingsManager implements ListMenu.SettingsListener {
             "pref_camera2_video_time_lapse_frame_interval_key";
     public static final String KEY_FACE_DETECTION = "pref_camera2_facedetection_key";
     public static final String KEY_AUTO_VIDEOSNAP_SIZE = "pref_camera2_videosnap_key";
+    public static final String KEY_VIDEO_HIGH_FRAME_RATE = "pref_camera2_hfr_key";
+    public static final String KEY_SELFIE_FLASH = "pref_selfie_flash_key";
+    public static final String KEY_SHUTTER_SOUND = "pref_camera2_shutter_sound_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -124,6 +131,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private boolean mIsMonoCameraPresent = false;
     private boolean mIsFrontCameraPresent = false;
     private JSONObject mDependency;
+    private int mCameraId;
 
     private SettingsManager(Context context) {
         mListeners = new ArrayList<>();
@@ -197,6 +205,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     @Override
     public void onSettingChanged(ListPreference pref) {
         String key = pref.getKey();
+        if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
         List changed = checkDependencyAndUpdate(key);
         if (changed == null) return;
         notifyListeners(changed);
@@ -215,6 +224,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     private void setLocalIdAndInitialize(int cameraId) {
         mPreferences.setLocalId(mContext, cameraId);
+        mCameraId = cameraId;
         CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
 
         PreferenceInflater inflater = new PreferenceInflater(mContext);
@@ -501,6 +511,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
         ListPreference makeup = mPreferenceGroup.findPreference(KEY_MAKEUP);
         ListPreference trackingfocus = mPreferenceGroup.findPreference(KEY_TRACKINGFOCUS);
+        ListPreference hfr = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
 
         if (whiteBalance != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
@@ -587,6 +598,14 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (!TrackingFocusFrameListener.isSupportedStatic())
                 removePreference(mPreferenceGroup, KEY_TRACKINGFOCUS);
         }
+
+        if (hfr != null) {
+            buildHFR();
+        }
+
+        if (!mIsFrontCameraPresent || !isFacingFront(mCameraId)) {
+            removePreference(mPreferenceGroup, KEY_SELFIE_FLASH);
+        }
     }
 
     private void buildExposureCompensation(int cameraId) {
@@ -647,6 +666,86 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference cameraIdPref = mPreferenceGroup.findPreference(KEY_CAMERA_ID);
         cameraIdPref.setEntryValues(entryValues);
         cameraIdPref.setEntries(entries);
+    }
+
+    private void buildHFR() {
+        ListPreference hfrPref = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
+
+
+        Size[] highSpeedVideoSize = getSupportedHighSpeedVideoSize(mCameraId);
+        if (highSpeedVideoSize.length == 0) {
+            CharSequence[] entryValues = new CharSequence[1];
+            CharSequence[] entries = new CharSequence[1];
+            entryValues[0] = "off";
+            entries[0] = "off";
+            hfrPref.setEntryValues(entryValues);
+            hfrPref.setEntries(entries);
+            hfrPref.setValueIndex(0);
+            return;
+        }
+
+        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        String video = videoQuality.getValue();
+        int x = video.indexOf('x');
+        Size videoSize = new Size(Integer.parseInt(video.substring(0, x)),
+                Integer.parseInt(video.substring(x + 1)));
+
+        boolean found = false;
+        for (Size s : highSpeedVideoSize) {
+            if (videoSize.equals(s)) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            CharSequence[] entryValues = new CharSequence[1];
+            CharSequence[] entries = new CharSequence[1];
+            entryValues[0] = "off";
+            entries[0] = "Off";
+            hfrPref.setEntryValues(entryValues);
+            hfrPref.setEntries(entries);
+            hfrPref.setValueIndex(0);
+            return;
+        }
+
+        Range[] range = getSupportedHighSpeedVideoFPSRange(mCameraId, highSpeedVideoSize[0]);
+        ArrayList<Range> list = new ArrayList<>();
+        for (Range r : range) {
+            if (r.getLower() == r.getUpper()) {
+                list.add(r);
+            }
+        }
+
+        if (list.size() == 0) {
+            CharSequence[] entryValues = new CharSequence[1];
+            CharSequence[] entries = new CharSequence[1];
+            entryValues[0] = "off";
+            entries[0] = "Off";
+            hfrPref.setEntryValues(entryValues);
+            hfrPref.setEntries(entries);
+            hfrPref.setValueIndex(0);
+            return;
+        }
+
+        CharSequence[] entryValues = new CharSequence[list.size() * 2 + 1];
+        CharSequence[] entries = new CharSequence[list.size() * 2 + 1];
+        entryValues[0] = "off";
+        entries[0] = "Off";
+        int i = 1;
+        for (Range r : list) {
+            entries[i] = "HFR " + r.getLower();
+            entryValues[i] = "hfr" + r.getLower();
+            i++;
+        }
+        for (Range r : list) {
+            entries[i] = "HSR " + r.getLower();
+            entryValues[i] = "hsr" + r.getLower();
+            i++;
+        }
+
+        hfrPref.setEntryValues(entryValues);
+        hfrPref.setEntries(entries);
     }
 
     private boolean removePreference(PreferenceGroup group, String key) {
@@ -812,6 +911,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return res;
     }
 
+    public Size[] getSupportedHighSpeedVideoSize(int cameraId) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return map.getHighSpeedVideoSizes();
+    }
+
+    public Range[] getSupportedHighSpeedVideoFPSRange(int cameraId, Size videoSize) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return map.getHighSpeedVideoFpsRangesFor(videoSize);
+    }
+
     private List<String> getSupportedRedeyeReduction(int cameraId) {
         int[] flashModes = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .CONTROL_AE_AVAILABLE_MODES);
@@ -844,6 +955,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (mIsMonoCameraPresent) modes.add(SCENE_MODE_DUAL_STRING); // need special case handle for dual mode
         if (OptizoomFilter.isSupportedStatic()) modes.add(SCENE_MODE_OPTIZOOM_INT + "");
         if (UbifocusFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_UBIFOCUS_INT + "");
+        if (BestpictureFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_BESTPICTURE_INT + "");
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }
@@ -978,6 +1090,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         JSONObject dependencyMap = getDependencyMapForKey(key);
         if (dependencyMap == null) return null;
         if (!dependencyMap.has(value)) value = "default";
+        if (!dependencyMap.has(value)) return null;
         value = getDependencyKey(dependencyMap, value);
         try {
             return dependencyMap.getJSONObject(value);

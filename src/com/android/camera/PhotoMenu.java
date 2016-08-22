@@ -191,7 +191,9 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_EXPOSURE,
                 CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_QC_CHROMA_FLASH,
-                CameraSettings.KEY_REDEYE_REDUCTION
+                CameraSettings.KEY_REDEYE_REDUCTION,
+                CameraSettings.KEY_SELFIE_MIRROR,
+                CameraSettings.KEY_SHUTTER_SOUND
         };
 
         mOtherKeys2 = new String[] {
@@ -234,6 +236,8 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_MANUAL_EXPOSURE,
                 CameraSettings.KEY_MANUAL_WB,
                 CameraSettings.KEY_MANUAL_FOCUS,
+                CameraSettings.KEY_SELFIE_MIRROR,
+                CameraSettings.KEY_SHUTTER_SOUND,
                 SettingsManager.KEY_CAMERA2
         };
 
@@ -1476,6 +1480,12 @@ public class PhotoMenu extends MenuController
         if (notSame(pref, CameraSettings.KEY_SCENE_MODE, "auto")) {
             setPreference(CameraSettings.KEY_COLOR_EFFECT,
                     mActivity.getString(R.string.pref_camera_coloreffect_default));
+        }
+
+        String stillMoreOn = mActivity.getString(R.string.
+                pref_camera_advanced_feature_value_stillmore_on);
+        if (same(pref, CameraSettings.KEY_ADVANCED_FEATURES, stillMoreOn)) {
+           setPreference(CameraSettings.KEY_FLASH_MODE, Parameters.FLASH_MODE_OFF);
         }
 
         ListPreference autoHdrPref = mPreferenceGroup.findPreference(CameraSettings.KEY_AUTO_HDR);

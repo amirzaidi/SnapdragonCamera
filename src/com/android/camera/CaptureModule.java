@@ -35,6 +35,7 @@ import android.graphics.RectF;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
@@ -51,6 +52,7 @@ import android.media.CamcorderProfile;
 import android.media.CameraProfile;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaActionSound;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -62,13 +64,12 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
-import android.view.Display;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
@@ -80,6 +81,7 @@ import com.android.camera.imageprocessor.FrameProcessor;
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
 import com.android.camera.imageprocessor.filter.SharpshooterFilter;
+import com.android.camera.imageprocessor.filter.StillmoreFilter;
 import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.RotateTextToast;
@@ -156,8 +158,6 @@ public class CaptureModule implements CameraModule, PhotoController,
     // Currently, this cancel threshold selection is based on test experiments,
     // we can change it based on memory status or other requirements.
     private static final int LONGSHOT_CANCEL_THRESHOLD = 40 * 1024 * 1024;
-
-    private static final int MAX_IMAGE_NUM = 8;
 
     MeteringRectangle[][] mAFRegions = new MeteringRectangle[MAX_NUM_CAM][];
     MeteringRectangle[][] mAERegions = new MeteringRectangle[MAX_NUM_CAM][];
@@ -251,6 +251,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CameraCaptureSession mCurrentSession;
     private Size mPreviewSize;
     private Size mPictureSize;
+    private Size mVideoPreviewSize;
     private Size mVideoSize;
     private Size mVideoSnapshotSize;
 
@@ -271,6 +272,30 @@ public class CaptureModule implements CameraModule, PhotoController,
     private long mRecordingTotalTime;
     private boolean mRecordingTimeCountsDown = false;
     private ImageReader mVideoSnapshotImageReader;
+    private Range mHighSpeedFPSRange;
+    private boolean mHighSpeedCapture = false;
+    private boolean mHighSpeedCaptureSlowMode = false; //HFR
+    private int mHighSpeedCaptureRate;
+
+    private static final int SELFIE_FLASH_DURATION = 680;
+
+    private MediaActionSound mSound;
+
+    private class SelfieThread extends Thread {
+        public void run() {
+            try {
+                Thread.sleep(SELFIE_FLASH_DURATION);
+                mActivity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        takePicture();
+                    }
+                });
+            } catch(InterruptedException e) {
+            }
+            selfieThread = null;
+        }
+    }
+    private SelfieThread selfieThread;
 
     private class MediaSaveNotifyThread extends Thread {
         private Uri uri;
@@ -1039,6 +1064,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 warningToast("Camera is not ready yet to take a picture.");
                 return;
             }
+            checkAndPlayShutterSound(id);
 
             final boolean csEnabled = isClearSightOn();
             CaptureRequest.Builder captureBuilder;
@@ -1165,6 +1191,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 warningToast("Camera is not ready yet to take a video snapshot.");
                 return;
             }
+            checkAndPlayShutterSound(id);
             CaptureRequest.Builder captureBuilder =
                     mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_VIDEO_SNAPSHOT);
 
@@ -1265,7 +1292,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 } else {
                     // No Clearsight
                     mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
-                            mPictureSize.getHeight(), imageFormat, MAX_IMAGE_NUM);
+                            mPictureSize.getHeight(), imageFormat, PostProcessor.MAX_REQUIRED_IMAGE_NUM);
                     if((mPostProcessor.isFilterOn() || getFrameFilters().size() != 0)
                             && i == getMainCameraId()) {
                         mImageReader[i].setOnImageAvailableListener(mPostProcessor, mImageAvailableHandler);
@@ -1315,7 +1342,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mVideoSnapshotImageReader.close();
         }
         mVideoSnapshotImageReader = ImageReader.newInstance(mVideoSnapshotSize.getWidth(),
-                mVideoSnapshotSize.getHeight(), ImageFormat.JPEG, MAX_IMAGE_NUM);
+                mVideoSnapshotSize.getHeight(), ImageFormat.JPEG, mPostProcessor.MAX_REQUIRED_IMAGE_NUM);
         mVideoSnapshotImageReader.setOnImageAvailableListener(
                 new ImageReader.OnImageAvailableListener() {
                     @Override
@@ -1371,6 +1398,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    mUI.stopSelfieFlash();
                     mUI.enableShutter(true);
                 }
             });
@@ -1600,6 +1628,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mIsRecordingVideo) {
             stopRecordingVideo(getMainCameraId());
         }
+        if (mSound != null) {
+            mSound.release();
+            mSound = null;
+        }
+        if (selfieThread != null) {
+            selfieThread.interrupt();
+        }
+        mUI.stopSelfieFlash();
     }
 
     @Override
@@ -1664,6 +1700,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             return PostProcessor.FILTER_SHARPSHOOTER;
         } else if (mode == SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
             return PostProcessor.FILTER_UBIFOCUS;
+        } else if (mode == SettingsManager.SCENE_MODE_AUTO_INT && StillmoreFilter.isSupportedStatic()) {
+            return PostProcessor.FILTER_STILLMORE;
+        } else if (mode == SettingsManager.SCENE_MODE_BESTPICTURE_INT) {
+            return PostProcessor.FILTER_BESTPICTURE;
         }
         return PostProcessor.FILTER_NONE;
     }
@@ -1677,14 +1717,57 @@ public class CaptureModule implements CameraModule, PhotoController,
         updateMaxVideoDuration();
     }
 
+    private void updatePreviewSize() {
+        int preview_resolution = PersistUtil.getCameraPreviewSize();
+        int width = mPreviewSize.getWidth();
+        int height = mPreviewSize.getHeight();
+        switch (preview_resolution) {
+            case 1: {
+                width = 640;
+                height = 480;
+                Log.v(TAG, "Preview resolution hardcoded to 640x480");
+                break;
+            }
+            case 2: {
+                width = 720;
+                height = 480;
+                Log.v(TAG, "Preview resolution hardcoded to 720x480");
+                break;
+            }
+            case 3: {
+                width = 1280;
+                height = 720;
+                Log.v(TAG, "Preview resolution hardcoded to 1280x720");
+                break;
+            }
+            case 4: {
+                width = 1920;
+                height = 1080;
+                Log.v(TAG, "Preview resolution hardcoded to 1920x1080");
+                break;
+            }
+            default: {
+                Log.v(TAG, "Preview resolution as per Snapshot aspect ratio");
+                break;
+            }
+        }
+        mPreviewSize = new Size(width, height);
+        mUI.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+    }
+
     @Override
     public void onResumeAfterSuper() {
         Log.d(TAG, "onResume " + getCameraMode());
         initializeValues();
-        mUI.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());;
+        updatePreviewSize();
         mUI.showSurfaceView();
         mUI.setSwitcherIndex();
         mCameraIdList = new ArrayList<>();
+
+        if (mSound == null) {
+            mSound = new MediaActionSound();
+        }
+
         if(mPostProcessor != null) {
             String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
             if (scene != null) {
@@ -1937,10 +2020,27 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void checkSelfieFlashAndTakePicture() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_SELFIE_FLASH);
+        if (value == null) {
+            takePicture();
+            return;
+        }
+        if (value.equals("on") && getMainCameraId() == FRONT_ID) {
+            mUI.startSelfieFlash();
+            if (selfieThread == null) {
+                selfieThread = new SelfieThread();
+                selfieThread.start();
+            }
+        } else {
+            takePicture();
+        }
+    }
+
     @Override
     public void onCountDownFinished() {
         mUI.showUIAfterCountDown();
-        takePicture();
+        checkSelfieFlashAndTakePicture();
     }
 
     @Override
@@ -2094,6 +2194,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updateVideoSize() {
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         mVideoSize = parsePictureSize(videoSize);
+        Point screenSize = new Point();
+        mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
+        Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
+                MediaRecorder.class);
+        mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes, screenSize.x, screenSize.y);
     }
 
     private void updateVideoSnapshotSize() {
@@ -2132,7 +2237,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         closePreviewSession();
         mFrameProcessor.onClose();
-        boolean changed = mUI.setPreviewSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+        boolean changed = mUI.setPreviewSize(mVideoPreviewSize.getWidth(),
+                mVideoPreviewSize.getHeight());
         if (changed) {
             mUI.hideSurfaceView();
             mUI.showSurfaceView();
@@ -2146,46 +2252,96 @@ public class CaptureModule implements CameraModule, PhotoController,
             List<Surface> surfaces = new ArrayList<>();
 
             Surface surface = getPreviewSurfaceForSession(cameraId);
-            mFrameProcessor.init(mVideoSize);
+
             if(mFrameProcessor.isFrameFilterEnabled()) {
+                mFrameProcessor.init(mVideoSize);
                 mActivity.runOnUiThread(new Runnable() {
                     public void run() {
                         mUI.getSurfaceHolder().setFixedSize(mVideoSize.getHeight(), mVideoSize.getWidth());
                     }
                 });
+                mFrameProcessor.setOutputSurface(surface);
+                mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
+                addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
+            } else {
+                surfaces.add(surface);
+                mPreviewBuilder.addTarget(surface);
+                surfaces.add(mMediaRecorder.getSurface());
+                mPreviewBuilder.addTarget(mMediaRecorder.getSurface());
             }
-            mFrameProcessor.setOutputSurface(surface);
-            mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
-            addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
-            surfaces.add(mVideoSnapshotImageReader.getSurface());
 
-            mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
-                    .StateCallback() {
+            if (!mHighSpeedCapture) surfaces.add(mVideoSnapshotImageReader.getSurface());
+            else mPreviewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
 
-                @Override
-                public void onConfigured(CameraCaptureSession cameraCaptureSession) {
-                    Log.d(TAG, "StartRecordingVideo session onConfigured");
-                    mCurrentSession = cameraCaptureSession;
-                    try {
-                        setUpVideoCaptureRequestBuilder(mPreviewBuilder);
-                        mCurrentSession.setRepeatingRequest(mPreviewBuilder.build(), null, mCameraHandler);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
+            if (!mHighSpeedCapture) {
+                mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
+                        .StateCallback() {
+
+                    @Override
+                    public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                        Log.d(TAG, "StartRecordingVideo session onConfigured");
+                        mCurrentSession = cameraCaptureSession;
+                        try {
+                            setUpVideoCaptureRequestBuilder(mPreviewBuilder);
+                            mCurrentSession.setRepeatingRequest(mPreviewBuilder.build(), null, mCameraHandler);
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        }
+                        mMediaRecorder.start();
+                        mUI.clearFocus();
+                        mUI.resetPauseButton();
+                        mRecordingTotalTime = 0L;
+                        mRecordingStartTime = SystemClock.uptimeMillis();
+                        mUI.showRecordingUI(true);
+                        updateRecordingTime();
                     }
-                    mMediaRecorder.start();
-                    mUI.clearFocus();
-                    mUI.resetPauseButton();
-                    mRecordingTotalTime = 0L;
-                    mRecordingStartTime = SystemClock.uptimeMillis();
-                    mUI.showRecordingUI(true);
-                    updateRecordingTime();
-                }
 
-                @Override
-                public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                    Toast.makeText(mActivity, "Video Failed", Toast.LENGTH_SHORT).show();
-                }
-            }, null);
+                    @Override
+                    public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                        Toast.makeText(mActivity, "Video Failed", Toast.LENGTH_SHORT).show();
+                    }
+                }, null);
+            } else {
+                mCameraDevice[cameraId].createConstrainedHighSpeedCaptureSession(surfaces, new
+                        CameraConstrainedHighSpeedCaptureSession.StateCallback() {
+
+                            @Override
+                            public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                                mCurrentSession = cameraCaptureSession;
+                                CameraConstrainedHighSpeedCaptureSession session =
+                                        (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
+                                try {
+                                    List list = session
+                                            .createHighSpeedRequestList(mPreviewBuilder.build());
+                                    session.setRepeatingBurst(list, null, mCameraHandler);
+                                } catch (CameraAccessException e) {
+                                    Log.e(TAG, "Failed to start high speed video recording "
+                                            + e.getMessage());
+                                    e.printStackTrace();
+                                } catch (IllegalArgumentException e) {
+                                    Log.e(TAG, "Failed to start high speed video recording "
+                                            + e.getMessage());
+                                    e.printStackTrace();
+                                } catch (IllegalStateException e) {
+                                    Log.e(TAG, "Failed to start high speed video recording "
+                                            + e.getMessage());
+                                    e.printStackTrace();
+                                }
+                                mMediaRecorder.start();
+                                mUI.clearFocus();
+                                mUI.resetPauseButton();
+                                mRecordingTotalTime = 0L;
+                                mRecordingStartTime = SystemClock.uptimeMillis();
+                                mUI.showRecordingUI(true);
+                                updateRecordingTime();
+                            }
+
+                            @Override
+                            public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                                Toast.makeText(mActivity, "Failed", Toast.LENGTH_SHORT).show();
+                            }
+                        }, null);
+            }
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -2201,6 +2357,19 @@ public class CaptureModule implements CameraModule, PhotoController,
         mTimeBetweenTimeLapseFrameCaptureMs = time;
         mCaptureTimeLapse = mTimeBetweenTimeLapseFrameCaptureMs != 0;
         mUI.showTimeLapseUI(mCaptureTimeLapse);
+    }
+
+    private void updateHFRSetting() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+        if (value == null) return;
+        if (value.equals("off")) {
+            mHighSpeedCapture = false;
+        } else {
+            mHighSpeedCapture = true;
+            String mode = value.substring(0, 3);
+            mHighSpeedCaptureSlowMode = mode.equals("hsr");
+            mHighSpeedCaptureRate = Integer.parseInt(value.substring(3));
+        }
     }
 
     private void setUpVideoCaptureRequestBuilder(CaptureRequest.Builder builder) {
@@ -2426,8 +2595,11 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "setUpMediaRecorder");
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         int size = CameraSettings.VIDEO_QUALITY_TABLE.get(videoSize);
-        if (mCaptureTimeLapse)
+        if (mCaptureTimeLapse) {
             size = CameraSettings.getTimeLapseQualityFor(size);
+        }
+        updateHFRSetting();
+        boolean hfr = mHighSpeedCapture && !mHighSpeedCaptureSlowMode;
         mProfile = CamcorderProfile.get(cameraId, size);
 
         int videoEncoder = SettingTranslation
@@ -2437,7 +2609,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         int outputFormat = MediaRecorder.OutputFormat.MPEG_4;
 
-        if (!mCaptureTimeLapse) {
+        if (!mCaptureTimeLapse && !hfr) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
@@ -2454,7 +2626,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mMediaRecorder.setVideoSize(mProfile.videoFrameWidth, mProfile.videoFrameHeight);
         }
         mMediaRecorder.setVideoEncoder(videoEncoder);
-        if (!mCaptureTimeLapse) {
+        if (!mCaptureTimeLapse && !hfr) {
             mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
             mMediaRecorder.setAudioChannels(mProfile.audioChannels);
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
@@ -2464,7 +2636,21 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mCaptureTimeLapse) {
             double fps = 1000 / (double) mTimeBetweenTimeLapseFrameCaptureMs;
             mMediaRecorder.setCaptureRate(fps);
+        }  else if (mHighSpeedCapture) {
+            mHighSpeedFPSRange = new Range(mHighSpeedCaptureRate, mHighSpeedCaptureRate);
+            int fps = (int) mHighSpeedFPSRange.getUpper();
+            mMediaRecorder.setCaptureRate(fps);
+            if (mHighSpeedCaptureSlowMode) {
+                mMediaRecorder.setVideoFrameRate(30);
+            } else {
+                mMediaRecorder.setVideoFrameRate(fps);
+            }
+
+            int scaledBitrate = mProfile.videoBitRate * fps / mProfile.videoFrameRate;
+            Log.i(TAG, "Scaled Video bitrate : " + scaledBitrate);
+            mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
+
         Location loc = mLocationManager.getCurrentLocation();
         if (loc != null) {
             mMediaRecorder.setLocation((float) loc.getLatitude(),
@@ -2520,7 +2706,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     warningToast("It's still busy processing previous scene mode request.");
                     return;
                 }
-                takePicture();
+                checkSelfieFlashAndTakePicture();
             }
         }
     }
@@ -2836,6 +3022,15 @@ public class CaptureModule implements CameraModule, PhotoController,
                 builder.addTarget(surface);
             }
             return;
+        }
+    }
+
+    private void checkAndPlayShutterSound(int id) {
+        if (id == getMainCameraId()) {
+            String value = mSettingsManager.getValue(SettingsManager.KEY_SHUTTER_SOUND);
+            if (value != null && value.equals("on")) {
+                mSound.play(MediaActionSound.SHUTTER_CLICK);
+            }
         }
     }
 

@@ -51,8 +51,10 @@ import com.android.camera.MediaSaveService;
 import com.android.camera.PhotoModule;
 import com.android.camera.SettingsManager;
 import com.android.camera.exif.ExifInterface;
+import com.android.camera.imageprocessor.filter.BestpictureFilter;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.imageprocessor.filter.SharpshooterFilter;
+import com.android.camera.imageprocessor.filter.StillmoreFilter;
 import com.android.camera.imageprocessor.filter.UbifocusFilter;
 import com.android.camera.ui.RotateTextToast;
 
@@ -76,8 +78,12 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     public static final int FILTER_OPTIZOOM = 1;
     public static final int FILTER_SHARPSHOOTER = 2;
     public static final int FILTER_UBIFOCUS = 3;
-    public static final int FILTER_MAX = 4;
+    public static final int FILTER_STILLMORE = 4;
+    public static final int FILTER_BESTPICTURE = 5;
+    public static final int FILTER_MAX = 6;
 
+    //Max image is now Bestpicture filter with 10
+    public static final int MAX_REQUIRED_IMAGE_NUM = 10;
     private int mCurrentNumImage = 0;
     private ImageFilter mFilter;
     private int mFilterIndex;
@@ -285,6 +291,12 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                 case FILTER_UBIFOCUS:
                     mFilter = new UbifocusFilter(mController, mActivity);
                     break;
+                case FILTER_STILLMORE:
+                    mFilter = new StillmoreFilter(mController);
+                    break;
+                case FILTER_BESTPICTURE:
+                    mFilter = new BestpictureFilter(mController, mActivity);
+                    break;
             }
         }
 
@@ -435,10 +447,12 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                             }
                         }
                     }
-                    //Start processing FrameProcessor filter as well
-                    for (ImageFilter filter : mController.getFrameFilters()) {
-                        filter.init(resultImage.width, resultImage.height, resultImage.stride, resultImage.stride);
-                        filter.addImage(resultImage.outBuffer, null, 0, new Boolean(false));
+                    if(resultImage != null) {
+                        //Start processing FrameProcessor filter as well
+                        for (ImageFilter filter : mController.getFrameFilters()) {
+                            filter.init(resultImage.width, resultImage.height, resultImage.stride, resultImage.stride);
+                            filter.addImage(resultImage.outBuffer, null, 0, new Boolean(false));
+                        }
                     }
                     //End processing FrameProessor filter
                     clear();
@@ -446,10 +460,11 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                     if(mWatchdog != null) {
                         mWatchdog.stopMonitor();
                     }
-                    if((resultImage.outRoi.left + resultImage.outRoi.width() > resultImage.width) ||
+                    if(resultImage == null ||
+                            (resultImage.outRoi.left + resultImage.outRoi.width() > resultImage.width) ||
                             (resultImage.outRoi.top + resultImage.outRoi.height() > resultImage.height)
                             ) {
-                        Log.e(TAG, "Processed outRoi is not within picture range");
+                        Log.d(TAG, "Result image is not valid.");
                     } else {
                         if(mFilter != null && DEBUG_FILTER) {
                             bytes = nv21ToJpeg(mDebugResultImage, mOrientation);
@@ -488,5 +503,9 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
         }
     }
 
+    private native int nativeFlipVerticalNV21(byte[] buf, int stride, int height);
 
+    static {
+        System.loadLibrary("jni_imageutil");
+    }
 }

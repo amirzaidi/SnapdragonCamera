@@ -125,7 +125,7 @@ public class FrameProcessor {
                 mOutingHandler = new Handler(mOutingThread.getLooper());
             }
 
-            if(mListeningThread == null) {
+            if (mListeningThread == null) {
                 mListeningThread = new HandlerThread("FrameListeningThread");
                 mListeningThread.start();
                 mListeningHandler = new Handler(mListeningThread.getLooper());
@@ -256,10 +256,10 @@ public class FrameProcessor {
             } catch (InterruptedException e) {
             }
         }
-        for(ImageFilter filter : mPreviewFilters) {
+        for (ImageFilter filter : mPreviewFilters) {
             filter.deinit();
         }
-        for(ImageFilter filter : mFinalFilters) {
+        for (ImageFilter filter : mFinalFilters) {
             filter.deinit();
         }
     }
@@ -275,14 +275,14 @@ public class FrameProcessor {
 
     public List<Surface> getInputSurfaces() {
         List<Surface> surfaces = new ArrayList<Surface>();
-        if(mPreviewFilters.size() == 0 && mFinalFilters.size() == 0) {
+        if (mPreviewFilters.size() == 0 && mFinalFilters.size() == 0) {
             surfaces.add(mSurfaceAsItIs);
-            if(mIsVideoOn) {
+            if (mIsVideoOn) {
                 surfaces.add(mVideoSurfaceAsItIs);
             }
         } else if (mFinalFilters.size() == 0) {
             surfaces.add(mSurfaceAsItIs);
-            if(mIsVideoOn) {
+            if (mIsVideoOn) {
                 surfaces.add(mVideoSurfaceAsItIs);
             }
             surfaces.add(getReaderSurface());
@@ -293,7 +293,7 @@ public class FrameProcessor {
     }
 
     public boolean isFrameFilterEnabled() {
-        if(mFinalFilters.size() == 0) {
+        if (mFinalFilters.size() == 0) {
             return false;
         }
         return true;
@@ -301,13 +301,13 @@ public class FrameProcessor {
 
     public void setOutputSurface(Surface surface) {
         mSurfaceAsItIs = surface;
-        if(mFinalFilters.size() != 0) {
+        if (mFinalFilters.size() != 0) {
             mOutputAllocation.setSurface(surface);
         }
     }
 
     public void setVideoOutputSurface(Surface surface) {
-        if(surface == null) {
+        if (surface == null) {
             synchronized (mAllocationLock) {
                 if (mVideoOutputAllocation != null) {
                     mVideoOutputAllocation.destroy();
@@ -319,7 +319,7 @@ public class FrameProcessor {
         }
         mVideoSurfaceAsItIs = surface;
         mIsVideoOn = true;
-        if(mFinalFilters.size() != 0) {
+        if (mFinalFilters.size() != 0) {
             synchronized (mAllocationLock) {
                 if (mVideoOutputAllocation == null) {
                     Type.Builder rgbTypeBuilder = new Type.Builder(mRs, Element.RGBA_8888(mRs));
@@ -346,32 +346,32 @@ public class FrameProcessor {
         @Override
         public void onImageAvailable(ImageReader reader) {
             synchronized (mAllocationLock) {
-                if(mOutputAllocation == null) {
+                if (mOutputAllocation == null) {
                     return;
                 }
                 try {
                     Image image = reader.acquireLatestImage();
-                    if(image == null) {
+                    if (image == null) {
                         return;
                     }
-                    if(!mIsActive) {
+                    if (!mIsActive) {
                         image.close();
                         return;
                     }
                     mIsAllocationEverUsed = true;
                     ByteBuffer bY = image.getPlanes()[0].getBuffer();
                     ByteBuffer bVU = image.getPlanes()[2].getBuffer();
-                    if(yvuBytes == null || width != mSize.getWidth() || height != mSize.getHeight()) {
+                    if (yvuBytes == null || width != mSize.getWidth() || height != mSize.getHeight()) {
                         stride = image.getPlanes()[0].getRowStride();
                         width = mSize.getWidth();
                         height = mSize.getHeight();
                         ySize = stride * mSize.getHeight();
-                        yvuBytes = new byte[ySize*3/2];
+                        yvuBytes = new byte[ySize * 3 / 2];
                     }
                     boolean needToFeedSurface = false;
                     //Start processing yvu buf
                     for (ImageFilter filter : mPreviewFilters) {
-                        if(filter.isFrameListener()) {
+                        if (filter.isFrameListener()) {
                             if (mListeningTask.setParam(filter, bY, bVU, mSize.getWidth(), mSize.getHeight(), stride)) {
                                 mListeningHandler.post(mListeningTask);
                             }
@@ -384,7 +384,7 @@ public class FrameProcessor {
                         bVU.rewind();
                     }
                     //End processing yvu buf
-                    if(needToFeedSurface) {
+                    if (needToFeedSurface) {
                         bY.get(yvuBytes, 0, bY.remaining());
                         bVU.get(yvuBytes, ySize, bVU.remaining());
                         mOutingHandler.post(this);
@@ -398,17 +398,17 @@ public class FrameProcessor {
         @Override
         public void run() {
             synchronized (mAllocationLock) {
-                if(!mIsActive) {
+                if (!mIsActive) {
                     return;
                 }
-                if(mInputAllocation == null) {
+                if (mInputAllocation == null) {
                     createAllocation(stride, height, stride - width);
                 }
                 mInputAllocation.copyFrom(yvuBytes);
                 mRsRotator.forEach_rotate90andMerge(mInputAllocation);
                 mRsYuvToRGB.forEach_nv21ToRgb(mOutputAllocation);
                 mOutputAllocation.ioSend();
-                if(mVideoOutputAllocation != null) {
+                if (mVideoOutputAllocation != null) {
                     mVideoOutputAllocation.copyFrom(mOutputAllocation);
                     mVideoOutputAllocation.ioSend();
                 }
@@ -425,7 +425,7 @@ public class FrameProcessor {
         Semaphore mMutureLock = new Semaphore(1);
 
         public boolean setParam(ImageFilter filter, ByteBuffer bY, ByteBuffer bVU, int width, int height, int stride) {
-            if(!mIsActive) {
+            if (!mIsActive) {
                 return false;
             }
             if (!mMutureLock.tryAcquire()) {
@@ -466,14 +466,6 @@ public class FrameProcessor {
             } catch (InterruptedException e) {
             }
         }
-    }
-
-    private native int nativeRotateNV21(ByteBuffer inBuf, int imageWidth, int imageHeight, int degree, ByteBuffer outBuf);
-
-    private native int nativeNV21toRgb(ByteBuffer yvuBuf, ByteBuffer rgbBuf, int width, int height);
-
-    static {
-        System.loadLibrary("jni_imageutil");
     }
 }
 

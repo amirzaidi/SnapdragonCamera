@@ -133,6 +133,7 @@
         <item>8</item>
         <item>9</item>
         <item>-1</item>
+        <item>103</item>
     </string-array>
 
     <!-- Camera Preferences Scene Mode dialog box entries -->
@@ -153,6 +154,7 @@
         <item>@string/pref_camera_scenemode_entry_beach</item>
         <item>@string/pref_camera_scenemode_entry_snow</item>
         <item>@string/pref_camera_scenemode_entry_asd</item>
+        <item>@string/pref_camera_scenemode_entry_bestpicture</item>
     </string-array>
 
     <array name="pref_camera2_scenemode_thumbnails" translatable="false">
@@ -172,6 +174,7 @@
         <item>@drawable/ic_scene_mode_beach</item>
         <item>@drawable/ic_scene_mode_snow</item>
         <item>@drawable/ic_scene_mode_smartauto</item>
+        <item>@drawable/pick_the_best_photo</item>
     </array>
 
     <string-array name="pref_camera2_whitebalance_entryvalues" translatable="false">
@@ -825,5 +828,15 @@ for time lapse recording -->
     <string-array name="pref_camera2_videosnap_entryvalues" translatable="false">
         <item>@string/pref_camera2_videosnap_value_enable</item>
         <item>@string/pref_camera2_videosnap_value_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_shutter_sound_entries" translatable="true">
+        <item>@string/pref_camera2_shutter_sound_entry_on</item>
+        <item>@string/pref_camera2_shutter_sound_entry_off</item>
+    </string-array>
+
+    <string-array name="pref_camera2_shutter_sound_entryvalues" translatable="false">
+        <item>@string/pref_camera2_shutter_sound_value_on</item>
+        <item>@string/pref_camera2_shutter_sound_value_off</item>
     </string-array>
 </resources>

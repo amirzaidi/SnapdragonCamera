@@ -44,6 +44,7 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -67,6 +68,7 @@ import com.android.camera.ui.RenderOverlay;
 import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateTextToast;
+import com.android.camera.ui.SelfieFlashView;
 import com.android.camera.ui.TrackingFocusRenderer;
 import com.android.camera.ui.ZoomRenderer;
 import com.android.camera.util.CameraUtil;
@@ -100,6 +102,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private static final int ANIMATION_DURATION = 300;
     private static final int CLICK_THRESHOLD = 200;
     String[] mSettingKeys = new String[]{
+            SettingsManager.KEY_SELFIE_FLASH,
             SettingsManager.KEY_FLASH_MODE,
             SettingsManager.KEY_RECORD_LOCATION,
             SettingsManager.KEY_PICTURE_SIZE,
@@ -111,12 +114,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_WHITE_BALANCE,
             SettingsManager.KEY_CAMERA2,
             SettingsManager.KEY_FACE_DETECTION,
+            SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE,
             SettingsManager.KEY_VIDEO_FLASH_MODE,
             SettingsManager.KEY_VIDEO_DURATION,
             SettingsManager.KEY_VIDEO_QUALITY,
             SettingsManager.KEY_TRACKINGFOCUS,
-            SettingsManager.KEY_MAKEUP
-            };
+            SettingsManager.KEY_MAKEUP,
+            SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
+            SettingsManager.KEY_SHUTTER_SOUND
+    };
     String[] mDeveloperKeys = new String[]{
             SettingsManager.KEY_REDEYE_REDUCTION,
             SettingsManager.KEY_MONO_ONLY,
@@ -127,7 +133,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             SettingsManager.KEY_DIS,
             SettingsManager.KEY_VIDEO_ENCODER,
             SettingsManager.KEY_AUDIO_ENCODER,
-            SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
             SettingsManager.KEY_VIDEO_ROTATION,
             SettingsManager.KEY_AUTO_VIDEOSNAP_SIZE
     };
@@ -155,6 +160,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private ImageView mThumbnail;
     private Camera2FaceView mFaceView;
     private Point mDisplaySize = new Point();
+    private SelfieFlashView mSelfieView;
+    private float mScreenBrightness = 0.0f;
 
     private SurfaceHolder.Callback callbackMono = new SurfaceHolder.Callback() {
         // SurfaceHolder callbacks
@@ -1671,6 +1678,32 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                     break;
             }
         }
+    }
+
+    public void startSelfieFlash() {
+        if (mSelfieView == null)
+            mSelfieView = (SelfieFlashView) (mRootView.findViewById(R.id.selfie_flash));
+        mSelfieView.bringToFront();
+        mSelfieView.open();
+        mScreenBrightness = setScreenBrightness(1F);
+    }
+
+    public void stopSelfieFlash() {
+        if (mSelfieView == null)
+            mSelfieView = (SelfieFlashView) (mRootView.findViewById(R.id.selfie_flash));
+        mSelfieView.close();
+        if (mScreenBrightness != 0.0f)
+            setScreenBrightness(mScreenBrightness);
+    }
+
+    private float setScreenBrightness(float brightness) {
+        float originalBrightness;
+        Window window = mActivity.getWindow();
+        WindowManager.LayoutParams layout = window.getAttributes();
+        originalBrightness = layout.screenBrightness;
+        layout.screenBrightness = brightness;
+        window.setAttributes(layout);
+        return originalBrightness;
     }
 
     public void hideSurfaceView() {

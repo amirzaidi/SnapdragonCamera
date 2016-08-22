@@ -458,6 +458,7 @@ public class PhotoUI implements PieListener,
         }
 
         mSurfaceView.setLayoutParams(lp);
+        mRootView.requestLayout();
         if (mFaceView != null) {
             mFaceView.setLayoutParams(lp);
         }
@@ -1252,7 +1253,10 @@ public class PhotoUI implements PieListener,
 
     @Override
     public void clearFocus() {
-        FocusIndicator indicator = getFocusIndicator();
+        FocusIndicator indicator = mPieRenderer;
+        if (hasFaces()) {
+            mFaceView.showStart();
+        }
         if (indicator != null) indicator.clear();
     }
 
@@ -1295,6 +1299,9 @@ public class PhotoUI implements PieListener,
         mFaceView.setVisibility(View.VISIBLE);
         mFaceView.setDisplayOrientation(orientation);
         mFaceView.setMirror(mirror);
+        LayoutParams layoutParams = new LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        mFaceView.setLayoutParams(layoutParams);
         mFaceView.resume();
     }
 

@@ -16,6 +16,8 @@
 
 package com.android.camera;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.Display;
 import android.graphics.Point;
 import android.Manifest;
@@ -67,7 +69,6 @@ import android.os.PowerManager.WakeLock;
 import android.os.SystemProperties;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -224,6 +225,7 @@ public class CameraActivity extends Activity
     private FrameLayout mPreviewContentLayout;
     private boolean mPaused = true;
     private boolean mHasCriticalPermissions;
+    private boolean mForceReleaseCamera = false;
 
     private Uri[] mNfcPushUris = new Uri[1];
 
@@ -1642,6 +1644,13 @@ public class CameraActivity extends Activity
             if(resultCode == RESULT_OK) {
                 mCaptureModule.setRefocusLastTaken(false);
             }
+        } else if (requestCode == BestpictureActivity.BESTPICTURE_ACTIVITY_CODE)  {
+            if(resultCode == RESULT_OK) {
+                byte[] jpeg = data.getByteArrayExtra("thumbnail");
+                if(jpeg != null) {
+                    updateThumbnail(jpeg);
+                }
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -1672,8 +1681,7 @@ public class CameraActivity extends Activity
         } else {
             mHasCriticalPermissions = false;
         }
-        if ((checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) ||
-                !mHasCriticalPermissions) {
+        if (!mHasCriticalPermissions) {
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean isRequestShown = prefs.getBoolean(CameraSettings.KEY_REQUEST_PERMISSION, false);
             if(!isRequestShown || !mHasCriticalPermissions) {
@@ -1903,9 +1911,9 @@ public class CameraActivity extends Activity
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION: {
                 // If request is cancelled, the result arrays are empty.
-                 mCurrentModule.waitingLocationPermissionResult(false);
+                mCurrentModule.waitingLocationPermissionResult(false);
                 if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.v(TAG, "Location permission is granted");
                     mCurrentModule.enableRecordingLocation(true);
                 } else {
@@ -1917,11 +1925,17 @@ public class CameraActivity extends Activity
         }
     }
 
+    public boolean isForceReleaseCamera() {
+        return mForceReleaseCamera;
+    }
+
     @Override
     public void onModuleSelected(int moduleIndex) {
         boolean cam2on = SettingsManager.getInstance().isCamera2On();
-        if (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
+        mForceReleaseCamera = cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX;
+        if (mForceReleaseCamera) {
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
+        }
         if (mCurrentModuleIndex == moduleIndex) {
             if (mCurrentModuleIndex != ModuleSwitcher.CAPTURE_MODULE_INDEX) {
                 return;
@@ -1932,6 +1946,7 @@ public class CameraActivity extends Activity
         setModuleFromIndex(moduleIndex);
 
         openModule(mCurrentModule);
+        mForceReleaseCamera = false;
         mCurrentModule.onOrientationChanged(mLastRawOrientation);
         if (mMediaSaveService != null) {
             mCurrentModule.onMediaSaveServiceConnected(mMediaSaveService);
