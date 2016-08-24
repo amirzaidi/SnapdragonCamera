@@ -1123,7 +1123,7 @@ public class PhotoModule
                     }
                 });
             }
-            if (mRefocus) {
+            if (mRefocus && isShutterSoundOn()) {
                 mSoundPool.play(mRefocusSound, 1.0f, 1.0f, 0, 0, 1.0f);
             }
         }
