@@ -2314,14 +2314,14 @@ public class VideoModule implements CameraModule,
         Log.v(TAG, "preview format set to NV21");
 
         // Set High Frame Rate.
-        String HighFrameRate = mPreferences.getString(
+        String highFrameRate = mPreferences.getString(
             CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
             mActivity. getString(R.string.pref_camera_hfr_default));
-        boolean isHFR = "hfr".equals(HighFrameRate.substring(0,3));
-        boolean isHSR = "hsr".equals(HighFrameRate.substring(0,3));
+        boolean isHFR = "hfr".equals(highFrameRate.substring(0,3));
+        boolean isHSR = "hsr".equals(highFrameRate.substring(0,3));
 
         if (isHFR || isHSR) {
-            String hfrRate = HighFrameRate.substring(3);
+            String hfrRate = highFrameRate.substring(3);
             if (isHFR) {
                 mUnsupportedHFRVideoSize = true;
             } else {
@@ -2533,8 +2533,7 @@ public class VideoModule implements CameraModule,
         String hfr = mParameters.getVideoHighFrameRate();
         String hsr = mParameters.get(CameraSettings.KEY_VIDEO_HSR);
         String hdr = mParameters.getVideoHDRMode();
-        if ( ((hfr != null) && (!hfr.equals("off"))) ||
-             ((hsr != null) && (!hsr.equals("off"))) ) {
+         if ( !"off".equals(highFrameRate) ) {
              // Read time lapse recording interval.
              String frameIntervalStr = mPreferences.getString(
                     CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
