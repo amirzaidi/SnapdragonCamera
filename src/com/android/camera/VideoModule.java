@@ -553,6 +553,12 @@ public class VideoModule implements CameraModule,
         mLocationManager.recordLocation(enable);
      }
 
+    @Override
+    public void setPreferenceForTest(String key, String value) {
+        mUI.setPreference(key, value);
+        onSharedPreferenceChanged();
+    }
+
     // SingleTapListener
     // Preview area is touched. Take a picture.
     @Override

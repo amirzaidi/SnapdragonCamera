@@ -148,6 +148,8 @@ public class CameraActivity extends Activity
     // This string is used for judge start activity from screenoff or not
     public static final String GESTURE_CAMERA_NAME = "com.android.camera.CameraGestureActivity";
 
+    private static final String AUTO_TEST_INTENT ="com.android.camera.autotest";
+
     /**
      * Request code from an activity we started that indicated that we do not
      * want to reset the view to the preview in onResume.
@@ -252,6 +254,8 @@ public class CameraActivity extends Activity
     // Keep track of data request here to avoid creating useless UpdateThumbnailTask.
     private boolean mDataRequested;
     private Cursor mCursor;
+
+    private boolean mAutoTestEnabled = false;
 
     private WakeLock mWakeLock;
     private static final int REFOCUS_ACTIVITY_CODE = 1;
@@ -1394,6 +1398,24 @@ public class CameraActivity extends Activity
         }
     }
 
+    private BroadcastReceiver mAutoTestReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.hasExtra("KEY") && intent.hasExtra("VALUE")) {
+                String key = intent.getExtras().getString("KEY");
+                String value = intent.getExtras().getString("VALUE");
+                if (mCurrentModule != null) {
+                    mCurrentModule.setPreferenceForTest(key,value);
+                }
+            }
+        }
+    };
+
+    private  void registerAutoTestReceiver() {
+        IntentFilter filter = new IntentFilter(AUTO_TEST_INTENT);
+        registerReceiver(mAutoTestReceiver, filter);
+    }
+
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -1451,11 +1473,11 @@ public class CameraActivity extends Activity
             moduleIndex = ModuleSwitcher.VIDEO_MODULE_INDEX;
         } else if (MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA.equals(getIntent().getAction())
                 || MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(getIntent()
-                        .getAction())) {
+                .getAction())) {
             moduleIndex = ModuleSwitcher.PHOTO_MODULE_INDEX;
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             if (prefs.getInt(CameraSettings.KEY_STARTUP_MODULE_INDEX, -1)
-                        == ModuleSwitcher.GCAM_MODULE_INDEX && GcamHelper.hasGcamCapture()) {
+                    == ModuleSwitcher.GCAM_MODULE_INDEX && GcamHelper.hasGcamCapture()) {
                 moduleIndex = ModuleSwitcher.GCAM_MODULE_INDEX;
             }
         } else if (MediaStore.ACTION_IMAGE_CAPTURE.equals(getIntent().getAction())
@@ -1582,6 +1604,11 @@ public class CameraActivity extends Activity
         SETTING_LIST_WIDTH_1 = lower / 2 + offset;
         SETTING_LIST_WIDTH_2 = lower / 2 - offset;
         registerSDcardMountedReceiver();
+        mAutoTestEnabled = SystemProperties.getBoolean("camera.ui.auto_test", false);
+
+        if (mAutoTestEnabled) {
+            registerAutoTestReceiver();
+        }
     }
 
     private void setRotationAnimation() {
@@ -1786,6 +1813,9 @@ public class CameraActivity extends Activity
 
             mCursor.close();
             mCursor=null;
+        }
+        if (mAutoTestEnabled) {
+            unregisterReceiver(mAutoTestReceiver);
         }
         super.onDestroy();
     }

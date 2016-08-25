@@ -2130,6 +2130,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
+    public void setPreferenceForTest(String key, String value) {
+        mSettingsManager.setValue(key, value);
+    }
+
+    @Override
     public void onPreviewUIReady() {
         if (mPaused || mIsRecordingVideo) {
             return;
