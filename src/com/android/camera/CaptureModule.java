@@ -604,6 +604,16 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void checkAfAeStatesAndCapture(int id) {
         if(isBackCamera() && getCameraMode() == DUAL_MODE) {
             mState[id] = STATE_AF_AE_LOCKED;
+            try {
+                // stop repeating request once we have AF/AE lock
+                // for mono when mono preview is off.
+                if(id == MONO_ID && !canStartMonoPreview()) {
+                    mCaptureSession[id].stopRepeating();
+                }
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+
             if(mState[BAYER_ID] == STATE_AF_AE_LOCKED &&
                     mState[MONO_ID] == STATE_AF_AE_LOCKED) {
                 mState[BAYER_ID] = STATE_PICTURE_TAKEN;
@@ -982,6 +992,17 @@ public class CaptureModule implements CameraModule, PhotoController,
             return;
         }
         Log.d(TAG, "lockFocus " + id);
+
+        try {
+            // start repeating request to get AF/AE state updates
+            // for mono when mono preview is off.
+            if(id == MONO_ID && !canStartMonoPreview()) {
+                mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
+                        .build(), mCaptureCallback, mCameraHandler);
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
 
         mTakingPicture[id] = true;
         if (mState[id] == STATE_WAITING_TOUCH_FOCUS) {
