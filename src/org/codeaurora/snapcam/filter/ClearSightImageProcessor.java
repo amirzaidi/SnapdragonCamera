@@ -405,7 +405,7 @@ public class ClearSightImageProcessor {
                 mNumBurstCount);
 
         private SparseLongArray mReprocessingFrames = new SparseLongArray();
-        private SparseLongArray mReprocessedFrames = new SparseLongArray();
+        private int mReprocessingPairCount;
         private int mReprocessedBayerCount;
         private int mReprocessedMonoCount;
         private NamedEntity mNamedEntity;
@@ -421,6 +421,7 @@ public class ClearSightImageProcessor {
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 mCaptureDone = false;
+                mReprocessingPairCount = 0;
                 mReprocessedBayerCount = 0;
                 mReprocessedMonoCount = 0;
                 mNumImagesToProcess[msg.arg1] = msg.arg2;
@@ -463,6 +464,16 @@ public class ClearSightImageProcessor {
         }
 
         private void processNewCaptureEvent(Message msg) {
+             // Toss extra frames
+            if(mCaptureDone) {
+                Log.d(TAG, "processNewCaptureEvent - captureDone - we already have required frame pairs");
+                if(msg.what == MSG_NEW_IMG) {
+                    Image image = (Image) msg.obj;
+                    image.close();
+                }
+                return;
+            }
+
             ArrayDeque<Image> imageQueue;
             ArrayDeque<TotalCaptureResult> resultQueue;
             ArrayDeque<ReprocessableImage> frameQueue;
@@ -504,8 +515,9 @@ public class ClearSightImageProcessor {
             Log.d(TAG, "processNewCaptureEvent - imagestoprocess[bayer] " + mNumImagesToProcess[CAM_TYPE_BAYER] +
                     " imagestoprocess[mono]: " + mNumImagesToProcess[CAM_TYPE_MONO]);
 
-            if (mNumImagesToProcess[CAM_TYPE_BAYER] == 0
-                    && mNumImagesToProcess[CAM_TYPE_MONO] == 0) {
+            if (mReprocessingPairCount == mNumFrameCount ||
+                    (mNumImagesToProcess[CAM_TYPE_BAYER] == 0
+                    && mNumImagesToProcess[CAM_TYPE_MONO] == 0)) {
                 processFinalPair();
             }
         }
@@ -550,6 +562,7 @@ public class ClearSightImageProcessor {
                     // send for reproc
                     sendReprocessRequest(CAM_TYPE_BAYER, mBayerFrames.poll());
                     sendReprocessRequest(CAM_TYPE_MONO, mMonoFrames.poll());
+                    mReprocessingPairCount++;
                 }
             }
         }
@@ -575,6 +588,7 @@ public class ClearSightImageProcessor {
                 Integer hash = ts.hashCode();
                 reprocRequest.setTag(hash);
                 mReprocessingFrames.put(hash, ts);
+                Log.d(TAG, "sendReprocessRequest - adding reproc frame - hash: " + hash + ", ts: " + ts);
 
                 mImageWriter[camId].queueInputImage(reprocImg.mImage);
 
@@ -619,6 +633,13 @@ public class ClearSightImageProcessor {
             }
 
             mBayerFrames.clear();
+
+            for (Image img : mBayerImages) {
+                img.close();
+            }
+
+            mBayerImages.clear();
+            mBayerCaptureResults.clear();
         }
 
         private void releaseMonoFrames() {
@@ -627,12 +648,22 @@ public class ClearSightImageProcessor {
             }
 
             mMonoFrames.clear();
+
+            for (Image img : mMonoImages) {
+                img.close();
+            }
+
+            mMonoImages.clear();
+            mMonoCaptureResults.clear();
         }
 
         private void processFinalPair() {
             Log.d(TAG, "processFinalPair");
             releaseBayerFrames();
             releaseMonoFrames();
+
+            mImageProcessHandler.removeMessages(MSG_NEW_CAPTURE_RESULT);
+            mImageProcessHandler.removeMessages(MSG_NEW_CAPTURE_FAIL);
 
             mCaptureDone = true;
         }
