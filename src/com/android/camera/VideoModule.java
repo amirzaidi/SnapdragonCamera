@@ -98,6 +98,7 @@ public class VideoModule implements CameraModule,
     private static final int SHOW_TAP_TO_SNAPSHOT_TOAST = 7;
     private static final int SWITCH_CAMERA = 8;
     private static final int SWITCH_CAMERA_START_ANIMATION = 9;
+    private static final int HANDLE_FLASH_TORCH_DELAY = 10;
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
@@ -412,6 +413,11 @@ public class VideoModule implements CameraModule,
 
                     // Enable all camera controls.
                     mSwitchingCamera = false;
+                    break;
+                }
+
+                case HANDLE_FLASH_TORCH_DELAY: {
+                    forceFlashOff(!mPreviewFocused);
                     break;
                 }
 
@@ -1224,7 +1230,7 @@ public class VideoModule implements CameraModule,
 
         setDisplayOrientation();
         mCameraDevice.setDisplayOrientation(mCameraDisplayOrientation);
-        setCameraParameters();
+        setCameraParameters(true);
 
         try {
             mCameraDevice.setPreviewDisplay(sh);
@@ -1323,6 +1329,7 @@ public class VideoModule implements CameraModule,
         mHandler.removeMessages(CHECK_DISPLAY_ROTATION);
         mHandler.removeMessages(SWITCH_CAMERA);
         mHandler.removeMessages(SWITCH_CAMERA_START_ANIMATION);
+        mHandler.removeMessages(HANDLE_FLASH_TORCH_DELAY);
         mPendingSwitchCameraId = -1;
         mSwitchingCamera = false;
         mPreferenceRead = false;
@@ -2598,7 +2605,7 @@ public class VideoModule implements CameraModule,
     }
 
     @SuppressWarnings("deprecation")
-    private void setCameraParameters() {
+    private void setCameraParameters(boolean isFlashDelay) {
         Log.d(TAG,"Preview dimension in App->"+mDesiredPreviewWidth+"X"+mDesiredPreviewHeight);
         mParameters.setPreviewSize(mDesiredPreviewWidth, mDesiredPreviewHeight);
         mParameters.set("video-size", mProfile.videoFrameWidth+"x"+mProfile.videoFrameHeight);
@@ -2611,7 +2618,11 @@ public class VideoModule implements CameraModule,
             mParameters.setPreviewFrameRate(mProfile.videoFrameRate);
         }
 
-        forceFlashOffIfSupported(!mPreviewFocused);
+        if (isFlashDelay) {
+            mHandler.sendEmptyMessageDelayed(HANDLE_FLASH_TORCH_DELAY, 800);
+        } else {
+            forceFlashOffIfSupported(!mPreviewFocused);
+        }
         videoWidth = mProfile.videoFrameWidth;
         videoHeight = mProfile.videoFrameHeight;
 
@@ -2786,7 +2797,7 @@ public class VideoModule implements CameraModule,
                 resizeForPreviewAspectRatio();
                 startPreview(); // Parameters will be set in startPreview().
             } else {
-                setCameraParameters();
+                setCameraParameters(false);
             }
             mRestartPreview = false;
             mUI.updateOnScreenIndicators(mParameters, mPreferences);
@@ -2915,7 +2926,7 @@ public class VideoModule implements CameraModule,
     @Override
     public void onPreviewFocusChanged(boolean previewFocused) {
         mUI.onPreviewFocusChanged(previewFocused);
-        forceFlashOff(!previewFocused);
+        mHandler.sendEmptyMessageDelayed(HANDLE_FLASH_TORCH_DELAY, 800);
         mPreviewFocused = previewFocused;
     }
 
