@@ -76,6 +76,7 @@ import android.widget.Toast;
 
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.Exif;
+import com.android.camera.imageprocessor.filter.ChromaflashFilter;
 import com.android.camera.imageprocessor.filter.ImageFilter;
 import com.android.camera.imageprocessor.PostProcessor;
 import com.android.camera.imageprocessor.FrameProcessor;
@@ -911,6 +912,26 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void setAFModeToPreview(int id, int afMode) {
         Log.d(TAG, "setAFModeToPreview " + afMode);
         mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AF_MODE, afMode);
+        applyAFRegions(mPreviewRequestBuilder[id], id);
+        applyAERegions(mPreviewRequestBuilder[id], id);
+        mPreviewRequestBuilder[id].setTag(id);
+        try {
+            mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
+                    .build(), mCaptureCallback, mCameraHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setFlashModeToPreview(int id, boolean isFlashOn) {
+        Log.d(TAG, "setFlashModeToPreview " + isFlashOn);
+        if(isFlashOn) {
+            mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            mPreviewRequestBuilder[id].set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
+        } else {
+            mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            mPreviewRequestBuilder[id].set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+        }
         applyAFRegions(mPreviewRequestBuilder[id], id);
         applyAERegions(mPreviewRequestBuilder[id], id);
         mPreviewRequestBuilder[id].setTag(id);
@@ -1810,6 +1831,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             return PostProcessor.FILTER_OPTIZOOM;
         } else if (mode == SettingsManager.SCENE_MODE_NIGHT_INT && SharpshooterFilter.isSupportedStatic()) {
             return PostProcessor.FILTER_SHARPSHOOTER;
+        } else if (mode == SettingsManager.SCENE_MODE_CHROMAFLASH_INT && ChromaflashFilter.isSupportedStatic()) {
+            return PostProcessor.FILTER_CHROMAFLASH;
         } else if (mode == SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
             return PostProcessor.FILTER_UBIFOCUS;
         }// else if (mode == SettingsManager.SCENE_MODE_AUTO_INT && StillmoreFilter.isSupportedStatic()) {

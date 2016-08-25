@@ -58,6 +58,7 @@ import com.android.camera.PhotoModule;
 import com.android.camera.SettingsManager;
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.imageprocessor.filter.BestpictureFilter;
+import com.android.camera.imageprocessor.filter.ChromaflashFilter;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
 import com.android.camera.imageprocessor.filter.SharpshooterFilter;
 import com.android.camera.imageprocessor.filter.StillmoreFilter;
@@ -87,7 +88,8 @@ public class PostProcessor{
     public static final int FILTER_UBIFOCUS = 3;
     public static final int FILTER_STILLMORE = 4;
     public static final int FILTER_BESTPICTURE = 5;
-    public static final int FILTER_MAX = 6;
+    public static final int FILTER_CHROMAFLASH = 6;
+    public static final int FILTER_MAX = 7;
 
     //BestPicture requires 10 which is the biggest among filters
     public static final int MAX_REQUIRED_IMAGE_NUM = 11;
@@ -507,6 +509,9 @@ public class PostProcessor{
                     break;
                 case FILTER_BESTPICTURE:
                     mFilter = new BestpictureFilter(mController, mActivity);
+                    break;
+                case FILTER_CHROMAFLASH:
+                    mFilter = new ChromaflashFilter(mController);
                     break;
             }
         }
