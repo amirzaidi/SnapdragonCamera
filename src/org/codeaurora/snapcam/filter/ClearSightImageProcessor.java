@@ -213,7 +213,7 @@ public class ClearSightImageProcessor {
             CameraCharacteristics cc = cm.getCameraCharacteristics("0");
             byte[] blob = cc.get(OTP_CALIB_BLOB);
             ClearSightNativeEngine.getInstance().init(mNumFrameCount*2,
-                    width, height, CamSystemCalibrationData.createFromBytes(blob));
+                    maxWidth, maxHeight, CamSystemCalibrationData.createFromBytes(blob));
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -715,6 +715,12 @@ public class ClearSightImageProcessor {
             mImageProcessHandler.removeMessages(MSG_NEW_CAPTURE_FAIL);
 
             mCaptureDone = true;
+
+            if(mReprocessingPairCount == 0) {
+                // No matching pairs
+                Log.w(TAG, "processFinalPair - no matching pairs found");
+                if(mCallback != null) mCallback.onClearSightFailure(null);
+            }
         }
 
         private void processNewReprocessImage(Message msg) {
@@ -1194,22 +1200,25 @@ public class ClearSightImageProcessor {
 
         // if ratios are different, adjust crop rect to fit ratio
         // if ratios are same, no need to adjust crop
+        Log.d(TAG, "getFinalCropRect - rect: " + rect.toString());
+        Log.d(TAG, "getFinalCropRect - ratios: " + rectRatio + ", " + mFinalPictureRatio);
         if(rectRatio > mFinalPictureRatio) {
             // ratio indicates need for horizontal crop
             // add .5 to round up if necessary
             int newWidth = (int)(((float)rect.height() * mFinalPictureRatio) + .5f);
-            int newXoffset = (rect.width() - newWidth)/2;
+            int newXoffset = (rect.width() - newWidth)/2 + rect.left;
             finalRect.left = newXoffset;
             finalRect.right = newXoffset + newWidth;
         } else if(rectRatio < mFinalPictureRatio) {
             // ratio indicates need for vertical crop
             // add .5 to round up if necessary
             int newHeight = (int)(((float)rect.width() / mFinalPictureRatio) + .5f);
-            int newYoffset = (rect.height() - newHeight)/2;
+            int newYoffset = (rect.height() - newHeight)/2 + rect.top;
             finalRect.top = newYoffset;
             finalRect.bottom = newYoffset + newHeight;
         }
 
+        Log.d(TAG, "getFinalCropRect - final rect: " + finalRect.toString());
         return finalRect;
     }
 }
