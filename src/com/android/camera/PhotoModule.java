@@ -1469,7 +1469,7 @@ public class PhotoModule
                                 mUI.setDownFactor(4);
                             }
                             if (mAnimateCapture) {
-                                mUI.animateCapture(jpegData, orientation, mMirror);
+                                mUI.animateCapture(jpegData);
                             }
                         } else {
                             // In long shot mode, we do not want to update the preview thumbnail
@@ -1483,7 +1483,7 @@ public class PhotoModule
                         stopPreview();
                         mJpegImageData = jpegData;
                         if (!mQuickCapture) {
-                            mUI.showCapturedImageForReview(jpegData, orientation, mMirror);
+                            mUI.showCapturedImageForReview(jpegData, orientation, false);
                         } else {
                             onCaptureDone();
                         }
@@ -1708,6 +1708,12 @@ public class PhotoModule
             mUI.enableShutter(false);
         }
 
+        if (!isShutterSoundOn()) {
+            mCameraDevice.enableShutterSound(false);
+        } else {
+            mCameraDevice.enableShutterSound(!mRefocus);
+        }
+
         if (mCameraState == LONGSHOT) {
             mLongShotCaptureCountLimit = SystemProperties.getInt(
                                     "persist.camera.longshot.shotnum", 0);
@@ -1724,12 +1730,6 @@ public class PhotoModule
                         new JpegPictureCallback(loc));
             }
         } else {
-            if (!isShutterSoundOn()) {
-                mCameraDevice.enableShutterSound(false);
-            } else {
-                mCameraDevice.enableShutterSound(!mRefocus);
-            }
-
             mCameraDevice.takePicture(mHandler,
                     new ShutterCallback(!animateBefore),
                     mRawPictureCallback, mPostViewPictureCallback,
@@ -2245,7 +2245,7 @@ public class PhotoModule
            if (mCameraState == LONGSHOT) {
                mLongshotActive = false;
                mCameraDevice.setLongshot(false);
-               mUI.animateCapture(mLastJpegData, mLastJpegOrientation, mMirror);
+               mUI.animateCapture(mLastJpegData);
                mLastJpegData = null;
                if (!mFocusManager.isZslEnabled()) {
                    setupPreview();
