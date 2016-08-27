@@ -538,7 +538,7 @@ public class PhotoUI implements PieListener,
         mActivity.setPreviewGestures(mGestures);
     }
 
-    public void animateCapture(final byte[] jpegData, int orientation, boolean mirror) {
+    public void animateCapture(final byte[] jpegData) {
         // Decode jpeg byte array and then animate the jpeg
         mActivity.updateThumbnail(jpegData);
     }
