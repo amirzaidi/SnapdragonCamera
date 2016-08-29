@@ -1713,19 +1713,17 @@ public class CameraActivity extends Activity
         } else {
             mHasCriticalPermissions = false;
         }
-        if (!mHasCriticalPermissions) {
-            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean isRequestShown = prefs.getBoolean(CameraSettings.KEY_REQUEST_PERMISSION, false);
-            if(!isRequestShown || !mHasCriticalPermissions) {
-                Log.v(TAG, "Request permission");
-                Intent intent = new Intent(this, PermissionsActivity.class);
-                startActivity(intent);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putBoolean(CameraSettings.KEY_REQUEST_PERMISSION, true);
-                editor.apply();
-                requestPermission = true;
-           }
-        }
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isRequestShown = prefs.getBoolean(CameraSettings.KEY_REQUEST_PERMISSION, false);
+        if(!isRequestShown || !mHasCriticalPermissions) {
+            Log.v(TAG, "Request permission");
+            Intent intent = new Intent(this, PermissionsActivity.class);
+            startActivity(intent);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean(CameraSettings.KEY_REQUEST_PERMISSION, true);
+            editor.apply();
+            requestPermission = true;
+       }
         return requestPermission;
     }
 
