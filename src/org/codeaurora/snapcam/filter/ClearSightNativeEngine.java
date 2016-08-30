@@ -174,10 +174,14 @@ public class ClearSightNativeEngine {
             Log.d(TAG, "setRefColorImage");
             Plane[] planes = mRefColorImage.getPlanes();
             SourceImage newSrc = getNewSourceImage();
+            ByteBuffer refY = planes[Y_PLANE].getBuffer();
+            ByteBuffer refVU = planes[VU_PLANE].getBuffer();
+            refY.rewind();
+            refVU.rewind();
             newSrc.mY.rewind();
-            newSrc.mY.put(planes[Y_PLANE].getBuffer());
+            newSrc.mY.put(refY);
             newSrc.mVU.rewind();
-            newSrc.mVU.put(planes[VU_PLANE].getBuffer());
+            newSrc.mVU.put(refVU);
             mSrcColor.add(newSrc);
         }
     }
@@ -194,8 +198,10 @@ public class ClearSightNativeEngine {
             Log.d(TAG, "setRefMonoImage");
             Plane[] planes = mRefMonoImage.getPlanes();
             SourceImage newSrc = getNewSourceImage();
+            ByteBuffer refY = planes[Y_PLANE].getBuffer();
+            refY.rewind();
             newSrc.mY.rewind();
-            newSrc.mY.put(planes[Y_PLANE].getBuffer());
+            newSrc.mY.put(refY);
             mSrcMono.add(newSrc);
         }
     }
