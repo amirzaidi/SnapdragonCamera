@@ -34,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.codeaurora.snapcam.filter.ClearSightNativeEngine.CamSystemCalibrationData;
@@ -53,6 +54,7 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.InputConfiguration;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -65,6 +67,7 @@ import android.os.Message;
 import android.os.SystemProperties;
 import android.util.Log;
 import android.util.SparseLongArray;
+import android.util.Size;
 import android.view.Surface;
 
 import com.android.camera.CaptureModule;
@@ -75,6 +78,7 @@ import com.android.camera.MediaSaveService.OnMediaSavedListener;
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
 import com.android.camera.Storage;
+import com.android.camera.util.CameraUtil;
 
 public class ClearSightImageProcessor {
     private static final String TAG = "ClearSightImageProcessor";
@@ -85,6 +89,13 @@ public class ClearSightImageProcessor {
 
     private static final long DEFAULT_TIMESTAMP_THRESHOLD_MS = 10;
     private static final int DEFAULT_IMAGES_TO_BURST = 4;
+
+    private static final long MIN_MONO_AREA = 1900000;  // ~1.9 MP
+    private static final Size[] MONO_SIZES = {
+        new Size(1600, 1200),   // 4:3
+        new Size(1920, 1080),   // 16:9
+        new Size(1400, 1400)    // 1:1
+    };
 
     private static final int MSG_START_CAPTURE = 0;
     private static final int MSG_NEW_IMG = 1;
@@ -107,6 +118,9 @@ public class ClearSightImageProcessor {
     private ImageReader[] mImageReader = new ImageReader[NUM_CAM];
     private ImageReader[] mEncodeImageReader = new ImageReader[NUM_CAM];
     private ImageWriter[] mImageWriter = new ImageWriter[NUM_CAM];
+    private float mFinalPictureRatio;
+    private Size mFinalPictureSize;
+    private Size mFinalMonoSize;
 
     private ImageProcessHandler mImageProcessHandler;
     private ClearsightRegisterHandler mClearsightRegisterHandler;
@@ -163,7 +177,8 @@ public class ClearSightImageProcessor {
         return mInstance;
     }
 
-    public void init(int width, int height, Context context, OnMediaSavedListener mediaListener) {
+    public void init(StreamConfigurationMap map, int width, int height,
+            Context context, OnMediaSavedListener mediaListener) {
         mImageProcessThread = new HandlerThread("CameraImageProcess");
         mImageProcessThread.start();
         mClearsightRegisterThread = new HandlerThread("ClearsightRegister");
@@ -178,10 +193,16 @@ public class ClearSightImageProcessor {
         mClearsightProcessHandler = new ClearsightProcessHandler(mClearsightProcessThread.getLooper());
         mImageEncodeHandler = new ImageEncodeHandler(mImageEncodeThread.getLooper());
 
-        mImageReader[CAM_TYPE_BAYER] = createImageReader(CAM_TYPE_BAYER, width, height);
-        mImageReader[CAM_TYPE_MONO] = createImageReader(CAM_TYPE_MONO, width, height);
-        mEncodeImageReader[CAM_TYPE_BAYER] = createEncodeImageReader(CAM_TYPE_BAYER, width, height);
-        mEncodeImageReader[CAM_TYPE_MONO] = createEncodeImageReader(CAM_TYPE_MONO, width, height);
+        mFinalPictureSize = new Size(width, height);
+        mFinalPictureRatio = (float)width / (float)height;
+        mFinalMonoSize = getFinalMonoSize();
+        Size maxSize = findMaxOutputSize(map);
+        int maxWidth = maxSize.getWidth();
+        int maxHeight = maxSize.getHeight();
+        mImageReader[CAM_TYPE_BAYER] = createImageReader(CAM_TYPE_BAYER, maxWidth, maxHeight);
+        mImageReader[CAM_TYPE_MONO] = createImageReader(CAM_TYPE_MONO, maxWidth, maxHeight);
+        mEncodeImageReader[CAM_TYPE_BAYER] = createEncodeImageReader(CAM_TYPE_BAYER, maxWidth, maxHeight);
+        mEncodeImageReader[CAM_TYPE_MONO] = createEncodeImageReader(CAM_TYPE_MONO, maxWidth, maxHeight);
 
         mMediaSavedListener = mediaListener;
         CameraManager cm = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
@@ -859,13 +880,26 @@ public class ClearSightImageProcessor {
         private void sendReprocessRequest(CaptureRequest.Builder reprocRequest, Image image, final int camType) {
 
             try {
+                reprocRequest.set(CaptureModule.JpegCropEnableKey, (byte)1);
+
                 Rect cropRect = image.getCropRect();
-                if(cropRect != null &&
-                        !cropRect.isEmpty()) {
-                    // has crop rect. apply to jpeg request
-                    reprocRequest.set(CaptureModule.JpegCropEnableKey, (byte)1);
-                    reprocRequest.set(CaptureModule.JpegCropRectKey,
-                           new int[] {cropRect.left, cropRect.top, cropRect.width(), cropRect.height()});
+                if(cropRect == null ||
+                        cropRect.isEmpty()) {
+                    // if no crop rect set, init to default image width + height
+                    cropRect = new Rect(0, 0, image.getWidth(), image.getHeight());
+                }
+
+                cropRect = getFinalCropRect(cropRect);
+                // has crop rect. apply to jpeg request
+                reprocRequest.set(CaptureModule.JpegCropRectKey,
+                       new int[] {cropRect.left, cropRect.top, cropRect.width(), cropRect.height()});
+
+                if(camType == CAM_TYPE_MONO) {
+                    reprocRequest.set(CaptureModule.JpegRoiRectKey,
+                           new int[] {0, 0, mFinalMonoSize.getWidth(), mFinalMonoSize.getHeight()});
+                } else {
+                    reprocRequest.set(CaptureModule.JpegRoiRectKey,
+                            new int[] {0, 0, mFinalPictureSize.getWidth(), mFinalPictureSize.getHeight()});
                 }
 
                 mImageWriter[camType].queueInputImage(image);
@@ -1072,5 +1106,74 @@ public class ClearSightImageProcessor {
         buffer.get(data, 0, size);
 
         return data;
+    }
+
+    private Size findMaxOutputSize(StreamConfigurationMap map) {
+        Size[] sizes = map.getOutputSizes(ImageFormat.YUV_420_888);
+        Arrays.sort(sizes, new CameraUtil.CompareSizesByArea());
+        return sizes[sizes.length-1];
+    }
+
+    private Size getFinalMonoSize() {
+        Size finalSize = null;
+        long finalPicArea = mFinalPictureSize.getWidth() * mFinalPictureSize.getHeight();
+
+        // if final pic size is less than 2MP, then use same MONO size
+        if(finalPicArea > MIN_MONO_AREA) {
+            for(Size size:MONO_SIZES) {
+                float monoRatio = (float)size.getWidth() / (float)size.getHeight();
+                if(monoRatio == mFinalPictureRatio) {
+                    finalSize = size;
+                    break;
+                } else if (Math.abs(monoRatio - mFinalPictureRatio) < 0.1f) {
+                    // close enough
+                    int monoWidth = size.getWidth();
+                    int monoHeight = size.getHeight();
+                    if(monoRatio > mFinalPictureRatio) {
+                        // keep width, increase height to match final ratio
+                        // add .5 to round up if necessary
+                        monoHeight = (int)(((float)monoWidth / mFinalPictureRatio) + .5f);
+                    } else if(monoRatio < mFinalPictureRatio) {
+                        // keep height, increase width to match final ratio
+                        // add .5 to round up if necessary
+                        monoWidth = (int)(((float)monoHeight * mFinalPictureRatio) + .5f);
+                    }
+                    finalSize = new Size(monoWidth, monoHeight);
+                }
+            }
+        }
+
+        if(finalSize == null) {
+            // set to mFinalPictureSize if matching size not found
+            // or if final resolution is less than 2 MP
+            finalSize = mFinalPictureSize;
+        }
+
+        return finalSize;
+    }
+
+    private Rect getFinalCropRect(Rect rect) {
+        Rect finalRect = new Rect(rect);
+        float rectRatio = (float) rect.width()/(float) rect.height();
+
+        // if ratios are different, adjust crop rect to fit ratio
+        // if ratios are same, no need to adjust crop
+        if(rectRatio > mFinalPictureRatio) {
+            // ratio indicates need for horizontal crop
+            // add .5 to round up if necessary
+            int newWidth = (int)(((float)rect.height() * mFinalPictureRatio) + .5f);
+            int newXoffset = (rect.width() - newWidth)/2;
+            finalRect.left = newXoffset;
+            finalRect.right = newXoffset + newWidth;
+        } else if(rectRatio < mFinalPictureRatio) {
+            // ratio indicates need for vertical crop
+            // add .5 to round up if necessary
+            int newHeight = (int)(((float)rect.width() / mFinalPictureRatio) + .5f);
+            int newYoffset = (rect.height() - newHeight)/2;
+            finalRect.top = newYoffset;
+            finalRect.bottom = newYoffset + newHeight;
+        }
+
+        return finalRect;
     }
 }
