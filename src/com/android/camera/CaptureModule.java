@@ -1158,6 +1158,15 @@ public class CaptureModule implements CameraModule, PhotoController,
                 captureBuilder = mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             }
 
+            Location location = mLocationManager.getCurrentLocation();
+            if(location != null) {
+                Log.d(TAG, "captureStillPicture gps: " + location.toString());
+                // workaround for Google bug. Need to convert timestamp from ms -> sec
+                location.setTime(location.getTime()/1000);
+                captureBuilder.set(CaptureRequest.JPEG_GPS_LOCATION, location);
+            } else {
+                Log.d(TAG, "captureStillPicture no location - getRecordLocation: " + getRecordLocation());
+            }
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, mOrientation));
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             addPreviewSurface(captureBuilder, null, id);
