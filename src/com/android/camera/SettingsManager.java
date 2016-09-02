@@ -39,6 +39,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.MediaRecorder;
+import android.media.CamcorderProfile;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
@@ -895,7 +896,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
         Size[] sizes = map.getOutputSizes(MediaRecorder.class);
         List<String> res = new ArrayList<>();
         for (int i = 0; i < sizes.length; i++) {
-            res.add(sizes[i].toString());
+            if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(sizes[i].toString())) {
+                int profile = CameraSettings.VIDEO_QUALITY_TABLE.get(sizes[i].toString());
+
+                if (CamcorderProfile.hasProfile(cameraId, profile)) {
+                    res.add(sizes[i].toString());
+                }
+            }
         }
         return res;
     }
@@ -907,7 +914,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         List<String> res = new ArrayList<>();
         for (int i = 0; i < sizes.length; i++) {
             if(sizes[i].getWidth() <= maxWidth && sizes[i].getHeight() <= maxHeight) {
-                res.add(sizes[i].toString());
+                if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(sizes[i].toString())) {
+                    int profile = CameraSettings.VIDEO_QUALITY_TABLE.get(sizes[i].toString());
+                    if (CamcorderProfile.hasProfile(cameraId, profile)) {
+                        res.add(sizes[i].toString());
+                    }
+                }
             }
         }
         return res;
