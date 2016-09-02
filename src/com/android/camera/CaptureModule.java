@@ -2756,7 +2756,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mMediaRecorder.setVideoFrameRate(fps);
             }
 
-            int scaledBitrate = mProfile.videoBitRate * fps / mProfile.videoFrameRate;
+            int scaledBitrate = mProfile.videoBitRate * (fps / mProfile.videoFrameRate);
             Log.i(TAG, "Scaled Video bitrate : " + scaledBitrate);
             mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
