@@ -80,6 +80,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.HashMap;
 import java.lang.reflect.Method;
+import java.util.regex.Pattern;
 
 public class VideoModule implements CameraModule,
     VideoController,
@@ -2547,10 +2548,9 @@ public class VideoModule implements CameraModule,
                     mActivity.getString(R.string.pref_video_time_lapse_frame_interval_default));
              int timeLapseInterval = Integer.parseInt(frameIntervalStr);
              int rate = 0;
-             if (!hfr.equals("off"))
-                 rate = Integer.parseInt(hfr);
-             else
-                 rate = Integer.parseInt(hsr);
+             if ( isDigit(highFrameRate.substring(3)) ) {
+                 rate = Integer.parseInt(highFrameRate.substring(3));
+             }
              Log.v(TAG, "rate = "+rate);
              if ( (timeLapseInterval != 0) ||
                   (disMode.equals("enable") && (rate > PERSIST_EIS_MAX_FPS)) ||
@@ -2602,6 +2602,12 @@ public class VideoModule implements CameraModule,
                 mFaceDetectionEnabled = false;
             }
         }
+    }
+
+    private boolean isDigit(String input) {
+        String ruler = "[1-9][0-9]*";
+        Pattern pattern = Pattern.compile(ruler);
+        return pattern.matcher(input).matches();
     }
 
     @SuppressWarnings("deprecation")
