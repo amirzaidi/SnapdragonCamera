@@ -286,6 +286,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final int SELFIE_FLASH_DURATION = 680;
 
     private MediaActionSound mSound;
+    private Size mSupportedMaxPictureSize;
 
     private class SelfieThread extends Thread {
         public void run() {
@@ -864,7 +865,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                     };
 
             if(id == getMainCameraId()) {
-                mFrameProcessor.init(mPreviewSize);
                 mFrameProcessor.setOutputSurface(surface);
             }
 
@@ -1361,8 +1361,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                     }
                 } else {
                     // No Clearsight
-                    mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
-                            mPictureSize.getHeight(), imageFormat, PostProcessor.MAX_REQUIRED_IMAGE_NUM);
+                    if(mPostProcessor.isZSLEnabled()) {
+                        mImageReader[i] = ImageReader.newInstance(mSupportedMaxPictureSize.getWidth(),
+                                mSupportedMaxPictureSize.getHeight(), imageFormat, PostProcessor.MAX_REQUIRED_IMAGE_NUM);
+                    } else {
+                        mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
+                                mPictureSize.getHeight(), imageFormat, PostProcessor.MAX_REQUIRED_IMAGE_NUM);
+                    }
                     if ((mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isZSLEnabled())
                             && i == getMainCameraId()) {
                         mImageReader[i].setOnImageAvailableListener(mPostProcessor.getImageHandler(), mImageAvailableHandler);
@@ -1479,6 +1484,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mUI.enableShutter(true);
                 }
             });
+        } catch (NullPointerException e) {
+            Log.w(TAG, "Session is already closed");
+        } catch (IllegalStateException e) {
+            Log.w(TAG, "Session is already closed");
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -1878,7 +1887,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         }
         if(mFrameProcessor != null) {
-            mFrameProcessor.onOpen(getFrameProcFilterId());
+            mFrameProcessor.onOpen(getFrameProcFilterId(), mPreviewSize);
         }
 
         if(mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isZSLEnabled()) {
@@ -2278,6 +2287,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
         Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                 SurfaceHolder.class);
+        mSupportedMaxPictureSize = prevSizes[0];
         mPreviewSize = getOptimalPreviewSize(mPictureSize, prevSizes, screenSize.x, screenSize.y);
     }
 
@@ -2359,23 +2369,17 @@ public class CaptureModule implements CameraModule, PhotoController,
             List<Surface> surfaces = new ArrayList<>();
 
             Surface surface = getPreviewSurfaceForSession(cameraId);
-
+            mFrameProcessor.onOpen(getFrameProcFilterId(),mVideoSize);
             if(mFrameProcessor.isFrameFilterEnabled()) {
-                mFrameProcessor.init(mVideoSize);
                 mActivity.runOnUiThread(new Runnable() {
                     public void run() {
                         mUI.getSurfaceHolder().setFixedSize(mVideoSize.getHeight(), mVideoSize.getWidth());
                     }
                 });
-                mFrameProcessor.setOutputSurface(surface);
-                mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
-                addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
-            } else {
-                surfaces.add(surface);
-                mPreviewBuilder.addTarget(surface);
-                surfaces.add(mMediaRecorder.getSurface());
-                mPreviewBuilder.addTarget(mMediaRecorder.getSurface());
             }
+            mFrameProcessor.setOutputSurface(surface);
+            mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
+            addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
 
             if (!mHighSpeedCapture) surfaces.add(mVideoSnapshotImageReader.getSurface());
             else mPreviewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
@@ -2617,15 +2621,18 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "stopRecordingVideo " + cameraId);
 
         // Stop recording
-        mFrameProcessor.onClose();
         mFrameProcessor.setVideoOutputSurface(null);
+        mFrameProcessor.onClose();
         closePreviewSession();
         mMediaRecorder.stop();
         mMediaRecorder.reset();
-
         saveVideo();
         mUI.showRecordingUI(false);
         mIsRecordingVideo = false;
+
+        if(mFrameProcessor != null) {
+            mFrameProcessor.onOpen(getFrameProcFilterId(), mPreviewSize);
+        }
         boolean changed = mUI.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
         if (changed) {
             mUI.hideSurfaceView();
@@ -3143,7 +3150,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void checkAndPlayShutterSound(int id) {
         if (id == getMainCameraId()) {
             String value = mSettingsManager.getValue(SettingsManager.KEY_SHUTTER_SOUND);
-            if (value != null && value.equals("on")) {
+            if (value != null && value.equals("on") && mSound != null) {
                 mSound.play(MediaActionSound.SHUTTER_CLICK);
             }
         }

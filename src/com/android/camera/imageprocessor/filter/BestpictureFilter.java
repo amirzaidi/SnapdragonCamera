@@ -78,6 +78,8 @@ public class BestpictureFilter implements ImageFilter {
     private PhotoModule.NamedImages mNamedImages;
     private ByteBuffer mBY;
     private ByteBuffer mBVU;
+    private Object mClosingLock = new Object();
+    private boolean mIsOn = false;
 
     private static void Log(String msg) {
         if (DEBUG) {
@@ -117,12 +119,16 @@ public class BestpictureFilter implements ImageFilter {
         mHeight = height/2*2;
         mStrideY = strideY/2*2;
         mStrideVU = strideVU / 2 * 2;
+        mIsOn = true;
         Log("width: " + mWidth + " height: " + mHeight + " strideY: " + mStrideY + " strideVU: " + mStrideVU);
     }
 
     @Override
     public void deinit() {
         Log("deinit");
+        synchronized (mClosingLock) {
+            mIsOn = false;
+        }
     }
 
     @Override
@@ -136,8 +142,13 @@ public class BestpictureFilter implements ImageFilter {
         }
         new Thread() {
             public void run() {
-                saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation));
-                mSavedCount++;
+                synchronized (mClosingLock) {
+                    if (!mIsOn) {
+                        return;
+                    }
+                    saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation));
+                    mSavedCount++;
+                }
             }
         }.start();
     }

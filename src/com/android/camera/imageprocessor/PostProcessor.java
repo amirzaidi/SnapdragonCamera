@@ -214,7 +214,8 @@ public class PostProcessor{
             mImageReader = imageReader;
         }
         ZSLQueue.ImageItem imageItem = mZSLQueue.tryToGetMatchingItem();
-        if(mController.getPreviewCaptureResult().get(CaptureResult.CONTROL_AE_STATE) == CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED) {
+        if(mController.getPreviewCaptureResult() == null ||
+                mController.getPreviewCaptureResult().get(CaptureResult.CONTROL_AE_STATE) == CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED) {
             if(DEBUG_ZSL) Log.d(TAG, "Flash required image");
             imageItem = null;
         }
@@ -226,7 +227,7 @@ public class PostProcessor{
             reprocessImage(imageItem);
             return true;
         } else {
-            if(DEBUG_ZSL) Log.d(TAG, "No good item in queue, reigster the request for the future");
+            if(DEBUG_ZSL) Log.d(TAG, "No good item in queue, register the request for the future");
             mZSLQueue.addPictureRequest();
             return false;
         }
@@ -332,8 +333,12 @@ public class PostProcessor{
     }
 
     public void manualCapture(CaptureRequest.Builder builder, CameraCaptureSession captureSession,
-                              CameraCaptureSession.CaptureCallback callback, Handler handler) throws CameraAccessException {
-        mFilter.manualCapture(builder, captureSession, callback, handler);
+                              CameraCaptureSession.CaptureCallback callback, Handler handler) throws CameraAccessException{
+        try {
+            mFilter.manualCapture(builder, captureSession, callback, handler);
+        } catch(IllegalStateException e) {
+            Log.w(TAG, "Session is closed while taking manual pictures ");
+        }
     }
 
     public boolean isFilterOn() {
@@ -580,7 +585,7 @@ public class PostProcessor{
         mHandler.post(new Runnable() {
                 public void run() {
                     synchronized (lock) {
-                        if(!handler.isRunning) {
+                        if(!handler.isRunning || mStatus != STATUS.BUSY) {
                             return;
                         }
                         ByteBuffer yBuf = image.getPlanes()[0].getBuffer();
@@ -630,7 +635,7 @@ public class PostProcessor{
     private void processImage(final String title, final long date,
                              final MediaSaveService.OnMediaSavedListener mediaSavedListener,
                              final ContentResolver contentResolver) {
-        if(mHandler == null || !mHandler.isRunning) {
+        if(mHandler == null || !mHandler.isRunning || mStatus != STATUS.BUSY) {
             return;
         }
         final ProcessorHandler handler = mHandler;
