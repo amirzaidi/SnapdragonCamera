@@ -36,6 +36,7 @@ public class PersistUtil {
     private static final String PERSIST_SKIP_MEMORY_CHECK = "persist.camera.perf.skip_memck";
     private static final String PERSIST_LONGSHOT_SHOT_LIMIT = "persist.camera.longshot.shotnum";
     private static final String PERSIST_CAMERA_PREVIEW_SIZE = "persist.camera.preview.size";
+    private static final String PERSIST_CAMERA_CAMERA2 = "persist.camera.camera2";
 
     public static int getMemoryLimit() {
         return SystemProperties.getInt(PERSIST_MEMORY_LIMIT, 60);
@@ -51,5 +52,9 @@ public class PersistUtil {
 
     public static int getCameraPreviewSize() {
         return SystemProperties.getInt(PERSIST_CAMERA_PREVIEW_SIZE, 0);
+    }
+
+    public static boolean getCamera2Mode() {
+        return SystemProperties.getBoolean(PERSIST_CAMERA_CAMERA2, false);
     }
 }

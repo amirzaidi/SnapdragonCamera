@@ -89,7 +89,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_WHITE_BALANCE = "pref_camera2_whitebalance_key";
     public static final String KEY_MAKEUP = "pref_camera2_makeup_key";
     public static final String KEY_TRACKINGFOCUS = "pref_camera2_trackingfocus_key";
-    public static final String KEY_CAMERA2 = "pref_camera2_camera2_key";
     public static final String KEY_MONO_ONLY = "pref_camera2_mono_only_key";
     public static final String KEY_MONO_PREVIEW = "pref_camera2_mono_preview_key";
     public static final String KEY_CLEARSIGHT = "pref_camera2_clearsight_key";
@@ -402,10 +401,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
         for (Listener listener : mListeners) {
             listener.onSettingsChanged(changes);
         }
-    }
-
-    public boolean isCamera2On() {
-        return mPreferences.getString(KEY_CAMERA2, "disable").equals("enable");
     }
 
     public String getValue(String key) {

@@ -110,6 +110,7 @@ import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
 import com.android.camera.util.IntentHelper;
+import com.android.camera.util.PersistUtil;
 import com.android.camera.util.PhotoSphereHelper;
 import com.android.camera.util.PhotoSphereHelper.PanoramaViewHelper;
 import com.android.camera.util.UsageStatistics;
@@ -1512,7 +1513,7 @@ public class CameraActivity extends Activity
             }
         }
 
-        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        boolean cam2on = PersistUtil.getCamera2Mode();
         if (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
 
@@ -2014,7 +2015,7 @@ public class CameraActivity extends Activity
 
     @Override
     public void onModuleSelected(int moduleIndex) {
-        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        boolean cam2on = PersistUtil.getCamera2Mode();
         mForceReleaseCamera = moduleIndex == ModuleSwitcher.CAPTURE_MODULE_INDEX ||
                 (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX);
         if (mForceReleaseCamera) {

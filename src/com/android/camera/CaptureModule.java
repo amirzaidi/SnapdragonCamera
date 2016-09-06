@@ -3289,9 +3289,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case SettingsManager.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL:
                     updateTimeLapseSetting();
                     continue;
-                case SettingsManager.KEY_CAMERA2:
-                    switchCameraMode(value);
-                    return;
                 case SettingsManager.KEY_PICTURE_SIZE:
                     updatePictureSize();
                     if (count == 0) restart();

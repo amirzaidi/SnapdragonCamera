@@ -237,8 +237,7 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_MANUAL_WB,
                 CameraSettings.KEY_MANUAL_FOCUS,
                 CameraSettings.KEY_SELFIE_MIRROR,
-                CameraSettings.KEY_SHUTTER_SOUND,
-                SettingsManager.KEY_CAMERA2
+                CameraSettings.KEY_SHUTTER_SOUND
         };
 
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);
@@ -1502,11 +1501,6 @@ public class PhotoMenu extends MenuController
         }
 
         super.onSettingChanged(pref);
-        if (same(pref, SettingsManager.KEY_CAMERA2, "enable")) {
-            mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
-        } else if (notSame(pref, SettingsManager.KEY_CAMERA2, "enable")) {
-            mActivity.onModuleSelected(ModuleSwitcher.PHOTO_MODULE_INDEX);
-        }
     }
 
     public int getOrientation() {
