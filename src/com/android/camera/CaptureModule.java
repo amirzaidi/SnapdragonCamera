@@ -1980,6 +1980,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             applyZoomAndUpdate(FRONT_ID);
         }
+        mUI.updateFaceViewCameraBound(mCropRegion[getMainCameraId()]);
     }
 
     private boolean isInMode(int cameraId) {

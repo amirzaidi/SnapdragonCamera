@@ -1516,6 +1516,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFaceView.resume();
     }
 
+    public void updateFaceViewCameraBound(Rect cameraBound) {
+        mFaceView.setCameraBound(cameraBound);
+    }
+
     public void onStopFaceDetection() {
         if (mFaceView != null) {
             mFaceView.setBlockDraw(true);
