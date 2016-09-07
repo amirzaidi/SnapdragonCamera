@@ -241,16 +241,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initSwitchCamera();
         initFlashButton();
 
-        mTrackingFocusRenderer = new TrackingFocusRenderer(mActivity, mModule, this);
-        mRenderOverlay.addRenderer(mTrackingFocusRenderer);
-        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
-        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
-            mTrackingFocusRenderer.setVisible(true);
-        } else {
-            mTrackingFocusRenderer.setVisible(false);
-        }
-
-
         mRecordingTimeView = (TextView) mRootView.findViewById(R.id.recording_time);
         mRecordingTimeRect = (RotateLayout) mRootView.findViewById(R.id.recording_time_rect);
         mTimeLapseLabel = mRootView.findViewById(R.id.time_lapse_label);
@@ -302,9 +292,20 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mRenderOverlay.addRenderer(mZoomRenderer);
         }
 
+        if(mTrackingFocusRenderer == null) {
+            mTrackingFocusRenderer = new TrackingFocusRenderer(mActivity, mModule, this);
+            mRenderOverlay.addRenderer(mTrackingFocusRenderer);
+        }
+        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
+        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+            mTrackingFocusRenderer.setVisible(true);
+        } else {
+            mTrackingFocusRenderer.setVisible(false);
+        }
+
         if (mGestures == null) {
             // this will handle gesture disambiguation and dispatching
-            mGestures = new PreviewGestures(mActivity, this, mZoomRenderer, mPieRenderer);
+            mGestures = new PreviewGestures(mActivity, this, mZoomRenderer, mPieRenderer, mTrackingFocusRenderer);
             mRenderOverlay.setGestures(mGestures);
         }
 
@@ -325,9 +326,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initSceneModeButton();
         initFilterModeButton();
         initFlashButton();
-        if (mTrackingFocusRenderer != null) {
+        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
+        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+            mTrackingFocusRenderer.setVisible(false);
             mTrackingFocusRenderer.setVisible(true);
+        } else {
+            mTrackingFocusRenderer.setVisible(false);
         }
+
         if (mSurfaceViewMono != null) {
             if (mSettingsManager != null && mSettingsManager.getValue(SettingsManager.KEY_MONO_PREVIEW) != null
                     && mSettingsManager.getValue(SettingsManager.KEY_MONO_PREVIEW).equalsIgnoreCase("on")) {
@@ -467,6 +473,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mVideoButton.setImageResource(R.drawable.video_capture);
             ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
             mMuteButton.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void resetTrackingFocus() {
+        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
+        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+            mTrackingFocusRenderer.setVisible(false);
+            mTrackingFocusRenderer.setVisible(true);
         }
     }
 
@@ -746,7 +760,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void onOrientationChanged() {
-
     }
 
     /**

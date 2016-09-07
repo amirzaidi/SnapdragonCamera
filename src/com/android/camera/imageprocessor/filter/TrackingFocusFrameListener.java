@@ -58,9 +58,9 @@ public class TrackingFocusFrameListener implements ImageFilter {
     private static String TAG = "TrackingFocusFrameListener";
     private static boolean mIsSupported = false;
     private Rect imageRect;
-    public static final int PENDING_REGISTRATION = -1;
+    public static final long PENDING_REGISTRATION = -1;
     public static final int MAX_NUM_TRACKED_OBJECTS = 3;
-    private int mTrackedId = PENDING_REGISTRATION;
+    private long mTrackedId = PENDING_REGISTRATION;
     private boolean mIsInitialzed = false;
     private TrackingFocusRenderer mTrackingFocusRender;
     byte[] yvuBytes = null;
@@ -185,7 +185,7 @@ public class TrackingFocusFrameListener implements ImageFilter {
         return nGetMaxRoiDimension();
     }
 
-    public int registerObject(byte[] imageDataNV21, Rect rect)
+    public long registerObject(byte[] imageDataNV21, Rect rect)
     {
         if (imageDataNV21 == null || imageDataNV21.length < getMinFrameSize()) {
             throw new IllegalArgumentException("imageDataNV21 null or too small to encode frame");
@@ -195,7 +195,7 @@ public class TrackingFocusFrameListener implements ImageFilter {
         } else if (!mIsInitialzed) {
             throw new IllegalArgumentException("already released");
         }
-        int id = nRegisterObjectByRect(imageDataNV21, rect.left, rect.top, rect.right, rect.bottom);
+        long id = nRegisterObjectByRect(imageDataNV21, rect.left, rect.top, rect.right, rect.bottom);
         if(id == 0) {
             id = PENDING_REGISTRATION;
         }
@@ -203,7 +203,7 @@ public class TrackingFocusFrameListener implements ImageFilter {
         return mTrackedId;
     }
 
-    public int registerObject(byte[] imageDataNV21, Point point, boolean firstTime)
+    public long registerObject(byte[] imageDataNV21, Point point, boolean firstTime)
     {
         if (imageDataNV21 == null || imageDataNV21.length < getMinFrameSize()) {
             throw new IllegalArgumentException("imageDataNV21 null or too small to encode frame"
@@ -213,7 +213,7 @@ public class TrackingFocusFrameListener implements ImageFilter {
         } else if (!mIsInitialzed) {
             throw new IllegalArgumentException("already released");
         }
-        int id = nRegisterObjectByPoint(imageDataNV21, point.x, point.y, firstTime);
+        long id = nRegisterObjectByPoint(imageDataNV21, point.x, point.y, firstTime);
         if(id == 0) {
             id = PENDING_REGISTRATION;
         }
@@ -221,7 +221,7 @@ public class TrackingFocusFrameListener implements ImageFilter {
         return mTrackedId;
     }
 
-    public void unregisterObject(int id)
+    public void unregisterObject(long id)
     {
         if (id == PENDING_REGISTRATION) {
             Log.e(TAG, "There's a pending object");
@@ -282,12 +282,18 @@ public class TrackingFocusFrameListener implements ImageFilter {
     private native void nRelease();
     private native int nGetMinRoiDimension();
     private native int nGetMaxRoiDimension();
-    private native int nRegisterObjectByRect(byte[] imageDataNV21, int left, int top, int right, int bottom);
-    private native int nRegisterObjectByPoint(byte[] imageDataNV21, int x, int y, boolean firstTime);
-    private native void nUnregisterObject(int id);
+    private native long nRegisterObjectByRect(byte[] imageDataNV21, int left, int top, int right, int bottom);
+    private native long nRegisterObjectByPoint(byte[] imageDataNV21, int x, int y, boolean firstTime);
+    private native void nUnregisterObject(long id);
     private native int[] nTrackObjects(byte[] imageDataNV21);
 
     static {
-        mIsSupported = false;
+        try {
+            System.loadLibrary("jni_trackingfocus");
+            mIsSupported = true;
+        }catch(UnsatisfiedLinkError e) {
+            Log.d(TAG, e.toString());
+            mIsSupported = false;
+        }
     }
 }

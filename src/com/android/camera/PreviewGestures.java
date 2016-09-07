@@ -23,6 +23,7 @@ import android.view.View;
 
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.RenderOverlay;
+import com.android.camera.ui.TrackingFocusRenderer;
 import com.android.camera.ui.ZoomRenderer;
 
 /* PreviewGestures disambiguates touch events received on RenderOverlay
@@ -45,6 +46,7 @@ public class PreviewGestures
     private SingleTapListener mTapListener;
     private RenderOverlay mOverlay;
     private PieRenderer mPie;
+    private TrackingFocusRenderer mTrackingFocus;
     private ZoomRenderer mZoom;
     private MotionEvent mDown;
     private MotionEvent mCurrent;
@@ -123,9 +125,10 @@ public class PreviewGestures
     }
 
     public PreviewGestures(CameraActivity ctx, SingleTapListener tapListener,
-            ZoomRenderer zoom, PieRenderer pie) {
+                           ZoomRenderer zoom, PieRenderer pie, TrackingFocusRenderer trackingfocus) {
         mTapListener = tapListener;
         mPie = pie;
+        mTrackingFocus = trackingfocus;
         mZoom = zoom;
         mMode = MODE_NONE;
         mScale = new ScaleGestureDetector(ctx, this);
@@ -199,6 +202,10 @@ public class PreviewGestures
         // If pie is open, redirects all the touch events to pie.
         if (mPie != null && mPie.isOpen()) {
             return sendToPie(m);
+        }
+
+        if (mTrackingFocus != null && mTrackingFocus.isVisible()) {
+            return sendToTrackingFocus(m);
         }
 
         if (mCaptureUI != null) {
@@ -276,6 +283,10 @@ public class PreviewGestures
 
     private boolean sendToPie(MotionEvent m) {
         return mOverlay.directDispatchTouch(m, mPie);
+    }
+
+    private boolean sendToTrackingFocus(MotionEvent m) {
+        return mOverlay.directDispatchTouch(m, mTrackingFocus);
     }
 
     // OnScaleGestureListener implementation

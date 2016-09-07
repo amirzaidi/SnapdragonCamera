@@ -2400,6 +2400,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mUI.hideSurfaceView();
             mUI.showSurfaceView();
         }
+        mUI.resetTrackingFocus();
 
         try {
             setUpMediaRecorder(cameraId);
@@ -2681,6 +2682,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             createSession(cameraId);
         }
         mUI.showUIafterRecording();
+        mUI.resetTrackingFocus();
     }
 
     private void closePreviewSession() {

@@ -108,6 +108,9 @@ public class TrackingFocusRenderer extends OverlayRenderer implements FocusIndic
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if(mSurfaceDim == null) {
+            return true;
+        }
         switch(event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 break;
@@ -273,11 +276,14 @@ public class TrackingFocusRenderer extends OverlayRenderer implements FocusIndic
                 }
                 if(Math.abs(mOldX - mNewX) >= MIN_DIFF_CORDS || Math.abs(mOldY - mNewY) >= MIN_DIFF_CORDS  ||
                         Math.abs(mOldWidth - mNewWidth) >= MIN_DIFF_SIZE || Math.abs(mOldHeight - mNewHeight) >= MIN_DIFF_SIZE) {
-                    mModule.onSingleTapUp(null, mNewX, mNewY);
+                    try {
+                        mModule.onSingleTapUp(null, mNewX, mNewY);
                     mOldX = mNewX;
                     mOldY = mNewY;
                     mOldWidth = mNewWidth;
                     mOldHeight = mNewHeight;
+                    } catch(Exception e) {
+                    }
                 }
             }
         }
