@@ -385,6 +385,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+    public void openSettingsMenu() {
+        clearFocus();
+        removeFilterMenu(false);
+        Intent intent = new Intent(mActivity, SettingsActivity.class);
+        mActivity.startActivity(intent);
+    }
+
     public void initSwitchCamera() {
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         String value = mSettingsManager.getValue(SettingsManager.KEY_CAMERA_ID);
