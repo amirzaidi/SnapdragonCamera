@@ -117,8 +117,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static final int BAYER_MODE = 1;
     public static final int MONO_MODE = 2;
     public static final int BAYER_ID = 0;
-    public static int MONO_ID = 1;
-    public static int FRONT_ID = 1;
+    public static int MONO_ID = -1;
+    public static int FRONT_ID = -1;
     private static final int BACK_MODE = 0;
     private static final int FRONT_MODE = 1;
     private static final int CANCEL_TOUCH_FOCUS_DELAY = 3000;
