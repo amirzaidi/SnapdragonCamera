@@ -106,9 +106,6 @@ public class VideoModule implements CameraModule,
 
     private static final long SHUTTER_BUTTON_TIMEOUT = 0L; // 0ms
 
-    public static final boolean HAS_RESUME_SUPPORTED =
-            Build.VERSION.SDK_INT > Build.VERSION_CODES.M;
-
     /**
      * An unpublished intent flag requesting to start recording straight away
      * and return as soon as recording is stopped.
@@ -1416,6 +1413,7 @@ public class VideoModule implements CameraModule,
         if (valid) {
             resultCode = Activity.RESULT_OK;
             resultIntent.setData(mCurrentVideoUri);
+            resultIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } else {
             resultCode = Activity.RESULT_CANCELED;
         }
@@ -1979,7 +1977,7 @@ public class VideoModule implements CameraModule,
         mMediaRecorderPausing = false;
         mRecordingStartTime = SystemClock.uptimeMillis();
         updateRecordingTime();
-        if (!HAS_RESUME_SUPPORTED){
+        if (!ApiHelper.HAS_RESUME_SUPPORTED){
             mMediaRecorder.start();
         } else {
             try {
