@@ -53,6 +53,9 @@ public class ApiHelper {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
     public static final boolean HAS_HIDEYBARS = isKitKatOrHigher();
 
+    public static final boolean HAS_RESUME_SUPPORTED =
+            Build.VERSION.SDK_INT > Build.VERSION_CODES.M;
+
     public static int getIntFieldIfExists(Class<?> klass, String fieldName,
             Class<?> obj, int defaultVal) {
         try {

@@ -89,6 +89,7 @@ import com.android.camera.ui.TrackingFocusRenderer;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.PersistUtil;
 import com.android.camera.util.SettingTranslation;
+import com.android.camera.util.ApiHelper;
 import com.android.internal.util.MemInfoReader;
 
 import org.codeaurora.snapcam.R;
@@ -105,6 +106,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.lang.reflect.Method;
 
 public class CaptureModule implements CameraModule, PhotoController,
         MediaSaveService.Listener, ClearSightImageProcessor.Callback,
@@ -2552,7 +2554,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         mMediaRecorderPausing = false;
         mRecordingStartTime = SystemClock.uptimeMillis();
         updateRecordingTime();
-        mMediaRecorder.start();
+        if (!ApiHelper.HAS_RESUME_SUPPORTED){
+            mMediaRecorder.start();
+        } else {
+            try {
+                Method resumeRec = Class.forName("android.media.MediaRecorder").getMethod("resume");
+                resumeRec.invoke(mMediaRecorder);
+            } catch (Exception e) {
+                Log.v(TAG, "resume method not implemented");
+            }
+        }
     }
 
     public void onButtonPause() {
