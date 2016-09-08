@@ -35,9 +35,15 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.ImageWriter;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -65,11 +71,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.Semaphore;
 
 import com.android.camera.imageprocessor.filter.ImageFilter;
 import com.android.camera.util.CameraUtil;
 
-public class PostProcessor implements ImageReader.OnImageAvailableListener{
+public class PostProcessor{
 
     private CaptureModule mController;
 
@@ -82,8 +89,8 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     public static final int FILTER_BESTPICTURE = 5;
     public static final int FILTER_MAX = 6;
 
-    //Max image is now Bestpicture filter with 10
-    public static final int MAX_REQUIRED_IMAGE_NUM = 10;
+    //BestPicture requires 10 which is the biggest among filters
+    public static final int MAX_REQUIRED_IMAGE_NUM = 11;
     private int mCurrentNumImage = 0;
     private ImageFilter mFilter;
     private int mFilterIndex;
@@ -99,26 +106,192 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
     private PhotoModule.NamedImages mNamedImages;
     private WatchdogThread mWatchdog;
     private int mOrientation = 0;
+    private ImageWriter mZSLImageWriter;
 
     //This is for the debug feature.
     private static boolean DEBUG_FILTER = false;
+    private static boolean DEBUG_ZSL = false;
     private ImageFilter.ResultImage mDebugResultImage;
+    private ZSLQueue mZSLQueue;
+    private CameraDevice mCameraDevice;
+    private CameraCaptureSession mCaptureSession;
+    private ImageReader mImageReader;
+    private boolean mUseZSL = true;
+    private Handler mZSLHandler;
+    private HandlerThread mZSLHandlerThread;
+    private ImageHandlerTask mImageHandlerTask;
 
-    @Override
-    public void onImageAvailable(ImageReader reader) {
-        try {
-            Image image = reader.acquireNextImage();
-            addImage(image);
-            if (isReadyToProcess()) {
-                long captureStartTime = System.currentTimeMillis();
-                mNamedImages.nameNewImage(captureStartTime);
-                PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();
-                String title = (name == null) ? null : name.title;
-                long date = (name == null) ? -1 : name.date;
-                processImage(title, date, mController.getMediaSavedListener(), mActivity.getContentResolver());
+    public boolean isZSLEnabled() {
+        return mUseZSL;
+    }
+
+    public ImageHandlerTask getImageHandler() {
+        return mImageHandlerTask;
+    }
+
+    private class ImageWrapper {
+        Image mImage;
+        boolean mIsTaken;
+
+        public ImageWrapper(Image image) {
+            mImage = image;
+            mIsTaken = false;
+        }
+
+        public boolean isTaken() {
+            return mIsTaken;
+        }
+
+        public Image getImage() {
+            mIsTaken = true;
+            return mImage;
+        }
+    }
+
+    class ImageHandlerTask implements Runnable, ImageReader.OnImageAvailableListener {
+        private ImageWrapper mImageWrapper = null;
+        Semaphore mMutureLock = new Semaphore(1);
+
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            try {
+                Image image = reader.acquireLatestImage();
+                if(image == null) {
+                    return;
+                }
+                if (!mMutureLock.tryAcquire()) {
+                    image.close();
+                    return;
+                }
+                if(mImageWrapper == null || mImageWrapper.isTaken()) {
+                    mImageWrapper = new ImageWrapper(image);
+                    mMutureLock.release();
+                } else {
+                    image.close();
+                    mMutureLock.release();
+                    return;
+                }
+                if(mZSLHandler != null) {
+                    mZSLHandler.post(this);
+                }
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "Max images has been already acquired. ");
             }
-        } catch (IllegalStateException e) {
-            Log.e(TAG, "Max images has been already acquired. ");
+        }
+
+        @Override
+        public void run() {
+            try {
+                mMutureLock.acquire();
+                Image image = mImageWrapper.getImage();
+                if (mUseZSL) {
+                    if (mZSLQueue != null) {
+                        mZSLQueue.add(image);
+                    }
+                } else {
+                    onImageToProcess(image);
+                }
+                mMutureLock.release();
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+
+    public void onMetaAvailable(TotalCaptureResult metadata) {
+        if(mUseZSL && mZSLQueue != null) {
+            mZSLQueue.add(metadata);
+        }
+    }
+
+    public void onSessionConfiguredForZSL(CameraCaptureSession captureSession) {
+        mZSLImageWriter = ImageWriter.newInstance(captureSession.getInputSurface(), 2);
+    }
+
+    public boolean takeZSLPicture(CameraDevice cameraDevice, CameraCaptureSession captureSession, ImageReader imageReader) {
+        if(mCameraDevice == null || mCaptureSession == null || mImageReader == null) {
+            mCameraDevice = cameraDevice;
+            mCaptureSession = captureSession;
+            mImageReader = imageReader;
+        }
+        ZSLQueue.ImageItem imageItem = mZSLQueue.tryToGetMatchingItem();
+        if(mController.getPreviewCaptureResult().get(CaptureResult.CONTROL_AE_STATE) == CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED) {
+            if(DEBUG_ZSL) Log.d(TAG, "Flash required image");
+            imageItem = null;
+        }
+        if (imageItem != null) {
+            if(DEBUG_ZSL) Log.d(TAG,"Got the item from the queue");
+            reprocessImage(imageItem);
+            return true;
+        } else {
+            if(DEBUG_ZSL) Log.d(TAG, "No good item in queue, reigster the request for the future");
+            mZSLQueue.addPictureRequest();
+            return false;
+        }
+    }
+
+    public void onMatchingZSLPictureAvailable(ZSLQueue.ImageItem imageItem) {
+        reprocessImage(imageItem);
+    }
+
+    private void reprocessImage(ZSLQueue.ImageItem imageItem) {
+        if(mCameraDevice == null || mCaptureSession == null || mImageReader == null) {
+            Log.e(TAG, "Reprocess request is called even before taking picture");
+            new Throwable().printStackTrace();
+            return;
+        }
+        CaptureRequest.Builder builder = null;
+        try {
+            builder = mCameraDevice.createReprocessCaptureRequest(imageItem.getMetadata());
+            builder.addTarget(mImageReader.getSurface());
+            builder.set(CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE,
+                    CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY);
+            builder.set(CaptureRequest.EDGE_MODE,
+                    CaptureRequest.EDGE_MODE_HIGH_QUALITY);
+            builder.set(CaptureRequest.NOISE_REDUCTION_MODE,
+                    CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY);
+            try {
+                mZSLImageWriter.queueInputImage(imageItem.getImage());
+            } catch(IllegalStateException e) {
+                Log.e(TAG, "Queueing more than it can have");
+            }
+            mCaptureSession.capture(builder.build(),
+                    new CameraCaptureSession.CaptureCallback() {
+                        @Override
+                        public void onCaptureCompleted(
+                                CameraCaptureSession session,
+                                CaptureRequest request,
+                                TotalCaptureResult result) {
+                            super.onCaptureCompleted(session, request, result);
+                            Log.d(TAG, "Success to reprocess zsl image");
+                            try {
+                                onImageToProcess(mZSLImageWriter.dequeueInputImage());
+                            } catch(IllegalStateException e) {
+                                Log.e(TAG, "Dequeueing more than what it has");
+                            }
+                        }
+
+                        @Override
+                        public void onCaptureFailed(
+                                CameraCaptureSession session,
+                                CaptureRequest request,
+                                CaptureFailure failure) {
+                            super.onCaptureFailed(session, request, failure);
+                            Log.e(TAG, "failed to reprocess");
+                        }
+                    }, null);
+        } catch (CameraAccessException e) {
+        }
+    }
+
+    private void onImageToProcess(Image image) {
+        addImage(image);
+        if (isReadyToProcess()) {
+            long captureStartTime = System.currentTimeMillis();
+            mNamedImages.nameNewImage(captureStartTime);
+            PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();
+            String title = (name == null) ? null : name.title;
+            long date = (name == null) ? -1 : name.date;
+            processImage(title, date, mController.getMediaSavedListener(), mActivity.getContentResolver());
         }
     }
 
@@ -133,7 +306,6 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
         mController = module;
         mActivity = activity;
         mNamedImages = new PhotoModule.NamedImages();
-
     }
 
     public boolean isItBusy() {
@@ -168,10 +340,18 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
         return false;
     }
 
-    public void onOpen(int postFilterId) {
-        setFilter(postFilterId);
-        startBackgroundThread();
+    public void onOpen(int postFilterId, boolean isLongShotOn, boolean isFlashModeOn) {
+        mImageHandlerTask = new ImageHandlerTask();
 
+        if(setFilter(postFilterId) || isLongShotOn || isFlashModeOn) {
+            mUseZSL = false;
+        } else {
+            mUseZSL = true;
+        }
+        startBackgroundThread();
+        if(mUseZSL) {
+            mZSLQueue = new ZSLQueue(mController);
+        }
     }
 
     public int getFilterIndex() {
@@ -186,12 +366,27 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
             stopBackgroundThread();
         }
         setFilter(FILTER_NONE);
+        if(mZSLQueue != null) {
+            mZSLQueue.onClose();
+            mZSLQueue = null;
+        }
+        if (mZSLImageWriter != null) {
+            mZSLImageWriter.close();
+            mZSLImageWriter = null;
+        }
+        mCameraDevice = null;
+        mCaptureSession = null;
+        mImageReader = null;
     }
 
     private void startBackgroundThread() {
         mHandlerThread = new HandlerThread("PostProcessorThread");
         mHandlerThread.start();
         mHandler = new ProcessorHandler(mHandlerThread.getLooper());
+
+        mZSLHandlerThread = new HandlerThread("ZSLHandlerThread");
+        mZSLHandlerThread.start();
+        mZSLHandler = new ProcessorHandler(mZSLHandlerThread.getLooper());
 
         mWatchdog = new WatchdogThread();
         mWatchdog.start();
@@ -215,7 +410,6 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
                     }
                 }
             }
-
         }
 
         public void startMonitor() {
@@ -260,6 +454,15 @@ public class PostProcessor implements ImageReader.OnImageAvailableListener{
             }
             mHandlerThread = null;
             mHandler = null;
+        }
+        if (mZSLHandlerThread != null) {
+            mZSLHandlerThread.quitSafely();
+            try {
+                mZSLHandlerThread.join();
+            } catch (InterruptedException e) {
+            }
+            mZSLHandlerThread = null;
+            mZSLHandler = null;
         }
         if(mWatchdog != null) {
             mWatchdog.kill();
