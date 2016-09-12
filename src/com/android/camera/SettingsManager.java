@@ -255,7 +255,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
         if (videoQuality != null) {
             String scene = getValue(SettingsManager.KEY_MAKEUP);
-            if(scene != null && scene.equalsIgnoreCase("on")) {
+            if(scene != null && !scene.equalsIgnoreCase("0")) {
                 updateVideoQualityMenu(cameraId, 640, 480);
             }
         }
@@ -623,11 +623,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (!isFaceDetectionSupported(cameraId)) {
                 removePreference(mPreferenceGroup, KEY_FACE_DETECTION);
             }
-        }
-
-        if (makeup != null) {
-            if (!BeautificationFilter.isSupportedStatic())
-                removePreference(mPreferenceGroup, KEY_MAKEUP);
         }
 
         if (trackingfocus != null) {

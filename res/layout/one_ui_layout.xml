@@ -83,8 +83,13 @@
 
     <com.android.camera.ui.RotateImageView
         android:id="@+id/ts_makeup_switcher"
-        style="@style/OneUIMenuButton"
-        android:src="@drawable/beautify" />
+        style="@style/OneUIMenuButton" />
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/ts_makeup_seekbar"
+        android:visibility="gone"/>
 
     <LinearLayout
         android:id="@+id/remaining_photos"

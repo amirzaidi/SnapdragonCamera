@@ -20,7 +20,9 @@
 package com.android.camera;
 
 import android.animation.Animator;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.ImageFormat;
@@ -47,10 +49,9 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.android.camera.imageprocessor.ScriptC_YuvToRgb;
-import com.android.camera.imageprocessor.ScriptC_rotator;
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.Camera2FaceView;
 import com.android.camera.ui.CameraControls;
@@ -168,7 +169,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private View mFilterModeSwitcher;
     private View mSceneModeSwitcher;
     private View mFrontBackSwitcher;
-    private View mMakeupButton;
+    private ImageView mMakeupButton;
+    private SeekBar mMakeupSeekBar;
     private TextView mRecordingTimeView;
     private View mTimeLapseLabel;
     private RotateLayout mRecordingTimeRect;
@@ -234,7 +236,28 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFilterModeSwitcher = mRootView.findViewById(R.id.filter_mode_switcher);
         mSceneModeSwitcher = mRootView.findViewById(R.id.scene_mode_switcher);
         mFrontBackSwitcher = mRootView.findViewById(R.id.front_back_switcher);
-        mMakeupButton = mRootView.findViewById(R.id.ts_makeup_switcher);
+        mMakeupButton = (ImageView) mRootView.findViewById(R.id.ts_makeup_switcher);
+        setMakeupButtonIcon();
+        mMakeupSeekBar = (SeekBar)mRootView.findViewById(R.id.ts_makeup_seekbar);
+        mMakeupSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progresValue, boolean fromUser) {
+                int value = progresValue/10*10;
+                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, value+"");
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+        mMakeupButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                showMakeupSeekBar();
+            }
+        });
         mFlashButton = (FlashToggleButton) mRootView.findViewById(R.id.flash_button);
         initFilterModeButton();
         initSceneModeButton();
@@ -315,6 +338,44 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
     }
 
+    private void showMakeupSeekBar() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
+        if(mMakeupSeekBar.getVisibility() == View.VISIBLE) {
+            mMakeupSeekBar.setVisibility(View.GONE);
+            if(value != null && value.equals("0")) {
+                mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "off");
+                mModule.restart();
+            }
+        } else {
+            mMakeupSeekBar.setVisibility(View.VISIBLE);
+            if(value != null && value.equals("0")) {
+                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "40");
+                mMakeupSeekBar.setProgress(40);
+                mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "on");
+                mModule.restart();
+            } else {
+                try {
+                    mMakeupSeekBar.setProgress(Integer.parseInt(mSettingsManager.getValue(SettingsManager.KEY_MAKEUP)));
+                } catch(Exception e) {
+                }
+            }
+        }
+        setMakeupButtonIcon();
+    }
+
+    private void setMakeupButtonIcon() {
+        final String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                if(value != null && !value.equals("0")) {
+                    mMakeupButton.setImageResource(R.drawable.beautify_on);
+                } else {
+                    mMakeupButton.setImageResource(R.drawable.beautify);
+                }
+            }
+        });
+    }
+
     public void onCameraOpened(List<Integer> cameraIds) {
         mGestures.setCaptureUI(this);
         mGestures.setZoomEnabled(mSettingsManager.isZoomSupported(cameraIds));
@@ -326,6 +387,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initSceneModeButton();
         initFilterModeButton();
         initFlashButton();
+        setMakeupButtonIcon();
         String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
         if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
             mTrackingFocusRenderer.setVisible(false);

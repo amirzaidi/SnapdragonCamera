@@ -443,14 +443,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mFirstPreviewLoaded = true;
             }
             if (id == getMainCameraId()) {
-                Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
-                mPreviewFaces = faces;
-                if (faces != null && faces.length != 0) {
-                    mStickyFaces = faces;
-                }
                 mPreviewCaptureResult = result;
             }
-
             updateCaptureStateMachine(id, result);
         }
 
@@ -459,9 +453,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         CaptureRequest request,
                                         CaptureResult partialResult) {
             int id = (int) partialResult.getRequest().getTag();
-            if (id == getMainCameraId()) updateFocusStateChange(partialResult);
-            Face[] faces = partialResult.get(CaptureResult.STATISTICS_FACES);
-            updateFaceView(faces);
+            if (id == getMainCameraId()) {
+                updateFocusStateChange(partialResult);
+                Face[] faces = partialResult.get(CaptureResult.STATISTICS_FACES);
+                updateFaceView(faces);
+            }
         }
 
         @Override
@@ -469,9 +465,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                                        CaptureRequest request,
                                        TotalCaptureResult result) {
             int id = (int) result.getRequest().getTag();
-            if (id == getMainCameraId()) updateFocusStateChange(result);
-            Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
-            updateFaceView(faces);
+            if (id == getMainCameraId()) {
+                updateFocusStateChange(result);
+                Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
+                updateFaceView(faces);
+            }
             processCaptureResult(result);
             mPostProcessor.onMetaAvailable(result);
         }
@@ -753,13 +751,6 @@ public class CaptureModule implements CameraModule, PhotoController,
             return new ArrayList<ImageFilter>();
         } else {
             return mFrameProcessor.getFrameFilters();
-        }
-    }
-
-    private void applyFaceDetect(CaptureRequest.Builder builder, int id) {
-        if(id == getMainCameraId()) {
-            builder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
-                    CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE);
         }
     }
 
@@ -1608,7 +1599,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyAFRegions(builder, id);
         applyAERegions(builder, id);
         applyCommonSettings(builder, id);
-        applyFaceDetect(builder, id);
         applyFlash(builder, id);
     }
 
@@ -1624,7 +1614,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                 CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
         applyCommonSettings(builder, id);
         applyFlash(builder, id);
-        applyFaceDetect(builder, id);
     }
 
     private void applySettingsForLockExposure(CaptureRequest.Builder builder, int id) {
@@ -1639,7 +1628,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         builder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
         applyCommonSettings(builder, id);
-        applyFaceDetect(builder, id);
     }
 
     private void applySettingsForAutoFocus(CaptureRequest.Builder builder, int id) {
@@ -1648,7 +1636,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyAFRegions(builder, id);
         applyAERegions(builder, id);
         applyCommonSettings(builder, id);
-        applyFaceDetect(builder, id);
     }
 
     private void applyVideoSnapshot(CaptureRequest.Builder builder, int id) {
@@ -1806,7 +1793,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         ArrayList<Integer> filters = new ArrayList<Integer>();
 
         String scene = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
-        if(scene != null && scene.equalsIgnoreCase("on")) {
+        if(scene != null && !scene.equalsIgnoreCase("0")) {
             filters.add(FrameProcessor.FILTER_MAKEUP);
         }
         String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
@@ -1853,10 +1840,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         updateMaxVideoDuration();
     }
 
-    private void updatePreviewSize() {
+    private void updatePreviewSize(int[] dependencySize) {
         int preview_resolution = PersistUtil.getCameraPreviewSize();
         int width = mPreviewSize.getWidth();
         int height = mPreviewSize.getHeight();
+        if(dependencySize != null) {
+            width = dependencySize[0];
+            height = dependencySize[1];
+        }
         switch (preview_resolution) {
             case 1: {
                 width = 640;
@@ -1895,7 +1886,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void onResumeAfterSuper() {
         Log.d(TAG, "onResume " + getCameraMode());
         initializeValues();
-        updatePreviewSize();
+        int[] size = checkMakeupDependency();
+        updatePreviewSize(size);
         mUI.showSurfaceView();
         mCameraIdList = new ArrayList<>();
 
@@ -2156,7 +2148,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void updateFaceView(final Face[] faces) {
+        mPreviewFaces = faces;
         if (faces != null) {
+            if (faces.length != 0) {
+                mStickyFaces = faces;
+            }
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2992,7 +2988,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest
                 .CONTROL_AF_TRIGGER_IDLE);
         applyCommonSettings(mPreviewRequestBuilder[id], id);
-        applyFaceDetect(mPreviewRequestBuilder[id], id);
     }
 
     public float getZoomValue() {
@@ -3042,7 +3037,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 break;
             case SettingsManager.KEY_FACE_DETECTION:
                 updatePreview = true;
-                applyFaceDetect(mPreviewRequestBuilder[cameraId], cameraId);
+                applyFaceDetection(mPreviewRequestBuilder[cameraId]);
                 break;
         }
         return updatePreview;
@@ -3289,9 +3284,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         mDisplayOrientation = CameraUtil.getDisplayOrientation(mDisplayRotation, getMainCameraId());
     }
 
-    private void checkVideoSizeDependency() {
+    private int[] checkMakeupDependency() {
         String makeup = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
-        if(makeup.equalsIgnoreCase("on")) {
+        if(makeup != null && !makeup.equalsIgnoreCase("0")) {
             if(mVideoSize.getWidth() > 640 || mVideoSize.getHeight() > 480) {
                 mActivity.runOnUiThread(new Runnable() {
                     public void run() {
@@ -3301,8 +3296,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mSettingsManager.setValue(mSettingsManager.KEY_VIDEO_QUALITY, "640x480");
             }
             mSettingsManager.updateVideoQualityMenu(getMainCameraId(), 640, 480);
+            return new int[]{640, 480};
         } else {
             mSettingsManager.updateVideoQualityMenu(getMainCameraId(), -1, -1);
+            return null;
         }
     }
 
@@ -3351,10 +3348,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case SettingsManager.KEY_CLEARSIGHT:
                 case SettingsManager.KEY_MONO_PREVIEW:
                     if (count == 0) restart();
-                    return;
-                case SettingsManager.KEY_MAKEUP:
-                    if (count == 0) restart();
-                    checkVideoSizeDependency();
                     return;
                 case SettingsManager.KEY_TRACKINGFOCUS:
                     if (count == 0) restart();
@@ -3460,7 +3453,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         return false;
     }
 
-    private void restart() {
+    public void restart() {
         reinit();
         onPauseBeforeSuper();
         onPauseAfterSuper();

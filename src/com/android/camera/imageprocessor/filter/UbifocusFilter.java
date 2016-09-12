@@ -215,6 +215,7 @@ public class UbifocusFilter implements ImageFilter {
                 } while(Math.abs(mModule.getPreviewCaptureResult().get(CaptureResult.LENS_FOCUS_DISTANCE)
                         - value) >= 0.5f);
             } catch (InterruptedException e) {
+            } catch (NullPointerException e) {
             }
             builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
             builder.set(CaptureRequest.LENS_FOCUS_DISTANCE, value);

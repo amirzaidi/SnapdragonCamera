@@ -28,11 +28,13 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.codeaurora.snapcam.R;
 
 import com.android.camera.Storage;
+import com.android.camera.imageprocessor.filter.BeautificationFilter;
 
 public class OneUICameraControls extends RotatableLayout {
 
@@ -47,6 +49,7 @@ public class OneUICameraControls extends RotatableLayout {
     private View mPreview;
     private View mSceneModeSwitcher;
     private View mFilterModeSwitcher;
+    private View mMakeupSeekBar;
 
     private ArrowTextView mRefocusToast;
 
@@ -99,6 +102,8 @@ public class OneUICameraControls extends RotatableLayout {
         mVideoShutter = findViewById(R.id.video_button);
         mFrontBackSwitcher = findViewById(R.id.front_back_switcher);
         mTsMakeupSwitcher = findViewById(R.id.ts_makeup_switcher);
+        mMakeupSeekBar = findViewById(R.id.ts_makeup_seekbar);
+        ((SeekBar)mMakeupSeekBar).setMax(100);
         mFlashButton = findViewById(R.id.flash_button);
         mMute = findViewById(R.id.mute_button);
         mPreview = findViewById(R.id.preview_thumb);
@@ -110,6 +115,11 @@ public class OneUICameraControls extends RotatableLayout {
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
                 mTsMakeupSwitcher, mFlashButton, mShutter, mPreview, mVideoShutter
         };
+
+        if(!BeautificationFilter.isSupportedStatic()) {
+            mTsMakeupSwitcher.setVisibility(View.GONE);
+            mTsMakeupSwitcher = null;
+        }
     }
 
     @Override
@@ -122,7 +132,6 @@ public class OneUICameraControls extends RotatableLayout {
         mWidth = r;
         mHeight = b;
         setLocation(r - l, b - t);
-
         layoutRemaingPhotos();
     }
 
@@ -157,6 +166,9 @@ public class OneUICameraControls extends RotatableLayout {
     }
 
     private void setLocation(View v, boolean top, float idx) {
+        if(v == null) {
+            return;
+        }
         int w = v.getMeasuredWidth();
         int h = v.getMeasuredHeight();
         if (top) {
@@ -169,6 +181,18 @@ public class OneUICameraControls extends RotatableLayout {
         v.setX(bW * idx + (bW - w) / 2);
     }
 
+    private void setLocationCustomBottom(View v, float x, float y) {
+        if(v == null) {
+            return;
+        }
+        int w = v.getMeasuredWidth();
+        int h = v.getMeasuredHeight();
+        int bW = mWidth / 5;
+        int bH = mHeight / 6;
+        v.setY(mHeight - mBottom + (mBottom - h) / 2 - bH * y);
+        v.setX(bW * x);
+    }
+
     private void setLocation(int w, int h) {
         int rotation = getUnifiedRotation();
         setLocation(mSceneModeSwitcher, true, 0);
@@ -179,6 +203,7 @@ public class OneUICameraControls extends RotatableLayout {
         setLocation(mPreview, false, 0);
         setLocation(mShutter, false, 2);
         setLocation(mVideoShutter, false, 3.15f);
+        setLocationCustomBottom(mMakeupSeekBar, 0, 1);
 
         layoutToast(mRefocusToast, w, h, rotation);
     }

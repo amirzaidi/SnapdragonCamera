@@ -31,6 +31,7 @@ package com.android.camera.imageprocessor;
 
 import android.app.Activity;
 import android.graphics.ImageFormat;
+import android.hardware.camera2.CameraCharacteristics;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Handler;
@@ -154,7 +155,10 @@ public class FrameProcessor {
         mRsRotator.set_width(width);
         mRsRotator.set_height(height);
         mRsRotator.set_pad(stridePad);
-        mRsRotator.set_gFlip(!mModule.isBackCamera());
+        if(mModule.getMainCameraCharacteristics() != null &&
+                mModule.getMainCameraCharacteristics().get(CameraCharacteristics.SENSOR_ORIENTATION) == 270) {
+            mRsRotator.set_gFlip(true);
+        }
         mRsYuvToRGB.set_gIn(mProcessAllocation);
         mRsYuvToRGB.set_width(height);
         mRsYuvToRGB.set_height(width);

@@ -1047,5 +1047,7 @@
     <string name="pref_camera2_timer_value_5sec" translatable="false">5</string>
     <string name="pref_camera2_timer_value_10sec" translatable="false">10</string>
     <string name="panocapture_direction_is_not_determined" translatable="true">Direction is not detected.</string>
+    <string name="makeup_ui_title" translatable="true">Please choose the strength of the beautification.</string>
+    <string name="makeup_ui_ok_button" translatable="true">OK</string>
 </resources>
 
