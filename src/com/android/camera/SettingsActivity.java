@@ -30,12 +30,17 @@
 package com.android.camera;
 
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
+import android.util.Log;
+import android.widget.Toast;
 
 import org.codeaurora.snapcam.R;
 
@@ -45,6 +50,9 @@ import java.util.Set;
 public class SettingsActivity extends PreferenceActivity {
     private SettingsManager mSettingsManager;
     private SharedPreferences mSharedPreferences;
+    private boolean mDeveloperMenuEnabled;
+    private int privateCounter = 0;
+    private final int DEVELOPER_MENU_TOUCH_COUNT = 10;
 
     private SharedPreferences.OnSharedPreferenceChangeListener mSharedPreferenceChangeListener
             = new SharedPreferences.OnSharedPreferenceChangeListener() {
@@ -52,14 +60,16 @@ public class SettingsActivity extends PreferenceActivity {
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                               String key) {
             Preference p = findPreference(key);
+            if (p == null) return;
             String value;
             if (p instanceof SwitchPreference) {
                 boolean checked = ((SwitchPreference) p).isChecked();
                 value = checked ? "on" : "off";
-            } else {
+                mSettingsManager.setValue(key, value);
+            } else if (p instanceof ListPreference){
                 value = ((ListPreference) p).getValue();
+                mSettingsManager.setValue(key, value);
             }
-            mSettingsManager.setValue(key, value);
         }
     };
 
@@ -69,16 +79,52 @@ public class SettingsActivity extends PreferenceActivity {
         mSettingsManager = SettingsManager.getInstance();
         addPreferencesFromResource(R.xml.setting_menu_preferences);
 
+        mSharedPreferences = getPreferenceManager().getSharedPreferences();
+        mDeveloperMenuEnabled = mSharedPreferences.getBoolean(SettingsManager.KEY_DEVELOPER_MENU, false);
+
         filterPreferences();
         initializePreferences();
 
-        mSharedPreferences = getPreferenceManager().getSharedPreferences();
         mSharedPreferences.registerOnSharedPreferenceChangeListener(mSharedPreferenceChangeListener);
+
+        for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
+            PreferenceCategory category = (PreferenceCategory) getPreferenceScreen().getPreference(i);
+            for (int j = 0; j < category.getPreferenceCount(); j++) {
+                Preference pref = category.getPreference(j);
+                pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        if (!mDeveloperMenuEnabled) {
+                            if (preference.getKey().equals("version_info")) {
+                                privateCounter++;
+                                if (privateCounter >= DEVELOPER_MENU_TOUCH_COUNT) {
+                                    mDeveloperMenuEnabled = true;
+                                    mSharedPreferences.edit().putBoolean(SettingsManager.KEY_DEVELOPER_MENU, true).apply();
+                                    Toast.makeText(SettingsActivity.this, "Camera developer option is enabled now", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                privateCounter = 0;
+                            }
+                        }
+                        return false;
+                    }
+
+                });
+            }
+        }
+
     }
 
     private void filterPreferences() {
         String[] categories = {"photo", "video", "general"};
         Set<String> set = mSettingsManager.getFilteredKeys();
+        if (!mDeveloperMenuEnabled) {
+            set.add(SettingsManager.KEY_MONO_PREVIEW);
+            set.add(SettingsManager.KEY_MONO_ONLY);
+            set.add(SettingsManager.KEY_CLEARSIGHT);
+        }
+
         for (String key : set) {
             Preference p = findPreference(key);
             if (p == null) continue;
@@ -88,6 +134,7 @@ public class SettingsActivity extends PreferenceActivity {
                 if (group.removePreference(p)) break;
             }
         }
+
         ListPreference pictureSize = (ListPreference) findPreference(SettingsManager.KEY_PICTURE_SIZE);
         if (pictureSize != null) {
             pictureSize.setEntryValues(mSettingsManager.getEntryValues(SettingsManager.KEY_PICTURE_SIZE));
@@ -117,6 +164,15 @@ public class SettingsActivity extends PreferenceActivity {
                 ((ListPreference) p).setValue(value);
             }
             if (disabled) p.setEnabled(false);
+        }
+
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            int index = versionName.indexOf(' ');
+            versionName = versionName.substring(0, index);
+            findPreference("version_info").setSummary(versionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
         }
     }
 

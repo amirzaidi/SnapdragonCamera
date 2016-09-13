@@ -264,5 +264,13 @@
             android:key="pref_camera2_trackingfocus_key"
             android:layout="@layout/preference"
             android:title="@string/pref_camera2_trackingfocus_title" />
+
+        <Preference
+            android:defaultValue="false"
+            android:icon="@drawable/gps_location"
+            android:key="version_info"
+            android:layout="@layout/preference"
+            android:summary="Version"
+            android:title="Version Info" />
     </PreferenceCategory>
 </PreferenceScreen>
