@@ -267,7 +267,7 @@
 
         <Preference
             android:defaultValue="false"
-            android:icon="@drawable/gps_location"
+            android:icon="@drawable/version_info"
             android:key="version_info"
             android:layout="@layout/preference"
             android:summary="Version"
