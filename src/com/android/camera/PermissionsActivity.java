@@ -198,7 +198,6 @@ public class PermissionsActivity extends Activity {
     private void handlePermissionsFailure() {
         new AlertDialog.Builder(this).setTitle(getResources().getString(R.string.camera_error_title))
                 .setMessage(getResources().getString(R.string.error_permissions))
-                .setCancelable(false)
                 .setOnKeyListener(new Dialog.OnKeyListener() {
                     @Override
                     public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
