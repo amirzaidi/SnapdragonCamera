@@ -171,7 +171,11 @@ public class ListPreference extends CameraPreference {
     }
 
     public String getEntry() {
-        return mEntries[findIndexOfValue(getValue())].toString();
+        int index  = findIndexOfValue(getValue());
+        if(index < 0) {
+            return findSupportedDefaultValue();
+        }
+        return mEntries[index].toString();
     }
 
     public String getLabel() {
