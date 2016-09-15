@@ -2047,7 +2047,11 @@ public class ExifInterface {
     }
 
     public boolean addMakeAndModelTag() {
-        ExifTag t = buildTag(TAG_MAKE, Build.MANUFACTURER);
+        String maker = Build.MANUFACTURER;
+        if ( maker.equals("unknown") ) {
+            maker = "QCOM-AA";
+        }
+        ExifTag t = buildTag(TAG_MAKE, maker);
         if (t == null) {
             return false;
         }
