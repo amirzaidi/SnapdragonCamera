@@ -1145,7 +1145,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                 warningToast("Camera is not ready yet to take a picture.");
                 return;
             }
-            checkAndPlayShutterSound(id);
 
             final boolean csEnabled = isClearSightOn();
             CaptureRequest.Builder captureBuilder;
@@ -1175,9 +1174,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             applySettingsForCapture(captureBuilder, id);
 
             if(csEnabled) {
+                checkAndPlayShutterSound(id);
                 ClearSightImageProcessor.getInstance().capture(
                         id==BAYER_ID, mCaptureSession[id], captureBuilder, mCaptureCallbackHandler);
             } else if(id == getMainCameraId() && mPostProcessor.isFilterOn()) {
+                checkAndPlayShutterSound(id);
                 mCaptureSession[id].stopRepeating();
                 captureBuilder.addTarget(mImageReader[id].getSurface());
                 if(mPostProcessor.isManualMode()) {
@@ -1205,6 +1206,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                                                TotalCaptureResult result) {
                                     Log.d(TAG, "captureStillPicture Longshot onCaptureCompleted: " + id);
                                     if (mLongshotActive) {
+                                        checkAndPlayShutterSound(id);
                                         mActivity.runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
@@ -1238,6 +1240,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                 }
                             }, mCaptureCallbackHandler);
                 } else {
+                    checkAndPlayShutterSound(id);
                     if(isMpoOn()) {
                         mCaptureStartTime = System.currentTimeMillis();
                         mMpoSaveHandler.obtainMessage(MpoSaveHandler.MSG_CONFIGURE,
