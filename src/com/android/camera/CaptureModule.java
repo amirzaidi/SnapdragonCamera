@@ -2121,13 +2121,13 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private void checkSelfieFlashAndTakePicture() {
+    public boolean isSelfieFlash() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_SELFIE_FLASH);
-        if (value == null) {
-            takePicture();
-            return;
-        }
-        if (value.equals("on") && getMainCameraId() == FRONT_ID) {
+        return value != null && value.equals("on") && getMainCameraId() == FRONT_ID;
+    }
+
+    private void checkSelfieFlashAndTakePicture() {
+        if (isSelfieFlash()) {
             mUI.startSelfieFlash();
             if (selfieThread == null) {
                 selfieThread = new SelfieThread();

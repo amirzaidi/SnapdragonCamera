@@ -218,6 +218,9 @@ public class PostProcessor{
             if(DEBUG_ZSL) Log.d(TAG, "Flash required image");
             imageItem = null;
         }
+        if (mController.isSelfieFlash()) {
+            imageItem = null;
+        }
         if (imageItem != null) {
             if(DEBUG_ZSL) Log.d(TAG,"Got the item from the queue");
             reprocessImage(imageItem);
