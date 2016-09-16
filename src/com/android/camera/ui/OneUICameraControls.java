@@ -27,14 +27,15 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import org.codeaurora.snapcam.R;
-
 import com.android.camera.Storage;
 import com.android.camera.imageprocessor.filter.BeautificationFilter;
+
+import org.codeaurora.snapcam.R;
 
 public class OneUICameraControls extends RotatableLayout {
 
@@ -53,6 +54,8 @@ public class OneUICameraControls extends RotatableLayout {
     private View mMakeupSeekBarLowText;
     private View mMakeupSeekBarHighText;
     private View mMakeupSeekBarLayout;
+    private ViewGroup mProModeLayout;
+    private View mProModeCloseButton;
 
     private ArrowTextView mRefocusToast;
 
@@ -76,9 +79,27 @@ public class OneUICameraControls extends RotatableLayout {
     private int mHeight;
     private boolean mVisible;
 
+    private ProMode mProMode;
+    private ImageView mExposureIcon;
+    private ImageView mManualIcon;
+    private ImageView mWhiteBalanceIcon;
+    private ImageView mIsoIcon;
+    private TextView mExposureText;
+    private TextView mManualText;
+    private TextView mWhiteBalanceText;
+    private TextView mIsoText;
+    private boolean mProModeOn = false;
+    private LinearLayout mExposureLayout;
+    private LinearLayout mManualLayout;
+    private LinearLayout mWhiteBalanceLayout;
+    private LinearLayout mIsoLayout;
+    private RotateLayout mExposureRotateLayout;
+    private RotateLayout mManualRotateLayout;
+    private RotateLayout mWhiteBalanceRotateLayout;
+    private RotateLayout mIsoRotateLayout;
+
     public OneUICameraControls(Context context, AttributeSet attrs) {
         super(context, attrs);
-
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         setWillNotDraw(false);
 
@@ -117,6 +138,83 @@ public class OneUICameraControls extends RotatableLayout {
         mFilterModeSwitcher = findViewById(R.id.filter_mode_switcher);
         mRemainingPhotos = (LinearLayout) findViewById(R.id.remaining_photos);
         mRemainingPhotosText = (TextView) findViewById(R.id.remaining_photos_text);
+        mProModeLayout = (ViewGroup) findViewById(R.id.pro_mode_layout);
+        mProModeCloseButton = findViewById(R.id.promode_close_button);
+
+        mExposureIcon = (ImageView) findViewById(R.id.exposure);
+        mManualIcon = (ImageView) findViewById(R.id.manual);
+        mWhiteBalanceIcon = (ImageView) findViewById(R.id.white_balance);
+        mIsoIcon = (ImageView) findViewById(R.id.iso);
+        mExposureText = (TextView) findViewById(R.id.exposure_value);
+        mManualText = (TextView) findViewById(R.id.manual_value);
+        mWhiteBalanceText = (TextView) findViewById(R.id.white_balance_value);
+        mIsoText = (TextView) findViewById(R.id.iso_value);
+        mProMode = (ProMode) findViewById(R.id.promode_slider);
+        mProMode.initialize(this);
+
+        mExposureLayout = (LinearLayout) findViewById(R.id.exposure_layout);
+        mManualLayout = (LinearLayout) findViewById(R.id.manual_layout);
+        mWhiteBalanceLayout = (LinearLayout) findViewById(R.id.white_balance_layout);
+        mIsoLayout = (LinearLayout) findViewById(R.id.iso_layout);
+
+        mExposureRotateLayout = (RotateLayout) findViewById(R.id.exposure_rotate_layout);
+        mManualRotateLayout = (RotateLayout) findViewById(R.id.manual_rotate_layout);
+        mWhiteBalanceRotateLayout = (RotateLayout) findViewById(R.id.white_balance_rotate_layout);
+        mIsoRotateLayout = (RotateLayout) findViewById(R.id.iso_rotate_layout);
+
+        mExposureLayout.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetProModeIcons();
+                int mode = mProMode.getMode();
+                if (mode == ProMode.EXPOSURE_MODE) {
+                    mProMode.setMode(ProMode.NO_MODE);
+                } else {
+                    mExposureIcon.setImageResource(R.drawable.icon_exposure_blue);
+                    mProMode.setMode(ProMode.EXPOSURE_MODE);
+                }
+            }
+        });
+        mManualLayout.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetProModeIcons();
+                int mode = mProMode.getMode();
+                if (mode == ProMode.MANUAL_MODE) {
+                    mProMode.setMode(ProMode.NO_MODE);
+                } else {
+                    mManualIcon.setImageResource(R.drawable.icon_manual_blue);
+                    mProMode.setMode(ProMode.MANUAL_MODE);
+                }
+            }
+        });
+        mWhiteBalanceLayout.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetProModeIcons();
+                int mode = mProMode.getMode();
+                if (mode == ProMode.WHITE_BALANCE_MODE) {
+                    mProMode.setMode(ProMode.NO_MODE);
+                } else {
+                    mWhiteBalanceIcon.setImageResource(R.drawable.icon_white_balance_blue);
+                    mProMode.setMode(ProMode.WHITE_BALANCE_MODE);
+                }
+            }
+        });
+        mIsoLayout.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetProModeIcons();
+                int mode = mProMode.getMode();
+                if (mode == ProMode.ISO_MODE) {
+                    mProMode.setMode(ProMode.NO_MODE);
+                } else {
+                    mIsoIcon.setImageResource(R.drawable.icon_iso_blue);
+                    mProMode.setMode(ProMode.ISO_MODE);
+                }
+            }
+        });
+
         mViews = new View[]{
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
                 mTsMakeupSwitcher, mFlashButton, mShutter, mPreview, mVideoShutter
@@ -142,6 +240,14 @@ public class OneUICameraControls extends RotatableLayout {
         if(mMakeupSeekBar != null) {
             mMakeupSeekBar.setMinimumWidth(mWidth/2);
         }
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(mWidth/ 4,mWidth/4);
+        mExposureLayout.setLayoutParams(lp);
+
+        mManualLayout.setLayoutParams(lp);
+        mWhiteBalanceLayout.setLayoutParams(lp);
+        mIsoLayout.setLayoutParams(lp);
+        initializeProMode(mProModeOn);
     }
 
     public boolean isControlRegion(int x, int y) {
@@ -212,6 +318,7 @@ public class OneUICameraControls extends RotatableLayout {
         setLocation(mShutter, false, 2);
         setLocation(mVideoShutter, false, 3.15f);
         setLocationCustomBottom(mMakeupSeekBarLayout, 0, 1);
+        setLocation(mProModeCloseButton, false, 4);
 
         layoutToast(mRefocusToast, w, h, rotation);
     }
@@ -332,6 +439,11 @@ public class OneUICameraControls extends RotatableLayout {
                 ((Rotatable) v).setOrientation(orientation, animation);
             }
         }
+        mExposureRotateLayout.setOrientation(orientation, animation);
+        mManualRotateLayout.setOrientation(orientation, animation);
+        mWhiteBalanceRotateLayout.setOrientation(orientation, animation);
+        mIsoRotateLayout.setOrientation(orientation, animation);
+        mProMode.setOrientation(orientation);
         layoutRemaingPhotos();
     }
 
@@ -375,6 +487,48 @@ public class OneUICameraControls extends RotatableLayout {
             mPath.lineTo(x2, y2);
             mPath.lineTo(x3, y3);
             mPath.lineTo(x1, y1);
+        }
+    }
+
+    public void setProMode(boolean promode) {
+        mProModeOn = promode;
+        initializeProMode(mProModeOn);
+        resetProModeIcons();
+    }
+
+    private void resetProModeIcons() {
+        mExposureIcon.setImageResource(R.drawable.icon_exposure);
+        mManualIcon.setImageResource(R.drawable.icon_manual);
+        mWhiteBalanceIcon.setImageResource(R.drawable.icon_white_balance);
+        mIsoIcon.setImageResource(R.drawable.icon_iso);
+    }
+
+    public void initializeProMode(boolean promode) {
+        if (!promode) {
+            mProMode.setMode(ProMode.NO_MODE);
+            mProModeLayout.setVisibility(INVISIBLE);
+            mProModeCloseButton.setVisibility(INVISIBLE);
+            return;
+        }
+        mProModeLayout.setVisibility(VISIBLE);
+        mProModeCloseButton.setVisibility(VISIBLE);
+        mProModeLayout.setY(mHeight - mBottom - mProModeLayout.getHeight());
+    }
+
+    public void updateProModeText(int mode, String value) {
+        switch (mode) {
+            case ProMode.EXPOSURE_MODE:
+                mExposureText.setText(value);
+                break;
+            case ProMode.MANUAL_MODE:
+                mManualText.setText(value);
+                break;
+            case ProMode.WHITE_BALANCE_MODE:
+                mWhiteBalanceText.setText(value);
+                break;
+            case ProMode.ISO_MODE:
+                mIsoText.setText(value);
+                break;
         }
     }
 }
