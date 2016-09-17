@@ -113,6 +113,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_AUDIO_ENCODER = "pref_camera2_audioencoder_key";
     public static final String KEY_DIS = "pref_camera2_dis_key";
     public static final String KEY_NOISE_REDUCTION = "pref_camera2_noise_reduction_key";
+    public static final String KEY_VIDEO_FLASH_MODE = "pref_camera2_video_flashmode_key";
     public static final String KEY_VIDEO_ROTATION = "pref_camera2_video_rotation_key";
     public static final String KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL =
             "pref_camera2_video_time_lapse_frame_interval_key";

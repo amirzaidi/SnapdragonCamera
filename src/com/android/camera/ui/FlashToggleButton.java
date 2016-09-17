@@ -41,8 +41,10 @@ import org.codeaurora.snapcam.R;
 
 public class FlashToggleButton extends RotateImageView {
     private SettingsManager mSettingsManager;
-    private int[] iconResId = {R.drawable.flash_off, R.drawable.flash};
+    private int[] cameraFlashIcon = {R.drawable.flash_off, R.drawable.flash_auto, R.drawable.flash};
+    private int[] videoFlashIcon = {R.drawable.flash_off, R.drawable.flash};
     private int mIndex;
+    private boolean mIsVideoFlash;
 
     public FlashToggleButton(Context context) {
         super(context);
@@ -52,9 +54,16 @@ public class FlashToggleButton extends RotateImageView {
         super(context, attrs);
     }
 
-    public void init() {
+    public void init(boolean videoFlash) {
+        mIsVideoFlash = videoFlash;
+        String key;
+        if (mIsVideoFlash) {
+            key = SettingsManager.KEY_VIDEO_FLASH_MODE;
+        } else {
+            key = SettingsManager.KEY_FLASH_MODE;
+        }
         mSettingsManager = SettingsManager.getInstance();
-        mIndex = mSettingsManager.getValueIndex(SettingsManager.KEY_FLASH_MODE);
+        mIndex = mSettingsManager.getValueIndex(key);
         if (mIndex == -1) {
             setVisibility(GONE);
             return;
@@ -66,14 +75,29 @@ public class FlashToggleButton extends RotateImageView {
         this.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                mIndex = (mIndex + 1) % 2;
-                mSettingsManager.setValueIndex(SettingsManager.KEY_FLASH_MODE, mIndex);
+                int[] icons;
+                String key;
+                if (mIsVideoFlash) {
+                    icons = videoFlashIcon;
+                    key = SettingsManager.KEY_VIDEO_FLASH_MODE;
+                } else {
+                    icons = cameraFlashIcon;
+                    key = SettingsManager.KEY_FLASH_MODE;
+                }
+                mIndex = (mIndex + 1) % icons.length;
+                mSettingsManager.setValueIndex(key, mIndex);
                 update();
             }
         });
     }
 
     private void update() {
-        setImageResource(iconResId[mIndex]);
+        int[] icons;
+        if (mIsVideoFlash) {
+            icons = videoFlashIcon;
+        } else {
+            icons = cameraFlashIcon;
+        }
+        setImageResource(icons[mIndex]);
     }
 }

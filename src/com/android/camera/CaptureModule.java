@@ -285,6 +285,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mHighSpeedCapture = false;
     private boolean mHighSpeedCaptureSlowMode = false; //HFR
     private int mHighSpeedCaptureRate;
+    private CaptureRequest.Builder mVideoRequestBuilder;
 
     private static final int SELFIE_FLASH_DURATION = 680;
 
@@ -2401,8 +2402,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         try {
             setUpMediaRecorder(cameraId);
             createVideoSnapshotImageReader();
-            final CaptureRequest.Builder mPreviewBuilder = mCameraDevice[cameraId]
-                    .createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            mVideoRequestBuilder = mCameraDevice[cameraId].createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             List<Surface> surfaces = new ArrayList<>();
 
             Surface surface = getPreviewSurfaceForSession(cameraId);
@@ -2416,10 +2416,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
             mFrameProcessor.setOutputSurface(surface);
             mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
-            addPreviewSurface(mPreviewBuilder, surfaces, cameraId);
+            addPreviewSurface(mVideoRequestBuilder, surfaces, cameraId);
 
             if (!mHighSpeedCapture) surfaces.add(mVideoSnapshotImageReader.getSurface());
-            else mPreviewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
+            else mVideoRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
 
             if (!mHighSpeedCapture) {
                 mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
@@ -2430,8 +2430,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                         Log.d(TAG, "StartRecordingVideo session onConfigured");
                         mCurrentSession = cameraCaptureSession;
                         try {
-                            setUpVideoCaptureRequestBuilder(mPreviewBuilder);
-                            mCurrentSession.setRepeatingRequest(mPreviewBuilder.build(), null, mCameraHandler);
+                            setUpVideoCaptureRequestBuilder(mVideoRequestBuilder);
+                            mCurrentSession.setRepeatingRequest(mVideoRequestBuilder.build(), null, mCameraHandler);
                         } catch (CameraAccessException e) {
                             e.printStackTrace();
                         }
@@ -2440,7 +2440,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mUI.resetPauseButton();
                         mRecordingTotalTime = 0L;
                         mRecordingStartTime = SystemClock.uptimeMillis();
-                        mUI.showRecordingUI(true);
+                        mUI.showRecordingUI(true, false);
                         updateRecordingTime();
                     }
 
@@ -2460,7 +2460,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
                                 try {
                                     List list = session
-                                            .createHighSpeedRequestList(mPreviewBuilder.build());
+                                            .createHighSpeedRequestList(mVideoRequestBuilder.build());
                                     session.setRepeatingBurst(list, null, mCameraHandler);
                                 } catch (CameraAccessException e) {
                                     Log.e(TAG, "Failed to start high speed video recording "
@@ -2480,7 +2480,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                 mUI.resetPauseButton();
                                 mRecordingTotalTime = 0L;
                                 mRecordingStartTime = SystemClock.uptimeMillis();
-                                mUI.showRecordingUI(true);
+                                mUI.showRecordingUI(true, true);
                                 updateRecordingTime();
                             }
 
@@ -2531,10 +2531,20 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyVideoFlash(builder);
     }
 
+    private void updateVideoFlash() {
+        if (!mIsRecordingVideo || mHighSpeedCapture) return;
+        applyVideoFlash(mVideoRequestBuilder);
+        try {
+            mCurrentSession.setRepeatingRequest(mVideoRequestBuilder.build(), null, mCameraHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void applyVideoFlash(CaptureRequest.Builder builder) {
-        String value = mSettingsManager.getValue(SettingsManager.KEY_FLASH_MODE);
+        String value = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_FLASH_MODE);
         if (value == null) return;
-        boolean flashOn = value.equals("on");
+        boolean flashOn = value.equals("torch");
 
         if (flashOn) {
             builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
@@ -2664,7 +2674,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mMediaRecorder.stop();
         mMediaRecorder.reset();
         saveVideo();
-        mUI.showRecordingUI(false);
+        mUI.showRecordingUI(false, false);
         mIsRecordingVideo = false;
 
         if(mFrameProcessor != null) {
@@ -2981,7 +2991,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private boolean isFlashOff(int id) {
         if (!mSettingsManager.isFlashSupported(id)) return true;
-        return mSettingsManager.getValue(SettingsManager.KEY_FLASH_MODE).equals("1");
+        return mSettingsManager.getValue(SettingsManager.KEY_FLASH_MODE).equals("off");
     }
 
     private void initializePreviewConfiguration(int id) {
@@ -3127,24 +3137,26 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void applyFlash(CaptureRequest.Builder request, String value) {
-        boolean flashOn = value.equals("on");
         String redeye = mSettingsManager.getValue(SettingsManager.KEY_REDEYE_REDUCTION);
-        boolean redeyeOn = redeye != null && redeye.equals("on");
 
-        if (redeyeOn) {
+        if (redeye != null && redeye.equals("on")) {
             request.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
         } else {
-            if (flashOn) {
-                request.set(CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
-                request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
-            } else {
-                request.set(CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON);
-                request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+            switch (value) {
+                case "on":
+                    request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
+                    request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
+                    break;
+                case "auto":
+                    request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+                    request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
+                    break;
+                case "off":
+                    request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+                    break;
             }
-
         }
     }
 
@@ -3357,6 +3369,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                     return;
                 case SettingsManager.KEY_LONGSHOT:
                     if (count == 0) restart();
+                    return;
+                case SettingsManager.KEY_VIDEO_FLASH_MODE:
+                    updateVideoFlash();
                     return;
                 case SettingsManager.KEY_FLASH_MODE:
                     if (count == 0) restart(); //Restart is due to ZSL mode change

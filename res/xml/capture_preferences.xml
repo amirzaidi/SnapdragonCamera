@@ -31,13 +31,10 @@
     xmlns:camera="http://schemas.android.com/apk/res/org.codeaurora.snapcam"
     camera:title="@string/pref_camera_settings_category">
     <IconListPreference
-        camera:defaultValue="@string/pref_camera2_flashmode_default"
+        camera:defaultValue="@string/pref_camera2_flashmode_value_auto"
         camera:entries="@array/pref_camera2_flashmode_entries"
         camera:entryValues="@array/pref_camera2_flashmode_entryvalues"
-        camera:icons="@array/pref_camera2_flashmode_icons"
         camera:key="pref_camera2_flashmode_key"
-        camera:labelList="@array/pref_camera2_flashmode_labels"
-        camera:largeIcons="@array/pref_camera2_flashmode_largeicons"
         camera:singleIcon="@drawable/ic_settings_flash"
         camera:title="@string/pref_camera_flashmode_title"/>
 
@@ -233,6 +230,15 @@
         camera:entryValues="@array/pref_camera2_noise_reduction_entryvalues"
         camera:key="pref_camera2_noise_reduction_key"
         camera:title="@string/pref_camera_noise_reduction_title"/>
+
+    <IconListPreference
+        camera:defaultValue="@string/pref_camera_video_flashmode_default"
+        camera:entries="@array/pref_camera2_video_flashmode_entries"
+        camera:entryValues="@array/pref_camera2_video_flashmode_entryvalues"
+        camera:icons="@array/video_flashmode_icons"
+        camera:key="pref_camera2_video_flashmode_key"
+        camera:singleIcon="@drawable/ic_settings_flash"
+        camera:title="@string/pref_camera_flashmode_title" />
 
     <ListPreference
         camera:defaultValue="@string/pref_camera_video_rotation_default"

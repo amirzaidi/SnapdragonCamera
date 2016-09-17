@@ -485,7 +485,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void initFlashButton() {
-        mFlashButton.init();
+        mFlashButton.init(false);
     }
 
     public void initSceneModeButton() {
@@ -524,14 +524,20 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
-    public void showRecordingUI(boolean recording) {
-        mFlashButton.setVisibility(recording ? View.GONE : View.VISIBLE);
+    public void showRecordingUI(boolean recording, boolean highspeed) {
         if (recording) {
+            if (highspeed) {
+                mFlashButton.setVisibility(View.GONE);
+            } else {
+                mFlashButton.init(true);
+            }
             mVideoButton.setImageResource(R.drawable.video_stop);
             mRecordingTimeView.setText("");
             ((ViewGroup)mRootView).addView(mRecordingTimeRect);
             mMuteButton.setVisibility(View.VISIBLE);
         } else {
+            mFlashButton.setVisibility(View.VISIBLE);
+            mFlashButton.init(false);
             mVideoButton.setImageResource(R.drawable.video_capture);
             ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
             mMuteButton.setVisibility(View.INVISIBLE);
