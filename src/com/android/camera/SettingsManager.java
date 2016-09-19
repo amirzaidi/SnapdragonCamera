@@ -214,9 +214,9 @@ public class SettingsManager implements ListMenu.SettingsListener {
     @Override
     public void onSettingChanged(ListPreference pref) {
         String key = pref.getKey();
-        if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
         List changed = checkDependencyAndUpdate(key);
         if (changed == null) return;
+        if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
         notifyListeners(changed);
     }
 
@@ -450,6 +450,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         String key = pref.getKey();
         List changed = checkDependencyAndUpdate(key);
         if (changed == null) return;
+        if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
         notifyListeners(changed);
     }
 
@@ -714,8 +715,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     private void buildHFR() {
         ListPreference hfrPref = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
-
-
         Size[] highSpeedVideoSize = getSupportedHighSpeedVideoSize(mCameraId);
         if (highSpeedVideoSize.length == 0) {
             CharSequence[] entryValues = new CharSequence[1];
@@ -724,7 +723,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
             entries[0] = "off";
             hfrPref.setEntryValues(entryValues);
             hfrPref.setEntries(entries);
-            hfrPref.setValueIndex(0);
+            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
             return;
         }
 
@@ -749,11 +748,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
             entries[0] = "Off";
             hfrPref.setEntryValues(entryValues);
             hfrPref.setEntries(entries);
-            hfrPref.setValueIndex(0);
+            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
             return;
         }
 
-        Range[] range = getSupportedHighSpeedVideoFPSRange(mCameraId, highSpeedVideoSize[0]);
+        Range[] range = getSupportedHighSpeedVideoFPSRange(mCameraId, videoSize);
         ArrayList<Range> list = new ArrayList<>();
         for (Range r : range) {
             if (r.getLower() == r.getUpper()) {
@@ -768,7 +767,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
             entries[0] = "Off";
             hfrPref.setEntryValues(entryValues);
             hfrPref.setEntries(entries);
-            hfrPref.setValueIndex(0);
+            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
             return;
         }
 
@@ -790,6 +789,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
         hfrPref.setEntryValues(entryValues);
         hfrPref.setEntries(entries);
+        int index = getValueIndex(KEY_VIDEO_HIGH_FRAME_RATE);
+        if (index == -1) {
+            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
+        }
     }
 
     private boolean removePreference(PreferenceGroup group, String key) {

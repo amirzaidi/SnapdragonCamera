@@ -70,6 +70,9 @@ public class SettingsActivity extends PreferenceActivity {
                 value = ((ListPreference) p).getValue();
                 mSettingsManager.setValue(key, value);
             }
+            if (key.equals(SettingsManager.KEY_VIDEO_QUALITY)) {
+                updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+            }
         }
     };
 
@@ -134,18 +137,13 @@ public class SettingsActivity extends PreferenceActivity {
                 if (group.removePreference(p)) break;
             }
         }
-
-        ListPreference pictureSize = (ListPreference) findPreference(SettingsManager.KEY_PICTURE_SIZE);
-        if (pictureSize != null) {
-            pictureSize.setEntryValues(mSettingsManager.getEntryValues(SettingsManager.KEY_PICTURE_SIZE));
-            pictureSize.setEntries(mSettingsManager.getEntries(SettingsManager.KEY_PICTURE_SIZE));
-        }
     }
 
     private void initializePreferences() {
-        ListPreference pref = (ListPreference) findPreference(SettingsManager.KEY_EXPOSURE);
-        pref.setEntries(mSettingsManager.getExposureCompensationEntries());
-        pref.setEntryValues(mSettingsManager.getExposureCompensationEntryValues());
+        updatePreference(SettingsManager.KEY_PICTURE_SIZE);
+        updatePreference(SettingsManager.KEY_VIDEO_QUALITY);
+        updatePreference(SettingsManager.KEY_EXPOSURE);
+        updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
 
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         Set<Map.Entry<String, SettingsManager.Values>> set = map.entrySet();
@@ -173,6 +171,15 @@ public class SettingsActivity extends PreferenceActivity {
             findPreference("version_info").setSummary(versionName);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void updatePreference(String key) {
+        ListPreference pref = (ListPreference) findPreference(key);
+        if (pref != null) {
+            pref.setEntries(mSettingsManager.getEntries(key));
+            pref.setEntryValues(mSettingsManager.getEntryValues(key));
+            pref.setValueIndex(mSettingsManager.getValueIndex(key));
         }
     }
 
