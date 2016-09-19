@@ -922,6 +922,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return res;
     }
 
+    public Size[] getSupportedThumbnailSizes(int cameraId) {
+        return mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.JPEG_AVAILABLE_THUMBNAIL_SIZES);
+    }
+
     public Size[] getSupportedOutputSize(int cameraId, int format) {
         StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
