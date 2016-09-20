@@ -44,6 +44,7 @@ import android.widget.Toast;
 
 import org.codeaurora.snapcam.R;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -72,6 +73,12 @@ public class SettingsActivity extends PreferenceActivity {
             }
             if (key.equals(SettingsManager.KEY_VIDEO_QUALITY)) {
                 updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+            }
+            List<String> list = mSettingsManager.getDependentKeys(key);
+            if (list != null) {
+                for (String dependentKey : list) {
+                    updatePreferenceButton(dependentKey);
+                }
             }
         }
     };
@@ -159,7 +166,11 @@ public class SettingsActivity extends PreferenceActivity {
             if (p instanceof SwitchPreference) {
                 ((SwitchPreference) p).setChecked(isOn(value));
             } else if (p instanceof ListPreference) {
-                ((ListPreference) p).setValue(value);
+                ListPreference pref = (ListPreference) p;
+                pref.setValue(value);
+                if (pref.getEntryValues().length == 1) {
+                    pref.setEnabled(false);
+                }
             }
             if (disabled) p.setEnabled(false);
         }
@@ -171,6 +182,17 @@ public class SettingsActivity extends PreferenceActivity {
             findPreference("version_info").setSummary(versionName);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void updatePreferenceButton(String key) {
+        ListPreference pref = (ListPreference) findPreference(key);
+        if (pref != null) {
+            if (pref.getEntryValues().length == 1) {
+                pref.setEnabled(false);
+            } else {
+                pref.setEnabled(true);
+            }
         }
     }
 

@@ -1164,6 +1164,25 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
     }
 
+    public List<String> getDependentKeys(String key) {
+        List<String> list = null;
+        if (key.equals(KEY_VIDEO_QUALITY)) {
+            list = new ArrayList<>();
+            list.add(KEY_VIDEO_HIGH_FRAME_RATE);
+        } else {
+            String value = getValue(key);
+            JSONObject dependencies = getDependencyList(key, value);
+            if (dependencies != null) {
+                list = new ArrayList<>();
+                Iterator<String> it = dependencies.keys();
+                while (it.hasNext()) {
+                    list.add(it.next());
+                }
+            }
+        }
+        return list;
+    }
+
     private JSONObject parseJson(String fileName) {
         String json;
         try {
