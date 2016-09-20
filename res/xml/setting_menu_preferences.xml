@@ -239,16 +239,6 @@
             android:title="@string/pref_video_time_lapse_frame_interval_title" />
 
         <ListPreference
-            android:defaultValue="@string/pref_camera2_videosnap_default"
-            android:entries="@array/pref_camera2_videosnap_entries"
-            android:entryValues="@array/pref_camera2_videosnap_entryvalues"
-            android:icon="@drawable/auto_snapshot_size"
-            android:key="pref_camera2_videosnap_key"
-            android:layout="@layout/preference"
-            android:summary="%s"
-            android:title="@string/pref_camera2_videosnap_title" />
-
-        <ListPreference
             android:defaultValue="@string/pref_camera_hfr_default"
             android:entries="@array/pref_camera_hfr_entries"
             android:entryValues="@array/pref_camera_hfr_entryvalues"
