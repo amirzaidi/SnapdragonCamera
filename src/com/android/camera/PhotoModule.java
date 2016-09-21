@@ -2665,6 +2665,12 @@ public class PhotoModule
         // we will update focus manager with proper UI.
         if (mFocusManager != null && mUI != null) {
             mFocusManager.setPhotoUI(mUI);
+
+            View root = mUI.getRootView();
+            // These depend on camera parameters.
+            int width = root.getWidth();
+            int height = root.getHeight();
+            mFocusManager.setPreviewSize(width, height);
         }
     }
 
