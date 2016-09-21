@@ -1639,6 +1639,7 @@ public class PhotoModule
         // is full then ignore.
         if (mCameraDevice == null || mCameraState == SNAPSHOT_IN_PROGRESS
                 || mCameraState == SWITCHING_CAMERA
+                || mCameraState == PREVIEW_STOPPED
                 || mActivity.getMediaSaveService() == null
                 || mActivity.getMediaSaveService().isQueueFull()) {
             return false;
