@@ -179,6 +179,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     int mPreviewWidth;
     int mPreviewHeight;
+    private boolean mIsVideoUI = false;
 
     private void previewUIReady() {
         if((mSurfaceHolder != null && mSurfaceHolder.getSurface().isValid())) {
@@ -243,6 +244,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             @Override
             public void onProgressChanged(SeekBar seekBar, int progresValue, boolean fromUser) {
                 int value = progresValue/10*10;
+                if(mIsVideoUI && value == 0) {
+                    mMakeupSeekBar.setProgress(10);
+                    return;
+                }
                 mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, value+"");
             }
             @Override
@@ -255,7 +260,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                showMakeupSeekBar();
+                showOrHideMakeupSeekBar();
             }
         });
         mFlashButton = (FlashToggleButton) mRootView.findViewById(R.id.flash_button);
@@ -339,21 +344,24 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
     }
 
-    private void showMakeupSeekBar() {
+    private void showOrHideMakeupSeekBar() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
         if(mMakeupSeekBar.getVisibility() == View.VISIBLE) {
-            mMakeupSeekBar.setVisibility(View.GONE);
             if(value != null && value.equals("0")) {
+                if(mIsVideoUI) {
+                    return;
+                }
                 mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "off");
-                mModule.restart();
+                mModule.restartSession(true);
             }
+            mMakeupSeekBar.setVisibility(View.GONE);
         } else {
             mMakeupSeekBar.setVisibility(View.VISIBLE);
             if(value != null && value.equals("0")) {
                 mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "40");
                 mMakeupSeekBar.setProgress(40);
                 mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "on");
-                mModule.restart();
+                mModule.restartSession(true);
             } else {
                 try {
                     mMakeupSeekBar.setProgress(Integer.parseInt(mSettingsManager.getValue(SettingsManager.KEY_MAKEUP)));
@@ -557,6 +565,12 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         mFilterModeSwitcher.setVisibility(View.INVISIBLE);
         mSceneModeSwitcher.setVisibility(View.INVISIBLE);
+
+        String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
+        if(value != null && value.equals("0")) {
+            mMakeupButton.setVisibility(View.INVISIBLE);
+        }
+        mIsVideoUI = true;
     }
 
     public void showUIafterRecording() {
@@ -564,6 +578,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
+        mMakeupButton.setVisibility(View.VISIBLE);
+        mIsVideoUI = false;
     }
 
     public void addFilterMode() {
@@ -1249,6 +1265,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mSurfaceView.getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
         mSurfaceView.setAspectRatio(mPreviewHeight, mPreviewWidth);
         mSurfaceView.setVisibility(View.VISIBLE);
+        mIsVideoUI = false;
     }
 
     public boolean setPreviewSize(int width, int height) {
