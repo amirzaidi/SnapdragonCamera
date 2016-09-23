@@ -60,5 +60,11 @@
     {"pref_camera2_hfr_key":"off"}
     ,
     "0":{}
+  },
+  "pref_camera2_makeup_key":
+  {
+    "0":{},
+    "default":
+      {"pref_camera2_facedetection_key":"on"}
   }
 }

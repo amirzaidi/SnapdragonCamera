@@ -57,6 +57,8 @@ public class BeautificationFilter implements ImageFilter {
     private static String TAG = "BeautificationFilter";
     private static boolean mIsSupported = false;
     private int mStrengthValue = 0;
+    private static int FACE_TIMEOUT_VALUE = 60; //in frame count
+    private int mFaceTimeOut = FACE_TIMEOUT_VALUE;
 
     public BeautificationFilter(CaptureModule module) {
         mModule = module;
@@ -101,6 +103,14 @@ public class BeautificationFilter implements ImageFilter {
         Face[] faces;
         if(((Boolean)isPreview).booleanValue()) {
             faces = mModule.getPreviewFaces();
+            if(faces == null || faces.length == 0) {
+                if(mFaceTimeOut > 0) {
+                    faces = mModule.getStickyFaces();
+                    mFaceTimeOut--;
+                }
+            } else {
+                mFaceTimeOut = FACE_TIMEOUT_VALUE;
+            }
         } else {
             faces = mModule.getStickyFaces();
         }
@@ -113,11 +123,13 @@ public class BeautificationFilter implements ImageFilter {
         int value = nativeBeautificationProcess(bY, bVU, mWidth, mHeight, mStrideY,
                 (int)(rect.left*widthRatio), (int)(rect.top*heightRatio),
                 (int)(rect.right*widthRatio), (int)(rect.bottom*heightRatio), mStrengthValue, mStrengthValue);
-        if(DEBUG && value < 0) {
+        if(DEBUG) {
             if(value == -1) {
                 Log.d(TAG, "library initialization is failed.");
             } else if(value == -2) {
                 Log.d(TAG, "No face is recognized");
+            } else if(value >= 0 && !((Boolean)isPreview).booleanValue()){
+                Log.d(TAG, "Successful beautification");
             }
         }
     }
