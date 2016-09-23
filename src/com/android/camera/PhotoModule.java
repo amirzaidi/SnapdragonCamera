@@ -1270,10 +1270,14 @@ public class PhotoModule
         }
     }
 
-    private byte[] flipJpeg(byte[] jpegData) {
+    private byte[] flipJpeg(byte[] jpegData, int orientation) {
         Bitmap srcBitmap = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
         Matrix m = new Matrix();
-        m.preScale(-1, 1);
+        if(orientation == 270) {
+            m.preScale(-1, 1);
+        } else { //if it's 90
+            m.preScale(1, -1);
+        }
         Bitmap dstBitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(), srcBitmap.getHeight(), m, false);
         dstBitmap.setDensity(DisplayMetrics.DENSITY_DEFAULT);
         int size = dstBitmap.getWidth() * dstBitmap.getHeight();
@@ -1281,6 +1285,18 @@ public class PhotoModule
         dstBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
 
         return outStream.toByteArray();
+    }
+
+    public static byte[] addExifTags(byte[] jpeg, int orientationInDegree) {
+        ExifInterface exif = new ExifInterface();
+        exif.addOrientationTag(orientationInDegree);
+        ByteArrayOutputStream jpegOut = new ByteArrayOutputStream();
+        try {
+            exif.writeExif(jpeg, jpegOut);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not write EXIF", e);
+        }
+        return jpegOut.toByteArray();
     }
 
     private final class JpegPictureCallback
@@ -1389,9 +1405,9 @@ public class PhotoModule
                             .findPreference(CameraSettings.KEY_SELFIE_MIRROR);
                     if (selfieMirrorPref != null && selfieMirrorPref.getValue() != null &&
                             selfieMirrorPref.getValue().equalsIgnoreCase("enable")) {
-                        jpegData = flipJpeg(jpegData);
-                        exif = Exif.getExif(jpegData);
-                        exif.addOrientationTag(orientation);
+                        CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
+                        jpegData = flipJpeg(jpegData, info.orientation);
+                        jpegData = addExifTags(jpegData, orientation);
                     }
                 }
                 if (!mIsImageCaptureIntent) {
