@@ -1639,6 +1639,7 @@ public class PhotoModule
         // is full then ignore.
         if (mCameraDevice == null || mCameraState == SNAPSHOT_IN_PROGRESS
                 || mCameraState == SWITCHING_CAMERA
+                || mCameraState == PREVIEW_STOPPED
                 || mActivity.getMediaSaveService() == null
                 || mActivity.getMediaSaveService().isQueueFull()) {
             return false;
@@ -2664,6 +2665,12 @@ public class PhotoModule
         // we will update focus manager with proper UI.
         if (mFocusManager != null && mUI != null) {
             mFocusManager.setPhotoUI(mUI);
+
+            View root = mUI.getRootView();
+            // These depend on camera parameters.
+            int width = root.getWidth();
+            int height = root.getHeight();
+            mFocusManager.setPreviewSize(width, height);
         }
     }
 
