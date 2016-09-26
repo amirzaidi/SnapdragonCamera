@@ -56,17 +56,11 @@ public class BeautificationFilter implements ImageFilter {
     private static boolean DEBUG = false;
     private static String TAG = "BeautificationFilter";
     private static boolean mIsSupported = false;
-    private int mStrengthValue = 0;
     private static int FACE_TIMEOUT_VALUE = 60; //in frame count
     private int mFaceTimeOut = FACE_TIMEOUT_VALUE;
 
     public BeautificationFilter(CaptureModule module) {
         mModule = module;
-        String value = SettingsManager.getInstance().getValue(SettingsManager.KEY_MAKEUP);
-        try {
-            mStrengthValue = Integer.parseInt(value);
-        } catch(Exception e) {
-        }
     }
 
     @Override
@@ -120,17 +114,25 @@ public class BeautificationFilter implements ImageFilter {
             return;
         }
         Rect rect = faces[0].getBounds();
+        int strengthValue = 100;
+        try {
+            String str = SettingsManager.getInstance().getValue(SettingsManager.KEY_MAKEUP);
+            strengthValue = Integer.parseInt(str);
+        } catch(Exception e) {
+        }
         int value = nativeBeautificationProcess(bY, bVU, mWidth, mHeight, mStrideY,
                 (int)(rect.left*widthRatio), (int)(rect.top*heightRatio),
-                (int)(rect.right*widthRatio), (int)(rect.bottom*heightRatio), mStrengthValue, mStrengthValue);
+                (int)(rect.right*widthRatio), (int)(rect.bottom*heightRatio), strengthValue, strengthValue);
         if(DEBUG) {
             if(value == -1) {
                 Log.d(TAG, "library initialization is failed.");
             } else if(value == -2) {
                 Log.d(TAG, "No face is recognized");
-            } else if(value >= 0 && !((Boolean)isPreview).booleanValue()){
-                Log.d(TAG, "Successful beautification");
             }
+        }
+        if(value >= 0 && !((Boolean)isPreview).booleanValue()){
+            Log.i(TAG, "Successful beautification at "+faces[0].toString()+
+                    " widthRatio: "+widthRatio+" heightRatio: "+ heightRatio+" Strength: "+strengthValue);
         }
     }
 

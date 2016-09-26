@@ -290,9 +290,9 @@ public class ZSLQueue {
         }
 
         if( captureResult.get(CaptureResult.CONTROL_AE_STATE) != null &&
-            captureResult.get(CaptureResult.CONTROL_AF_STATE) != null &&
+            captureResult.get(CaptureResult.FLASH_MODE) != null &&
             captureResult.get(CaptureResult.CONTROL_AE_STATE).intValue() == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED &&
-            captureResult.get(CaptureResult.CONTROL_AF_STATE).intValue() != CaptureResult.FLASH_MODE_OFF) {
+            captureResult.get(CaptureResult.FLASH_MODE).intValue() != CaptureResult.FLASH_MODE_OFF) {
             return true;
         }
 
