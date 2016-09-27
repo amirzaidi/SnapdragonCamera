@@ -1162,6 +1162,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             addPreviewSurface(captureBuilder, null, id);
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
             captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
+            applySettingsForLockExposure(captureBuilder, id);
             applySettingsForCapture(captureBuilder, id);
 
             if(csEnabled) {
