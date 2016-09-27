@@ -122,14 +122,16 @@ public class WideAnglePanoramaUI implements
         mSwitcher = (ModuleSwitcher) mRootView.findViewById(R.id.camera_switcher);
         mSwitcher.setCurrentIndex(ModuleSwitcher.WIDE_ANGLE_PANO_MODULE_INDEX);
         mSwitcher.setSwitchListener(mActivity);
-        mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
-        mThumbnail.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!CameraControls.isAnimating())
-                    mActivity.gotoGallery();
-            }
-        });
+        if (!mActivity.isSecureCamera()) {
+            mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+            mThumbnail.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (!CameraControls.isAnimating())
+                        mActivity.gotoGallery();
+                }
+            });
+        }
 
         mSwitcher.setOnClickListener(new View.OnClickListener() {
             @Override

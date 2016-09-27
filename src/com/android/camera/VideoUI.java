@@ -677,17 +677,18 @@ public class VideoUI implements PieRenderer.PieListener,
 
         mGestures.setRenderOverlay(mRenderOverlay);
 
-        mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
-        mThumbnail.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Do not allow navigation to filmstrip during video recording
-                if (!mRecordingStarted && !CameraControls.isAnimating()) {
-                    mActivity.gotoGallery();
+        if (!mActivity.isSecureCamera()) {
+            mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+            mThumbnail.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Do not allow navigation to filmstrip during video recording
+                    if (!mRecordingStarted && !CameraControls.isAnimating()) {
+                        mActivity.gotoGallery();
+                    }
                 }
-            }
-        });
-
+            });
+        }
     }
 
     public void setPreviewGesturesVideoUI() {
