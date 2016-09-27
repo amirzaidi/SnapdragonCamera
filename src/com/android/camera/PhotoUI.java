@@ -1299,9 +1299,6 @@ public class PhotoUI implements PieListener,
         mFaceView.setVisibility(View.VISIBLE);
         mFaceView.setDisplayOrientation(orientation);
         mFaceView.setMirror(mirror);
-        LayoutParams layoutParams = new LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        mFaceView.setLayoutParams(layoutParams);
         mFaceView.resume();
     }
 
