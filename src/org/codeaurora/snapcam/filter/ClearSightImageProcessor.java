@@ -141,6 +141,7 @@ public class ClearSightImageProcessor {
     private int mNumFrameCount;
     private boolean mDumpImages;
     private boolean mDumpYUV;
+    private boolean mIsClosing;
 
     private static ClearSightImageProcessor mInstance;
 
@@ -179,6 +180,8 @@ public class ClearSightImageProcessor {
 
     public void init(StreamConfigurationMap map, int width, int height,
             Context context, OnMediaSavedListener mediaListener) {
+        Log.d(TAG, "init() start");
+        mIsClosing = false;
         mImageProcessThread = new HandlerThread("CameraImageProcess");
         mImageProcessThread.start();
         mClearsightRegisterThread = new HandlerThread("ClearsightRegister");
@@ -210,13 +213,67 @@ public class ClearSightImageProcessor {
             CameraCharacteristics cc = cm.getCameraCharacteristics("0");
             byte[] blob = cc.get(OTP_CALIB_BLOB);
             ClearSightNativeEngine.getInstance().init(mNumFrameCount*2,
-                    width, height, CamSystemCalibrationData.createFromBytes(blob));
+                    maxWidth, maxHeight, CamSystemCalibrationData.createFromBytes(blob));
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+        Log.d(TAG, "init() done");
     }
 
     public void close() {
+        Log.d(TAG, "close() start");
+        mIsClosing = true;
+        // use quit instead of quitSafely
+        // because we don't want to process any more queued events.
+        // just clean up and exit.
+        if(mImageProcessThread != null) {
+            mImageProcessThread.quit();
+
+            try {
+                mImageProcessThread.join();
+                mImageProcessThread = null;
+                mImageProcessHandler = null;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if(mClearsightRegisterThread != null) {
+            mClearsightRegisterThread.quit();
+
+            try {
+                mClearsightRegisterThread.join();
+                mClearsightRegisterThread = null;
+                mClearsightRegisterHandler = null;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if(mClearsightProcessThread != null) {
+            mClearsightProcessThread.quit();
+
+            try {
+                mClearsightProcessThread.join();
+                mClearsightProcessThread = null;
+                mClearsightProcessHandler = null;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if(mImageEncodeThread != null) {
+            mImageEncodeThread.quit();
+
+            try {
+                mImageEncodeThread.join();
+                mImageEncodeThread = null;
+                mImageEncodeHandler = null;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         for(int i=0; i<mImageReader.length; i++) {
             if (null != mImageReader[i]) {
                 mImageReader[i].close();
@@ -232,59 +289,12 @@ public class ClearSightImageProcessor {
             }
         }
 
-        if(mImageProcessThread != null) {
-            mImageProcessThread.quitSafely();
-
-            try {
-                mImageProcessThread.join();
-                mImageProcessThread = null;
-                mImageProcessHandler = null;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if(mClearsightRegisterThread != null) {
-            mClearsightRegisterThread.quitSafely();
-
-            try {
-                mClearsightRegisterThread.join();
-                mClearsightRegisterThread = null;
-                mClearsightRegisterHandler = null;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if(mClearsightProcessThread != null) {
-            mClearsightProcessThread.quitSafely();
-
-            try {
-                mClearsightProcessThread.join();
-                mClearsightProcessThread = null;
-                mClearsightProcessHandler = null;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if(mImageEncodeThread != null) {
-            mImageEncodeThread.quitSafely();
-
-            try {
-                mImageEncodeThread.join();
-                mImageEncodeThread = null;
-                mImageEncodeHandler = null;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
         mCaptureSessions[CAM_TYPE_MONO] = null;
         mCaptureSessions[CAM_TYPE_BAYER] = null;
         mMediaSaveService = null;
         mMediaSavedListener = null;
         ClearSightNativeEngine.getInstance().close();
+        Log.d(TAG, "close() done");
     }
 
     public void setCallback(Callback callback) {
@@ -337,8 +347,11 @@ public class ClearSightImageProcessor {
                     CaptureRequest request,
                     TotalCaptureResult result) {
                 Log.d(TAG, "captureStillPicture onCaptureCompleted: " + cam);
-                mImageProcessHandler.obtainMessage(MSG_NEW_CAPTURE_RESULT,
-                        cam, 0, result).sendToTarget();
+                if(isClosing())
+                    Log.d(TAG, "captureStillPicture onCaptureCompleted - closing");
+                else
+                    mImageProcessHandler.obtainMessage(MSG_NEW_CAPTURE_RESULT,
+                            cam, 0, result).sendToTarget();
             }
 
             @Override
@@ -346,8 +359,11 @@ public class ClearSightImageProcessor {
                     CaptureRequest request,
                     CaptureFailure result) {
                 Log.d(TAG, "captureStillPicture onCaptureFailed: " + cam);
-                mImageProcessHandler.obtainMessage(MSG_NEW_CAPTURE_FAIL,
-                        cam, 0, result).sendToTarget();
+                if(isClosing())
+                    Log.d(TAG, "captureStillPicture onCaptureFailed - closing");
+                else
+                    mImageProcessHandler.obtainMessage(MSG_NEW_CAPTURE_FAIL,
+                            cam, 0, result).sendToTarget();
             }
 
             @Override
@@ -369,15 +385,22 @@ public class ClearSightImageProcessor {
         session.captureBurst(burstList, captureCallback, captureCallbackHandler);
     }
 
+    private boolean isClosing() {
+        return mIsClosing;
+    }
+
     private ImageReader createImageReader(final int cam, int width, int height) {
         ImageReader reader = ImageReader.newInstance(width, height,
                 ImageFormat.YUV_420_888, mNumBurstCount + mNumFrameCount);
         reader.setOnImageAvailableListener(new OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                Log.d(TAG, "image available for cam: " + cam);
-                mImageProcessHandler.obtainMessage(
-                        MSG_NEW_IMG, cam, 0, reader.acquireNextImage()).sendToTarget();
+                Log.d(TAG, "onImageAvailable for cam: " + cam);
+                if(isClosing())
+                    Log.d(TAG, "onImageAvailable - closing");
+                else
+                    mImageProcessHandler.obtainMessage(
+                            MSG_NEW_IMG, cam, 0, reader.acquireNextImage()).sendToTarget();
             }
         }, null);
 
@@ -400,8 +423,9 @@ public class ClearSightImageProcessor {
     }
 
     public interface Callback {
-        public void onClearSightSuccess();
-        public void onClearSightFailure();
+        public void onReleaseShutterLock();
+        public void onClearSightSuccess(byte[] thumnailBytes);
+        public void onClearSightFailure(byte[] thumnailBytes);
     }
 
     private static class ReprocessableImage {
@@ -442,6 +466,8 @@ public class ClearSightImageProcessor {
 
         @Override
         public void handleMessage(Message msg) {
+            if(isClosing()) return;
+
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 mCaptureDone = false;
@@ -453,8 +479,6 @@ public class ClearSightImageProcessor {
                 mNamedEntity = mNamedImages.getNextNameEntity();
                 mClearsightRegisterHandler.obtainMessage(MSG_START_CAPTURE,
                         0, 0, mNamedEntity).sendToTarget();
-                break;
-            case MSG_END_CAPTURE:
                 break;
             case MSG_NEW_IMG:
                 processImg(msg);
@@ -691,6 +715,12 @@ public class ClearSightImageProcessor {
             mImageProcessHandler.removeMessages(MSG_NEW_CAPTURE_FAIL);
 
             mCaptureDone = true;
+
+            if(mReprocessingPairCount == 0) {
+                // No matching pairs
+                Log.w(TAG, "processFinalPair - no matching pairs found");
+                if(mCallback != null) mCallback.onClearSightFailure(null);
+            }
         }
 
         private void processNewReprocessImage(Message msg) {
@@ -761,6 +791,8 @@ public class ClearSightImageProcessor {
 
         @Override
         public void handleMessage(Message msg) {
+            if(isClosing()) return;
+
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 mNamedEntity = (NamedEntity) msg.obj;
@@ -800,6 +832,8 @@ public class ClearSightImageProcessor {
 
         @Override
         public void handleMessage(Message msg) {
+            if(isClosing()) return;
+
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 processClearSight((NamedEntity) msg.obj);
@@ -819,7 +853,7 @@ public class ClearSightImageProcessor {
 
             if(processInit) {
                 if(mCallback != null)
-                    mCallback.onClearSightSuccess();
+                    mCallback.onReleaseShutterLock();
 
                 Image encodeImage = mImageWriter[CAM_TYPE_BAYER].dequeueInputImage();
                 ClearSightNativeEngine.ClearsightImage csImage = new ClearsightImage(encodeImage);
@@ -832,9 +866,6 @@ public class ClearSightImageProcessor {
                     csImage = null;
                     encodeImage.close();
                 }
-            } else {
-                if(mCallback != null)
-                    mCallback.onClearSightFailure();
             }
 
             mImageEncodeHandler.obtainMessage(MSG_END_CAPTURE,
@@ -950,6 +981,8 @@ public class ClearSightImageProcessor {
 
         @Override
         public void handleMessage(Message msg) {
+            if(isClosing()) return;
+
             switch (msg.what) {
             case MSG_END_CAPTURE:
                 Log.d(TAG, "ImageEncodeEvent - END_CAPTURE");
@@ -1001,12 +1034,21 @@ public class ClearSightImageProcessor {
                 height = mClearSightImage.getHeight();
             }
 
+            byte[] clearSightBytes = getJpegData(mClearSightImage);
             byte[] bayerBytes = getJpegData(mBayerImage);
             ExifInterface exif = Exif.getExif(bayerBytes);
             int orientation = Exif.getOrientation(exif);
 
+            if(clearSightBytes != null) {
+                if(mCallback != null) mCallback.onClearSightSuccess(clearSightBytes);
+            } else if (bayerBytes != null) {
+                if(mCallback != null) mCallback.onClearSightFailure(bayerBytes);
+            } else {
+                if(mCallback != null) mCallback.onClearSightFailure(null);
+            }
+
             mMediaSaveService.addMpoImage(
-                    getJpegData(mClearSightImage),
+                    clearSightBytes,
                     bayerBytes,
                     getJpegData(mMonoImage), width, height, title,
                     date, null, orientation, mMediaSavedListener,
@@ -1158,22 +1200,25 @@ public class ClearSightImageProcessor {
 
         // if ratios are different, adjust crop rect to fit ratio
         // if ratios are same, no need to adjust crop
+        Log.d(TAG, "getFinalCropRect - rect: " + rect.toString());
+        Log.d(TAG, "getFinalCropRect - ratios: " + rectRatio + ", " + mFinalPictureRatio);
         if(rectRatio > mFinalPictureRatio) {
             // ratio indicates need for horizontal crop
             // add .5 to round up if necessary
             int newWidth = (int)(((float)rect.height() * mFinalPictureRatio) + .5f);
-            int newXoffset = (rect.width() - newWidth)/2;
+            int newXoffset = (rect.width() - newWidth)/2 + rect.left;
             finalRect.left = newXoffset;
             finalRect.right = newXoffset + newWidth;
         } else if(rectRatio < mFinalPictureRatio) {
             // ratio indicates need for vertical crop
             // add .5 to round up if necessary
             int newHeight = (int)(((float)rect.width() / mFinalPictureRatio) + .5f);
-            int newYoffset = (rect.height() - newHeight)/2;
+            int newYoffset = (rect.height() - newHeight)/2 + rect.top;
             finalRect.top = newYoffset;
             finalRect.bottom = newYoffset + newHeight;
         }
 
+        Log.d(TAG, "getFinalCropRect - final rect: " + finalRect.toString());
         return finalRect;
     }
 }
