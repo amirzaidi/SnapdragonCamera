@@ -91,7 +91,7 @@
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:src="@drawable/pano_direction_left_indicator"
-                    android:visibility="gone" />
+                    android:visibility="invisible" />
 
                 <com.android.camera.PanoProgressBar
                     android:id="@+id/pano_pan_progress_bar"
@@ -100,7 +100,7 @@
                     android:layout_weight="9"
                     android:gravity="center_vertical"
                     android:src="@drawable/ic_pan_progression"
-                    android:visibility="gone" />
+                    android:visibility="invisible" />
 
                 <ImageView
                     android:id="@+id/pano_pan_right_indicator"
@@ -111,7 +111,7 @@
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:src="@drawable/pano_direction_right_indicator"
-                    android:visibility="gone" />
+                    android:visibility="invisible" />
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>
