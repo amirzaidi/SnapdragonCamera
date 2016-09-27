@@ -1492,52 +1492,43 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcessor.onClose();
         }
 
-        // Close camera starting with AUX first
-        for (int i = MAX_NUM_CAM-1; i >= 0; i--) {
-            if (null != mCaptureSession[i]) {
-                if (mIsLinked && mCamerasOpened) {
-                    unLinkBayerMono(i);
-                    try {
-                        mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
-                                mCameraHandler);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
-                mCaptureSession[i].close();
-                mCaptureSession[i] = null;
-            }
-
-            if (null != mImageReader[i]) {
-                mImageReader[i].close();
-                mImageReader[i] = null;
-            }
-        }
         /* no need to set this in the callback and handle asynchronously. This is the same
         reason as why we release the semaphore here, not in camera close callback function
         as we don't have to protect the case where camera open() gets called during camera
         close(). The low level framework/HAL handles the synchronization for open()
         happens after close() */
-        mIsLinked = false;
 
         try {
-            mCameraOpenCloseLock.acquire();
             // Close camera starting with AUX first
             for (int i = MAX_NUM_CAM-1; i >= 0; i--) {
                 if (null != mCameraDevice[i]) {
+                    if (!mCameraOpenCloseLock.tryAcquire(2000, TimeUnit.MILLISECONDS)) {
+                        Log.d(TAG, "Time out waiting to lock camera closing.");
+                        throw new RuntimeException("Time out waiting to lock camera closing");
+                    }
+                    Log.d(TAG, "Closing camera: " + mCameraDevice[i].getId());
                     mCameraDevice[i].close();
                     mCameraDevice[i] = null;
                     mCameraOpened[i] = false;
-                }
-                if (null != mMediaRecorder) {
-                    mMediaRecorder.release();
-                    mMediaRecorder = null;
+                    mCaptureSession[i] = null;
                 }
 
-                if (null != mVideoSnapshotImageReader) {
-                    mVideoSnapshotImageReader.close();
-                    mVideoSnapshotImageReader = null;
+                if (null != mImageReader[i]) {
+                    mImageReader[i].close();
+                    mImageReader[i] = null;
                 }
+            }
+
+            mIsLinked = false;
+
+            if (null != mMediaRecorder) {
+                mMediaRecorder.release();
+                mMediaRecorder = null;
+            }
+
+            if (null != mVideoSnapshotImageReader) {
+                mVideoSnapshotImageReader.close();
+                mVideoSnapshotImageReader = null;
             }
         } catch (InterruptedException e) {
             mCameraOpenCloseLock.release();
