@@ -402,6 +402,7 @@ public class VideoUI implements PieRenderer.PieListener,
 
         float scaledTextureWidth, scaledTextureHeight;
         int rotation = CameraUtil.getDisplayRotation(mActivity);
+        mScreenRatio = CameraUtil.determineRatio(ratio);
         if (mScreenRatio == CameraUtil.RATIO_16_9
                 && CameraUtil.determinCloseRatio(ratio) == CameraUtil.RATIO_4_3) {
             int l = (mTopMargin + mBottomMargin) * 4;
@@ -434,6 +435,9 @@ public class VideoUI implements PieRenderer.PieListener,
             }
         } else {
             float width = mMaxPreviewWidth, height = mMaxPreviewHeight;
+            if (width == 0 || height == 0) return;
+            if(mScreenRatio == CameraUtil.RATIO_4_3)
+                height -=  (mTopMargin + mBottomMargin);
             if (mOrientationResize) {
                 scaledTextureWidth = height * mAspectRatio;
                 if (scaledTextureWidth > width) {
@@ -673,17 +677,18 @@ public class VideoUI implements PieRenderer.PieListener,
 
         mGestures.setRenderOverlay(mRenderOverlay);
 
-        mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
-        mThumbnail.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Do not allow navigation to filmstrip during video recording
-                if (!mRecordingStarted && !CameraControls.isAnimating()) {
-                    mActivity.gotoGallery();
+        if (!mActivity.isSecureCamera()) {
+            mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+            mThumbnail.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Do not allow navigation to filmstrip during video recording
+                    if (!mRecordingStarted && !CameraControls.isAnimating()) {
+                        mActivity.gotoGallery();
+                    }
                 }
-            }
-        });
-
+            });
+        }
     }
 
     public void setPreviewGesturesVideoUI() {
@@ -1255,9 +1260,6 @@ public class VideoUI implements PieRenderer.PieListener,
         mFaceView.setVisibility(View.VISIBLE);
         mFaceView.setDisplayOrientation(orientation);
         mFaceView.setMirror(mirror);
-        LayoutParams layoutParams = new LayoutParams(
-           LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        mFaceView.setLayoutParams(layoutParams);
         mFaceView.resume();
     }
 

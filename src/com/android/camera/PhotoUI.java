@@ -559,15 +559,17 @@ public class PhotoUI implements PieListener,
     }
 
     public void initializeControlByIntent() {
-        mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
-        mThumbnail.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!CameraControls.isAnimating()
-                        && mController.getCameraState() != PhotoController.SNAPSHOT_IN_PROGRESS)
-                    mActivity.gotoGallery();
-            }
-        });
+        if (!mActivity.isSecureCamera()) {
+            mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+            mThumbnail.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (!CameraControls.isAnimating()
+                            && mController.getCameraState() != PhotoController.SNAPSHOT_IN_PROGRESS)
+                        mActivity.gotoGallery();
+                }
+            });
+        }
         mMenuButton = mRootView.findViewById(R.id.menu);
         mMenuButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -1299,9 +1301,6 @@ public class PhotoUI implements PieListener,
         mFaceView.setVisibility(View.VISIBLE);
         mFaceView.setDisplayOrientation(orientation);
         mFaceView.setMirror(mirror);
-        LayoutParams layoutParams = new LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        mFaceView.setLayoutParams(layoutParams);
         mFaceView.resume();
     }
 

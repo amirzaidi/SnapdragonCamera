@@ -363,7 +363,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                         if (uri != null) {
                             mActivity.notifyNewMedia(uri);
                         }
-                        if (mLastJpegData != null) mActivity.updateThumbnail(mLastJpegData);
                     }
                 }
             };
@@ -1158,11 +1157,21 @@ public class CaptureModule implements CameraModule, PhotoController,
                 captureBuilder = mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             }
 
+            Location location = mLocationManager.getCurrentLocation();
+            if(location != null) {
+                Log.d(TAG, "captureStillPicture gps: " + location.toString());
+                // workaround for Google bug. Need to convert timestamp from ms -> sec
+                location.setTime(location.getTime()/1000);
+                captureBuilder.set(CaptureRequest.JPEG_GPS_LOCATION, location);
+            } else {
+                Log.d(TAG, "captureStillPicture no location - getRecordLocation: " + getRecordLocation());
+            }
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, mOrientation));
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             addPreviewSurface(captureBuilder, null, id);
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
             captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
+            applySettingsForLockExposure(captureBuilder, id);
             applySettingsForCapture(captureBuilder, id);
 
             if(csEnabled) {
@@ -1372,7 +1381,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     long date = (name == null) ? -1 : name.date;
 
                                     byte[] bytes = getJpegData(image);
-                                    mLastJpegData = bytes;
 
                                     ExifInterface exif = Exif.getExif(bytes);
                                     int orientation = Exif.getOrientation(exif);
@@ -1380,6 +1388,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     mActivity.getMediaSaveService().addImage(bytes, title, date,
                                             null, image.getWidth(), image.getHeight(), orientation, null,
                                             mOnMediaSavedListener, mContentResolver, "jpeg");
+
+                                    if(mLongshotActive) {
+                                        mLastJpegData = bytes;
+                                    } else {
+                                        mActivity.updateThumbnail(bytes);
+                                    }
                                     image.close();
                                 }
                             }
@@ -1414,7 +1428,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.remaining()];
-                        mLastJpegData = bytes;
                         buffer.get(bytes);
 
                         ExifInterface exif = Exif.getExif(bytes);
@@ -1423,6 +1436,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mActivity.getMediaSaveService().addImage(bytes, title, date,
                                 null, image.getWidth(), image.getHeight(), orientation, null,
                                 mOnMediaSavedListener, mContentResolver, "jpeg");
+
+                        mActivity.updateThumbnail(bytes);
                         image.close();
                     }
                 }, mImageAvailableHandler);
@@ -1486,52 +1501,43 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcessor.onClose();
         }
 
-        // Close camera starting with AUX first
-        for (int i = MAX_NUM_CAM-1; i >= 0; i--) {
-            if (null != mCaptureSession[i]) {
-                if (mIsLinked && mCamerasOpened) {
-                    unLinkBayerMono(i);
-                    try {
-                        mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
-                                mCameraHandler);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
-                mCaptureSession[i].close();
-                mCaptureSession[i] = null;
-            }
-
-            if (null != mImageReader[i]) {
-                mImageReader[i].close();
-                mImageReader[i] = null;
-            }
-        }
         /* no need to set this in the callback and handle asynchronously. This is the same
         reason as why we release the semaphore here, not in camera close callback function
         as we don't have to protect the case where camera open() gets called during camera
         close(). The low level framework/HAL handles the synchronization for open()
         happens after close() */
-        mIsLinked = false;
 
         try {
-            mCameraOpenCloseLock.acquire();
             // Close camera starting with AUX first
             for (int i = MAX_NUM_CAM-1; i >= 0; i--) {
                 if (null != mCameraDevice[i]) {
+                    if (!mCameraOpenCloseLock.tryAcquire(2000, TimeUnit.MILLISECONDS)) {
+                        Log.d(TAG, "Time out waiting to lock camera closing.");
+                        throw new RuntimeException("Time out waiting to lock camera closing");
+                    }
+                    Log.d(TAG, "Closing camera: " + mCameraDevice[i].getId());
                     mCameraDevice[i].close();
                     mCameraDevice[i] = null;
                     mCameraOpened[i] = false;
-                }
-                if (null != mMediaRecorder) {
-                    mMediaRecorder.release();
-                    mMediaRecorder = null;
+                    mCaptureSession[i] = null;
                 }
 
-                if (null != mVideoSnapshotImageReader) {
-                    mVideoSnapshotImageReader.close();
-                    mVideoSnapshotImageReader = null;
+                if (null != mImageReader[i]) {
+                    mImageReader[i].close();
+                    mImageReader[i] = null;
                 }
+            }
+
+            mIsLinked = false;
+
+            if (null != mMediaRecorder) {
+                mMediaRecorder.release();
+                mMediaRecorder = null;
+            }
+
+            if (null != mVideoSnapshotImageReader) {
+                mVideoSnapshotImageReader.close();
+                mVideoSnapshotImageReader = null;
             }
         } catch (InterruptedException e) {
             mCameraOpenCloseLock.release();
@@ -1734,6 +1740,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.hideSurfaceView();
         mFirstPreviewLoaded = false;
         stopBackgroundThread();
+        mLastJpegData = null;
     }
 
     @Override
@@ -3516,13 +3523,14 @@ public class CaptureModule implements CameraModule, PhotoController,
             byte[] bayerBytes = getJpegData(bayerImage);
             byte[] monoBytes = getJpegData(monoImage);
 
-            mLastJpegData = bayerBytes;
             ExifInterface exif = Exif.getExif(bayerBytes);
             int orientation = Exif.getOrientation(exif);
 
             mActivity.getMediaSaveService().addMpoImage(
                     null, bayerBytes, monoBytes, width, height, title,
                     date, null, orientation, mOnMediaSavedListener, mContentResolver, "jpeg");
+
+            mActivity.updateThumbnail(bayerBytes);
 
             bayerImage.close();
             bayerImage = null;
@@ -3533,8 +3541,16 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
-    public void onClearSightSuccess() {
+    public void onReleaseShutterLock() {
+        Log.d(TAG, "onReleaseShutterLock");
+        unlockFocus(BAYER_ID);
+        unlockFocus(MONO_ID);
+    }
+
+    @Override
+    public void onClearSightSuccess(byte[] thumbnailBytes) {
         Log.d(TAG, "onClearSightSuccess");
+        if(thumbnailBytes != null) mActivity.updateThumbnail(thumbnailBytes);
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -3542,14 +3558,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                         Toast.LENGTH_SHORT).show();
             }
         });
-
-        unlockFocus(BAYER_ID);
-        unlockFocus(MONO_ID);
     }
 
     @Override
-    public void onClearSightFailure() {
+    public void onClearSightFailure(byte[] thumbnailBytes) {
         Log.d(TAG, "onClearSightFailure");
+        if(thumbnailBytes != null) mActivity.updateThumbnail(thumbnailBytes);
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {

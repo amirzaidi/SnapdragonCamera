@@ -738,8 +738,12 @@ public class CameraActivity extends Activity
         mThumbnailDrawable = new CircularDrawable(bitmap);
         if (mThumbnail != null) {
             mThumbnail.setImageDrawable(mThumbnailDrawable);
-            mThumbnail.setVisibility(View.VISIBLE);
-        }
+            if (!isSecureCamera()) {
+                mThumbnail.setVisibility(View.VISIBLE);
+            } else {
+                mThumbnail.setVisibility(View.GONE);
+            }
+       }
     }
 
     public void updateThumbnail(ImageView thumbnail) {
@@ -747,7 +751,11 @@ public class CameraActivity extends Activity
         if (mThumbnail == null) return;
         if (mThumbnailDrawable != null) {
             mThumbnail.setImageDrawable(mThumbnailDrawable);
-            mThumbnail.setVisibility(View.VISIBLE);
+            if (!isSecureCamera()) {
+                mThumbnail.setVisibility(View.VISIBLE);
+            } else {
+                mThumbnail.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -761,8 +769,8 @@ public class CameraActivity extends Activity
     }
 
     private class UpdateThumbnailTask extends AsyncTask<Void, Void, Bitmap> {
-        private final byte[] mJpegData;
-        private final boolean mCheckOrientation;
+        private byte[] mJpegData;
+        private boolean mCheckOrientation;
 
         public UpdateThumbnailTask(final byte[] jpegData, boolean checkOrientation) {
             mJpegData = jpegData;
@@ -805,6 +813,17 @@ public class CameraActivity extends Activity
             } else {
                 updateThumbnail(bitmap);
             }
+
+            mJpegData = null;
+        }
+
+        @Override
+        protected void onCancelled(Bitmap bitmap) {
+            if(bitmap != null)
+                bitmap.recycle();
+
+            bitmap = null;
+            mJpegData = null;
         }
 
         private Bitmap decodeImageCenter(final String path) {
@@ -1996,7 +2015,8 @@ public class CameraActivity extends Activity
     @Override
     public void onModuleSelected(int moduleIndex) {
         boolean cam2on = SettingsManager.getInstance().isCamera2On();
-        mForceReleaseCamera = cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX;
+        mForceReleaseCamera = moduleIndex == ModuleSwitcher.CAPTURE_MODULE_INDEX ||
+                (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX);
         if (mForceReleaseCamera) {
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
         }
