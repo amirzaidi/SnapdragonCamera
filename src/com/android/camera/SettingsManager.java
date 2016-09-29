@@ -1021,7 +1021,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (UbifocusFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_UBIFOCUS_INT + "");
         if (BestpictureFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_BESTPICTURE_INT + "");
         if (PanoCaptureProcessView.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_PANORAMA_INT + "");
-        if (ChromaflashFilter.isSupportedStatic()) modes.add(SCENE_MODE_CHROMAFLASH_INT + "");
+        if (ChromaflashFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_CHROMAFLASH_INT + "");
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }

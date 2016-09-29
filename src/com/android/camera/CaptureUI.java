@@ -46,6 +46,7 @@ import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -173,11 +174,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private ImageView mMakeupButton;
     private SeekBar mMakeupSeekBar;
     private View mMakeupSeekBarLayout;
+    private View mSeekbarBody;
     private TextView mRecordingTimeView;
     private View mTimeLapseLabel;
     private RotateLayout mRecordingTimeRect;
     private PauseButton mPauseButton;
     private RotateImageView mMuteButton;
+    private Button mSeekbarToggleButton;
 
     int mPreviewWidth;
     int mPreviewHeight;
@@ -242,15 +245,23 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupButton = (ImageView) mRootView.findViewById(R.id.ts_makeup_switcher);
         setMakeupButtonIcon();
         mMakeupSeekBarLayout = mRootView.findViewById(R.id.makeup_seekbar_layout);
+        mSeekbarBody = mRootView.findViewById(R.id.seekbar_body);
+        mSeekbarToggleButton = (Button) mRootView.findViewById(R.id.seekbar_toggle);
+        mSeekbarToggleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mSeekbarBody.getVisibility() == View.VISIBLE) {
+                    mSeekbarBody.setVisibility(View.GONE);
+                } else {
+                    mSeekbarBody.setVisibility(View.VISIBLE);
+                }
+            }
+        });
         mMakeupSeekBar = (SeekBar)mRootView.findViewById(R.id.makeup_seekbar);
         mMakeupSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progresValue, boolean fromUser) {
                 int value = progresValue/10*10;
-                if(mIsVideoUI && value == 0) {
-                    mMakeupSeekBar.setProgress(10);
-                    return;
-                }
                 mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, value+"");
             }
             @Override
@@ -263,7 +274,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                showOrHideMakeupSeekBar();
+                toggleMakeup();
             }
         });
         mFlashButton = (FlashToggleButton) mRootView.findViewById(R.id.flash_button);
@@ -347,32 +358,22 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
     }
 
-    private void showOrHideMakeupSeekBar() {
+    private void toggleMakeup() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
-        if(mMakeupSeekBarLayout.getVisibility() == View.VISIBLE) {
-            if(value != null && value.equals("0")) {
-                if(mIsVideoUI) {
-                    return;
-                }
-                mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "off");
-                mModule.restartSession(true);
-            }
-            mMakeupSeekBarLayout.setVisibility(View.GONE);
-        } else {
-            mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
-            if(value != null && value.equals("0")) {
-                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "40");
-                mMakeupSeekBar.setProgress(40);
-                mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "on");
-                mModule.restartSession(true);
+        if(value != null && !mIsVideoUI) {
+            if(value.equals("0")) {
+                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "10");
+                mMakeupSeekBar.setProgress(10);
+                mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
+                mSeekbarBody.setVisibility(View.VISIBLE);
             } else {
-                try {
-                    mMakeupSeekBar.setProgress(Integer.parseInt(mSettingsManager.getValue(SettingsManager.KEY_MAKEUP)));
-                } catch(Exception e) {
-                }
+                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "0");
+                mMakeupSeekBar.setProgress(0);
+                mMakeupSeekBarLayout.setVisibility(View.GONE);
             }
+            setMakeupButtonIcon();
+            mModule.restartSession(true);
         }
-        setMakeupButtonIcon();
     }
 
     private void setMakeupButtonIcon() {
