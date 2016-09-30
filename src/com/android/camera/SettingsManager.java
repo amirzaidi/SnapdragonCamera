@@ -138,6 +138,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private JSONObject mDependency;
     private int mCameraId;
     private Set<String> mFilteredKeys;
+    private CharSequence[] mVideoQualityEntryValues;
+    private CharSequence[] mVideoQualityEntries;
 
     public Map<String, Values> getValuesMap() {
         return mValuesMap;
@@ -222,6 +224,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         List changed = checkDependencyAndUpdate(key);
         if (changed == null) return;
         if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
+        if (pref.getKey().equals(KEY_MAKEUP)) checkVideoSizeDependency();
         notifyListeners(changed);
     }
 
@@ -257,10 +260,32 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
         if (videoQuality != null) {
             String scene = getValue(SettingsManager.KEY_MAKEUP);
-            if(scene != null && !scene.equalsIgnoreCase("0")) {
-                updateVideoQualityMenu(cameraId, 640, 480);
+            if (scene != null && !scene.equals("0")) {
+                updateVideoQualityMenu(cameraId, 720, 480);
             }
         }
+    }
+
+    private void checkVideoSizeDependency() {
+        String makeup = getValue(SettingsManager.KEY_MAKEUP);
+        String video = getValue(SettingsManager.KEY_VIDEO_QUALITY);
+        Size videoSize = parseSize(video);
+        if (makeup != null && !makeup.equals("0")) {
+            if (videoSize.getWidth() > 720 || videoSize.getHeight() > 480) {
+                String size = getSupportedVideoSize(mCameraId, 720, 480).get(0);
+                setValue(KEY_VIDEO_QUALITY, size);
+            }
+            updateVideoQualityMenu(mCameraId, 720, 480);
+        } else {
+            updateVideoQualityMenu(mCameraId, -1, -1);
+        }
+    }
+
+    private Size parseSize(String value) {
+        int indexX = value.indexOf('x');
+        int width = Integer.parseInt(value.substring(0, indexX));
+        int height = Integer.parseInt(value.substring(indexX + 1));
+        return new Size(width, height);
     }
 
     private void initDepedencyTable() {
@@ -463,6 +488,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         List changed = checkDependencyAndUpdate(key);
         if (changed == null) return;
         if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
+        if (pref.getKey().equals(KEY_MAKEUP)) checkVideoSizeDependency();
         notifyListeners(changed);
     }
 
@@ -502,6 +528,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public void updateVideoQualityMenu(int cameraId, int maxWidth, int maxHeight) {
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        videoQuality.setEntryValues(mVideoQualityEntryValues);
+        videoQuality.setEntries(mVideoQualityEntries);
         if (videoQuality != null) {
             List<String> sizes;
             if(maxWidth < 0 && maxHeight < 0) {
@@ -586,6 +614,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (videoQuality != null) {
             CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
                     videoQuality, getSupportedVideoSize(cameraId));
+            mVideoQualityEntryValues = videoQuality.getEntryValues();
+            mVideoQualityEntries = videoQuality.getEntries();
         }
 
         if (iso != null) {
@@ -964,7 +994,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return res;
     }
 
-    private List<String> getSupportedVideoSize(int cameraId, int maxWidth, int maxHeight) {
+    public List<String> getSupportedVideoSize(int cameraId, int maxWidth, int maxHeight) {
         StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = map.getOutputSizes(MediaRecorder.class);
