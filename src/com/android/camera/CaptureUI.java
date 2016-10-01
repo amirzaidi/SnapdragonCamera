@@ -24,11 +24,13 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Camera.Face;
+import android.preference.PreferenceManager;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -57,6 +59,7 @@ import android.widget.TextView;
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.Camera2FaceView;
 import com.android.camera.ui.CameraControls;
+import com.android.camera.ui.MenuHelp;
 import com.android.camera.ui.OneUICameraControls;
 import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.FlashToggleButton;
@@ -157,6 +160,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private FlashToggleButton mFlashButton;
     private CountDownView mCountDownView;
     private OneUICameraControls mCameraControls;
+    private MenuHelp mMenuHelp;
     private PieRenderer mPieRenderer;
     private ZoomRenderer mZoomRenderer;
     private Allocation mMonoDummyAllocation;
@@ -356,6 +360,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
         mActivity.setPreviewGestures(mGestures);
         ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
+        showFirstTimeHelp();
     }
 
     private void toggleMakeup() {
@@ -1109,6 +1114,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void setOrientation(int orientation, boolean animation) {
         mOrientation = orientation;
         mCameraControls.setOrientation(orientation, animation);
+        if (mMenuHelp != null) {
+            mMenuHelp.setOrientation(orientation, animation);
+        }
         if (mFilterLayout != null) {
             ViewGroup vg = (ViewGroup) mFilterLayout.getChildAt(0);
             if (vg != null)
@@ -1142,6 +1150,33 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public int getOrientation() {
         return mOrientation;
+    }
+
+    public void showFirstTimeHelp() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+        boolean isMenuShown = prefs.getBoolean(CameraSettings.KEY_SHOW_MENU_HELP, false);
+        if(!isMenuShown) {
+            showFirstTimeHelp(mTopMargin, mBottomMargin);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean(CameraSettings.KEY_SHOW_MENU_HELP, true);
+            editor.apply();
+        }
+    }
+
+    private void showFirstTimeHelp(int topMargin, int bottomMargin) {
+        mMenuHelp = (MenuHelp) mRootView.findViewById(R.id.menu_help);
+        mMenuHelp.setForCamera2(true);
+        mMenuHelp.setVisibility(View.VISIBLE);
+        mMenuHelp.setMargins(topMargin, bottomMargin);
+        mMenuHelp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mMenuHelp != null) {
+                    mMenuHelp.setVisibility(View.GONE);
+                    mMenuHelp = null;
+                }
+            }
+        });
     }
 
     @Override
