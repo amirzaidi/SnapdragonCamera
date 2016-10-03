@@ -29,6 +29,7 @@ import android.content.res.Resources;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
 import android.hardware.Camera.Face;
 import android.preference.PreferenceManager;
 import android.renderscript.Allocation;
@@ -429,6 +430,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mShutterButton.setOnShutterButtonListener(mModule);
         mShutterButton.setVisibility(View.VISIBLE);
         mVideoButton.setVisibility(View.VISIBLE);
+        mShutterButton.setImageResource(R.drawable.one_ui_shutter_anim);
+        mShutterButton.setOnClickListener(new View.OnClickListener()  {
+            @Override
+            public void onClick(View v) {
+                    doShutterAnimation();
+            }
+        });
         mVideoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -825,6 +833,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void doShutterAnimation() {
+        AnimationDrawable frameAnimation = (AnimationDrawable) mShutterButton.getDrawable();
+        frameAnimation.stop();
+        frameAnimation.start();
     }
 
     public void showUI() {
