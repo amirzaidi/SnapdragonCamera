@@ -1460,6 +1460,8 @@ public class CameraActivity extends Activity
             mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
         }
 
+        mCursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
+
         if (mSecureCamera) {
             // Change the window flags so that secure camera can show when locked
             Window win = getWindow();
@@ -1522,9 +1524,9 @@ public class CameraActivity extends Activity
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
 
         mOrientationListener = new MyOrientationEventListener(this);
-        setModuleFromIndex(moduleIndex);
         setContentView(R.layout.camera_filmstrip);
         mFilmStripView = (FilmStripView) findViewById(R.id.filmstrip_view);
+        setModuleFromIndex(moduleIndex);
 
         mActionBar = getActionBar();
         mActionBar.addOnMenuVisibilityListener(this);
@@ -1605,8 +1607,6 @@ public class CameraActivity extends Activity
         mLocalImagesObserver = new LocalMediaObserver();
         mLocalVideosObserver = new LocalMediaObserver();
 
-        mCursor = getContentResolver().query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
         getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true,
                 mLocalImagesObserver);

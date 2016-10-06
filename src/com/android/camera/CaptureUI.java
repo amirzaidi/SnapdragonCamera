@@ -335,6 +335,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mGestures.setRenderOverlay(mRenderOverlay);
         mRenderOverlay.requestLayout();
 
+        mActivity.setPreviewGestures(mGestures);
         ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
     }
 
@@ -380,7 +381,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mGestures.setCaptureUI(this);
         mGestures.setZoomEnabled(mSettingsManager.isZoomSupported(cameraIds));
         initializeZoom(cameraIds);
-        mActivity.setPreviewGestures(mGestures);
     }
 
     public void reInitUI() {
