@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import org.codeaurora.snapcam.R;
+import android.preference.PreferenceManager;
+import android.content.SharedPreferences;
 
 /**
  * Activity that shows permissions request dialogs and handles lack of critical permissions.
@@ -182,6 +184,7 @@ public class PermissionsActivity extends Activity {
 
     private void handlePermissionsSuccess() {
         if (mIntent != null) {
+            setRequestPermissionShow();
             mIsReturnResult = true;
             mIntent.setClass(this, CameraActivity.class);
             mIntent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
@@ -215,5 +218,15 @@ public class PermissionsActivity extends Activity {
                     }
                 })
                 .show();
+    }
+
+    private void setRequestPermissionShow() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isRequestShown = prefs.getBoolean(CameraSettings.KEY_REQUEST_PERMISSION, false);
+        if (!isRequestShown) {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean(CameraSettings.KEY_REQUEST_PERMISSION, true);
+            editor.apply();
+        }
     }
 }
