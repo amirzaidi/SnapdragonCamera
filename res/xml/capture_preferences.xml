@@ -31,13 +31,10 @@
     xmlns:camera="http://schemas.android.com/apk/res/org.codeaurora.snapcam"
     camera:title="@string/pref_camera_settings_category">
     <IconListPreference
-        camera:defaultValue="@string/pref_camera2_flashmode_default"
+        camera:defaultValue="@string/pref_camera2_flashmode_value_auto"
         camera:entries="@array/pref_camera2_flashmode_entries"
         camera:entryValues="@array/pref_camera2_flashmode_entryvalues"
-        camera:icons="@array/pref_camera2_flashmode_icons"
         camera:key="pref_camera2_flashmode_key"
-        camera:labelList="@array/pref_camera2_flashmode_labels"
-        camera:largeIcons="@array/pref_camera2_flashmode_largeicons"
         camera:singleIcon="@drawable/ic_settings_flash"
         camera:title="@string/pref_camera_flashmode_title"/>
 
@@ -80,28 +77,21 @@
         camera:title="@string/pref_camera_savepath_title"/>
 
     <ListPreference
-        camera:defaultValue="@string/pref_camera2_camera2_default"
-        camera:entries="@array/pref_camera2_camera2_entries"
-        camera:entryValues="@array/pref_camera2_camera2_entryvalues"
-        camera:key="pref_camera2_camera2_key"
-        camera:title="@string/pref_camera2_camera2_title"/>
-
-    <ListPreference
-        camera:defaultValue="@string/pref_camera2_mono_only_default"
+        camera:defaultValue="@string/setting_off_value"
         camera:entries="@array/pref_camera2_mono_only_entries"
         camera:entryValues="@array/pref_camera2_mono_only_entryvalues"
         camera:key="pref_camera2_mono_only_key"
         camera:title="@string/pref_camera2_mono_only_title"/>
 
     <ListPreference
-        camera:defaultValue="@string/pref_camera2_mono_preview_default"
+        camera:defaultValue="@string/setting_off_value"
         camera:entries="@array/pref_camera2_mono_preview_entries"
         camera:entryValues="@array/pref_camera2_mono_preview_entryvalues"
         camera:key="pref_camera2_mono_preview_key"
         camera:title="@string/pref_camera2_mono_preview_title"/>
 
     <ListPreference
-        camera:defaultValue="@string/pref_camera2_clearsight_default"
+        camera:defaultValue="@string/setting_on_value"
         camera:entries="@array/pref_camera2_clearsight_entries"
         camera:entryValues="@array/pref_camera2_clearsight_entryvalues"
         camera:key="pref_camera2_clearsight_key"
@@ -134,7 +124,7 @@
         camera:title="@string/pref_camera_scenemode_title"/>
 
     <IconListPreference
-        camera:defaultValue="@string/pref_camera_redeyereduction_default"
+        camera:defaultValue="@string/setting_off_value"
         camera:entries="@array/pref_camera2_redeyereduction_entries"
         camera:entryValues="@array/pref_camera2_redeyereduction_entryvalues"
         camera:key="pref_camera2_redeyereduction_key"
@@ -172,7 +162,7 @@
         camera:title="@string/pref_camera_iso_title"/>
 
     <IconListPreference
-        camera:defaultValue="@string/pref_camera_longshot_default"
+        camera:defaultValue="@string/setting_off_value"
         camera:entries="@array/pref_camera2_longshot_entries"
         camera:entryValues="@array/pref_camera2_longshot_entryvalues"
         camera:key="pref_camera2_longshot_key"
@@ -227,7 +217,7 @@
         camera:title="@string/pref_camera_audioencoder_title"/>
 
     <IconListPreference
-        camera:defaultValue="@string/pref_camera_dis_default"
+        camera:defaultValue="@string/setting_off_value"
         camera:entries="@array/pref_camera2_dis_entries"
         camera:entryValues="@array/pref_camera2_dis_entryvalues"
         camera:key="pref_camera2_dis_key"
@@ -247,10 +237,8 @@
         camera:entryValues="@array/pref_camera2_video_flashmode_entryvalues"
         camera:icons="@array/video_flashmode_icons"
         camera:key="pref_camera2_video_flashmode_key"
-        camera:labelList="@array/pref_camera2_video_flashmode_labels"
-        camera:largeIcons="@array/video_flashmode_largeicons"
         camera:singleIcon="@drawable/ic_settings_flash"
-        camera:title="@string/pref_camera_flashmode_title"/>
+        camera:title="@string/pref_camera_flashmode_title" />
 
     <ListPreference
         camera:defaultValue="@string/pref_camera_video_rotation_default"
@@ -267,19 +255,12 @@
         camera:title="@string/pref_video_time_lapse_frame_interval_title"/>
 
     <IconListPreference
-        camera:defaultValue="@string/pref_camera_facedetection_default"
+        camera:defaultValue="@string/setting_off_value"
         camera:entries="@array/pref_camera2_facedetection_entries"
         camera:entryValues="@array/pref_camera2_facedetection_entryvalues"
         camera:key="pref_camera2_facedetection_key"
         camera:singleIcon="@drawable/ic_settings_facerec"
         camera:title="@string/pref_camera_facedetection_title"/>
-
-    <ListPreference
-        camera:defaultValue="@string/pref_camera2_videosnap_default"
-        camera:entries="@array/pref_camera2_videosnap_entries"
-        camera:entryValues="@array/pref_camera2_videosnap_entryvalues"
-        camera:key="pref_camera2_videosnap_key"
-        camera:title="@string/pref_camera2_videosnap_title" />
 
     <ListPreference
         camera:defaultValue="off"

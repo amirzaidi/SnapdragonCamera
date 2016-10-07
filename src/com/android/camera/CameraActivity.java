@@ -85,6 +85,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.ShareActionProvider;
+import android.widget.Toast;
 
 import com.android.camera.app.AppManagerFactory;
 import com.android.camera.app.PlaceholderManager;
@@ -106,10 +107,13 @@ import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.DetailsDialog;
 import com.android.camera.ui.FilmStripView;
 import com.android.camera.ui.FilmStripView.ImageData;
+import com.android.camera.ui.PanoCaptureProcessView;
+import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
 import com.android.camera.util.IntentHelper;
+import com.android.camera.util.PersistUtil;
 import com.android.camera.util.PhotoSphereHelper;
 import com.android.camera.util.PhotoSphereHelper.PanoramaViewHelper;
 import com.android.camera.util.UsageStatistics;
@@ -198,6 +202,7 @@ public class CameraActivity extends Activity
     private VideoModule mVideoModule;
     private WideAnglePanoramaModule mPanoModule;
     private CaptureModule mCaptureModule;
+    private PanoCaptureModule mPano2Module;
     private FrameLayout mAboveFilmstripControlLayout;
     private FrameLayout mCameraRootFrame;
     private View mCameraPhotoModuleRootView;
@@ -1514,7 +1519,7 @@ public class CameraActivity extends Activity
             }
         }
 
-        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        boolean cam2on = PersistUtil.getCamera2Mode();
         if (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX)
             moduleIndex = ModuleSwitcher.CAPTURE_MODULE_INDEX;
 
@@ -2014,7 +2019,7 @@ public class CameraActivity extends Activity
 
     @Override
     public void onModuleSelected(int moduleIndex) {
-        boolean cam2on = SettingsManager.getInstance().isCamera2On();
+        boolean cam2on = PersistUtil.getCamera2Mode();
         mForceReleaseCamera = moduleIndex == ModuleSwitcher.CAPTURE_MODULE_INDEX ||
                 (cam2on && moduleIndex == ModuleSwitcher.PHOTO_MODULE_INDEX);
         if (mForceReleaseCamera) {
@@ -2094,6 +2099,26 @@ public class CameraActivity extends Activity
                 mCurrentModule = mCaptureModule;
                 mCameraCaptureModuleRootView.setVisibility(View.VISIBLE);
                 break;
+
+            case ModuleSwitcher.PANOCAPTURE_MODULE_INDEX:
+                final Activity activity = this;
+                if(!PanoCaptureProcessView.isSupportedStatic()) {
+                    this.runOnUiThread(new Runnable() {
+                        public void run() {
+                            RotateTextToast.makeText(activity, "Panocapture library is missing", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    mCurrentModuleIndex = ModuleSwitcher.PHOTO_MODULE_INDEX;
+                    //Let it fall through to photo module
+                } else {
+                    if (mPano2Module == null) {
+                        mPano2Module = new PanoCaptureModule();
+                        mPano2Module.init(this, mCameraPanoModuleRootView);
+                    }
+                    mCurrentModule = mPano2Module;
+                    mCameraPanoModuleRootView.setVisibility(View.VISIBLE);
+                    break;
+                }
             case ModuleSwitcher.LIGHTCYCLE_MODULE_INDEX: //Unused module for now
             case ModuleSwitcher.GCAM_MODULE_INDEX:  //Unused module for now
             default:

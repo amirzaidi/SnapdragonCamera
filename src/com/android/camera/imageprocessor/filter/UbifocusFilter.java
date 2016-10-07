@@ -73,6 +73,7 @@ public class UbifocusFilter implements ImageFilter {
     private CameraActivity mActivity;
     private int mOrientation = 0;
     private float mMinFocusDistance = -1f;
+    private Object mClosingLock = new Object();
     final String[] NAMES = {"00.jpg", "01.jpg", "02.jpg", "03.jpg",
             "04.jpg", "DepthMapImage.y", "AllFocusImage.jpg"};
 
@@ -119,8 +120,10 @@ public class UbifocusFilter implements ImageFilter {
     @Override
     public void deinit() {
         Log("deinit");
-        mOutBuf = null;
-        nativeDeinit();
+        synchronized (mClosingLock) {
+            mOutBuf = null;
+            nativeDeinit();
+        }
     }
 
     @Override
@@ -138,8 +141,13 @@ public class UbifocusFilter implements ImageFilter {
         }
         new Thread() {
             public void run() {
-                saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation));
-                mSavedCount++;
+                synchronized (mClosingLock) {
+                    if(mOutBuf == null) {
+                        return;
+                    }
+                    saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation));
+                    mSavedCount++;
+                }
             }
         }.start();
     }
@@ -207,6 +215,7 @@ public class UbifocusFilter implements ImageFilter {
                 } while(Math.abs(mModule.getPreviewCaptureResult().get(CaptureResult.LENS_FOCUS_DISTANCE)
                         - value) >= 0.5f);
             } catch (InterruptedException e) {
+            } catch (NullPointerException e) {
             }
             builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
             builder.set(CaptureRequest.LENS_FOCUS_DISTANCE, value);
@@ -247,22 +256,18 @@ public class UbifocusFilter implements ImageFilter {
     }
 
     private void saveToPrivateFile(final int index, final byte[] bytes) {
-        new Thread() {
-            public void run() {
-                String filesPath = mActivity.getFilesDir()+"/Ubifocus";
-                File file = new File(filesPath);
-                if(!file.exists()) {
-                    file.mkdir();
-                }
-                file = new File(filesPath+"/"+NAMES[index]);
-                try {
-                    FileOutputStream out = new FileOutputStream(file);
-                    out.write(bytes, 0, bytes.length);
-                    out.close();
-                } catch (Exception e) {
-                }
-            }
-        }.start();
+        String filesPath = mActivity.getFilesDir()+"/Ubifocus";
+        File file = new File(filesPath);
+        if(!file.exists()) {
+            file.mkdir();
+        }
+        file = new File(filesPath+"/"+NAMES[index]);
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            out.write(bytes, 0, bytes.length);
+            out.close();
+        } catch (Exception e) {
+        }
     }
 
     private native int nativeInit(int width, int height, int yStride, int vuStride, int numImages);

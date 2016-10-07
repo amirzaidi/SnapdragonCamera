@@ -524,7 +524,7 @@ public class PhotoUI implements PieListener,
 
         if (mGestures == null) {
             // this will handle gesture disambiguation and dispatching
-            mGestures = new PreviewGestures(mActivity, this, mZoomRenderer, mPieRenderer);
+            mGestures = new PreviewGestures(mActivity, this, mZoomRenderer, mPieRenderer, null);
             mRenderOverlay.setGestures(mGestures);
         }
         mGestures.setPhotoMenu(mMenu);

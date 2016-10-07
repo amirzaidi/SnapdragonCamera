@@ -93,6 +93,6 @@
 
     <include
         style="@style/CameraControls"
-        layout="@layout/camera_controls"
+        layout="@layout/one_ui_layout"
         android:layout_gravity="center" />
 </merge>

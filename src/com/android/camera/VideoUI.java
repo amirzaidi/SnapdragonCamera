@@ -670,7 +670,7 @@ public class VideoUI implements PieRenderer.PieListener,
         }
         mRenderOverlay.addRenderer(mZoomRenderer);
         if (mGestures == null) {
-            mGestures = new PreviewGestures(mActivity, this, mZoomRenderer, mPieRenderer);
+            mGestures = new PreviewGestures(mActivity, this, mZoomRenderer, mPieRenderer, null);
             mRenderOverlay.setGestures(mGestures);
         }
         mGestures.setVideoMenu(mVideoMenu);

@@ -165,7 +165,7 @@
     <dimen name="scene_mode_padding">10dp</dimen>
     <dimen name="filter_mode_height">100dp</dimen>
     <dimen name="filter_mode_width">100dp</dimen>
-    <dimen name="filter_mode_padding">10dp</dimen>
+    <dimen name="filter_mode_padding">0dp</dimen>
 
     <dimen name="remaining_photos_margin">67dp</dimen>
     <dimen name="tsmakeup_mode_paddingBottom">96dp</dimen>

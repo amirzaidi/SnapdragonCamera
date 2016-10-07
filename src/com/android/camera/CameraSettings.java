@@ -1041,33 +1041,35 @@ public class CameraSettings {
         return false;
     }
 
-    public static void filterUnsupportedOptions(PreferenceGroup group,
+    public static boolean filterUnsupportedOptions(PreferenceGroup group,
             ListPreference pref, List<String> supported) {
 
         // Remove the preference if the parameter is not supported or there is
         // only one options for the settings.
         if (supported == null || supported.size() <= 1) {
             removePreference(group, pref.getKey());
-            return;
+            return true;
         }
 
         pref.filterUnsupported(supported);
         if (pref.getEntries().length <= 1) {
             removePreference(group, pref.getKey());
-            return;
+            return true;
         }
 
         resetIfInvalid(pref);
+        return false;
     }
 
-    public static void filterSimilarPictureSize(PreferenceGroup group,
+    public static boolean filterSimilarPictureSize(PreferenceGroup group,
             ListPreference pref) {
         pref.filterDuplicated();
         if (pref.getEntries().length <= 1) {
             removePreference(group, pref.getKey());
-            return;
+            return true;
         }
         resetIfInvalid(pref);
+        return false;
     }
 
     private static void resetIfInvalid(ListPreference pref) {

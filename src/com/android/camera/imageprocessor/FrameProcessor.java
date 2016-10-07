@@ -31,6 +31,7 @@ package com.android.camera.imageprocessor;
 
 import android.app.Activity;
 import android.graphics.ImageFormat;
+import android.hardware.camera2.CameraCharacteristics;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Handler;
@@ -90,6 +91,7 @@ public class FrameProcessor {
     public static final int LISTENER_TRACKING_FOCUS = 2;
     private CaptureModule mModule;
     private boolean mIsVideoOn = false;
+    private boolean mIsInitialized = false;
 
     public FrameProcessor(Activity activity, CaptureModule module) {
         mActivity = activity;
@@ -98,7 +100,7 @@ public class FrameProcessor {
         mFinalFilters = new ArrayList<ImageFilter>();
     }
 
-    public void init(Size previewDim) {
+    private void init(Size previewDim) {
         mIsActive = true;
         mSize = previewDim;
         synchronized (mAllocationLock) {
@@ -135,6 +137,7 @@ public class FrameProcessor {
             mTask = new ProcessingTask();
             mInputImageReader.setOnImageAvailableListener(mTask, mProcessingHandler);
             mIsAllocationEverUsed = false;
+            mIsInitialized = true;
         }
     }
 
@@ -152,7 +155,10 @@ public class FrameProcessor {
         mRsRotator.set_width(width);
         mRsRotator.set_height(height);
         mRsRotator.set_pad(stridePad);
-        mRsRotator.set_gFlip(!mModule.isBackCamera());
+        if(mModule.getMainCameraCharacteristics() != null &&
+                mModule.getMainCameraCharacteristics().get(CameraCharacteristics.SENSOR_ORIENTATION) == 270) {
+            mRsRotator.set_gFlip(true);
+        }
         mRsYuvToRGB.set_gIn(mProcessAllocation);
         mRsYuvToRGB.set_width(height);
         mRsYuvToRGB.set_height(width);
@@ -177,12 +183,21 @@ public class FrameProcessor {
         mFinalFilters = new ArrayList<ImageFilter>();
     }
 
-    public void onOpen(ArrayList<Integer> filterIds) {
+    public void onOpen(ArrayList<Integer> filterIds, final Size size) {
         cleanFilterSet();
         if (filterIds != null) {
             for (Integer i : filterIds) {
                 addFilter(i.intValue());
             }
+        }
+        if(isFrameFilterEnabled() || isFrameListnerEnabled()) {
+            new Thread() {
+                public void run() {
+                    init(size);
+                }
+            }.start();
+        } else {
+            mIsInitialized = true;
         }
     }
 
@@ -203,8 +218,18 @@ public class FrameProcessor {
 
     }
 
+    private void waitForInitialization() {
+        while(!mIsInitialized) {
+            try {
+                Thread.sleep(10);
+            } catch(InterruptedException e) {
+            }
+        }
+    }
+
     public void onClose() {
         mIsActive = false;
+        waitForInitialization();
         synchronized (mAllocationLock) {
             if (mIsAllocationEverUsed) {
                 if (mInputAllocation != null) {
@@ -228,6 +253,7 @@ public class FrameProcessor {
             mOutputAllocation = null;
             mInputAllocation = null;
             mVideoOutputAllocation = null;
+            mIsInitialized = false;
         }
         if (mProcessingThread != null) {
             mProcessingThread.quitSafely();
@@ -299,7 +325,15 @@ public class FrameProcessor {
         return true;
     }
 
+    public boolean isFrameListnerEnabled() {
+        if (mPreviewFilters.size() == 0) {
+            return false;
+        }
+        return true;
+    }
+
     public void setOutputSurface(Surface surface) {
+        waitForInitialization();
         mSurfaceAsItIs = surface;
         if (mFinalFilters.size() != 0) {
             mOutputAllocation.setSurface(surface);
@@ -307,6 +341,7 @@ public class FrameProcessor {
     }
 
     public void setVideoOutputSurface(Surface surface) {
+        waitForInitialization();
         if (surface == null) {
             synchronized (mAllocationLock) {
                 if (mVideoOutputAllocation != null) {

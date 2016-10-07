@@ -33,12 +33,15 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.Face;
+import android.media.audiofx.BassBoost;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Size;
 
 import com.android.camera.CaptureModule;
+import com.android.camera.SettingsManager;
 import com.android.camera.ui.FilmstripBottomControls;
+import com.android.camera.ui.ListMenu;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -53,9 +56,15 @@ public class BeautificationFilter implements ImageFilter {
     private static boolean DEBUG = false;
     private static String TAG = "BeautificationFilter";
     private static boolean mIsSupported = false;
+    private int mStrengthValue = 0;
 
     public BeautificationFilter(CaptureModule module) {
         mModule = module;
+        String value = SettingsManager.getInstance().getValue(SettingsManager.KEY_MAKEUP);
+        try {
+            mStrengthValue = Integer.parseInt(value);
+        } catch(Exception e) {
+        }
     }
 
     @Override
@@ -97,12 +106,13 @@ public class BeautificationFilter implements ImageFilter {
         }
         float widthRatio = (float)mWidth/back.width();
         float heightRatio = (float)mHeight/back.height();
-        if(faces == null || faces.length == 0)
+        if(faces == null || faces.length == 0) {
             return;
+        }
         Rect rect = faces[0].getBounds();
         int value = nativeBeautificationProcess(bY, bVU, mWidth, mHeight, mStrideY,
                 (int)(rect.left*widthRatio), (int)(rect.top*heightRatio),
-                (int)(rect.right*widthRatio), (int)(rect.bottom*heightRatio));
+                (int)(rect.right*widthRatio), (int)(rect.bottom*heightRatio), mStrengthValue, mStrengthValue);
         if(DEBUG && value < 0) {
             if(value == -1) {
                 Log.d(TAG, "library initialization is failed.");
@@ -143,11 +153,11 @@ public class BeautificationFilter implements ImageFilter {
     }
 
     private native int nativeBeautificationProcess(ByteBuffer yB, ByteBuffer vuB,
-                        int width, int height, int stride, int fleft, int ftop, int fright, int fbottom);
+                        int width, int height, int stride, int fleft, int ftop, int fright, int fbottom, int whiteLevel, int cleanLevel);
 
     static {
         try {
-            System.loadLibrary("jni_makeup");
+            System.loadLibrary("jni_makeupV2");
             mIsSupported = true;
         }catch(UnsatisfiedLinkError e) {
             mIsSupported = false;

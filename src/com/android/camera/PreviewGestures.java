@@ -20,10 +20,10 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.util.Log;
 
 import com.android.camera.ui.PieRenderer;
 import com.android.camera.ui.RenderOverlay;
+import com.android.camera.ui.TrackingFocusRenderer;
 import com.android.camera.ui.ZoomRenderer;
 
 /* PreviewGestures disambiguates touch events received on RenderOverlay
@@ -46,6 +46,7 @@ public class PreviewGestures
     private SingleTapListener mTapListener;
     private RenderOverlay mOverlay;
     private PieRenderer mPie;
+    private TrackingFocusRenderer mTrackingFocus;
     private ZoomRenderer mZoom;
     private MotionEvent mDown;
     private MotionEvent mCurrent;
@@ -88,7 +89,21 @@ public class PreviewGestures
             }
             if (mZoomOnly || mMode == MODE_ZOOM) return false;
 
-            return onSingleTapUp(e2);
+            int deltaX = (int) (e1.getX() - e2.getX());
+            int deltaY = (int) (e1.getY() - e2.getY());
+
+            int orientation = 0;
+            if (mCaptureUI != null)
+                orientation = mCaptureUI.getOrientation();
+
+            if (isLeftSwipe(orientation, deltaX, deltaY)) {
+                waitUntilNextDown = true;
+                if (mCaptureUI != null)
+                    mCaptureUI.openSettingsMenu();
+                return true;
+            } else {
+                return onSingleTapUp(e2);
+            }
         }
 
         private boolean isLeftSwipe(int orientation, int deltaX, int deltaY) {
@@ -110,9 +125,10 @@ public class PreviewGestures
     }
 
     public PreviewGestures(CameraActivity ctx, SingleTapListener tapListener,
-            ZoomRenderer zoom, PieRenderer pie) {
+                           ZoomRenderer zoom, PieRenderer pie, TrackingFocusRenderer trackingfocus) {
         mTapListener = tapListener;
         mPie = pie;
+        mTrackingFocus = trackingfocus;
         mZoom = zoom;
         mMode = MODE_NONE;
         mScale = new ScaleGestureDetector(ctx, this);
@@ -188,17 +204,14 @@ public class PreviewGestures
             return sendToPie(m);
         }
 
+        if (mTrackingFocus != null && mTrackingFocus.isVisible()) {
+            return sendToTrackingFocus(m);
+        }
+
         if (mCaptureUI != null) {
-            if (mCaptureUI.isMenuBeingShown()) {
-                if (!mCaptureUI.isMenuBeingAnimated()) {
-                    waitUntilNextDown = true;
-                    mCaptureUI.removeAllSettingMenu(true);
-                }
-                return true;
-            }
             if (mCaptureUI.isPreviewMenuBeingShown()) {
                 waitUntilNextDown = true;
-                mCaptureUI.removeSceneAndFilterMenu(true);
+                mCaptureUI.removeFilterMenu(true);
                 return true;
             }
         }
@@ -270,6 +283,10 @@ public class PreviewGestures
 
     private boolean sendToPie(MotionEvent m) {
         return mOverlay.directDispatchTouch(m, mPie);
+    }
+
+    private boolean sendToTrackingFocus(MotionEvent m) {
+        return mOverlay.directDispatchTouch(m, mTrackingFocus);
     }
 
     // OnScaleGestureListener implementation

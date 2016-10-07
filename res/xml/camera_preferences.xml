@@ -382,7 +382,7 @@
 
     <ListPreference
             camera:key="pref_camera2_camera2_key"
-            camera:defaultValue="@string/pref_camera2_camera2_default"
+            camera:defaultValue="@string/setting_off_value"
             camera:title="@string/pref_camera2_camera2_title"
             camera:entries="@array/pref_camera2_camera2_entries"
             camera:entryValues="@array/pref_camera2_camera2_entryvalues" />
