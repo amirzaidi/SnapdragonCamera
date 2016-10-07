@@ -493,7 +493,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCameraOpened[id] = true;
 
             if (isBackCamera() && getCameraMode() == DUAL_MODE && id == BAYER_ID) {
-                Message msg = mCameraHandler.obtainMessage(OPEN_CAMERA, MONO_ID);
+                Message msg = mCameraHandler.obtainMessage(OPEN_CAMERA, MONO_ID, 0);
                 mCameraHandler.sendMessage(msg);
             } else {
                 mCamerasOpened = true;
@@ -1062,7 +1062,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         mTakingPicture[id] = true;
         if (mState[id] == STATE_WAITING_TOUCH_FOCUS) {
-            mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, id);
+            mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[id]);
             mState[id] = STATE_WAITING_AF_LOCK;
             return;
         }
@@ -1098,7 +1098,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[id] = STATE_WAITING_TOUCH_FOCUS;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             setAFModeToPreview(id, mControlAFMode);
-            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, id);
+            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, mCameraId[id]);
             mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -1930,17 +1930,16 @@ public class CaptureModule implements CameraModule, PhotoController,
             switch (getCameraMode()) {
                 case DUAL_MODE:
                 case BAYER_MODE:
-                    msg.obj = BAYER_ID;
+                    msg.arg1 = BAYER_ID;
                     mCameraHandler.sendMessage(msg);
                     break;
                 case MONO_MODE:
-                    msg.what = OPEN_CAMERA;
-                    msg.obj = MONO_ID;
+                    msg.arg1 = MONO_ID;
                     mCameraHandler.sendMessage(msg);
                     break;
             }
         } else {
-            msg.obj = FRONT_ID;
+            msg.arg1 = FRONT_ID;
             mCameraHandler.sendMessage(msg);
         }
         if (!mFirstTimeInitialized) {
@@ -2389,7 +2388,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mMediaRecorderPausing = false;
         mUI.hideUIwhileRecording();
         mUI.clearFocus();
-        mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, cameraId);
+        mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[cameraId]);
         mState[cameraId] = STATE_PREVIEW;
         mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         closePreviewSession();
@@ -3237,8 +3236,17 @@ public class CaptureModule implements CameraModule, PhotoController,
         int height = p.y;
         mAFRegions[id] = afaeRectangle(x, y, width, height, 1f, mCropRegion[id]);
         mAERegions[id] = afaeRectangle(x, y, width, height, 1.5f, mCropRegion[id]);
-        mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, id);
+        mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[id]);
         autoFocusTrigger(id);
+    }
+
+    private void cancelTouchFocus(int id) {
+        if(mPaused)
+            return;
+
+        mState[id] = STATE_PREVIEW;
+        mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        setAFModeToPreview(id, mControlAFMode);
     }
 
     private MeteringRectangle[] afaeRectangle(float x, float y, int width, int height,
@@ -3531,15 +3539,13 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         @Override
         public void handleMessage(Message msg) {
-            int id = (int) msg.obj;
+            int id = msg.arg1;
             switch (msg.what) {
                 case OPEN_CAMERA:
                     openCamera(id);
                     break;
                 case CANCEL_TOUCH_FOCUS:
-                    mState[id] = STATE_PREVIEW;
-                    mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
-                    setAFModeToPreview(id, mControlAFMode);
+                    cancelTouchFocus(id);
                     break;
             }
         }
