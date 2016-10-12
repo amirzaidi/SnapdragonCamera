@@ -925,7 +925,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void setFlashModeToPreview(int id, boolean isFlashOn) {
         Log.d(TAG, "setFlashModeToPreview " + isFlashOn);
         if(isFlashOn) {
-            mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
             mPreviewRequestBuilder[id].set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
         } else {
             mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
@@ -1507,6 +1507,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 });
             }
             mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+            applyFlash(mPreviewRequestBuilder[id], id);
             applySettingsForUnlockExposure(mPreviewRequestBuilder[id], id);
             setAFModeToPreview(id, mControlAFMode);
             mTakingPicture[id] = false;
@@ -3055,6 +3056,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest
                 .CONTROL_AF_TRIGGER_IDLE);
         applyCommonSettings(mPreviewRequestBuilder[id], id);
+        applyFlash(mPreviewRequestBuilder[id], id);
     }
 
     public float getZoomValue() {
@@ -3105,10 +3107,6 @@ public class CaptureModule implements CameraModule, PhotoController,
             case SettingsManager.KEY_FACE_DETECTION:
                 updatePreview = true;
                 applyFaceDetection(mPreviewRequestBuilder[cameraId]);
-                break;
-            case SettingsManager.KEY_FLASH_MODE:
-                updatePreview = true;
-                applyFlash(mPreviewRequestBuilder[cameraId], cameraId);
                 break;
         }
         return updatePreview;

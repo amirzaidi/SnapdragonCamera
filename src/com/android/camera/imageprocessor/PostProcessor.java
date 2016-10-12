@@ -129,6 +129,8 @@ public class PostProcessor{
     private HandlerThread mZSLHandlerThread;
     private ImageHandlerTask mImageHandlerTask;
     private LinkedList<TotalCaptureResult> mTotalCaptureResultList = new LinkedList<TotalCaptureResult>();
+    private TotalCaptureResult mZSLFallOffResult = null;
+    private boolean mIsZSLFallOffForFlash = false;
 
     public boolean isZSLEnabled() {
         return mUseZSL;
@@ -173,6 +175,19 @@ public class PostProcessor{
         public void onImageAvailable(ImageReader reader) {
             try {
                 if(mUseZSL) {
+                    if(mIsZSLFallOffForFlash && mZSLFallOffResult != null) {
+                        Image image = reader.acquireNextImage();
+                        if((mZSLFallOffResult.get(CaptureResult.SENSOR_TIMESTAMP)).longValue() <= image.getTimestamp()) {
+                            Log.d(TAG,"ZSL fall off for flash image");
+                            mIsZSLFallOffForFlash = false;
+                            reprocessImage(image, mZSLFallOffResult);
+                            mZSLFallOffResult = null;
+                        } else {
+                            image.close();
+                        }
+                        return;
+                    }
+
                     Image image = reader.acquireLatestImage();
                     if (image == null) {
                         return;
@@ -200,6 +215,8 @@ public class PostProcessor{
                 }
             } catch (IllegalStateException e) {
                 Log.e(TAG, "Max images has been already acquired. ");
+                mIsZSLFallOffForFlash = false;
+                mZSLFallOffResult = null;
             }
         }
 
@@ -234,7 +251,11 @@ public class PostProcessor{
             if(mTotalCaptureResultList.size() <= PostProcessor.MAX_REQUIRED_IMAGE_NUM) {
                 mTotalCaptureResultList.add(result);
             }
-            onMetaAvailable(result);
+            if(mIsZSLFallOffForFlash) {
+                mZSLFallOffResult = result;
+            } else {
+                onMetaAvailable(result);
+            }
         }
 
         @Override
@@ -246,7 +267,9 @@ public class PostProcessor{
         @Override
         public void onCaptureSequenceCompleted(CameraCaptureSession session, int
                 sequenceId, long frameNumber) {
-            mController.unlockFocus(mController.getMainCameraId());
+            if(!isFilterOn()) {
+                mController.unlockFocus(mController.getMainCameraId());
+            }
         }
     };
 
@@ -275,6 +298,7 @@ public class PostProcessor{
         if(mController.getPreviewCaptureResult() == null ||
                 mController.getPreviewCaptureResult().get(CaptureResult.CONTROL_AE_STATE) == CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED) {
             if(DEBUG_ZSL) Log.d(TAG, "Flash required image");
+            mIsZSLFallOffForFlash = true;
             imageItem = null;
         }
         if (mController.isSelfieFlash()) {
@@ -286,7 +310,9 @@ public class PostProcessor{
             return true;
         } else {
             if(DEBUG_ZSL) Log.d(TAG, "No good item in queue, register the request for the future");
-            mZSLQueue.addPictureRequest();
+            if(!mIsZSLFallOffForFlash) {
+                mZSLQueue.addPictureRequest();
+            }
             return false;
         }
     }
@@ -325,6 +351,7 @@ public class PostProcessor{
     private void onImageToProcess(Image image) {
         addImage(image);
         if (isReadyToProcess()) {
+            mController.unlockFocus(mController.getMainCameraId());
             long captureStartTime = System.currentTimeMillis();
             mNamedImages.nameNewImage(captureStartTime);
             PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();

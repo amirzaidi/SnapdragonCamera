@@ -91,15 +91,27 @@ public class PanoCaptureUI implements
         mPreviewProcessView.onFrameAvailable(bitmap, isCancelling);
     }
 
-    public void setThumbnailVisibility(final int visibility) {
-        if(mThumbnail != null) {
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mThumbnail.setVisibility(visibility);
+    public void onPanoStatusChange(final boolean isStarting) {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(isStarting) {
+                    if (mThumbnail != null) {
+                        mThumbnail.setVisibility(View.GONE);
+                    }
+                    if (mShutterButton != null) {
+                        mShutterButton.setImageResource(R.drawable.shutter_button_video_stop);
+                    }
+                } else {
+                    if (mThumbnail != null) {
+                        mThumbnail.setVisibility(View.VISIBLE);
+                    }
+                    if (mShutterButton != null) {
+                        mShutterButton.setImageResource(R.drawable.btn_new_shutter_panorama);
+                    }
                 }
-            });
-        }
+            }
+        });
     }
 
     /*
@@ -329,7 +341,7 @@ public class PanoCaptureUI implements
 
     public void onResume() {
         mPreviewProcessView.onResume();
-        setThumbnailVisibility(View.VISIBLE);
+        onPanoStatusChange(false);
         mCameraControls.getPanoramaExitButton().setVisibility(View.VISIBLE);
         mCameraControls.getPanoramaExitButton().setOnClickListener(new OnClickListener() {
             @Override
