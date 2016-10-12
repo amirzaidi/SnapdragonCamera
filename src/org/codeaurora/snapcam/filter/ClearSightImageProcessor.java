@@ -86,9 +86,11 @@ public class ClearSightImageProcessor {
     private static final String PERSIST_BURST_COUNT_KEY = "persist.camera.cs.burstcount";
     private static final String PERSIST_DUMP_FRAMES_KEY = "persist.camera.cs.dumpframes";
     private static final String PERSIST_DUMP_YUV_KEY = "persist.camera.cs.dumpyuv";
+    private static final String PERSIST_CS_TIMEOUT_KEY = "persist.camera.cs.timeout";
 
     private static final long DEFAULT_TIMESTAMP_THRESHOLD_MS = 10;
     private static final int DEFAULT_IMAGES_TO_BURST = 4;
+    private static final int DEFAULT_CS_TIMEOUT_MS = 300;
 
     private static final long MIN_MONO_AREA = 1900000;  // ~1.9 MP
     private static final Size[] MONO_SIZES = {
@@ -139,6 +141,7 @@ public class ClearSightImageProcessor {
     private long mTimestampThresholdNs;
     private int mNumBurstCount;
     private int mNumFrameCount;
+    private int mCsTimeout;
     private boolean mDumpImages;
     private boolean mDumpYUV;
     private boolean mIsClosing;
@@ -162,6 +165,9 @@ public class ClearSightImageProcessor {
 
         mDumpYUV = SystemProperties.getBoolean(PERSIST_DUMP_YUV_KEY, false);
         Log.d(TAG, "mDumpYUV: " + mDumpYUV);
+
+        mCsTimeout = SystemProperties.getInt(PERSIST_CS_TIMEOUT_KEY, DEFAULT_CS_TIMEOUT_MS);
+        Log.d(TAG, "mCsTimeout: " + mCsTimeout);
     }
 
     public static void createInstance() {
@@ -346,9 +352,9 @@ public class ClearSightImageProcessor {
             public void onCaptureCompleted(CameraCaptureSession session,
                     CaptureRequest request,
                     TotalCaptureResult result) {
-                Log.d(TAG, "captureStillPicture onCaptureCompleted: " + cam);
+                Log.d(TAG, "capture - onCaptureCompleted: " + cam);
                 if(isClosing())
-                    Log.d(TAG, "captureStillPicture onCaptureCompleted - closing");
+                    Log.d(TAG, "capture - onCaptureCompleted - closing");
                 else
                     mImageProcessHandler.obtainMessage(MSG_NEW_CAPTURE_RESULT,
                             cam, 0, result).sendToTarget();
@@ -358,9 +364,9 @@ public class ClearSightImageProcessor {
             public void onCaptureFailed(CameraCaptureSession session,
                     CaptureRequest request,
                     CaptureFailure result) {
-                Log.d(TAG, "captureStillPicture onCaptureFailed: " + cam);
+                Log.d(TAG, "capture - onCaptureFailed: " + cam);
                 if(isClosing())
-                    Log.d(TAG, "captureStillPicture onCaptureFailed - closing");
+                    Log.d(TAG, "capture - onCaptureFailed - closing");
                 else
                     mImageProcessHandler.obtainMessage(MSG_NEW_CAPTURE_FAIL,
                             cam, 0, result).sendToTarget();
@@ -369,7 +375,7 @@ public class ClearSightImageProcessor {
             @Override
             public void onCaptureSequenceCompleted(CameraCaptureSession session, int
                     sequenceId, long frameNumber) {
-                Log.d(TAG, "captureStillPicture onCaptureSequenceCompleted: " + cam);
+                Log.d(TAG, "capture - onCaptureSequenceCompleted: " + cam);
             }
         };
 
@@ -453,12 +459,14 @@ public class ClearSightImageProcessor {
                 mNumBurstCount);
 
         private SparseLongArray mReprocessingFrames = new SparseLongArray();
+        private ArrayList<CaptureRequest> mReprocessingRequests = new ArrayList<CaptureRequest>();
         private int mReprocessingPairCount;
         private int mReprocessedBayerCount;
         private int mReprocessedMonoCount;
         private NamedEntity mNamedEntity;
         private int[] mNumImagesToProcess = new int[NUM_CAM];
         private boolean mCaptureDone;
+        private boolean mHasFailures;
 
         ImageProcessHandler(Looper looper) {
             super(looper);
@@ -471,6 +479,7 @@ public class ClearSightImageProcessor {
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 mCaptureDone = false;
+                mHasFailures = false;
                 mReprocessingPairCount = 0;
                 mReprocessedBayerCount = 0;
                 mReprocessedMonoCount = 0;
@@ -479,6 +488,10 @@ public class ClearSightImageProcessor {
                 mNamedEntity = mNamedImages.getNextNameEntity();
                 mClearsightRegisterHandler.obtainMessage(MSG_START_CAPTURE,
                         0, 0, mNamedEntity).sendToTarget();
+                break;
+            case MSG_END_CAPTURE:
+                // TIMED OUT WAITING FOR FRAME
+                handleTimeout();
                 break;
             case MSG_NEW_IMG:
                 processImg(msg);
@@ -498,6 +511,29 @@ public class ClearSightImageProcessor {
             }
         }
 
+        private void handleTimeout() {
+            Log.d(TAG, "handleTimeout");
+            releaseBayerFrames();
+            releaseMonoFrames();
+            mReprocessingFrames.clear();
+            mReprocessingRequests.clear();
+
+            removeMessages(MSG_NEW_CAPTURE_RESULT);
+            removeMessages(MSG_NEW_CAPTURE_FAIL);
+            removeMessages(MSG_NEW_REPROC_RESULT);
+            removeMessages(MSG_NEW_REPROC_FAIL);
+            removeMessages(MSG_END_CAPTURE);
+
+            // set capture done so that any loose frames coming in will be closed
+            mCaptureDone = true;
+            mClearsightRegisterHandler.obtainMessage(MSG_END_CAPTURE, 0, 1).sendToTarget();
+        }
+
+        private void kickTimeout() {
+            removeMessages(MSG_END_CAPTURE);
+            sendEmptyMessageDelayed(MSG_END_CAPTURE, mCsTimeout);
+        }
+
         private void processImg(Message msg) {
             Log.d(TAG, "processImg: " + msg.arg1);
             Image image = (Image) msg.obj;
@@ -512,6 +548,8 @@ public class ClearSightImageProcessor {
         }
 
         private void processNewCaptureEvent(Message msg) {
+            kickTimeout();
+
              // Toss extra frames
             if(mCaptureDone) {
                 Log.d(TAG, "processNewCaptureEvent - captureDone - we already have required frame pairs " + msg.arg1);
@@ -541,7 +579,7 @@ public class ClearSightImageProcessor {
                 Log.d(TAG, "processNewCaptureEvent - newImg: " + msg.arg1);
                 Image image = (Image) msg.obj;
                 imageQueue.add(image);
-            } else if(msg.arg2 == 1) {
+            } else if(msg.what == MSG_NEW_CAPTURE_FAIL) {
                 Log.d(TAG, "processNewCaptureEvent - new failed result: " + msg.arg1);
                 mNumImagesToProcess[msg.arg1]--;
             } else {
@@ -641,7 +679,8 @@ public class ClearSightImageProcessor {
 
                 mImageWriter[camId].queueInputImage(reprocImg.mImage);
 
-                session.capture(reprocRequest.build(),
+                CaptureRequest request = reprocRequest.build();
+                session.capture(request,
                         new CaptureCallback() {
                     @Override
                     public void onCaptureCompleted(
@@ -671,6 +710,8 @@ public class ClearSightImageProcessor {
                                 .sendToTarget();
                     }
                 }, null);
+
+                mReprocessingRequests.add(request);
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
@@ -711,14 +752,15 @@ public class ClearSightImageProcessor {
             releaseBayerFrames();
             releaseMonoFrames();
 
-            mImageProcessHandler.removeMessages(MSG_NEW_CAPTURE_RESULT);
-            mImageProcessHandler.removeMessages(MSG_NEW_CAPTURE_FAIL);
+            removeMessages(MSG_NEW_CAPTURE_RESULT);
+            removeMessages(MSG_NEW_CAPTURE_FAIL);
 
             mCaptureDone = true;
 
             if(mReprocessingPairCount == 0) {
-                // No matching pairs
+                // No matching pairs = nothing registered, no need to reset engine
                 Log.w(TAG, "processFinalPair - no matching pairs found");
+                removeMessages(MSG_END_CAPTURE);
                 if(mCallback != null) mCallback.onClearSightFailure(null);
             }
         }
@@ -749,13 +791,14 @@ public class ClearSightImageProcessor {
         private void processNewReprocessResult(Message msg) {
             Log.d(TAG, "processNewReprocessResult: " + msg.arg1);
             boolean isBayer = (msg.arg1 == CAM_TYPE_BAYER);
+            TotalCaptureResult result = (TotalCaptureResult)msg.obj;
+            mReprocessingRequests.remove(result.getRequest());
 
             if (ClearSightNativeEngine.getInstance()
                     .getReferenceResult(isBayer) == null) {
                 // reference not yet set
                 Log.d(TAG, "reprocess - setReferenceResult: " + msg.obj);
-                ClearSightNativeEngine.getInstance().setReferenceResult(isBayer,
-                        (TotalCaptureResult)msg.obj);
+                ClearSightNativeEngine.getInstance().setReferenceResult(isBayer, result);
             }
 
             checkReprocessDone();
@@ -763,21 +806,29 @@ public class ClearSightImageProcessor {
 
         private void processNewReprocessFailure(Message msg) {
             Log.d(TAG, "processNewReprocessFailure: " + msg.arg1);
-            boolean isBayer = (msg.arg1 == CAM_TYPE_BAYER);
+            CaptureFailure failure = (CaptureFailure)msg.obj;
+            mReprocessingRequests.remove(failure.getRequest());
             mReprocessingFrames.delete(msg.arg2);
+            mHasFailures = true;
             checkReprocessDone();
         }
 
         private void checkReprocessDone() {
             Log.d(TAG, "checkReprocessDone capture done: " + mCaptureDone
                     + ", reproc frames: " + mReprocessingFrames.size());
-            if(mCaptureDone && mReprocessingFrames.size() == 0
-                    && ClearSightNativeEngine.getInstance().getReferenceResult(true) != null
-                    && ClearSightNativeEngine.getInstance().getReferenceResult(false) != null) {
-                mClearsightRegisterHandler.obtainMessage(MSG_END_CAPTURE).sendToTarget();
-                mImageProcessHandler.removeMessages(MSG_NEW_REPROC_RESULT);
-                mImageProcessHandler.removeMessages(MSG_NEW_REPROC_FAIL);
+            // If all burst frames and results have been processed
+            if(mCaptureDone && mReprocessingFrames.size() == 0 && mReprocessingRequests.isEmpty()) {
+                mClearsightRegisterHandler.obtainMessage(MSG_END_CAPTURE, mHasFailures?1:0, 0).sendToTarget();
+                removeMessages(MSG_NEW_REPROC_RESULT);
+                removeMessages(MSG_NEW_REPROC_FAIL);
                 mCaptureDone = false;
+                mHasFailures = false;
+
+                // all burst and reproc frames processed.
+                // remove timeout msg.
+                removeMessages(MSG_END_CAPTURE);
+            } else {
+                kickTimeout();
             }
         }
     };
@@ -801,8 +852,15 @@ public class ClearSightImageProcessor {
                 registerImage(msg);
                 break;
             case MSG_END_CAPTURE:
-                mClearsightProcessHandler.obtainMessage(MSG_START_CAPTURE,
-                        0, 0, mNamedEntity).sendToTarget();
+                // Check if timeout
+                if(msg.arg2 == 1) {
+                    Log.d(TAG, "ClearsightRegisterHandler - handleTimeout");
+                    ClearSightNativeEngine.getInstance().reset();
+                    if(mCallback != null) mCallback.onClearSightFailure(null);
+                } else {
+                    mClearsightProcessHandler.obtainMessage(MSG_START_CAPTURE,
+                            msg.arg1, 0, mNamedEntity).sendToTarget();
+                }
                 break;
             }
         }
@@ -842,13 +900,18 @@ public class ClearSightImageProcessor {
         }
 
         private void processClearSight(NamedEntity namedEntity) {
-            boolean clearSightEncode = false;
+            mImageEncodeHandler.obtainMessage(MSG_START_CAPTURE).sendToTarget();
+
+            short encodeRequest = 0;
             long csTs = ClearSightNativeEngine.getInstance().getReferenceImage(true).getTimestamp();
             CaptureRequest.Builder csRequest = createEncodeReprocRequest(
                     ClearSightNativeEngine.getInstance().getReferenceResult(true), CAM_TYPE_BAYER);
+            csRequest.setTag(new Object());
 
             boolean processInit = ClearSightNativeEngine.getInstance().initProcessImage();
-            sendReferenceEncodeRequests();
+            sendReferenceMonoEncodeRequest();
+            sendReferenceBayerEncodeRequest();
+            encodeRequest |= ImageEncodeHandler.MASK_BAYER_ENCODE|ImageEncodeHandler.MASK_MONO_ENCODE;
             ClearSightNativeEngine.getInstance().reset();
 
             if(processInit) {
@@ -860,7 +923,7 @@ public class ClearSightImageProcessor {
                 encodeImage.setTimestamp(csTs);
 
                 if(ClearSightNativeEngine.getInstance().processImage(csImage)) {
-                    clearSightEncode = true;
+                    encodeRequest |= ImageEncodeHandler.MASK_CS_ENCODE;
                     sendReprocessRequest(csRequest, encodeImage, CAM_TYPE_BAYER);
                 } else {
                     csImage = null;
@@ -869,17 +932,19 @@ public class ClearSightImageProcessor {
             }
 
             mImageEncodeHandler.obtainMessage(MSG_END_CAPTURE,
-                    clearSightEncode?1:0, 0, namedEntity).sendToTarget();
+                    encodeRequest, 0, namedEntity).sendToTarget();
         }
 
-        private void sendReferenceEncodeRequests() {
+        private void sendReferenceMonoEncodeRequest() {
             // First Mono
             CaptureRequest.Builder monoRequest = createEncodeReprocRequest(
                     ClearSightNativeEngine.getInstance().getReferenceResult(false), CAM_TYPE_MONO);
             sendReprocessRequest(monoRequest,
                     ClearSightNativeEngine.getInstance().getReferenceImage(false),
                     CAM_TYPE_MONO);
+        }
 
+        private void sendReferenceBayerEncodeRequest() {
             // bayer
             CaptureRequest.Builder bayerRequest = createEncodeReprocRequest(
                     ClearSightNativeEngine.getInstance().getReferenceResult(true), CAM_TYPE_BAYER);
@@ -957,7 +1022,7 @@ public class ClearSightImageProcessor {
                         super.onCaptureFailed(session, request, failure);
                         Log.d(TAG, "encode - onCaptureFailed: " + camType);
                         mImageEncodeHandler.obtainMessage(
-                                MSG_NEW_CAPTURE_RESULT, camType, 1)
+                                MSG_NEW_CAPTURE_FAIL, camType, 0, failure)
                                 .sendToTarget();
                     }
                 }, null);
@@ -968,8 +1033,14 @@ public class ClearSightImageProcessor {
     }
 
     private class ImageEncodeHandler extends Handler {
-        private boolean mClearsightEncode;
+        static final short MASK_CS_ENCODE = 0x01;
+        static final short MASK_BAYER_ENCODE = 0x02;
+        static final short MASK_MONO_ENCODE = 0x04;
+
+        private short mEncodeRequest;
+        private short mEncodeResults;
         private boolean mReadyToSave;
+        private boolean mHasFailure;
         private Image mMonoImage;
         private Image mBayerImage;
         private Image mClearSightImage;
@@ -984,15 +1055,20 @@ public class ClearSightImageProcessor {
             if(isClosing()) return;
 
             switch (msg.what) {
+            case MSG_START_CAPTURE:
+                Log.d(TAG, "ImageEncodeEvent - START_CAPTURE");
+                resetParams();
+                break;
             case MSG_END_CAPTURE:
                 Log.d(TAG, "ImageEncodeEvent - END_CAPTURE");
                 mNamedEntity = (NamedEntity) msg.obj;
-                mClearsightEncode = (msg.arg1 == 1);
+                mEncodeRequest = (short)msg.arg1;
                 mReadyToSave = true;
                 saveMpoImage();
                 break;
             case MSG_NEW_IMG:
             case MSG_NEW_CAPTURE_RESULT:
+            case MSG_NEW_CAPTURE_FAIL:
                 processNewEvent(msg);
                 saveMpoImage();
                 break;
@@ -1004,38 +1080,59 @@ public class ClearSightImageProcessor {
                 Log.d(TAG, "processNewEncodeEvent - newImg: " + msg.arg1);
                 if(msg.arg1 == CAM_TYPE_MONO) {
                     mMonoImage = (Image)msg.obj;
+                    mEncodeResults |= MASK_MONO_ENCODE;
                 } else if(mBayerImage == null){
                     mBayerImage = (Image)msg.obj;
+                    mEncodeResults |= MASK_BAYER_ENCODE;
                 } else {
                     mClearSightImage = (Image)msg.obj;
+                    mEncodeResults |= MASK_CS_ENCODE;
                 }
-            } else if (msg.arg2 == 0) {
+            } else if (msg.what == MSG_NEW_CAPTURE_RESULT) {
                 Log.d(TAG, "processNewEncodeEvent - newResult: " + msg.arg1);
             } else {
                 Log.d(TAG, "processNewEncodeEvent - newFailure: " + msg.arg1);
+                mHasFailure = true;
+                if(msg.arg1 == CAM_TYPE_MONO) {
+                    mEncodeResults |= MASK_MONO_ENCODE;
+                } else {
+                    CaptureFailure failure = (CaptureFailure)msg.obj;
+                    if(failure.getRequest().getTag() != null)
+                        mEncodeResults |= MASK_CS_ENCODE;
+                    else
+                        mEncodeResults |= MASK_BAYER_ENCODE;
+                }
             }
         }
 
         private void saveMpoImage() {
-            if(!mReadyToSave || mMonoImage == null || mBayerImage == null
-                    || (mClearsightEncode && mClearSightImage == null)) {
+            if(!mReadyToSave || mEncodeRequest != mEncodeResults) {
                 Log.d(TAG, "saveMpoImage - not yet ready to save");
                 return;
             }
 
             Log.d(TAG, "saveMpoImage");
+            if(mHasFailure) {
+                // don't save anything and fail
+                Log.d(TAG, "saveMpoImage has failure - aborting.");
+                if(mCallback != null) mCallback.onClearSightFailure(null);
+                resetParams();
+                return;
+            }
+
             String title = (mNamedEntity == null) ? null : mNamedEntity.title;
             long date = (mNamedEntity == null) ? -1 : mNamedEntity.date;
             int width = mBayerImage.getWidth();
             int height = mBayerImage.getHeight();
 
-            if(mClearsightEncode) {
+            if(mClearSightImage != null) {
                 width = mClearSightImage.getWidth();
                 height = mClearSightImage.getHeight();
             }
 
             byte[] clearSightBytes = getJpegData(mClearSightImage);
             byte[] bayerBytes = getJpegData(mBayerImage);
+            byte[] monoBytes = getJpegData(mMonoImage);
             ExifInterface exif = Exif.getExif(bayerBytes);
             int orientation = Exif.getOrientation(exif);
 
@@ -1047,24 +1144,42 @@ public class ClearSightImageProcessor {
                 if(mCallback != null) mCallback.onClearSightFailure(null);
             }
 
-            mMediaSaveService.addMpoImage(
-                    clearSightBytes,
-                    bayerBytes,
-                    getJpegData(mMonoImage), width, height, title,
-                    date, null, orientation, mMediaSavedListener,
-                    mMediaSaveService.getContentResolver(), "jpeg");
+            if(monoBytes == null) {
+                mMediaSaveService.addImage(
+                        clearSightBytes!=null?clearSightBytes:bayerBytes, title, date, null,
+                        width, height, orientation, exif,
+                        mMediaSavedListener,
+                        mMediaSaveService.getContentResolver(), "jpeg");
+            } else if (bayerBytes != null) {
+                mMediaSaveService.addMpoImage(
+                        clearSightBytes,
+                        bayerBytes,
+                        monoBytes, width, height, title,
+                        date, null, orientation, mMediaSavedListener,
+                        mMediaSaveService.getContentResolver(), "jpeg");
+            }
 
-            mBayerImage.close();
-            mBayerImage = null;
-            mMonoImage.close();
-            mMonoImage = null;
+            resetParams();
+        }
+
+        void resetParams() {
+            if(mBayerImage != null) {
+                mBayerImage.close();
+                mBayerImage = null;
+            }
+            if(mMonoImage != null) {
+                mMonoImage.close();
+                mMonoImage = null;
+            }
             if(mClearSightImage != null) {
                 mClearSightImage.close();
                 mClearSightImage = null;
             }
             mNamedEntity = null;
             mReadyToSave = false;
-            mClearsightEncode = false;
+            mHasFailure = false;
+            mEncodeRequest = 0;
+            mEncodeResults = 0;
         }
     }
 
