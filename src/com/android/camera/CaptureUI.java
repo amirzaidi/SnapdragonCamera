@@ -49,11 +49,9 @@ import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -185,7 +183,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private RotateLayout mRecordingTimeRect;
     private PauseButton mPauseButton;
     private RotateImageView mMuteButton;
-    private Button mSeekbarToggleButton;
+    private ImageView mSeekbarToggleButton;
 
     int mPreviewWidth;
     int mPreviewHeight;
@@ -250,14 +248,16 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupButton = (ImageView) mRootView.findViewById(R.id.ts_makeup_switcher);
         mMakeupSeekBarLayout = mRootView.findViewById(R.id.makeup_seekbar_layout);
         mSeekbarBody = mRootView.findViewById(R.id.seekbar_body);
-        mSeekbarToggleButton = (Button) mRootView.findViewById(R.id.seekbar_toggle);
+        mSeekbarToggleButton = (ImageView) mRootView.findViewById(R.id.seekbar_toggle);
         mSeekbarToggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(mSeekbarBody.getVisibility() == View.VISIBLE) {
                     mSeekbarBody.setVisibility(View.GONE);
+                    mSeekbarToggleButton.setImageResource(R.drawable.seekbar_show);
                 } else {
                     mSeekbarBody.setVisibility(View.VISIBLE);
+                    mSeekbarToggleButton.setImageResource(R.drawable.seekbar_hide);
                 }
             }
         });
@@ -372,6 +372,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 mMakeupSeekBar.setProgress(10);
                 mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
                 mSeekbarBody.setVisibility(View.VISIBLE);
+                mSeekbarToggleButton.setImageResource(R.drawable.seekbar_hide);
             } else {
                 mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "0");
                 mMakeupSeekBar.setProgress(0);

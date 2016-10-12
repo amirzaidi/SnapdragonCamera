@@ -76,6 +76,7 @@ import android.widget.Toast;
 
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.Exif;
+import com.android.camera.imageprocessor.filter.BlurbusterFilter;
 import com.android.camera.imageprocessor.filter.ChromaflashFilter;
 import com.android.camera.imageprocessor.filter.ImageFilter;
 import com.android.camera.imageprocessor.PostProcessor;
@@ -1861,6 +1862,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             return PostProcessor.FILTER_SHARPSHOOTER;
         } else if (mode == SettingsManager.SCENE_MODE_CHROMAFLASH_INT && ChromaflashFilter.isSupportedStatic()) {
             return PostProcessor.FILTER_CHROMAFLASH;
+        } else if (mode == SettingsManager.SCENE_MODE_BLURBUSTER_INT && BlurbusterFilter.isSupportedStatic()) {
+            return PostProcessor.FILTER_BLURBUSTER;
         } else if (mode == SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
             return PostProcessor.FILTER_UBIFOCUS;
         }// else if (mode == SettingsManager.SCENE_MODE_AUTO_INT && StillmoreFilter.isSupportedStatic()) {
