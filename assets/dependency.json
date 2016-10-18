@@ -69,6 +69,7 @@
   {
     "0":{},
     "default":
-      {"pref_camera2_facedetection_key":"on"}
+      {"pref_camera2_facedetection_key":"on",
+      "pref_camera2_video_quality_key":"720x480"}
   }
 }

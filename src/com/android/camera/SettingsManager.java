@@ -44,6 +44,8 @@ import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
+import android.media.EncoderCapabilities;
+import android.media.EncoderCapabilities.VideoEncoderCap;
 
 import com.android.camera.imageprocessor.filter.BeautificationFilter;
 import com.android.camera.imageprocessor.filter.BestpictureFilter;
@@ -140,8 +142,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private JSONObject mDependency;
     private int mCameraId;
     private Set<String> mFilteredKeys;
-    private CharSequence[] mVideoQualityEntryValues;
-    private CharSequence[] mVideoQualityEntries;
 
     public Map<String, Values> getValuesMap() {
         return mValuesMap;
@@ -225,8 +225,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         String key = pref.getKey();
         List changed = checkDependencyAndUpdate(key);
         if (changed == null) return;
-        if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
-        if (pref.getKey().equals(KEY_MAKEUP)) checkVideoSizeDependency();
+        runTimeUpdateDependencyOptions(pref);
         notifyListeners(changed);
     }
 
@@ -253,34 +252,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         mDependendsOnMap = new HashMap<>();
         mFilteredKeys = new HashSet<>();
         filterPreferences(cameraId);
-        initDepedencyTable();
+        initDependencyTable();
         initializeValueMap();
-        checkInitialDependency(cameraId);
-    }
-
-    private void checkInitialDependency(int cameraId) {
-        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
-        if (videoQuality != null) {
-            String scene = getValue(SettingsManager.KEY_MAKEUP);
-            if (scene != null && !scene.equals("0")) {
-                updateVideoQualityMenu(cameraId, 720, 480);
-            }
-        }
-    }
-
-    private void checkVideoSizeDependency() {
-        String makeup = getValue(SettingsManager.KEY_MAKEUP);
-        String video = getValue(SettingsManager.KEY_VIDEO_QUALITY);
-        Size videoSize = parseSize(video);
-        if (makeup != null && !makeup.equals("0")) {
-            if (videoSize.getWidth() > 720 || videoSize.getHeight() > 480) {
-                String size = getSupportedVideoSize(mCameraId, 720, 480).get(0);
-                setValue(KEY_VIDEO_QUALITY, size);
-            }
-            updateVideoQualityMenu(mCameraId, 720, 480);
-        } else {
-            updateVideoQualityMenu(mCameraId, -1, -1);
-        }
     }
 
     private Size parseSize(String value) {
@@ -290,7 +263,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return new Size(width, height);
     }
 
-    private void initDepedencyTable() {
+    private void initDependencyTable() {
         for (int i = 0; i < mPreferenceGroup.size(); i++) {
             ListPreference pref = (ListPreference) mPreferenceGroup.get(i);
             String baseKey = pref.getKey();
@@ -455,7 +428,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public int getValueIndex(String key) {
         ListPreference pref = mPreferenceGroup.findPreference(key);
         String value = getValue(key);
-        if (value == null) return -1;
+        if ((value == null) || (pref == null)) return -1;
         return pref.findIndexOfValue(value);
     }
 
@@ -481,16 +454,17 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public void setValueIndex(String key, int index) {
         ListPreference pref = mPreferenceGroup.findPreference(key);
-        pref.setValueIndex(index);
-        updateMapAndNotify(pref);
+        if (pref != null) {
+            pref.setValueIndex(index);
+            updateMapAndNotify(pref);
+        }
     }
 
     private void updateMapAndNotify(ListPreference pref) {
         String key = pref.getKey();
         List changed = checkDependencyAndUpdate(key);
         if (changed == null) return;
-        if (pref.getKey().equals(KEY_VIDEO_QUALITY)) buildHFR();
-        if (pref.getKey().equals(KEY_MAKEUP)) checkVideoSizeDependency();
+        runTimeUpdateDependencyOptions(pref);
         notifyListeners(changed);
     }
 
@@ -500,12 +474,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public CharSequence[] getEntries(String key) {
         ListPreference pref = mPreferenceGroup.findPreference(key);
-        return pref.getEntries();
+        if (pref != null) {
+            return pref.getEntries();
+        }
+        return null;
     }
 
     public CharSequence[] getEntryValues(String key) {
         ListPreference pref = mPreferenceGroup.findPreference(key);
-        return pref.getEntryValues();
+        if (pref != null) {
+            return pref.getEntryValues();
+        }
+        return null;
     }
 
     public int[] getResource(String key, int type) {
@@ -528,22 +508,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
         else return CaptureModule.MONO_ID;
     }
 
-    public void updateVideoQualityMenu(int cameraId, int maxWidth, int maxHeight) {
-        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
-        videoQuality.setEntryValues(mVideoQualityEntryValues);
-        videoQuality.setEntries(mVideoQualityEntries);
-        if (videoQuality != null) {
-            List<String> sizes;
-            if(maxWidth < 0 && maxHeight < 0) {
-                sizes = getSupportedVideoSize(cameraId);
-            } else {
-                sizes = getSupportedVideoSize(cameraId, maxWidth, maxHeight);
-            }
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    videoQuality, sizes);
-        }
-    }
-
     private void filterPreferences(int cameraId) {
         // filter unsupported preferences
         ListPreference whiteBalance = mPreferenceGroup.findPreference(KEY_WHITE_BALANCE);
@@ -560,13 +524,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference mpo = mPreferenceGroup.findPreference(KEY_MPO);
         ListPreference redeyeReduction = mPreferenceGroup.findPreference(KEY_REDEYE_REDUCTION);
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
-        ListPreference videoEncoder = mPreferenceGroup.findPreference(KEY_VIDEO_ENCODER);
         ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
         ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
         ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
-        ListPreference makeup = mPreferenceGroup.findPreference(KEY_MAKEUP);
         ListPreference trackingfocus = mPreferenceGroup.findPreference(KEY_TRACKINGFOCUS);
-        ListPreference hfr = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -599,7 +560,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (filterUnsupportedOptions(pictureSize, getSupportedPictureSize(cameraId))) {
                 mFilteredKeys.add(pictureSize.getKey());
             } else {
-                if (CameraSettings.filterSimilarPictureSize(mPreferenceGroup, pictureSize)) {
+                if (filterSimilarPictureSize(mPreferenceGroup, pictureSize)) {
                     mFilteredKeys.add(pictureSize.getKey());
                 }
             }
@@ -614,10 +575,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
 
         if (videoQuality != null) {
-            CameraSettings.filterUnsupportedOptions(mPreferenceGroup,
-                    videoQuality, getSupportedVideoSize(cameraId));
-            mVideoQualityEntryValues = videoQuality.getEntryValues();
-            mVideoQualityEntries = videoQuality.getEntries();
+            if (filterUnsupportedOptions(videoQuality,
+                    getSupportedVideoSize(cameraId))) {
+                mFilteredKeys.add(videoQuality.getKey());
+            }
         }
 
         if (!mIsMonoCameraPresent) {
@@ -630,13 +591,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (redeyeReduction != null) {
             if (filterUnsupportedOptions(redeyeReduction, getSupportedRedeyeReduction(cameraId))) {
                 mFilteredKeys.add(redeyeReduction.getKey());
-            }
-        }
-
-        if (videoEncoder != null) {
-            if (filterUnsupportedOptions(videoEncoder,
-                    getSupportedVideoEncoders(videoEncoder.getEntryValues()))) {
-                mFilteredKeys.add(videoEncoder.getKey());
             }
         }
 
@@ -665,13 +619,22 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 removePreference(mPreferenceGroup, KEY_TRACKINGFOCUS);
         }
 
-        if (hfr != null) {
-            buildHFR();
-        }
+        // filter dynamic lists.
+        // These list can be changed run-time
+        filterHFROptions();
+        filterVideoEncoderOptions();
 
         if (!mIsFrontCameraPresent || !isFacingFront(mCameraId)) {
             removePreference(mPreferenceGroup, KEY_SELFIE_FLASH);
             removePreference(mPreferenceGroup, KEY_SELFIEMIRROR);
+        }
+    }
+
+    private void runTimeUpdateDependencyOptions(ListPreference pref) {
+        // update the supported list
+        if (pref.getKey().equals(KEY_VIDEO_QUALITY)) {
+            filterHFROptions();
+            filterVideoEncoderOptions();
         }
     }
 
@@ -747,86 +710,52 @@ public class SettingsManager implements ListMenu.SettingsListener {
         cameraIdPref.setEntries(entries);
     }
 
-    private void buildHFR() {
-        ListPreference hfrPref = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
-        Size[] highSpeedVideoSize = getSupportedHighSpeedVideoSize(mCameraId);
-        if (highSpeedVideoSize.length == 0) {
-            CharSequence[] entryValues = new CharSequence[1];
-            CharSequence[] entries = new CharSequence[1];
-            entryValues[0] = "off";
-            entries[0] = "off";
-            hfrPref.setEntryValues(entryValues);
-            hfrPref.setEntries(entries);
-            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
-            return;
+    private void filterVideoEncoderOptions() {
+        ListPreference videoEncoder = mPreferenceGroup.findPreference(KEY_VIDEO_ENCODER);
+
+        if (videoEncoder != null) {
+            videoEncoder.reloadInitialEntriesAndEntryValues();
+            if (filterUnsupportedOptions(videoEncoder,
+                    getSupportedVideoEncoders())) {
+                mFilteredKeys.add(videoEncoder.getKey());
+            }
         }
+    }
+
+    private void filterHFROptions() {
+        ListPreference hfrPref = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
+        if (hfrPref != null) {
+            hfrPref.reloadInitialEntriesAndEntryValues();
+            if (filterUnsupportedOptions(hfrPref,
+                    getSupportedHighFrameRate())) {
+                mFilteredKeys.add(hfrPref.getKey());
+            }
+        }
+    }
+
+    private List<String> getSupportedHighFrameRate() {
+        ArrayList<String> supported = new ArrayList<String>();
+        supported.add("off");
 
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
-        String video = videoQuality.getValue();
-        int x = video.indexOf('x');
-        Size videoSize = new Size(Integer.parseInt(video.substring(0, x)),
-                Integer.parseInt(video.substring(x + 1)));
-
-        boolean found = false;
-        for (Size s : highSpeedVideoSize) {
-            if (videoSize.equals(s)) {
-                found = true;
-                break;
+        String videoSizeStr = videoQuality.getValue();
+        if (videoSizeStr != null) {
+            Size videoSize = parseSize(videoSizeStr);
+            try {
+                Range[] range = getSupportedHighSpeedVideoFPSRange(mCameraId, videoSize);
+                for (Range r : range) {
+                    // To support HFR for both preview and recording,
+                    // minmal FPS needs to be equal to maximum FPS
+                    if ((int) r.getUpper() == (int)r.getLower()) {
+                        supported.add("hfr" + String.valueOf(r.getUpper()));
+                        supported.add("hsr" + String.valueOf(r.getUpper()));
+                    }
+                }
+            } catch (IllegalArgumentException ex) {
+                Log.w(TAG, "HFR is not supported for this resolution " + ex);
             }
         }
-
-        if (!found) {
-            CharSequence[] entryValues = new CharSequence[1];
-            CharSequence[] entries = new CharSequence[1];
-            entryValues[0] = "off";
-            entries[0] = "Off";
-            hfrPref.setEntryValues(entryValues);
-            hfrPref.setEntries(entries);
-            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
-            return;
-        }
-
-        Range[] range = getSupportedHighSpeedVideoFPSRange(mCameraId, videoSize);
-        ArrayList<Range> list = new ArrayList<>();
-        for (Range r : range) {
-            if (r.getLower() == r.getUpper()) {
-                list.add(r);
-            }
-        }
-
-        if (list.size() == 0) {
-            CharSequence[] entryValues = new CharSequence[1];
-            CharSequence[] entries = new CharSequence[1];
-            entryValues[0] = "off";
-            entries[0] = "Off";
-            hfrPref.setEntryValues(entryValues);
-            hfrPref.setEntries(entries);
-            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
-            return;
-        }
-
-        CharSequence[] entryValues = new CharSequence[list.size() * 2 + 1];
-        CharSequence[] entries = new CharSequence[list.size() * 2 + 1];
-        entryValues[0] = "off";
-        entries[0] = "Off";
-        int i = 1;
-        for (Range r : list) {
-            entries[i] = "HFR " + r.getLower();
-            entryValues[i] = "hfr" + r.getLower();
-            i++;
-        }
-        for (Range r : list) {
-            entries[i] = "HSR " + r.getLower();
-            entryValues[i] = "hsr" + r.getLower();
-            i++;
-        }
-
-        hfrPref.setEntryValues(entryValues);
-        hfrPref.setEntries(entries);
-        int index = getValueIndex(KEY_VIDEO_HIGH_FRAME_RATE);
-        if (index == -1) {
-            setValueIndex(KEY_VIDEO_HIGH_FRAME_RATE, 0);
-        }
+        return supported;
     }
 
     private boolean removePreference(PreferenceGroup group, String key) {
@@ -991,24 +920,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return res;
     }
 
-    public List<String> getSupportedVideoSize(int cameraId, int maxWidth, int maxHeight) {
-        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        Size[] sizes = map.getOutputSizes(MediaRecorder.class);
-        List<String> res = new ArrayList<>();
-        for (int i = 0; i < sizes.length; i++) {
-            if(sizes[i].getWidth() <= maxWidth && sizes[i].getHeight() <= maxHeight) {
-                if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(sizes[i].toString())) {
-                    int profile = CameraSettings.VIDEO_QUALITY_TABLE.get(sizes[i].toString());
-                    if (CamcorderProfile.hasProfile(cameraId, profile)) {
-                        res.add(sizes[i].toString());
-                    }
-                }
-            }
-        }
-        return res;
-    }
-
     public Size[] getSupportedHighSpeedVideoSize(int cameraId) {
         StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -1103,12 +1014,41 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return supportedIso;
     }
 
-    private static List<String> getSupportedVideoEncoders(CharSequence[] strings) {
-        ArrayList<String> supported = new ArrayList<>();
-        for (CharSequence cs: strings) {
-            String s = cs.toString();
-            int value = SettingTranslation.getVideoEncoder(s.toString());
-            if (value != SettingTranslation.NOT_FOUND) supported.add(s.toString());
+    private boolean isCurrentVideoResolutionSupportedByEncoder(VideoEncoderCap encoderCap) {
+        boolean supported = false;
+        ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        String videoSizeStr = videoQuality.getValue();
+
+        if (videoSizeStr != null) {
+            Size videoSize = parseSize(videoSizeStr);
+
+            if (videoSize.getWidth() > encoderCap.mMaxFrameWidth ||
+                    videoSize.getWidth() < encoderCap.mMinFrameWidth ||
+                    videoSize.getHeight() > encoderCap.mMaxFrameHeight ||
+                    videoSize.getHeight() < encoderCap.mMinFrameHeight) {
+                Log.e(TAG, "Codec = " + encoderCap.mCodec + ", capabilities: " +
+                        "mMinFrameWidth = " + encoderCap.mMinFrameWidth + " , " +
+                        "mMinFrameHeight = " + encoderCap.mMinFrameHeight + " , " +
+                        "mMaxFrameWidth = " + encoderCap.mMaxFrameWidth + " , " +
+                        "mMaxFrameHeight = " + encoderCap.mMaxFrameHeight);
+            } else {
+                supported = true;
+            }
+        }
+        return supported;
+    }
+
+    private List<String> getSupportedVideoEncoders() {
+        ArrayList<String> supported = new ArrayList<String>();
+        String str = null;
+        List<VideoEncoderCap> videoEncoders = EncoderCapabilities.getVideoEncoders();
+        for (VideoEncoderCap videoEncoder: videoEncoders) {
+            str = SettingTranslation.getVideoEncoder(videoEncoder.mCodec);
+            if (str != null) {
+                if (isCurrentVideoResolutionSupportedByEncoder(videoEncoder)) {
+                    supported.add(str);
+                }
+            }
         }
         return supported;
     }
@@ -1134,8 +1074,39 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return modes;
     }
 
+    private void resetIfInvalid(ListPreference pref) {
+        // Set the value to the first entry if it is invalid.
+        String value = pref.getValue();
+        if (pref.findIndexOfValue(value) == -1) {
+            pref.setValueIndex(0);
+        }
+    }
+
+    private boolean filterSimilarPictureSize(PreferenceGroup group,
+                                                    ListPreference pref) {
+        pref.filterDuplicated();
+        if (pref.getEntries().length <= 1) {
+            removePreference(group, pref.getKey());
+            return true;
+        }
+        resetIfInvalid(pref);
+        return false;
+    }
+
     private boolean filterUnsupportedOptions(ListPreference pref, List<String> supported) {
-        return CameraSettings.filterUnsupportedOptions(mPreferenceGroup, pref, supported);
+        // Remove the preference if the parameter is not supported
+        if (supported == null) {
+            removePreference(mPreferenceGroup, pref.getKey());
+            return true;
+        }
+        pref.filterUnsupported(supported);
+        if (pref.getEntries().length <= 0) {
+            removePreference(mPreferenceGroup, pref.getKey());
+            return true;
+        }
+
+        resetIfInvalid(pref);
+        return false;
     }
 
     public interface Listener {
