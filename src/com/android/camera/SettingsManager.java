@@ -618,12 +618,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
             mVideoQualityEntries = videoQuality.getEntries();
         }
 
-        if (iso != null) {
-            if (filterUnsupportedOptions(videoQuality, getSupportedVideoSize(cameraId))) {
-                mFilteredKeys.add(redeyeReduction.getKey());
-            }
-        }
-
         if (!mIsMonoCameraPresent) {
             if (clearsight != null) removePreference(mPreferenceGroup, KEY_CLEARSIGHT);
             if (monoPreview != null) removePreference(mPreferenceGroup, KEY_MONO_PREVIEW);
