@@ -49,6 +49,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -171,6 +172,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private View mFrontBackSwitcher;
     private ImageView mMakeupButton;
     private SeekBar mMakeupSeekBar;
+    private View mMakeupSeekBarLayout;
     private TextView mRecordingTimeView;
     private View mTimeLapseLabel;
     private RotateLayout mRecordingTimeRect;
@@ -239,7 +241,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher = mRootView.findViewById(R.id.front_back_switcher);
         mMakeupButton = (ImageView) mRootView.findViewById(R.id.ts_makeup_switcher);
         setMakeupButtonIcon();
-        mMakeupSeekBar = (SeekBar)mRootView.findViewById(R.id.ts_makeup_seekbar);
+        mMakeupSeekBarLayout = mRootView.findViewById(R.id.makeup_seekbar_layout);
+        mMakeupSeekBar = (SeekBar)mRootView.findViewById(R.id.makeup_seekbar);
         mMakeupSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progresValue, boolean fromUser) {
@@ -346,7 +349,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     private void showOrHideMakeupSeekBar() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
-        if(mMakeupSeekBar.getVisibility() == View.VISIBLE) {
+        if(mMakeupSeekBarLayout.getVisibility() == View.VISIBLE) {
             if(value != null && value.equals("0")) {
                 if(mIsVideoUI) {
                     return;
@@ -354,9 +357,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "off");
                 mModule.restartSession(true);
             }
-            mMakeupSeekBar.setVisibility(View.GONE);
+            mMakeupSeekBarLayout.setVisibility(View.GONE);
         } else {
-            mMakeupSeekBar.setVisibility(View.VISIBLE);
+            mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
             if(value != null && value.equals("0")) {
                 mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "40");
                 mMakeupSeekBar.setProgress(40);

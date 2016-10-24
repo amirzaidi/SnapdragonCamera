@@ -50,6 +50,9 @@ public class OneUICameraControls extends RotatableLayout {
     private View mSceneModeSwitcher;
     private View mFilterModeSwitcher;
     private View mMakeupSeekBar;
+    private View mMakeupSeekBarLowText;
+    private View mMakeupSeekBarHighText;
+    private View mMakeupSeekBarLayout;
 
     private ArrowTextView mRefocusToast;
 
@@ -102,7 +105,10 @@ public class OneUICameraControls extends RotatableLayout {
         mVideoShutter = findViewById(R.id.video_button);
         mFrontBackSwitcher = findViewById(R.id.front_back_switcher);
         mTsMakeupSwitcher = findViewById(R.id.ts_makeup_switcher);
-        mMakeupSeekBar = findViewById(R.id.ts_makeup_seekbar);
+        mMakeupSeekBarLowText = findViewById(R.id.makeup_low_text);
+        mMakeupSeekBarHighText = findViewById(R.id.makeup_high_text);
+        mMakeupSeekBar = findViewById(R.id.makeup_seekbar);
+        mMakeupSeekBarLayout = findViewById(R.id.makeup_seekbar_layout);
         ((SeekBar)mMakeupSeekBar).setMax(100);
         mFlashButton = findViewById(R.id.flash_button);
         mMute = findViewById(R.id.mute_button);
@@ -133,6 +139,9 @@ public class OneUICameraControls extends RotatableLayout {
         mHeight = b;
         setLocation(r - l, b - t);
         layoutRemaingPhotos();
+        if(mMakeupSeekBar != null) {
+            mMakeupSeekBar.setMinimumWidth(mWidth/2);
+        }
     }
 
     public boolean isControlRegion(int x, int y) {
@@ -203,7 +212,7 @@ public class OneUICameraControls extends RotatableLayout {
         setLocation(mPreview, false, 0);
         setLocation(mShutter, false, 2);
         setLocation(mVideoShutter, false, 3.15f);
-        setLocationCustomBottom(mMakeupSeekBar, 0, 1);
+        setLocationCustomBottom(mMakeupSeekBarLayout, 0, 1);
 
         layoutToast(mRefocusToast, w, h, rotation);
     }
@@ -315,12 +324,13 @@ public class OneUICameraControls extends RotatableLayout {
         mOrientation = orientation;
         View[] views = {
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
-                mTsMakeupSwitcher, mFlashButton, mPreview, mMute, mShutter, mVideoShutter
+                mTsMakeupSwitcher, mFlashButton, mPreview, mMute, mShutter, mVideoShutter,
+                mMakeupSeekBarLowText, mMakeupSeekBarHighText
         };
 
         for (View v : views) {
             if (v != null) {
-                ((RotateImageView) v).setOrientation(orientation, animation);
+                ((Rotatable) v).setOrientation(orientation, animation);
             }
         }
         layoutRemaingPhotos();
