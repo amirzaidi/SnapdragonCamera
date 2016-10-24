@@ -539,6 +539,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             @Override
             public void onClick(View v) {
                 addFilterMode();
+                adjustOrientation();
             }
         });
     }
