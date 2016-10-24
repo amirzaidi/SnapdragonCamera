@@ -24,6 +24,7 @@
  layout. -->
 
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center">
@@ -94,5 +95,10 @@
     <include
         style="@style/CameraControls"
         layout="@layout/one_ui_layout"
+        android:layout_gravity="center" />
+
+    <include
+        style="@style/CameraControls"
+        layout="@layout/menu_help"
         android:layout_gravity="center" />
 </merge>

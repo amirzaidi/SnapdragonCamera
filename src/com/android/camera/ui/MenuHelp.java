@@ -31,6 +31,7 @@ package com.android.camera.ui;
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -85,6 +86,7 @@ public class MenuHelp extends RotatableLayout {
     private static final int WIDTH_GRID = 5;
     private static final int HEIGHT_GRID = 7;
     private Typeface mTypeface;
+    private boolean forCamera2 = false;
 
     public MenuHelp(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -94,6 +96,10 @@ public class MenuHelp extends RotatableLayout {
 
     public MenuHelp(Context context) {
         this(context, null);
+    }
+
+    public void setForCamera2(boolean forCamera2) {
+        this.forCamera2 = forCamera2;
     }
 
     public void setMargins(int top, int bottom) {
@@ -120,7 +126,11 @@ public class MenuHelp extends RotatableLayout {
         toIndex(mHelp1_0, w, h, rotation, 2, 2, HELP_1_0_INDEX);
         if(TsMakeupManager.HAS_TS_MAKEUP)
             toIndex(mHelp3_0, w, h, rotation, 3, 1, HELP_3_0_INDEX);
-        toIndex(mHelp4_6, w, h, rotation, 3, 4, HELP_4_6_INDEX);
+        if (!forCamera2) {
+            toIndex(mHelp4_6, w, h, rotation, 3, 4, HELP_4_6_INDEX);
+        } else {
+            mHelp4_6.setVisibility(View.GONE);
+        }
         toIndex(mOk2_4, w, h, rotation, 1, 5, OK_2_4_INDEX);
         fillArrows(w, h, rotation);
     }
@@ -155,7 +165,7 @@ public class MenuHelp extends RotatableLayout {
             mArrows.addPath(x, y);
         }
 
-        {
+        if (!forCamera2) {
             toIndex(v1, w, h, rotation, 3, 4, -1);
             toIndex(v2, w, h, rotation, 3, 5, -1);
             toIndex(v3, w, h, rotation, 4, 6, -1);
