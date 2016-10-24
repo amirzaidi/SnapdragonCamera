@@ -1877,13 +1877,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         updateMaxVideoDuration();
     }
 
-    private void updatePreviewSize(int[] dependencySize) {
+    private void updatePreviewSize() {
         int preview_resolution = PersistUtil.getCameraPreviewSize();
         int width = mPreviewSize.getWidth();
         int height = mPreviewSize.getHeight();
-        if(dependencySize != null) {
-            width = dependencySize[0];
-            height = dependencySize[1];
+
+        String makeup = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
+        boolean makeupOn = makeup != null && !makeup.equals("0");
+        if (makeupOn) {
+            width = mVideoSize.getWidth();
+            height = mVideoSize.getHeight();
         }
         switch (preview_resolution) {
             case 1: {
@@ -1963,8 +1966,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void onResumeAfterSuper() {
         Log.d(TAG, "onResume " + getCameraMode());
         initializeValues();
-        int[] size = checkMakeupDependency();
-        updatePreviewSize(size);
+        updatePreviewSize();
         mUI.showSurfaceView();
         mCameraIdList = new ArrayList<>();
 
@@ -3361,25 +3363,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         mDisplayOrientation = CameraUtil.getDisplayOrientation(mDisplayRotation, getMainCameraId());
     }
 
-    private int[] checkMakeupDependency() {
-        String makeup = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
-        if(makeup != null && !makeup.equalsIgnoreCase("0")) {
-            if(mVideoSize.getWidth() > 640 || mVideoSize.getHeight() > 480) {
-                mActivity.runOnUiThread(new Runnable() {
-                    public void run() {
-                        RotateTextToast.makeText(mActivity, R.string.makeup_video_size_limit, Toast.LENGTH_SHORT).show();
-                    }
-                });
-                mSettingsManager.setValue(mSettingsManager.KEY_VIDEO_QUALITY, "640x480");
-            }
-            mSettingsManager.updateVideoQualityMenu(getMainCameraId(), 640, 480);
-            return new int[]{640, 480};
-        } else {
-            mSettingsManager.updateVideoQualityMenu(getMainCameraId(), -1, -1);
-            return null;
-        }
-    }
-
     @Override
     public void onSettingsChanged(List<SettingsManager.SettingState> settings) {
         if (mPaused) return;
@@ -3520,8 +3503,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         closeProcessors();
         closeSessions();
         initializeValues();
-        int[] size = checkMakeupDependency();
-        updatePreviewSize(size);
+        updatePreviewSize();
         openProcessors();
         if(isSurfaceChanged) {
             mUI.showSurfaceView();
