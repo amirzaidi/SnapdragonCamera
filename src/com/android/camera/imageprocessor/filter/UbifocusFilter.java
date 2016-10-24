@@ -74,6 +74,7 @@ public class UbifocusFilter implements ImageFilter {
     private int mOrientation = 0;
     private float mMinFocusDistance = -1f;
     private Object mClosingLock = new Object();
+    private PostProcessor mPostProcessor;
     final String[] NAMES = {"00.jpg", "01.jpg", "02.jpg", "03.jpg",
             "04.jpg", "DepthMapImage.y", "AllFocusImage.jpg"};
 
@@ -85,9 +86,10 @@ public class UbifocusFilter implements ImageFilter {
         }
     }
 
-    public UbifocusFilter(CaptureModule module, CameraActivity activity) {
+    public UbifocusFilter(CaptureModule module, CameraActivity activity, PostProcessor processor) {
         mModule = module;
         mActivity = activity;
+        mPostProcessor = processor;
     }
 
     @Override
@@ -145,7 +147,7 @@ public class UbifocusFilter implements ImageFilter {
                     if(mOutBuf == null) {
                         return;
                     }
-                    saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation));
+                    saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation, imageNum));
                     mSavedCount++;
                 }
             }
@@ -164,7 +166,7 @@ public class UbifocusFilter implements ImageFilter {
             byte[] depthMapBuf = new byte[depthMapSize[0] * depthMapSize[1] + META_BYTES_SIZE];
             nativeGetDepthMap(depthMapBuf, depthMapSize[0], depthMapSize[1]);
             saveToPrivateFile(NAMES.length - 2, depthMapBuf);
-            saveToPrivateFile(NAMES.length - 1, nv21ToJpeg(mOutBuf, null, new Rect(roi[0], roi[1], roi[0] + roi[2], roi[1] + roi[3]), mOrientation));
+            saveToPrivateFile(NAMES.length - 1, nv21ToJpeg(mOutBuf, null, new Rect(roi[0], roi[1], roi[0] + roi[2], roi[1] + roi[3]), mOrientation, 0));
             mModule.setRefocusLastTaken(true);
         }
         while(mSavedCount < NUM_REQUIRED_IMAGE) {
@@ -228,7 +230,7 @@ public class UbifocusFilter implements ImageFilter {
         return mIsSupported;
     }
 
-    private byte[] nv21ToJpeg(ByteBuffer bY, ByteBuffer bVU, Rect roi, int orientation) {
+    private byte[] nv21ToJpeg(ByteBuffer bY, ByteBuffer bVU, Rect roi, int orientation, int imageIndex) {
         ByteBuffer buf =  ByteBuffer.allocate(mStrideY*mHeight*3/2);
         buf.put(bY);
         bY.rewind();
@@ -239,9 +241,9 @@ public class UbifocusFilter implements ImageFilter {
         BitmapOutputStream bos = new BitmapOutputStream(1024);
         YuvImage im = new YuvImage(buf.array(), ImageFormat.NV21,
                 mWidth, mHeight, new int[]{mStrideY, mStrideVU});
-        im.compressToJpeg(roi, 50, bos);
+        im.compressToJpeg(roi, mPostProcessor.getJpegQualityValue(), bos);
         byte[] bytes = bos.getArray();
-        bytes = PostProcessor.addExifTags(bytes, orientation);
+        bytes = PostProcessor.addExifTags(bytes, orientation, mPostProcessor.waitForMetaData(imageIndex));
         return bytes;
     }
 

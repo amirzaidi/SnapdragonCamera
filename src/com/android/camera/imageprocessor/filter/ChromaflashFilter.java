@@ -147,28 +147,15 @@ public class ChromaflashFilter implements ImageFilter{
                               CameraCaptureSession.CaptureCallback callback, Handler handler) throws CameraAccessException {
         for(int i=0; i < NUM_REQUIRED_IMAGE; i++) {
             if(i == 1) {
-                waitTillGetImage(0);
                 mModule.setFlashModeToPreview(mModule.getMainCameraId(), true);
                 builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
                 builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
             } else {
-                if(i == 2) {
-                    waitTillGetImage(1);
-                }
                 mModule.setFlashModeToPreview(mModule.getMainCameraId(), false);
                 builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
                 builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
             }
             captureSession.capture(builder.build(), callback, handler);
-        }
-    }
-
-    private void waitTillGetImage(int imageNum) {
-        while(mImageNum < imageNum) {
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-            }
         }
     }
 
