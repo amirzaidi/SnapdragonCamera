@@ -116,6 +116,7 @@ public class PanoCaptureModule implements CameraModule, PhotoController {
     private static final int STATE_WAITING_LOCK = 1;
     private Semaphore mFocusLockSemaphore = new Semaphore(1);
     private boolean mIsLockFocusAttempted = false;
+    private int mCameraSensorOrientation;
 
     private CameraCaptureSession.CaptureCallback mCaptureCallback
             = new CameraCaptureSession.CaptureCallback() {
@@ -301,7 +302,7 @@ public class PanoCaptureModule implements CameraModule, PhotoController {
             if (map == null) {
                 return;
             }
-
+            mCameraSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             Display display = mActivity.getWindowManager().getDefaultDisplay();
             Point ds = new Point();
             display.getSize(ds);
@@ -310,6 +311,10 @@ public class PanoCaptureModule implements CameraModule, PhotoController {
         } catch (CameraAccessException e) {
             Log.e(TAG, "setUpCameraOutputs: " + e.toString());
         }
+    }
+
+    public int getCameraSensorOrientation() {
+        return mCameraSensorOrientation;
     }
 
     private Size getOutputSize(float ratio, Size[] prevSizes, int screenW, int

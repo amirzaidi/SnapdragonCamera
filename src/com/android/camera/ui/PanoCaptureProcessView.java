@@ -917,13 +917,14 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
     private void rotateAndScale(Bitmap srcBitmap, Bitmap dstBitmap, float ratio) {
         Canvas canvas = new Canvas(dstBitmap);
         matrix.reset();
+        int sensorOrientation = mController.getCameraSensorOrientation();
         if(mOrientation == 0 || mOrientation == 270) {
-            matrix.postRotate((90 + mOrientation + 360) % 360, srcBitmap.getHeight() / 2, srcBitmap.getHeight() / 2);
+            matrix.postRotate((sensorOrientation + mOrientation + 360) % 360, srcBitmap.getHeight() / 2, srcBitmap.getHeight() / 2);
         } else  if (mOrientation == 180){
-            matrix.postRotate((90 + mOrientation + 180 + 360) % 360, srcBitmap.getHeight() / 2, srcBitmap.getHeight() / 2);
+            matrix.postRotate((sensorOrientation + mOrientation + 180 + 360) % 360, srcBitmap.getHeight() / 2, srcBitmap.getHeight() / 2);
             matrix.postRotate(180, srcBitmap.getHeight() / 2, srcBitmap.getWidth() / 2);
         } else if(mOrientation == 90) {
-            matrix.postRotate((90 + mOrientation + 180 + 360) % 360, srcBitmap.getHeight() / 2, srcBitmap.getHeight() / 2);
+            matrix.postRotate((sensorOrientation + mOrientation + 180 + 360) % 360, srcBitmap.getHeight() / 2, srcBitmap.getHeight() / 2);
             matrix.postRotate(180, srcBitmap.getWidth() / 2, srcBitmap.getHeight() / 2);
         }
         matrix.postScale(ratio, ratio);

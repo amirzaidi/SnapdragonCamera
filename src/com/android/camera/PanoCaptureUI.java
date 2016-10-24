@@ -337,7 +337,9 @@ public class PanoCaptureUI implements
         mCameraControls.getPanoramaExitButton().setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                SettingsManager.getInstance().setValueIndex(SettingsManager.KEY_SCENE_MODE, SettingsManager.SCENE_MODE_AUTO_INT);
+                try {
+                    SettingsManager.getInstance().setValueIndex(SettingsManager.KEY_SCENE_MODE, SettingsManager.SCENE_MODE_AUTO_INT);
+                } catch(NullPointerException e) {}
                 mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
             }
         });
