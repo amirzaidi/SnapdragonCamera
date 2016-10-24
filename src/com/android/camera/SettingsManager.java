@@ -107,6 +107,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
     public static final String KEY_TIMER = "pref_camera2_timer_key";
     public static final String KEY_LONGSHOT = "pref_camera2_longshot_key";
+    public static final String KEY_SELFIEMIRROR = "pref_camera2_selfiemirror_key";
     public static final String KEY_VIDEO_DURATION = "pref_camera2_video_duration_key";
     public static final String KEY_VIDEO_QUALITY = "pref_camera2_video_quality_key";
     public static final String KEY_VIDEO_ENCODER = "pref_camera2_videoencoder_key";

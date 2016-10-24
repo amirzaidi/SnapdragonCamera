@@ -1388,7 +1388,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
                                 mPictureSize.getHeight(), imageFormat, PostProcessor.MAX_REQUIRED_IMAGE_NUM);
                     }
-                    if ((mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isZSLEnabled())
+                    if ((mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isZSLEnabled() || mPostProcessor.isSelfieMirrorOn())
                             && i == getMainCameraId()) {
                         mImageReader[i].setOnImageAvailableListener(mPostProcessor.getImageHandler(), mImageAvailableHandler);
                     } else {
@@ -1926,7 +1926,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcessor.onOpen(getFrameProcFilterId(), mPreviewSize);
         }
 
-        if(mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isZSLEnabled()) {
+        if(mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isZSLEnabled() || mPostProcessor.isSelfieMirrorOn()) {
             setUpCameraOutputs(ImageFormat.YUV_420_888);
         } else {
             setUpCameraOutputs(ImageFormat.JPEG);
@@ -2900,7 +2900,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (seconds > 0) {
                 mUI.startCountDown(seconds, true);
             } else {
-                if((mPostProcessor.isFilterOn() || getFrameFilters().size() != 0)
+                if((mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isSelfieMirrorOn())
                         && mPostProcessor.isItBusy()) {
                     warningToast("It's still busy processing previous scene mode request.");
                     return;
@@ -3076,6 +3076,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             case SettingsManager.KEY_FACE_DETECTION:
                 updatePreview = true;
                 applyFaceDetection(mPreviewRequestBuilder[cameraId]);
+                break;
+            case SettingsManager.KEY_FLASH_MODE:
+                updatePreview = true;
+                applyFlash(mPreviewRequestBuilder[cameraId], cameraId);
                 break;
         }
         return updatePreview;

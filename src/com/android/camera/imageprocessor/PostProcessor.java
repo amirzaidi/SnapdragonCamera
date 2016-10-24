@@ -35,6 +35,7 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureFailure;
@@ -345,6 +346,13 @@ public class PostProcessor{
 
     public boolean isFilterOn() {
         if (mFilter != null) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isSelfieMirrorOn() {
+        if (SettingsManager.getInstance().getValue(SettingsManager.KEY_SELFIEMIRROR).equalsIgnoreCase("on")) {
             return true;
         }
         return false;
@@ -669,6 +677,15 @@ public class PostProcessor{
                             filter.init(resultImage.width, resultImage.height, resultImage.stride, resultImage.stride);
                             filter.addImage(resultImage.outBuffer, null, 0, new Boolean(false));
                         }
+
+                        if(isSelfieMirrorOn() && !mController.isBackCamera()) {
+                            if(mController.getMainCameraCharacteristics() != null &&
+                                    mController.getMainCameraCharacteristics().get(CameraCharacteristics.SENSOR_ORIENTATION) == 90) {
+                                nativeFlipNV21(resultImage.outBuffer.array(), resultImage.stride, resultImage.height, true);
+                            } else {
+                                nativeFlipNV21(resultImage.outBuffer.array(), resultImage.stride, resultImage.height, false);
+                            }
+                        }
                     }
                     //End processing FrameProessor filter
                     clear();
@@ -719,8 +736,7 @@ public class PostProcessor{
         }
     }
 
-    private native int nativeFlipVerticalNV21(byte[] buf, int stride, int height);
-
+    private native int nativeFlipNV21(byte[] buf, int stride, int height, boolean isVertical);
     static {
         System.loadLibrary("jni_imageutil");
     }

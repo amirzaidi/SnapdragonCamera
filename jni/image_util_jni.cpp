@@ -44,8 +44,8 @@ JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nat
          jint imageWidth, jint imageHeight, jint degree, jobjectArray outBuf);
 JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nativeNV21toRgb(
         JNIEnv *env, jobject thiz, jobjectArray yvuBuf, jobjectArray rgbBuf, jint width, jint height);
-JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipVerticalNV21(
-        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height);
+JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipNV21(
+        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height, jboolean isVertical);
 #ifdef __cplusplus
 }
 #endif
@@ -154,30 +154,52 @@ jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nativeNV21toR
     return 0;
 }
 
-jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipVerticalNV21(
-        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height)
+jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipNV21(
+        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height, jboolean isVertical)
 {
     jbyte* imageDataNV21Array = env->GetByteArrayElements(yvuBytes, NULL);
     uint8_t *buf = (uint8_t *)imageDataNV21Array;
     int ysize = width * height;
     uint8_t temp1, temp2;
-    for(int x=0; x < width; x++) {
-        for(int y=0; y < height/2; y++) {
-            temp1 = buf[y*width + x];
-            buf[y*width + x] = buf[(height-1-y)*width + x];
-            buf[(height-1-y)*width + x] = temp1;
+
+    if(isVertical) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height / 2; y++) {
+                temp1 = buf[y * width + x];
+                buf[y * width + x] = buf[(height - 1 - y) * width + x];
+                buf[(height - 1 - y) * width + x] = temp1;
+            }
+        }
+        for (int x = 0; x < width; x += 2) {
+            for (int y = 0; y < height / 4; y++) {
+                temp1 = buf[ysize + y * width + x];
+                temp2 = buf[ysize + y * width + x + 1];
+                buf[ysize + y * width + x] = buf[ysize + (height / 2 - 1 - y) * width + x];
+                buf[ysize + y * width + x + 1] = buf[ysize + (height / 2 - 1 - y) * width + x + 1];
+                buf[ysize + (height / 2 - 1 - y) * width + x] = temp1;
+                buf[ysize + (height / 2 - 1 - y) * width + x + 1] = temp2;
+            }
+        }
+    } else {
+        for (int x = 0; x < width/2; x++) {
+            for (int y = 0; y < height; y++) {
+                temp1 = buf[y * width + x];
+                buf[y * width + x] = buf[y * width + (width -1 - x)];
+                buf[y * width + (width - 1 - x)] = temp1;
+            }
+        }
+        for (int x = 0; x < width/2; x += 2) {
+            for (int y = 0; y < height / 2; y++) {
+                temp1 = buf[ysize + y * width + x];
+                temp2 = buf[ysize + y * width + x + 1];
+                buf[ysize + y * width + x] = buf[ysize + y * width + (width - 1 - x - 1)];
+                buf[ysize + y * width + x + 1] = buf[ysize + y * width + (width - 1 - x)];
+                buf[ysize + y * width + (width - 1 - x - 1)] = temp1;
+                buf[ysize + y * width + (width - 1 - x)] = temp2;
+            }
         }
     }
-    for(int x=0; x < width; x+=2) {
-        for(int y=0; y < height/4; y++) {
-            temp1 = buf[ysize + y*width + x];
-            temp2 = buf[ysize + y*width + x + 1];
-            buf[ysize + y*width + x] = buf[ysize + (height/2-1-y)*width + x];
-            buf[ysize + y*width + x + 1] = buf[ysize + (height/2-1-y)*width + x + 1];
-            buf[ysize + (height/2-1-y)*width + x] = temp1;
-            buf[ysize + (height/2-1-y)*width + x + 1] = temp2;
-        }
-    }
+
     env->ReleaseByteArrayElements(yvuBytes, imageDataNV21Array, JNI_ABORT);
     return 0;
 }
