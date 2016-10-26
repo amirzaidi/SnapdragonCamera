@@ -18,6 +18,7 @@ package com.android.camera.exif;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.camera2.CaptureResult;
 import android.util.SparseIntArray;
 import android.os.Build;
 
@@ -1976,6 +1977,62 @@ public class ExifInterface {
             return false;
         }
         return true;
+    }
+
+    public void addFlashTag(boolean isOn) {
+        ExifTag t;
+        if(isOn) {
+            t = buildTag(ExifInterface.TAG_FLASH, Flash.FIRED);
+        } else {
+            t = buildTag(ExifInterface.TAG_FLASH, Flash.DID_NOT_FIRED);
+        }
+        if(t != null) {
+            setTag(t);
+        }
+    }
+
+    public void addFocalLength(Rational r) {
+        ExifTag t;
+        t = buildTag(ExifInterface.TAG_FOCAL_LENGTH, r);
+        if(t != null) {
+            setTag(t);
+        }
+    }
+
+    public void addWhiteBalanceMode(int value) {
+        ExifTag t;
+        if(value == CaptureResult.CONTROL_AWB_MODE_AUTO) {
+            t = buildTag(ExifInterface.TAG_WHITE_BALANCE, WhiteBalance.AUTO);
+        } else {
+            t = buildTag(ExifInterface.TAG_WHITE_BALANCE, WhiteBalance.MANUAL);
+        }
+        if(t != null) {
+            setTag(t);
+        }
+    }
+
+    public void addAperture(Rational r) {
+        ExifTag t;
+        t = buildTag(ExifInterface.TAG_APERTURE_VALUE, r);
+        if(t != null) {
+            setTag(t);
+        }
+    }
+
+    public void addExposureTime(Rational r) {
+        ExifTag t;
+        t = buildTag(ExifInterface.TAG_EXPOSURE_TIME, r);
+        if(t != null) {
+            setTag(t);
+        }
+    }
+
+    public void addISO(int value) {
+        ExifTag t;
+        t = buildTag(ExifInterface.TAG_ISO_SPEED_RATINGS, value);
+        if(t != null) {
+            setTag(t);
+        }
     }
 
     public boolean addOrientationTag(int orientation) {

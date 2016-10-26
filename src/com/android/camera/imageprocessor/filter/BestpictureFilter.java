@@ -28,6 +28,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.android.camera.imageprocessor.filter;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -38,6 +39,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -80,6 +82,8 @@ public class BestpictureFilter implements ImageFilter {
     private ByteBuffer mBVU;
     private Object mClosingLock = new Object();
     private boolean mIsOn = false;
+    private PostProcessor mProcessor;
+    private ProgressDialog mProgressDialog;
 
     private static void Log(String msg) {
         if (DEBUG) {
@@ -87,9 +91,10 @@ public class BestpictureFilter implements ImageFilter {
         }
     }
 
-    public BestpictureFilter(CaptureModule module, CameraActivity activity) {
+    public BestpictureFilter(CaptureModule module, CameraActivity activity, PostProcessor processor) {
         mModule = module;
         mActivity = activity;
+        mProcessor = processor;
         mNamedImages = new PhotoModule.NamedImages();
     }
 
@@ -126,6 +131,7 @@ public class BestpictureFilter implements ImageFilter {
     @Override
     public void deinit() {
         Log("deinit");
+        dismissProgressDialog();
         synchronized (mClosingLock) {
             mIsOn = false;
         }
@@ -135,53 +141,77 @@ public class BestpictureFilter implements ImageFilter {
     public void addImage(final ByteBuffer bY, final ByteBuffer bVU, final int imageNum, Object param) {
         Log("addImage");
         if(imageNum == 0) {
+            showProgressDialog();
             mOrientation = CameraUtil.getJpegRotation(mModule.getMainCameraId(), mModule.getDisplayOrientation());
             mSavedCount = 0;
             mBY = bY;
             mBVU = bVU;
-        }
-        new Thread() {
-            public void run() {
-                synchronized (mClosingLock) {
-                    if (!mIsOn) {
-                        return;
+
+            long captureStartTime = System.currentTimeMillis();
+            mNamedImages.nameNewImage(captureStartTime);
+            PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();
+            String title = (name == null) ? null : name.title;
+            long date = (name == null) ? -1 : name.date;
+            mActivity.getMediaSaveService().addImage(
+                    nv21ToJpeg(mBY, mBVU, new Rect(0, 0, mWidth, mHeight), mOrientation, 0), title, date, null, mWidth, mHeight,
+                    mOrientation, null, new MediaSaveService.OnMediaSavedListener() {
+                        @Override
+                        public void onMediaSaved(final  Uri uri) {
+                            if (uri != null) {
+                                mActivity.notifyNewMedia(uri);
+                                new Thread() {
+                                    public void run() {
+                                        while(mSavedCount < NUM_REQUIRED_IMAGE) {
+                                            try {
+                                                Thread.sleep(10);
+                                            } catch (Exception e) {
+                                            }
+                                        }
+                                        mActivity.runOnUiThread(new Runnable() {
+                                            public void run() {
+                                                dismissProgressDialog();
+                                                startBestpictureActivity(uri);
+                                            }
+                                        });
+                                    }
+                                }.start();
+
+                            }
+                        }
                     }
-                    saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation));
-                    mSavedCount++;
-                }
-            }
-        }.start();
+                    , mActivity.getContentResolver(), "jpeg");
+        }
+        ImageSaveTask t = new ImageSaveTask(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation, imageNum);
+        t.execute();
     }
 
     @Override
     public ResultImage processImage() {
-        long captureStartTime = System.currentTimeMillis();
-        mNamedImages.nameNewImage(captureStartTime);
-        PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();
-        String title = (name == null) ? null : name.title;
-        long date = (name == null) ? -1 : name.date;
-        mActivity.getMediaSaveService().addImage(
-                nv21ToJpeg(mBY, mBVU, new Rect(0, 0, mWidth, mHeight), mOrientation), title, date, null, mWidth, mHeight,
-                        mOrientation, null, new MediaSaveService.OnMediaSavedListener() {
-                    @Override
-                    public void onMediaSaved(Uri uri) {
-                        if (uri != null) {
-                            mActivity.notifyNewMedia(uri);
-                        }
-                        startBestpictureActivity(uri);
-                    }
-                }
-                , mActivity.getContentResolver(), "jpeg");
-        while(mSavedCount < NUM_REQUIRED_IMAGE) {
-            try {
-                Thread.sleep(1);
-            } catch (Exception e) {
-            }
-        }
         return null;
     }
 
+    private void showProgressDialog() {
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                mProgressDialog = ProgressDialog.show(mActivity, "", "Saving pictures...", true, false);
+                mProgressDialog.show();
+            }
+        });
+    }
+
+    private void dismissProgressDialog() {
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                    mProgressDialog.dismiss();
+                    mProgressDialog = null;
+                }
+            }
+        });
+    }
+
     private void startBestpictureActivity(Uri uri) {
+        Log("Start best picture activity");
         Intent intent = new Intent();
         intent.setData(uri);
         intent.setClass(mActivity, BestpictureActivity.class);
@@ -200,7 +230,7 @@ public class BestpictureFilter implements ImageFilter {
 
     @Override
     public boolean isManualMode() {
-        return false;
+        return true;
     }
 
     @Override
@@ -219,7 +249,7 @@ public class BestpictureFilter implements ImageFilter {
         return mIsSupported;
     }
 
-    private byte[] nv21ToJpeg(ByteBuffer bY, ByteBuffer bVU, Rect roi, int orientation) {
+    private byte[] nv21ToJpeg(ByteBuffer bY, ByteBuffer bVU, Rect roi, int orientation, int imageIndex) {
         ByteBuffer buf =  ByteBuffer.allocate(mStrideY*mHeight*3/2);
         buf.put(bY);
         bY.rewind();
@@ -230,9 +260,9 @@ public class BestpictureFilter implements ImageFilter {
         BitmapOutputStream bos = new BitmapOutputStream(1024);
         YuvImage im = new YuvImage(buf.array(), ImageFormat.NV21,
                 mWidth, mHeight, new int[]{mStrideY, mStrideVU});
-        im.compressToJpeg(roi, 50, bos);
+        im.compressToJpeg(roi, mProcessor.getJpegQualityValue(), bos);
         byte[] bytes = bos.getArray();
-        bytes = PostProcessor.addExifTags(bytes, orientation);
+        bytes = PostProcessor.addExifTags(bytes, orientation, mProcessor.waitForMetaData(imageIndex));
         return bytes;
     }
 
@@ -246,18 +276,53 @@ public class BestpictureFilter implements ImageFilter {
         }
     }
 
-    private void saveToPrivateFile(final int index, final byte[] bytes) {
-        String filesPath = mActivity.getFilesDir()+"/Bestpicture";
-        File file = new File(filesPath);
-        if(!file.exists()) {
-            file.mkdir();
+    private class ImageSaveTask extends AsyncTask<Void, Void, byte[]> {
+        ByteBuffer bY;
+        ByteBuffer bVU;
+        Rect roi;
+        int orientation;
+        int imageNum;
+
+        public ImageSaveTask(ByteBuffer bY, ByteBuffer bVU, Rect roi, int orientation, int imageNum) {
+            this.bY = bY;
+            this.bVU = bVU;
+            this.roi = roi;
+            this.orientation = orientation;
+            this.imageNum = imageNum;
         }
-        file = new File(filesPath+"/"+NAMES[index]);
-        try {
-            FileOutputStream out = new FileOutputStream(file);
-            out.write(bytes, 0, bytes.length);
-            out.close();
-        } catch (Exception e) {
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected byte[] doInBackground(Void... v) {
+            synchronized (mClosingLock) {
+                if (!mIsOn) {
+                    return null;
+                }
+                return nv21ToJpeg(bY, bVU, roi, orientation, imageNum);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(byte[] bytes) {
+            if(bytes == null)
+                return;
+            String filesPath = mActivity.getFilesDir()+"/Bestpicture";
+            File file = new File(filesPath);
+            if(!file.exists()) {
+                file.mkdir();
+            }
+            file = new File(filesPath+"/"+NAMES[imageNum]);
+            try {
+                FileOutputStream out = new FileOutputStream(file);
+                out.write(bytes, 0, bytes.length);
+                out.close();
+            } catch (Exception e) {
+            }
+            mSavedCount++;
+            Log(imageNum+" image is saved");
         }
     }
 }

@@ -360,6 +360,8 @@ public class CameraUtil {
     }
 
     public static void showErrorAndFinish(final Activity activity, int msgId) {
+        if (activity == null || activity.isFinishing())
+            return;
         DialogInterface.OnClickListener buttonListener =
                 new DialogInterface.OnClickListener() {
             @Override

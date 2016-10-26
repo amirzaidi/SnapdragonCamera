@@ -85,11 +85,51 @@
         android:id="@+id/ts_makeup_switcher"
         style="@style/OneUIMenuButton" />
 
-    <SeekBar
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/ts_makeup_seekbar"
-        android:visibility="gone"/>
+        android:id="@+id/makeup_seekbar_layout"
+        android:visibility="gone">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/seekbar_toggle"
+            android:text="@string/makeup_seekbar_low">
+        </Button>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/seekbar_body">
+            <com.android.camera.ui.RotateLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:id="@+id/makeup_low_text">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/makeup_seekbar_low">
+                </TextView>
+            </com.android.camera.ui.RotateLayout>
+            <SeekBar
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="100dp"
+                    android:paddingRight="100dp"
+                    android:id="@+id/makeup_seekbar"/>
+            <com.android.camera.ui.RotateLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:id="@+id/makeup_high_text">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/makeup_seekbar_high">
+                </TextView>
+            </com.android.camera.ui.RotateLayout>
+        </RelativeLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/remaining_photos"

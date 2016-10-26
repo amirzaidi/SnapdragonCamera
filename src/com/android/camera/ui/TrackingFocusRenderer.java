@@ -33,6 +33,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.hardware.camera2.CameraCharacteristics;
 import android.view.MotionEvent;
 
 import com.android.camera.CameraActivity;
@@ -58,6 +59,7 @@ public class TrackingFocusRenderer extends OverlayRenderer implements FocusIndic
     public final static int STATUS_TRACKING = 2;
     public final static int STATUS_TRACKED = 3;
     private int mStatus = STATUS_INIT;
+    private boolean mIsFlipped = false;
 
     private final static String TAG = "TrackingFocusRenderer";
     private final static boolean DEBUG = false; //Enabling DEBUG LOG reduces the performance drastically.
@@ -71,6 +73,13 @@ public class TrackingFocusRenderer extends OverlayRenderer implements FocusIndic
     @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
+        if(mModule.getMainCameraCharacteristics() != null &&
+                mModule.getMainCameraCharacteristics().get(CameraCharacteristics.SENSOR_ORIENTATION) == 270) {
+            mIsFlipped = true;
+        } else {
+            mIsFlipped = false;
+        }
+
         if(!visible) {
             synchronized (mLock) {
                 mStatus = STATUS_INIT;
@@ -143,9 +152,17 @@ public class TrackingFocusRenderer extends OverlayRenderer implements FocusIndic
 
             /* It's supposed to give x,y like above but library x,y is reversed*/
             if(mModule.isBackCamera()) {
-                x = width - 1 - x;
+                if(!mIsFlipped) {
+                    x = width - 1 - x;
+                    y = height - 1 - y;
+                }
+            } else {  //Front camera
+                if(!mIsFlipped) {
+                    x = width - 1 - x;
+                } else {
+                    y = height - 1 - y;
+                }
             }
-            y = height-1-y;
 
             return new int[]{x, y};
         }
@@ -176,9 +193,20 @@ public class TrackingFocusRenderer extends OverlayRenderer implements FocusIndic
          */
         int x = height-1-src.centerY();
         int y = src.centerX();
+
         if(!mModule.isBackCamera()) {
-            y = width-1-src.centerX();
+            if(mIsFlipped) {
+                y = width - 1 - src.centerX();
+            } else {
+                x = src.centerY();
+            }
+        } else { //Back Camera
+            if(mIsFlipped) {
+                x = src.centerY();
+                y = width - 1 -src.centerX();
+            }
         }
+
         int w = (int)(src.height()*((float)mSurfaceDim.width()/height));
         int h = (int)(src.width()*((float)mSurfaceDim.height()/width));
         x = mSurfaceDim.left + (int)(x*((float)mSurfaceDim.width()/height));

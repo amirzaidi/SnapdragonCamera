@@ -154,8 +154,8 @@ public class BestpictureActivity extends FragmentActivity{
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
-        mWidth = size.x/2;
-        mHeight = size.y/2;
+        mWidth = size.x/4;
+        mHeight = size.y/4;
         mNamedImages = new PhotoModule.NamedImages();
 
         mImageItems = new ImageItems(mActivity);

@@ -91,8 +91,15 @@ public class PanoCaptureUI implements
         mPreviewProcessView.onFrameAvailable(bitmap, isCancelling);
     }
 
-    public void setSwitcherIndex() {
-        mSwitcher.setCurrentIndex(ModuleSwitcher.PANOCAPTURE_MODULE_INDEX);
+    public void setThumbnailVisibility(final int visibility) {
+        if(mThumbnail != null) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mThumbnail.setVisibility(visibility);
+                }
+            });
+        }
     }
 
     /*
@@ -162,18 +169,7 @@ public class PanoCaptureUI implements
         mShutterButton = (ShutterButton) mRootView.findViewById(R.id.shutter_button);
         mShutterButton.setLongClickable(false);
         mSwitcher = (ModuleSwitcher) mRootView.findViewById(R.id.camera_switcher);
-        mSwitcher.setCurrentIndex(ModuleSwitcher.PHOTO_MODULE_INDEX);
-        mSwitcher.setSwitchListener(mActivity);
-        mSwitcher.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mController.getCameraState() == PhotoController.LONGSHOT) {
-                    return;
-                }
-                mSwitcher.showPopup();
-                mSwitcher.setOrientation(mOrientation, false);
-            }
-        });
+        mSwitcher.setVisibility(View.GONE);
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
 
         mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
@@ -333,11 +329,14 @@ public class PanoCaptureUI implements
 
     public void onResume() {
         mPreviewProcessView.onResume();
+        setThumbnailVisibility(View.VISIBLE);
         mCameraControls.getPanoramaExitButton().setVisibility(View.VISIBLE);
         mCameraControls.getPanoramaExitButton().setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                SettingsManager.getInstance().setValueIndex(SettingsManager.KEY_SCENE_MODE, SettingsManager.SCENE_MODE_AUTO_INT);
+                try {
+                    SettingsManager.getInstance().setValueIndex(SettingsManager.KEY_SCENE_MODE, SettingsManager.SCENE_MODE_AUTO_INT);
+                } catch(NullPointerException e) {}
                 mActivity.onModuleSelected(ModuleSwitcher.CAPTURE_MODULE_INDEX);
             }
         });

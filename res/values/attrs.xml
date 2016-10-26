@@ -45,4 +45,7 @@
         <attr name="images" format="reference" />
     </declare-styleable>
 
+    <declare-styleable name="MenuHelp">
+        <attr name="forCamera2" format="boolean"/>
+    </declare-styleable>
 </resources>

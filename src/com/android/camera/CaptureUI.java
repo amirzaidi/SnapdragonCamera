@@ -24,11 +24,14 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
 import android.hardware.Camera.Face;
+import android.preference.PreferenceManager;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -46,15 +49,18 @@ import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.Camera2FaceView;
 import com.android.camera.ui.CameraControls;
+import com.android.camera.ui.MenuHelp;
 import com.android.camera.ui.OneUICameraControls;
 import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.FlashToggleButton;
@@ -155,6 +161,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private FlashToggleButton mFlashButton;
     private CountDownView mCountDownView;
     private OneUICameraControls mCameraControls;
+    private MenuHelp mMenuHelp;
     private PieRenderer mPieRenderer;
     private ZoomRenderer mZoomRenderer;
     private Allocation mMonoDummyAllocation;
@@ -171,14 +178,18 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private View mFrontBackSwitcher;
     private ImageView mMakeupButton;
     private SeekBar mMakeupSeekBar;
+    private View mMakeupSeekBarLayout;
+    private View mSeekbarBody;
     private TextView mRecordingTimeView;
     private View mTimeLapseLabel;
     private RotateLayout mRecordingTimeRect;
     private PauseButton mPauseButton;
     private RotateImageView mMuteButton;
+    private Button mSeekbarToggleButton;
 
     int mPreviewWidth;
     int mPreviewHeight;
+    private boolean mIsVideoUI = false;
 
     private void previewUIReady() {
         if((mSurfaceHolder != null && mSurfaceHolder.getSurface().isValid())) {
@@ -238,7 +249,20 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher = mRootView.findViewById(R.id.front_back_switcher);
         mMakeupButton = (ImageView) mRootView.findViewById(R.id.ts_makeup_switcher);
         setMakeupButtonIcon();
-        mMakeupSeekBar = (SeekBar)mRootView.findViewById(R.id.ts_makeup_seekbar);
+        mMakeupSeekBarLayout = mRootView.findViewById(R.id.makeup_seekbar_layout);
+        mSeekbarBody = mRootView.findViewById(R.id.seekbar_body);
+        mSeekbarToggleButton = (Button) mRootView.findViewById(R.id.seekbar_toggle);
+        mSeekbarToggleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mSeekbarBody.getVisibility() == View.VISIBLE) {
+                    mSeekbarBody.setVisibility(View.GONE);
+                } else {
+                    mSeekbarBody.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        mMakeupSeekBar = (SeekBar)mRootView.findViewById(R.id.makeup_seekbar);
         mMakeupSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progresValue, boolean fromUser) {
@@ -255,7 +279,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                showMakeupSeekBar();
+                toggleMakeup();
             }
         });
         mFlashButton = (FlashToggleButton) mRootView.findViewById(R.id.flash_button);
@@ -337,31 +361,25 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
         mActivity.setPreviewGestures(mGestures);
         ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
+        showFirstTimeHelp();
     }
 
-    private void showMakeupSeekBar() {
+    private void toggleMakeup() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
-        if(mMakeupSeekBar.getVisibility() == View.VISIBLE) {
-            mMakeupSeekBar.setVisibility(View.GONE);
-            if(value != null && value.equals("0")) {
-                mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "off");
-                mModule.restart();
-            }
-        } else {
-            mMakeupSeekBar.setVisibility(View.VISIBLE);
-            if(value != null && value.equals("0")) {
-                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "40");
-                mMakeupSeekBar.setProgress(40);
-                mSettingsManager.setValue(SettingsManager.KEY_FACE_DETECTION, "on");
-                mModule.restart();
+        if(value != null && !mIsVideoUI) {
+            if(value.equals("0")) {
+                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "10");
+                mMakeupSeekBar.setProgress(10);
+                mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
+                mSeekbarBody.setVisibility(View.VISIBLE);
             } else {
-                try {
-                    mMakeupSeekBar.setProgress(Integer.parseInt(mSettingsManager.getValue(SettingsManager.KEY_MAKEUP)));
-                } catch(Exception e) {
-                }
+                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "0");
+                mMakeupSeekBar.setProgress(0);
+                mMakeupSeekBarLayout.setVisibility(View.GONE);
             }
+            setMakeupButtonIcon();
+            mModule.restartSession(true);
         }
-        setMakeupButtonIcon();
     }
 
     private void setMakeupButtonIcon() {
@@ -412,6 +430,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mShutterButton.setOnShutterButtonListener(mModule);
         mShutterButton.setVisibility(View.VISIBLE);
         mVideoButton.setVisibility(View.VISIBLE);
+        mShutterButton.setImageResource(R.drawable.one_ui_shutter_anim);
+        mShutterButton.setOnClickListener(new View.OnClickListener()  {
+            @Override
+            public void onClick(View v) {
+                    doShutterAnimation();
+            }
+        });
         mVideoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -514,6 +539,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             @Override
             public void onClick(View v) {
                 addFilterMode();
+                adjustOrientation();
             }
         });
     }
@@ -557,6 +583,12 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         mFilterModeSwitcher.setVisibility(View.INVISIBLE);
         mSceneModeSwitcher.setVisibility(View.INVISIBLE);
+
+        String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
+        if(value != null && value.equals("0")) {
+            mMakeupButton.setVisibility(View.INVISIBLE);
+        }
+        mIsVideoUI = true;
     }
 
     public void showUIafterRecording() {
@@ -564,6 +596,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
+        mMakeupButton.setVisibility(View.VISIBLE);
+        mIsVideoUI = false;
     }
 
     public void addFilterMode() {
@@ -800,6 +834,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void doShutterAnimation() {
+        AnimationDrawable frameAnimation = (AnimationDrawable) mShutterButton.getDrawable();
+        frameAnimation.stop();
+        frameAnimation.start();
     }
 
     public void showUI() {
@@ -1089,6 +1126,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void setOrientation(int orientation, boolean animation) {
         mOrientation = orientation;
         mCameraControls.setOrientation(orientation, animation);
+        if (mMenuHelp != null) {
+            mMenuHelp.setOrientation(orientation, animation);
+        }
         if (mFilterLayout != null) {
             ViewGroup vg = (ViewGroup) mFilterLayout.getChildAt(0);
             if (vg != null)
@@ -1122,6 +1162,33 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public int getOrientation() {
         return mOrientation;
+    }
+
+    public void showFirstTimeHelp() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+        boolean isMenuShown = prefs.getBoolean(CameraSettings.KEY_SHOW_MENU_HELP, false);
+        if(!isMenuShown) {
+            showFirstTimeHelp(mTopMargin, mBottomMargin);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean(CameraSettings.KEY_SHOW_MENU_HELP, true);
+            editor.apply();
+        }
+    }
+
+    private void showFirstTimeHelp(int topMargin, int bottomMargin) {
+        mMenuHelp = (MenuHelp) mRootView.findViewById(R.id.menu_help);
+        mMenuHelp.setForCamera2(true);
+        mMenuHelp.setVisibility(View.VISIBLE);
+        mMenuHelp.setMargins(topMargin, bottomMargin);
+        mMenuHelp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mMenuHelp != null) {
+                    mMenuHelp.setVisibility(View.GONE);
+                    mMenuHelp = null;
+                }
+            }
+        });
     }
 
     @Override
@@ -1249,6 +1316,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mSurfaceView.getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
         mSurfaceView.setAspectRatio(mPreviewHeight, mPreviewWidth);
         mSurfaceView.setVisibility(View.VISIBLE);
+        mIsVideoUI = false;
     }
 
     public boolean setPreviewSize(int width, int height) {

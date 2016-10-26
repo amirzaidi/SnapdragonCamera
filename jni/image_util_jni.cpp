@@ -43,9 +43,13 @@ JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nat
         (JNIEnv* env, jobject thiz, jobjectArray inBuf,
          jint imageWidth, jint imageHeight, jint degree, jobjectArray outBuf);
 JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nativeNV21toRgb(
-        JNIEnv *env, jobject thiz, jobjectArray yvuBuf, jobjectArray rgbBuf, jint width, jint height);
-JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipVerticalNV21(
-        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height);
+        JNIEnv *env, jobject thiz, jobjectArray yvuBuf, jobjectArray rgbBuf, jint width, jint height, jint stride);
+JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipNV21(
+        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint stride, jint height, jint gap, jboolean isVertical);
+JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeResizeImage(
+        JNIEnv* env, jobject thiz, jbyteArray oldBuf, jbyteArray newBuf, jint oldWidth, jint oldHeight, jint oldStride, jint newWidth, jint newHeight);
+JNIEXPORT jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeNV21Split(
+        JNIEnv* env, jobject thiz, jbyteArray srcYVU, jobjectArray yBuf, jobjectArray vuBuf, jint width, jint height, jint srcStride, jint dstStride);
 #ifdef __cplusplus
 }
 #endif
@@ -154,30 +158,136 @@ jint JNICALL Java_com_android_camera_imageprocessor_FrameProcessor_nativeNV21toR
     return 0;
 }
 
-jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipVerticalNV21(
-        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint width, jint height)
+jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeFlipNV21(
+        JNIEnv* env, jobject thiz, jbyteArray yvuBytes, jint stride, jint height, jint gap, jboolean isVertical)
 {
     jbyte* imageDataNV21Array = env->GetByteArrayElements(yvuBytes, NULL);
     uint8_t *buf = (uint8_t *)imageDataNV21Array;
-    int ysize = width * height;
+    int ysize = stride * height;
     uint8_t temp1, temp2;
-    for(int x=0; x < width; x++) {
-        for(int y=0; y < height/2; y++) {
-            temp1 = buf[y*width + x];
-            buf[y*width + x] = buf[(height-1-y)*width + x];
-            buf[(height-1-y)*width + x] = temp1;
+
+    if(isVertical) {
+        for (int x = 0; x < stride; x++) {
+            for (int y = 0; y < height / 2; y++) {
+                temp1 = buf[y * stride + x];
+                buf[y * stride + x] = buf[(height - 1 - y) * stride + x];
+                buf[(height - 1 - y) * stride + x] = temp1;
+            }
+        }
+        for (int x = 0; x < stride; x += 2) {
+            for (int y = 0; y < height / 4; y++) {
+                temp1 = buf[ysize + y * stride + x];
+                temp2 = buf[ysize + y * stride + x + 1];
+                buf[ysize + y * stride + x] = buf[ysize + (height / 2 - 1 - y) * stride + x];
+                buf[ysize + y * stride + x + 1] = buf[ysize + (height / 2 - 1 - y) * stride + x + 1];
+                buf[ysize + (height / 2 - 1 - y) * stride + x] = temp1;
+                buf[ysize + (height / 2 - 1 - y) * stride + x + 1] = temp2;
+            }
+        }
+    } else {
+        int width = stride - gap;
+        for (int x = 0; x < width/2; x++) {
+            for (int y = 0; y < height; y++) {
+                temp1 = buf[y * stride + x];
+                buf[y * stride + x] = buf[y * stride + (width - 1 - x)];
+                buf[y * stride + (width - 1 - x)] = temp1;
+            }
+        }
+        for (int x = 0; x < width/2; x += 2) {
+            for (int y = 0; y < height / 2; y++) {
+                temp1 = buf[ysize + y * stride + x];
+                temp2 = buf[ysize + y * stride + x + 1];
+                buf[ysize + y * stride + x] = buf[ysize + y * stride + (width - 1 - x - 1)];
+                buf[ysize + y * stride + x + 1] = buf[ysize + y * stride + (width - 1 - x)];
+                buf[ysize + y * stride + (width - 1 - x - 1)] = temp1;
+                buf[ysize + y * stride + (width - 1 - x)] = temp2;
+            }
         }
     }
-    for(int x=0; x < width; x+=2) {
-        for(int y=0; y < height/4; y++) {
-            temp1 = buf[ysize + y*width + x];
-            temp2 = buf[ysize + y*width + x + 1];
-            buf[ysize + y*width + x] = buf[ysize + (height/2-1-y)*width + x];
-            buf[ysize + y*width + x + 1] = buf[ysize + (height/2-1-y)*width + x + 1];
-            buf[ysize + (height/2-1-y)*width + x] = temp1;
-            buf[ysize + (height/2-1-y)*width + x + 1] = temp2;
-        }
-    }
+
     env->ReleaseByteArrayElements(yvuBytes, imageDataNV21Array, JNI_ABORT);
     return 0;
+}
+
+jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeNV21Split(
+        JNIEnv* env, jobject thiz, jbyteArray srcYVU, jobjectArray yBuf, jobjectArray vuBuf, jint width, jint height, jint srcStride, jint dstStride) {
+    uint8_t *old_buf = (uint8_t *) env->GetByteArrayElements(srcYVU, NULL);
+    uint8_t *y_buf = (uint8_t *)env->GetDirectBufferAddress(yBuf);
+    uint8_t *vu_buf = (uint8_t *)env->GetDirectBufferAddress(vuBuf);
+    int ySize = srcStride*height;
+
+    for(int j=0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            y_buf[j*dstStride+i] = old_buf[j*srcStride + i];
+            if (j < height / 2) {
+                vu_buf[j*dstStride + i] = old_buf[ySize + j*srcStride + i];
+            }
+        }
+    }
+    env->ReleaseByteArrayElements(srcYVU, (jbyte *)old_buf, JNI_ABORT);
+
+    return 0;
+}
+
+jint JNICALL Java_com_android_camera_imageprocessor_PostProcessor_nativeResizeImage(
+        JNIEnv* env, jobject thiz, jbyteArray oldBuf, jbyteArray newBuf, jint oldWidth, jint oldHeight, jint oldStride, jint newWidth, jint newHeight) {
+    uint8_t *old_buf = (uint8_t *) env->GetByteArrayElements(oldBuf, NULL);
+    uint8_t *new_buf = (uint8_t *) env->GetByteArrayElements(newBuf, NULL);
+    int adjustedOldWidth = oldWidth;
+
+    if((float)oldWidth/oldHeight != (float)newWidth/newHeight) {
+        adjustedOldWidth = (int)(((float)newWidth/newHeight) * oldHeight);
+    }
+
+    int wR = adjustedOldWidth / newWidth;
+    int hR = oldHeight / newHeight;
+    if(wR < hR && adjustedOldWidth - newWidth*wR >= adjustedOldWidth/4) {
+        wR++;
+    }
+    if(hR < wR && oldHeight - newHeight*hR >= oldHeight/4) {
+        hR++;
+    }
+    int R = wR < hR ? wR : hR;
+    int wC = oldWidth - (newWidth*R);
+    int hC = oldHeight - (newHeight*R);
+    unsigned int cv1, cv2;
+
+    int index = 0;
+    for(int j=hC/2; j < newHeight*R + hC/2; j+=R) {
+        for(int i=wC/2; i < newWidth*R + wC/2; i+=R) {
+            cv1 = 0;
+            for(int y = 0; y < R; y++) {
+                for (int x = 0; x < R; x++) {
+                    cv1 += old_buf[(j+y)*oldStride + i+x];
+                }
+            }
+            cv1 /= R*R;
+            new_buf[index] = (unsigned char)cv1;
+            index++;
+        }
+    }
+    int ySize = oldStride*oldHeight;
+    index = newWidth*newHeight;
+    for(int j=hC/2; j < newHeight*R + hC/2; j+=R*2) {
+        for(int i=wC/2; i < newWidth*R + wC/2; i+=R*2) {
+            cv1 = 0;
+            cv2 = 0;
+            for(int y = 0; y < R*2; y+=2) {
+                for (int x = 0; x < R*2; x+=2) {
+                    cv1 += old_buf[ySize + (j+y)/2*oldStride + (i+x)/2*2];
+                    cv2 += old_buf[ySize + (j+y)/2*oldStride + (i+x)/2*2 + 1];
+                }
+            }
+            cv1 /= R*R;
+            cv2 /= R*R;
+            new_buf[index] = (unsigned char)cv1;
+            index++;
+            new_buf[index] = (unsigned char)cv2;
+            index++;
+        }
+    }
+    env->ReleaseByteArrayElements(oldBuf, (jbyte *)old_buf, JNI_ABORT);
+    env->ReleaseByteArrayElements(newBuf, (jbyte *)new_buf, JNI_ABORT);
+
+    return R;
 }
