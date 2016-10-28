@@ -164,6 +164,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     // we can change it based on memory status or other requirements.
     private static final int LONGSHOT_CANCEL_THRESHOLD = 40 * 1024 * 1024;
 
+    private static final int NORMAL_SESSION_MAX_FPS = 60;
+
     MeteringRectangle[][] mAFRegions = new MeteringRectangle[MAX_NUM_CAM][];
     MeteringRectangle[][] mAERegions = new MeteringRectangle[MAX_NUM_CAM][];
     CaptureRequest.Key<Byte> BayerMonoLinkEnableKey =
@@ -287,7 +289,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private ImageReader mVideoSnapshotImageReader;
     private Range mHighSpeedFPSRange;
     private boolean mHighSpeedCapture = false;
-    private boolean mHighSpeedCaptureSlowMode = false; //HFR
+    private boolean mHighSpeedRecordingMode = false; //HFR
     private int mHighSpeedCaptureRate;
     private CaptureRequest.Builder mVideoRequestBuilder;
 
@@ -2505,10 +2507,52 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcessor.setVideoOutputSurface(mMediaRecorder.getSurface());
             addPreviewSurface(mVideoRequestBuilder, surfaces, cameraId);
 
-            if (!mHighSpeedCapture) surfaces.add(mVideoSnapshotImageReader.getSurface());
-            else mVideoRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
+            if (mHighSpeedCapture)
+                mVideoRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, mHighSpeedFPSRange);
 
-            if (!mHighSpeedCapture) {
+            if (mHighSpeedCapture && ((int)mHighSpeedFPSRange.getUpper() > NORMAL_SESSION_MAX_FPS)) {
+                mCameraDevice[cameraId].createConstrainedHighSpeedCaptureSession(surfaces, new
+                        CameraConstrainedHighSpeedCaptureSession.StateCallback() {
+
+                    @Override
+                    public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                        mCurrentSession = cameraCaptureSession;
+                        CameraConstrainedHighSpeedCaptureSession session =
+                                    (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
+                        try {
+                            List list = session
+                                        .createHighSpeedRequestList(mVideoRequestBuilder.build());
+                            session.setRepeatingBurst(list, null, mCameraHandler);
+                        } catch (CameraAccessException e) {
+                            Log.e(TAG, "Failed to start high speed video recording "
+                                        + e.getMessage());
+                            e.printStackTrace();
+                        } catch (IllegalArgumentException e) {
+                            Log.e(TAG, "Failed to start high speed video recording "
+                                        + e.getMessage());
+                            e.printStackTrace();
+                        } catch (IllegalStateException e) {
+                            Log.e(TAG, "Failed to start high speed video recording "
+                                        + e.getMessage());
+                            e.printStackTrace();
+                        }
+                        mMediaRecorder.start();
+                        mUI.clearFocus();
+                        mUI.resetPauseButton();
+                        mRecordingTotalTime = 0L;
+                        mRecordingStartTime = SystemClock.uptimeMillis();
+                        mUI.enableShutter(false);
+                        mUI.showRecordingUI(true, true);
+                        updateRecordingTime();
+                    }
+
+                    @Override
+                    public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                        Toast.makeText(mActivity, "Failed", Toast.LENGTH_SHORT).show();
+                    }
+                }, null);
+            } else {
+                surfaces.add(mVideoSnapshotImageReader.getSurface());
                 mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
                         .StateCallback() {
 
@@ -2536,46 +2580,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                         Toast.makeText(mActivity, "Video Failed", Toast.LENGTH_SHORT).show();
                     }
                 }, null);
-            } else {
-                mCameraDevice[cameraId].createConstrainedHighSpeedCaptureSession(surfaces, new
-                        CameraConstrainedHighSpeedCaptureSession.StateCallback() {
-
-                            @Override
-                            public void onConfigured(CameraCaptureSession cameraCaptureSession) {
-                                mCurrentSession = cameraCaptureSession;
-                                CameraConstrainedHighSpeedCaptureSession session =
-                                        (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
-                                try {
-                                    List list = session
-                                            .createHighSpeedRequestList(mVideoRequestBuilder.build());
-                                    session.setRepeatingBurst(list, null, mCameraHandler);
-                                } catch (CameraAccessException e) {
-                                    Log.e(TAG, "Failed to start high speed video recording "
-                                            + e.getMessage());
-                                    e.printStackTrace();
-                                } catch (IllegalArgumentException e) {
-                                    Log.e(TAG, "Failed to start high speed video recording "
-                                            + e.getMessage());
-                                    e.printStackTrace();
-                                } catch (IllegalStateException e) {
-                                    Log.e(TAG, "Failed to start high speed video recording "
-                                            + e.getMessage());
-                                    e.printStackTrace();
-                                }
-                                mMediaRecorder.start();
-                                mUI.clearFocus();
-                                mUI.resetPauseButton();
-                                mRecordingTotalTime = 0L;
-                                mRecordingStartTime = SystemClock.uptimeMillis();
-                                mUI.showRecordingUI(true, true);
-                                updateRecordingTime();
-                            }
-
-                            @Override
-                            public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                                Toast.makeText(mActivity, "Failed", Toast.LENGTH_SHORT).show();
-                            }
-                        }, null);
             }
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -2602,7 +2606,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             mHighSpeedCapture = true;
             String mode = value.substring(0, 3);
-            mHighSpeedCaptureSlowMode = mode.equals("hsr");
+            mHighSpeedRecordingMode = mode.equals("hsr");
             mHighSpeedCaptureRate = Integer.parseInt(value.substring(3));
         }
     }
@@ -2762,6 +2766,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         mMediaRecorder.reset();
         saveVideo();
         mUI.showRecordingUI(false, false);
+        mUI.enableShutter(true);
+
         mIsRecordingVideo = false;
 
         if(mFrameProcessor != null) {
@@ -2857,23 +2863,25 @@ public class CaptureModule implements CameraModule, PhotoController,
             size = CameraSettings.getTimeLapseQualityFor(size);
         }
         updateHFRSetting();
-        boolean hfr = mHighSpeedCapture && !mHighSpeedCaptureSlowMode;
+        boolean hfr = mHighSpeedCapture && !mHighSpeedRecordingMode;
         mProfile = CamcorderProfile.get(cameraId, size);
-
         int videoEncoder = SettingTranslation
                 .getVideoEncoder(mSettingsManager.getValue(SettingsManager.KEY_VIDEO_ENCODER));
         int audioEncoder = SettingTranslation
                 .getAudioEncoder(mSettingsManager.getValue(SettingsManager.KEY_AUDIO_ENCODER));
 
-        int outputFormat = MediaRecorder.OutputFormat.MPEG_4;
-
+        mProfile.videoCodec = videoEncoder;
         if (!mCaptureTimeLapse && !hfr) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mProfile.audioCodec = audioEncoder;
+            if (mProfile.audioCodec == MediaRecorder.AudioEncoder.AMR_NB) {
+                mProfile.fileFormat = MediaRecorder.OutputFormat.THREE_GPP;
+            }
         }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
 
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
-        String fileName = generateVideoFilename(outputFormat);
+        String fileName = generateVideoFilename(mProfile.fileFormat);
         Log.v(TAG, "New video filename: " + fileName);
         mMediaRecorder.setOutputFile(fileName);
         mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
@@ -2891,6 +2899,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             mMediaRecorder.setAudioEncoder(audioEncoder);
         }
         mMediaRecorder.setMaxDuration(mMaxVideoDurationInMs);
+
+        Log.i(TAG, "Profile video bitrate: "+ mProfile.videoBitRate);
+        Log.i(TAG, "Profile video frame rate: "+ mProfile.videoFrameRate);
         if (mCaptureTimeLapse) {
             double fps = 1000 / (double) mTimeBetweenTimeLapseFrameCaptureMs;
             mMediaRecorder.setCaptureRate(fps);
@@ -2898,14 +2909,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             mHighSpeedFPSRange = new Range(mHighSpeedCaptureRate, mHighSpeedCaptureRate);
             int fps = (int) mHighSpeedFPSRange.getUpper();
             mMediaRecorder.setCaptureRate(fps);
-            if (mHighSpeedCaptureSlowMode) {
-                mMediaRecorder.setVideoFrameRate(30);
-            } else {
-                mMediaRecorder.setVideoFrameRate(fps);
-            }
-
-            int scaledBitrate = mProfile.videoBitRate * (fps / mProfile.videoFrameRate);
-            Log.i(TAG, "Scaled Video bitrate : " + scaledBitrate);
+            int targetRate = mHighSpeedRecordingMode ? fps : 30;
+            mMediaRecorder.setVideoFrameRate(targetRate);
+            Log.i(TAG, "Capture rate: "+fps+", Target rate: "+targetRate);
+            int scaledBitrate = mSettingsManager.getHighSpeedVideoEncoderBitRate(mProfile, targetRate);
+            Log.i(TAG, "Scaled video bitrate : " + scaledBitrate);
             mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
 
