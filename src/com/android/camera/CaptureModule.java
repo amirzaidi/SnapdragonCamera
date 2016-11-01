@@ -2623,6 +2623,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyNoiseReduction(builder);
         applyColorEffect(builder);
         applyVideoFlash(builder);
+        applyFaceDetection(builder);
     }
 
     private void updateVideoFlash() {
@@ -3275,7 +3276,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyFaceDetection(CaptureRequest.Builder request) {
             String value = mSettingsManager.getValue(SettingsManager.KEY_FACE_DETECTION);
-            if (value != null) {
+            if (value != null && value.equals("on")) {
                 request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
                         CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE);
             }
