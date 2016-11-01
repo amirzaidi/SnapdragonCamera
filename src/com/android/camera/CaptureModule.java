@@ -2046,11 +2046,46 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (CameraUtil.volumeKeyShutterDisable(mActivity)) {
+                    return false;
+                }
+            case KeyEvent.KEYCODE_FOCUS:
+                if (mFirstTimeInitialized) {
+                    if (event.getRepeatCount() == 0) {
+                        onShutterButtonFocus(true);
+                    }
+                    return true;
+                }
+                return false;
+            case KeyEvent.KEYCODE_CAMERA:
+                if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
+                    onShutterButtonClick();
+                }
+                return true;
+        }
         return false;
     }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (mFirstTimeInitialized
+                        && !CameraUtil.volumeKeyShutterDisable(mActivity)) {
+                    onShutterButtonClick();
+                    return true;
+                }
+                return false;
+            case KeyEvent.KEYCODE_FOCUS:
+                if (mFirstTimeInitialized) {
+                    onShutterButtonFocus(false);
+                }
+                return true;
+        }
         return false;
     }
 
