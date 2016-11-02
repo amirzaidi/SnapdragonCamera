@@ -836,6 +836,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                                 }
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
+                            } catch(IllegalStateException e) {
+                                e.printStackTrace();
                             }
                         }
 
@@ -1553,6 +1555,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mCaptureSession[i].capture(mPreviewRequestBuilder[i].build(), null,
                                 mCameraHandler);
                     } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    } catch (IllegalStateException e) {
                         e.printStackTrace();
                     }
                 }
