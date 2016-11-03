@@ -114,7 +114,8 @@ import java.lang.reflect.Method;
 public class CaptureModule implements CameraModule, PhotoController,
         MediaSaveService.Listener, ClearSightImageProcessor.Callback,
         SettingsManager.Listener, LocationManager.Listener,
-        CountDownView.OnCountDownFinishedListener {
+        CountDownView.OnCountDownFinishedListener,
+        MediaRecorder.OnInfoListener{
     public static final int DUAL_MODE = 0;
     public static final int BAYER_MODE = 1;
     public static final int MONO_MODE = 2;
@@ -2768,6 +2769,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         closePreviewSession();
         mMediaRecorder.stop();
         mMediaRecorder.reset();
+        mMediaRecorder.setOnInfoListener(null);
         saveVideo();
         mUI.showRecordingUI(false, false);
         mUI.enableShutter(true);
@@ -2938,6 +2940,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mMediaRecorder.setOrientationHint(rotation);
         }
         mMediaRecorder.prepare();
+        mMediaRecorder.setOnInfoListener(this);
     }
 
     public void onVideoButtonClick() {
@@ -3754,6 +3757,23 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onErrorListener(int error) {
         enableRecordingLocation(false);
+    }
+
+    // from MediaRecorder.OnInfoListener
+    @Override
+    public void onInfo(MediaRecorder mr, int what, int extra) {
+        if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
+            if (mIsRecordingVideo) {
+                stopRecordingVideo(getMainCameraId());
+            }
+        } else if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED) {
+           if (mIsRecordingVideo) {
+               stopRecordingVideo(getMainCameraId());
+           }
+            // Show the toast.
+            RotateTextToast.makeText(mActivity, R.string.video_reach_size_limit,
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     private byte[] getJpegData(Image image) {
