@@ -144,6 +144,7 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
     private ProgressDialog mProgressDialog;
     private String mCompleteSentence = "";
     private String mProgressSentence = "";
+    private String mIntroSentence = "";
     private Paint mCompleteSentencePaint = new Paint();
     private int mFinalDoneLength;
 
@@ -327,10 +328,11 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
         mCenterRectPaint.setStrokeWidth(2f);
         mCenterRectPaint.setStyle(Paint.Style.STROKE);
         mCompleteSentencePaint.setColor(Color.WHITE);
-        mCompleteSentencePaint.setTextSize(60f);
+        mCompleteSentencePaint.setTextSize(45f);
         mQueueProcessor = new PanoQueueProcessor();
         mQueueProcessor.start();
         mHandler = new Handler();
+        mIntroSentence = mActivity.getResources().getString(R.string.panocapture_intro);
     }
 
     public void onPause() {
@@ -371,24 +373,24 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (mOrientation == 0 || mOrientation == 180) {
+            rectF.left = canvas.getWidth() / 2 - mPreviewThumbWidth;
+            rectF.right = canvas.getWidth() / 2 + mPreviewThumbWidth;
+            rectF.top = canvas.getHeight() / 2 - mPreviewThumbHeight;
+            rectF.bottom = canvas.getHeight() / 2 + mPreviewThumbHeight;
+        } else {
+            rectF.left = canvas.getWidth() / 2 - mPreviewThumbHeight;
+            rectF.right = canvas.getWidth() / 2 + mPreviewThumbHeight;
+            rectF.top = canvas.getHeight() / 2 - mPreviewThumbWidth;
+            rectF.bottom = canvas.getHeight() / 2 + mPreviewThumbWidth;
+        }
+
         if(mPanoStatus != PANO_STATUS.INACTIVE) {
             canvas.rotate(-mOrientation, canvas.getWidth() / 2, canvas.getHeight() / 2);
 
-            if (mOrientation == 0 || mOrientation == 180) {
-                rectF.left = canvas.getWidth() / 2 - mPreviewThumbWidth;
-                rectF.right = canvas.getWidth() / 2 + mPreviewThumbWidth;
-                rectF.top = canvas.getHeight() / 2 - mPreviewThumbHeight;
-                rectF.bottom = canvas.getHeight() / 2 + mPreviewThumbHeight;
-            } else {
-                rectF.left = canvas.getWidth() / 2 - mPreviewThumbHeight;
-                rectF.right = canvas.getWidth() / 2 + mPreviewThumbHeight;
-                rectF.top = canvas.getHeight() / 2 - mPreviewThumbWidth;
-                rectF.bottom = canvas.getHeight() / 2 + mPreviewThumbWidth;
-            }
-
             if(!mProgressSentence.equals("")) {
                 int textWidth = (int) mCompleteSentencePaint.measureText(mProgressSentence);
-                canvas.drawText(mProgressSentence, rectF.centerX() - textWidth / 2, canvas.getHeight()/4, mCompleteSentencePaint);
+                canvas.drawText(mProgressSentence, rectF.centerX() - textWidth / 2, canvas.getHeight()*4/5, mCompleteSentencePaint);
             }
 
             if(mPanoStatus == PANO_STATUS.COMPLETING) {
@@ -412,6 +414,10 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
                     }
                 }
             }
+        } else {
+            canvas.rotate(-mPendingOrientation, canvas.getWidth()/2, canvas.getHeight()/2);
+            int textWidth = (int) mCompleteSentencePaint.measureText(mIntroSentence);
+            canvas.drawText(mIntroSentence, rectF.centerX() - textWidth / 2, canvas.getHeight()*4/5, mCompleteSentencePaint);
         }
     }
 
@@ -513,7 +519,7 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
                     bitmapTask.x, bitmapTask.y, 0, bitmapTask.dir);
             if(rtv < 0) {
                 mShouldFinish = true;
-                stopPano(false, "The direction is changed. Stopping.");
+                stopPano(false, mActivity.getResources().getString(R.string.panocapture_direction_is_changed));
                 Log.w(TAG, "Keyframe return value: "+rtv);
             }
             bitmapTask.clear();

@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChromaflashFilter implements ImageFilter{
-    public static final int NUM_REQUIRED_IMAGE = 3;
+    public static final int NUM_REQUIRED_IMAGE = 6;
     private int mWidth;
     private int mHeight;
     private int mStrideY;
@@ -105,6 +105,10 @@ public class ChromaflashFilter implements ImageFilter{
     @Override
     public void addImage(ByteBuffer bY, ByteBuffer bVU, int imageNum, Object param) {
         Log("addImage");
+        if(imageNum == 1 || imageNum == 2 || imageNum == 4) {
+            mImageNum = imageNum;
+            return;
+        }
         int yActualSize = bY.remaining();
         int vuActualSize = bVU.remaining();
         mImageNum = imageNum;
@@ -143,19 +147,46 @@ public class ChromaflashFilter implements ImageFilter{
     }
 
     @Override
-    public void manualCapture(CaptureRequest.Builder builder, CameraCaptureSession captureSession,
-                              CameraCaptureSession.CaptureCallback callback, Handler handler) throws CameraAccessException {
-        for(int i=0; i < NUM_REQUIRED_IMAGE; i++) {
-            if(i == 1) {
-                mModule.setFlashModeToPreview(mModule.getMainCameraId(), true);
-                builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
-            } else {
-                mModule.setFlashModeToPreview(mModule.getMainCameraId(), false);
-                builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+    public void manualCapture(final CaptureRequest.Builder builder, final CameraCaptureSession captureSession,
+                              final CameraCaptureSession.CaptureCallback callback, final Handler handler) throws CameraAccessException {
+        new Thread() {
+            public void run() {
+                try {
+                    for (int i = 0; i < NUM_REQUIRED_IMAGE; i++) {
+                        if (i == 0) {
+                            captureSession.capture(builder.build(), callback, handler);
+                        } else if (i == 1) { //To change the setting
+                            builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.FALSE);
+                            captureSession.capture(builder.build(), callback, handler);
+                            waitForImage(i);
+                        } else if (i == 2) { //To change the setting
+                            builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
+                            builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.TRUE);
+                            captureSession.capture(builder.build(), callback, handler);
+                            waitForImage(i);
+                        } else if (i == 3) {
+                            captureSession.capture(builder.build(), callback, handler);
+                        } else if (i == 4) { //To change the setting
+                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+                            captureSession.capture(builder.build(), callback, handler);
+                            waitForImage(i);
+                        } else if (i == 5) {
+                            captureSession.capture(builder.build(), callback, handler);
+                        }
+                    }
+                } catch(CameraAccessException e) {}
+
             }
-            captureSession.capture(builder.build(), callback, handler);
+        }.start();
+    }
+
+    private void waitForImage(int index) {
+        try {
+            while(mImageNum < index) {
+                Thread.sleep(50);
+            }
+        } catch (InterruptedException e) {
         }
     }
 

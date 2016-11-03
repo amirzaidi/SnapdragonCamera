@@ -248,7 +248,6 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mSceneModeSwitcher = mRootView.findViewById(R.id.scene_mode_switcher);
         mFrontBackSwitcher = mRootView.findViewById(R.id.front_back_switcher);
         mMakeupButton = (ImageView) mRootView.findViewById(R.id.ts_makeup_switcher);
-        setMakeupButtonIcon();
         mMakeupSeekBarLayout = mRootView.findViewById(R.id.makeup_seekbar_layout);
         mSeekbarBody = mRootView.findViewById(R.id.seekbar_body);
         mSeekbarToggleButton = (Button) mRootView.findViewById(R.id.seekbar_toggle);
@@ -282,6 +281,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 toggleMakeup();
             }
         });
+        setMakeupButtonIcon();
         mFlashButton = (FlashToggleButton) mRootView.findViewById(R.id.flash_button);
         initFilterModeButton();
         initSceneModeButton();
@@ -388,6 +388,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             public void run() {
                 if(value != null && !value.equals("0")) {
                     mMakeupButton.setImageResource(R.drawable.beautify_on);
+                    mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
                 } else {
                     mMakeupButton.setImageResource(R.drawable.beautify);
                 }

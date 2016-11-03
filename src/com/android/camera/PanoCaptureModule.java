@@ -278,12 +278,7 @@ public class PanoCaptureModule implements CameraModule, PhotoController {
     }
 
     public void changePanoStatus(boolean newStatus, boolean isCancelling) {
-        if(newStatus) {
-            mUI.setThumbnailVisibility(View.GONE);
-        } else {
-            mUI.setThumbnailVisibility(View.VISIBLE);
-        }
-
+        mUI.onPanoStatusChange(newStatus);
         if(mFrameProcessor != null) {
             mFrameProcessor.changePanoStatus(newStatus, isCancelling);
         }

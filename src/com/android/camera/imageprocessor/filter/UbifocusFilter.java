@@ -64,7 +64,7 @@ public class UbifocusFilter implements ImageFilter {
     private int mStrideVU;
     private static String TAG = "UbifocusFilter";
     private static final boolean DEBUG = false;
-    private static final int FOCUS_ADJUST_TIME_OUT = 200;
+    private static final int FOCUS_ADJUST_TIME_OUT = 400;
     private static final int META_BYTES_SIZE = 25;
     private int temp;
     private static boolean mIsSupported = true;
@@ -206,6 +206,8 @@ public class UbifocusFilter implements ImageFilter {
             float value = (i * step);
             mModule.setAFModeToPreview(mModule.getMainCameraId(), CaptureRequest.CONTROL_AF_MODE_OFF);
             mModule.setFocusDistanceToPreview(mModule.getMainCameraId(), value);
+            Log("Request:  " + value);
+            float focusDistance;
             try {
                 int count = FOCUS_ADJUST_TIME_OUT;
                 do {
@@ -214,15 +216,15 @@ public class UbifocusFilter implements ImageFilter {
                     if(count <= 0) {
                         break;
                     }
-                } while(Math.abs(mModule.getPreviewCaptureResult().get(CaptureResult.LENS_FOCUS_DISTANCE)
-                        - value) >= 0.5f);
+                    focusDistance = mModule.getPreviewCaptureResult().get(CaptureResult.LENS_FOCUS_DISTANCE);
+                    Log("Taken focus value :"+focusDistance);
+                } while(Math.abs(focusDistance - value) >= 1f);
             } catch (InterruptedException e) {
             } catch (NullPointerException e) {
             }
             builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
             builder.set(CaptureRequest.LENS_FOCUS_DISTANCE, value);
             captureSession.capture(builder.build(), callback, handler);
-            Log.d(TAG, "Request:  " + value);
         }
     }
 

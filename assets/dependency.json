@@ -48,6 +48,9 @@
       {"pref_camera2_clearsight_key":"off",
       "pref_camera2_mono_preview_key":"off",
       "pref_camera2_mpo_key":"off"}
+    ,
+    "105":
+      {"pref_camera2_flashmode_key":"off"}
   },
   "pref_camera2_clearsight_key":
   {
