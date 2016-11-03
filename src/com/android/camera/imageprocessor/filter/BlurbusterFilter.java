@@ -29,11 +29,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.android.camera.imageprocessor.filter;
 
 import android.graphics.Rect;
-import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
 import android.os.Handler;
 import android.util.Log;
 
@@ -43,31 +40,35 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChromaflashFilter implements ImageFilter{
-    public static final int NUM_REQUIRED_IMAGE = 6;
+public class BlurbusterFilter implements ImageFilter{
+    public static final int NUM_REQUIRED_IMAGE = 5;
     private int mWidth;
     private int mHeight;
     private int mStrideY;
     private int mStrideVU;
-    private static String TAG = "ChromaflashFilter";
+    private static String TAG = "BlurbusterFilter";
     private static final boolean DEBUG = false;
     private static boolean mIsSupported = false;
     private ByteBuffer mOutBuf;
     private CaptureModule mModule;
-    private int mImageNum = -1;
 
     private static void Log(String msg) {
         if(DEBUG) {
             Log.d(TAG, msg);
         }
     }
-    public ChromaflashFilter(CaptureModule module) {
+
+    public BlurbusterFilter(CaptureModule module) {
         mModule = module;
     }
 
     @Override
     public List<CaptureRequest> setRequiredImages(CaptureRequest.Builder builder) {
-        return null;
+        List<CaptureRequest> list = new ArrayList<CaptureRequest>();
+        for(int i=0; i < NUM_REQUIRED_IMAGE; i++) {
+            list.add(builder.build());
+        }
+        return list;
     }
 
     @Override
@@ -88,30 +89,22 @@ public class ChromaflashFilter implements ImageFilter{
         mStrideY = strideY/2*2;
         mStrideVU = strideVU/2*2;
         mOutBuf = ByteBuffer.allocate(mStrideY*mHeight*3/2);
-        mImageNum = -1;
         Log("width: "+mWidth+" height: "+mHeight+" strideY: "+mStrideY+" strideVU: "+mStrideVU);
-        nativeInit(mWidth, mHeight, mStrideY, mStrideVU,
-                0, 0, mWidth, mHeight, NUM_REQUIRED_IMAGE);
+        nativeInit(mWidth, mHeight, mStrideY, mStrideVU, NUM_REQUIRED_IMAGE);
     }
 
     @Override
     public void deinit() {
         Log("deinit");
         mOutBuf = null;
-        mImageNum = -1;
         nativeDeinit();
     }
 
     @Override
     public void addImage(ByteBuffer bY, ByteBuffer bVU, int imageNum, Object param) {
         Log("addImage");
-        if(imageNum == 1 || imageNum == 2 || imageNum == 4) {
-            mImageNum = imageNum;
-            return;
-        }
         int yActualSize = bY.remaining();
         int vuActualSize = bVU.remaining();
-        mImageNum = imageNum;
         int status = nativeAddImage(bY, bVU, yActualSize, vuActualSize, imageNum);
         if(status != 0) {
             Log.e(TAG, "Fail to add image");
@@ -122,9 +115,8 @@ public class ChromaflashFilter implements ImageFilter{
     public ResultImage processImage() {
         Log("processImage ");
         int[] roi = new int[4];
-        int status = nativeProcessImage(mOutBuf.array(), roi);
+        int status = nativeProcessImage(mOutBuf.array(),roi);
         Log("processImage done");
-        mImageNum = -1;
         if(status < 0) { //In failure case, library will return the first image as it is.
             Log.w(TAG, "Fail to process the image.");
         }
@@ -143,66 +135,27 @@ public class ChromaflashFilter implements ImageFilter{
 
     @Override
     public boolean isManualMode() {
-        return true;
+        return false;
     }
 
     @Override
-    public void manualCapture(final CaptureRequest.Builder builder, final CameraCaptureSession captureSession,
-                              final CameraCaptureSession.CaptureCallback callback, final Handler handler) throws CameraAccessException {
-        new Thread() {
-            public void run() {
-                try {
-                    for (int i = 0; i < NUM_REQUIRED_IMAGE; i++) {
-                        if (i == 0) {
-                            captureSession.capture(builder.build(), callback, handler);
-                        } else if (i == 1) { //To change the setting
-                            builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.FALSE);
-                            captureSession.capture(builder.build(), callback, handler);
-                            waitForImage(i);
-                        } else if (i == 2) { //To change the setting
-                            builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
-                            builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.TRUE);
-                            captureSession.capture(builder.build(), callback, handler);
-                            waitForImage(i);
-                        } else if (i == 3) {
-                            captureSession.capture(builder.build(), callback, handler);
-                        } else if (i == 4) { //To change the setting
-                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
-                            captureSession.capture(builder.build(), callback, handler);
-                            waitForImage(i);
-                        } else if (i == 5) {
-                            captureSession.capture(builder.build(), callback, handler);
-                        }
-                    }
-                } catch(CameraAccessException e) {}
+    public void manualCapture(CaptureRequest.Builder builder, CameraCaptureSession captureSession,
+                              CameraCaptureSession.CaptureCallback callback, Handler handler) {
 
-            }
-        }.start();
-    }
-
-    private void waitForImage(int index) {
-        try {
-            while(mImageNum < index) {
-                Thread.sleep(50);
-            }
-        } catch (InterruptedException e) {
-        }
     }
 
     public static boolean isSupportedStatic() {
         return mIsSupported;
     }
 
-    private native int nativeInit(int width, int height, int yStride, int vuStride,
-                                  int roiX, int roiY, int roiW, int roiH, int numImages);
+    private native int nativeInit(int width, int height, int yStride, int vuStride, int numImages);
     private native int nativeDeinit();
     private native int nativeAddImage(ByteBuffer yB, ByteBuffer vuB, int ySize, int vuSize, int imageNum);
     private native int nativeProcessImage(byte[] buffer, int[] roi);
 
     static {
         try {
-            System.loadLibrary("jni_chromaflash");
+            System.loadLibrary("jni_blurbuster");
             mIsSupported = true;
         }catch(UnsatisfiedLinkError e) {
             Log.d(TAG, e.toString());
