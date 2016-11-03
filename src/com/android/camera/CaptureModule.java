@@ -1829,6 +1829,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[i] = STATE_PREVIEW;
         }
         mLongshotActive = false;
+        mZoomValue = 1.0f;
     }
 
     private ArrayList<Integer> getFrameProcFilterId() {
