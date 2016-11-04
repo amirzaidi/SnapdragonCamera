@@ -2518,7 +2518,7 @@ public class PhotoModule
 
     private void updateRemainingPhotos() {
         if (mJpegFileSizeEstimation != 0) {
-            mRemainingPhotos = (int) 
+            mRemainingPhotos = (int)
                     ((mActivity.getStorageSpaceBytes() - Storage.LOW_STORAGE_THRESHOLD_BYTES)
                     / mJpegFileSizeEstimation);
         } else {
@@ -2971,7 +2971,7 @@ public class PhotoModule
         if (!mSnapshotOnIdle && !mInstantCaptureSnapShot) {
             // If the focus mode is continuous autofocus, call cancelAutoFocus to
             // resume it because it may have been paused by autoFocus call.
-            if (CameraUtil.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mFocusManager.getFocusMode())) {
+            if (CameraUtil.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mFocusManager.getFocusMode()) && mCameraState !=INIT) {
                 mCameraDevice.cancelAutoFocus();
             }
         } else {
@@ -4965,7 +4965,7 @@ public class PhotoModule
     public void onErrorListener(int error) {
         enableRecordingLocation(false);
     }
-    
+
 }
 
 /* Below is no longer needed, except to get rid of compile error
