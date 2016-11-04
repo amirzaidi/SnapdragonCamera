@@ -2492,6 +2492,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             setUpMediaRecorder(cameraId);
             createVideoSnapshotImageReader();
             mVideoRequestBuilder = mCameraDevice[cameraId].createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            mVideoRequestBuilder.setTag(cameraId);
+
             List<Surface> surfaces = new ArrayList<>();
 
             Surface surface = getPreviewSurfaceForSession(cameraId);
@@ -2522,7 +2524,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         try {
                             List list = session
                                         .createHighSpeedRequestList(mVideoRequestBuilder.build());
-                            session.setRepeatingBurst(list, null, mCameraHandler);
+                            session.setRepeatingBurst(list, mCaptureCallback, mCameraHandler);
                         } catch (CameraAccessException e) {
                             Log.e(TAG, "Failed to start high speed video recording "
                                         + e.getMessage());
@@ -2562,7 +2564,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mCurrentSession = cameraCaptureSession;
                         try {
                             setUpVideoCaptureRequestBuilder(mVideoRequestBuilder);
-                            mCurrentSession.setRepeatingRequest(mVideoRequestBuilder.build(), null, mCameraHandler);
+                            mCurrentSession.setRepeatingRequest(mVideoRequestBuilder.build(),
+                                mCaptureCallback, mCameraHandler);
                         } catch (CameraAccessException e) {
                             e.printStackTrace();
                         }
