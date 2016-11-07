@@ -265,6 +265,7 @@ public class RefocusActivity extends Activity {
                 stream.read(mData);
                 stream.close();
             } catch (Exception e) {
+                mData = new byte[0];
             }
 
             int length = (int) mData.length;
