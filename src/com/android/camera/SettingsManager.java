@@ -55,6 +55,7 @@ import com.android.camera.imageprocessor.filter.UbifocusFilter;
 import com.android.camera.ui.ListMenu;
 import com.android.camera.ui.PanoCaptureProcessView;
 import com.android.camera.util.SettingTranslation;
+import com.android.camera.app.CameraApp;
 
 import org.codeaurora.snapcam.R;
 import org.json.JSONException;
@@ -193,7 +194,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public static SettingsManager createInstance(Context context) {
         if (sInstance == null) {
-            sInstance = new SettingsManager(context);
+            sInstance = new SettingsManager(context.getApplicationContext());
         }
         return sInstance;
     }

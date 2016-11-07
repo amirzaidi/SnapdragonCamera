@@ -22,6 +22,7 @@ import android.app.Application;
 import com.android.camera.SDCard;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.UsageStatistics;
+import com.android.camera.SettingsManager;
 
 public class CameraApp extends Application {
     private static long mMaxSystemMemory;
@@ -37,6 +38,7 @@ public class CameraApp extends Application {
         if(mMaxSystemMemory <= LOW_MEMORY_DEVICE_THRESHOLD) {
             mIsLowMemoryDevice = true;
         }
+        SettingsManager.createInstance(this);
         UsageStatistics.initialize(this);
         CameraUtil.initialize(this);
         SDCard.initialize(this);
