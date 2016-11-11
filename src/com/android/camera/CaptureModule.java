@@ -1000,8 +1000,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         mFocusStateListener = new FocusStateListener(mUI);
         mLocationManager = new LocationManager(mActivity, this);
-        Storage.setSaveSDCard(mSettingsManager.getValue(SettingsManager
-                .KEY_CAMERA_SAVEPATH).equals("1"));
     }
 
     /**
@@ -1982,6 +1980,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mSound = new MediaActionSound();
         }
 
+        updateSaveStorageState();
         setDisplayOrientation();
         startBackgroundThread();
         openProcessors();
@@ -3720,5 +3719,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
         return bytes;
+    }
+
+    private void updateSaveStorageState() {
+        Storage.setSaveSDCard(mSettingsManager.getValue(SettingsManager
+                .KEY_CAMERA_SAVEPATH).equals("1"));
     }
 }
