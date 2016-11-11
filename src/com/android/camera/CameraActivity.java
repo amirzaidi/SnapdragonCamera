@@ -1764,6 +1764,10 @@ public class CameraActivity extends Activity
             finish();
             return;
         }
+        SettingsManager settingsManager = SettingsManager.getInstance();
+        if (settingsManager == null) {
+            SettingsManager.createInstance(this);
+        }
         // Hide action bar first since we are in full screen mode first, and
         // switch the system UI to lights-out mode.
         this.setSystemBarsVisibility(false);
