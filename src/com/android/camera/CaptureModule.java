@@ -104,7 +104,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -212,7 +211,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mIsLinked = false;
     private long mCaptureStartTime;
     private boolean mPaused = true;
-    private boolean mSurfaceReady = false;
+    private Semaphore mSurfaceReadyLock = new Semaphore(1);
+    private boolean mSurfaceReady = true;
     private boolean[] mCameraOpened = new boolean[MAX_NUM_CAM];
     private CameraDevice[] mCameraDevice = new CameraDevice[MAX_NUM_CAM];
     private String[] mCameraId = new String[MAX_NUM_CAM];
@@ -795,7 +795,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void createSessions() {
-        if (mPaused || !mCamerasOpened || !mSurfaceReady) return;
+        if (mPaused || !mCamerasOpened ) return;
         if (isBackCamera()) {
             switch (getCameraMode()) {
                 case DUAL_MODE:
@@ -824,12 +824,42 @@ public class CaptureModule implements CameraModule, PhotoController,
         return builder;
     }
 
+    private void waitForPreviewSurfaceReady() {
+        try {
+            if (!mSurfaceReady) {
+                if (!mSurfaceReadyLock.tryAcquire(2000, TimeUnit.MILLISECONDS)) {
+                    Log.d(TAG, "Time out waiting for surface.");
+                    throw new RuntimeException("Time out waiting for surface.");
+                }
+                mSurfaceReadyLock.release();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updatePreviewSurfaceReadyState(boolean rdy) {
+        if (rdy != mSurfaceReady) {
+            if (rdy) {
+                Log.i(TAG, "Preview Surface is ready!");
+                mSurfaceReadyLock.release();
+                mSurfaceReady = true;
+            } else {
+                try {
+                    Log.i(TAG, "Preview Surface is not ready!");
+                    mSurfaceReady = false;
+                    mSurfaceReadyLock.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
     private void createSession(final int id) {
-        if (mPaused || !mCameraOpened[id] || !mSurfaceReady) return;
+        if (mPaused || !mCameraOpened[id]) return;
         Log.d(TAG, "createSession " + id);
         List<Surface> list = new LinkedList<Surface>();
         try {
-            Surface surface = getPreviewSurfaceForSession(id);
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder[id] = getRequestBuilder(id);
             mPreviewRequestBuilder[id].setTag(id);
@@ -897,6 +927,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                             Log.d(TAG, "cameracapturesession - onClosed");
                         }
                     };
+            waitForPreviewSurfaceReady();
+            Surface surface = getPreviewSurfaceForSession(id);
 
             if(id == getMainCameraId()) {
                 mFrameProcessor.setOutputSurface(surface);
@@ -1020,8 +1052,6 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCameraOpened[i] = false;
             mTakingPicture[i] = false;
         }
-        mSurfaceReady = false;
-
         for (int i = 0; i < MAX_NUM_CAM; i++) {
             mState[i] = STATE_PREVIEW;
         }
@@ -1880,6 +1910,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         mLongshotActive = false;
         mZoomValue = 1.0f;
+        updatePreviewSurfaceReadyState(false);
     }
 
     private ArrayList<Integer> getFrameProcFilterId() {
@@ -2036,7 +2067,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "onResume " + getCameraMode());
         initializeValues();
         updatePreviewSize();
-        mUI.showSurfaceView();
         mCameraIdList = new ArrayList<>();
 
         if (mSound == null) {
@@ -2064,6 +2094,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             msg.arg1 = FRONT_ID;
             mCameraHandler.sendMessage(msg);
         }
+        mUI.showSurfaceView();
         if (!mFirstTimeInitialized) {
             initializeFirstTime();
         } else {
@@ -2355,17 +2386,16 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onPreviewUIReady() {
+        updatePreviewSurfaceReadyState(true);
+
         if (mPaused || mIsRecordingVideo) {
             return;
         }
-        Log.d(TAG, "onPreviewUIReady");
-        mSurfaceReady = true;
-        createSessions();
     }
 
     @Override
     public void onPreviewUIDestroyed() {
-        mSurfaceReady = false;
+        updatePreviewSurfaceReadyState(false);
     }
 
     @Override
@@ -2831,9 +2861,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (changed) {
             mUI.hideSurfaceView();
             mUI.showSurfaceView();
-        } else {
-            createSession(cameraId);
         }
+        createSessions();
         mUI.showUIafterRecording();
         mUI.resetTrackingFocus();
     }
