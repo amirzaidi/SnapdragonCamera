@@ -37,8 +37,6 @@ import android.graphics.Point;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.v13.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -85,7 +83,7 @@ public class BestpictureActivity extends FragmentActivity{
     private Uri mPlaceHolderUri;
     public static int BESTPICTURE_ACTIVITY_CODE = 11;
 
-    static class ImageItems implements Parcelable, DotsViewItem {
+    static class ImageItems implements DotsViewItem {
         private Bitmap[] mBitmap;
         private boolean[] mChosen;
         private BestpictureActivity mActivity;
@@ -101,11 +99,6 @@ public class BestpictureActivity extends FragmentActivity{
                 }
             }
             mActivity = activity;
-        }
-
-        @Override
-        public int describeContents() {
-            return 0;
         }
 
         public Bitmap getBitmap(int index) {
@@ -125,10 +118,6 @@ public class BestpictureActivity extends FragmentActivity{
             return mChosen[index];
         }
 
-        @Override
-        public void writeToParcel(Parcel dest, int flags) {
-        }
-
         public void toggleImageSelection(int num) {
             mChosen[num] = !mChosen[num];
             boolean isChosen = false;
@@ -143,6 +132,10 @@ public class BestpictureActivity extends FragmentActivity{
             }
             mActivity.mDotsView.update();
         }
+    }
+
+    public ImageItems getImageItems() {
+        return mImageItems;
     }
 
     @Override
@@ -261,7 +254,8 @@ public class BestpictureActivity extends FragmentActivity{
     private void dismissProgressDialog() {
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
-                if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                if (mProgressDialog != null && mProgressDialog.isShowing() &&
+                        !mActivity.isFinishing()) {
                     mProgressDialog.dismiss();
                     mProgressDialog = null;
                 }

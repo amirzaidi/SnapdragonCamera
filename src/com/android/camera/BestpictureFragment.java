@@ -49,7 +49,6 @@ public class BestpictureFragment extends Fragment {
         BestpictureFragment fragment = new BestpictureFragment();
         Bundle args = new Bundle();
         args.putInt(PARAM_IMAGE_NUM, imageNum);
-        args.putParcelable("imageItems", items);
         fragment.setArguments(args);
         return fragment;
     }
@@ -61,7 +60,7 @@ public class BestpictureFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mImageNum = getArguments().getInt(PARAM_IMAGE_NUM);
-        mImageItems = getArguments().getParcelable("imageItems");
+        mImageItems = ((BestpictureActivity)getActivity()).getImageItems();
     }
 
     @Override
@@ -71,15 +70,18 @@ public class BestpictureFragment extends Fragment {
                 .inflate(R.layout.bestpicture_page, container, false);
         mImageView = (ImageView) rootView.findViewById(R.id.image_view);
         mPictureSelectButton = (ImageView) rootView.findViewById(R.id.picture_select);
-        initSelectButton();
-        mImageView.setImageBitmap(mImageItems.getBitmap(mImageNum));
-        rootView.findViewById(R.id.picture_select).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                mImageItems.toggleImageSelection(mImageNum);
-                initSelectButton();
-            }
-        });
+        if (mImageItems != null) {
+            initSelectButton();
+            mImageView.setImageBitmap(mImageItems.getBitmap(mImageNum));
+            rootView.findViewById(R.id.picture_select).setOnClickListener(
+                    new View.OnClickListener() {
+                @Override
+                public void onClick(final View v) {
+                    mImageItems.toggleImageSelection(mImageNum);
+                    initSelectButton();
+                    }
+            });
+        }
         return rootView;
     }
 
@@ -89,5 +91,11 @@ public class BestpictureFragment extends Fragment {
         } else {
             mPictureSelectButton.setBackground(getResources().getDrawable(R.drawable.pick_the_best_photo_unselected, null));
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        mImageItems = null;
+        super.onDestroy();
     }
 }

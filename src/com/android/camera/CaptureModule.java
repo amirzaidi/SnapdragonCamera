@@ -837,6 +837,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                                 }
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
+                            } catch(IllegalStateException e) {
+                                e.printStackTrace();
                             }
                         }
 
@@ -1000,8 +1002,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         mFocusStateListener = new FocusStateListener(mUI);
         mLocationManager = new LocationManager(mActivity, this);
-        Storage.setSaveSDCard(mSettingsManager.getValue(SettingsManager
-                .KEY_CAMERA_SAVEPATH).equals("1"));
     }
 
     /**
@@ -1556,6 +1556,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                                 mCameraHandler);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
                     }
                 }
                 mCaptureSession[i].close();
@@ -1982,6 +1984,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mSound = new MediaActionSound();
         }
 
+        updateSaveStorageState();
         setDisplayOrientation();
         startBackgroundThread();
         openProcessors();
@@ -2051,11 +2054,46 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (CameraUtil.volumeKeyShutterDisable(mActivity)) {
+                    return false;
+                }
+            case KeyEvent.KEYCODE_FOCUS:
+                if (mFirstTimeInitialized) {
+                    if (event.getRepeatCount() == 0) {
+                        onShutterButtonFocus(true);
+                    }
+                    return true;
+                }
+                return false;
+            case KeyEvent.KEYCODE_CAMERA:
+                if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
+                    onShutterButtonClick();
+                }
+                return true;
+        }
         return false;
     }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (mFirstTimeInitialized
+                        && !CameraUtil.volumeKeyShutterDisable(mActivity)) {
+                    onShutterButtonClick();
+                    return true;
+                }
+                return false;
+            case KeyEvent.KEYCODE_FOCUS:
+                if (mFirstTimeInitialized) {
+                    onShutterButtonFocus(false);
+                }
+                return true;
+        }
         return false;
     }
 
@@ -3720,5 +3758,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
         return bytes;
+    }
+
+    private void updateSaveStorageState() {
+        Storage.setSaveSDCard(mSettingsManager.getValue(SettingsManager
+                .KEY_CAMERA_SAVEPATH).equals("1"));
     }
 }
