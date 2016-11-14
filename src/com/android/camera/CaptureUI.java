@@ -279,6 +279,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             @Override
             public void onClick(View v) {
                 toggleMakeup();
+                updateMenus();
             }
         });
         setMakeupButtonIcon();
@@ -368,8 +369,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
         if(value != null && !mIsVideoUI) {
             if(value.equals("0")) {
-                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "10");
-                mMakeupSeekBar.setProgress(10);
+                mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, "50");
+                mMakeupSeekBar.setProgress(50);
                 mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
                 mSeekbarBody.setVisibility(View.VISIBLE);
                 mSeekbarToggleButton.setImageResource(R.drawable.seekbar_hide);
@@ -478,6 +479,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 mFilterLayout = null;
             }
         }
+        updateMenus();
     }
 
     public void openSettingsMenu() {
@@ -542,6 +544,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             public void onClick(View v) {
                 addFilterMode();
                 adjustOrientation();
+                updateMenus();
             }
         });
     }
@@ -859,7 +862,26 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public void cleanUpMenus() {
         showUI();
+        updateMenus();
         mActivity.setSystemBarsVisibility(false);
+    }
+
+    public void updateMenus() {
+        boolean enableMakeupMenu = true;
+        boolean enableFilterMenu = true;
+        boolean enableSceneMenu = true;
+        String makeupValue = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
+        int colorEffect = mSettingsManager.getValueIndex(SettingsManager.KEY_COLOR_EFFECT);
+        if (makeupValue != null && !makeupValue.equals("0")) {
+            enableSceneMenu = false;
+            enableFilterMenu = false;
+        } else if (colorEffect != 0 || mFilterMenuStatus == FILTER_MENU_ON){
+            enableSceneMenu = false;
+            enableMakeupMenu = false;
+        }
+        mMakeupButton.setEnabled(enableMakeupMenu);
+        mFilterModeSwitcher.setEnabled(enableFilterMenu);
+        mSceneModeSwitcher.setEnabled(enableSceneMenu);
     }
 
     public boolean arePreviewControlsVisible() {
