@@ -234,7 +234,6 @@ public class CameraActivity extends Activity
     private View mPreviewCover;
     private FrameLayout mPreviewContentLayout;
     private boolean mPaused = true;
-    private boolean mHasCriticalPermissions;
     private boolean mForceReleaseCamera = false;
 
     private Uri[] mNfcPushUris = new Uri[1];
@@ -310,7 +309,6 @@ public class CameraActivity extends Activity
                 public void onCameraDisabled(int cameraId) {
                     UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
                             UsageStatistics.ACTION_OPEN_FAIL, "security");
-
                     CameraUtil.showErrorAndFinish(CameraActivity.this,
                             R.string.camera_disabled);
                 }
@@ -319,27 +317,21 @@ public class CameraActivity extends Activity
                 public void onDeviceOpenFailure(int cameraId) {
                     UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
                             UsageStatistics.ACTION_OPEN_FAIL, "open");
-
-                    CameraUtil.showErrorAndFinish(CameraActivity.this,
-                            R.string.cannot_connect_camera);
+                    showOpenCameraErrorDialog();
                 }
 
                 @Override
                 public void onReconnectionFailure(CameraManager mgr) {
                     UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
                             UsageStatistics.ACTION_OPEN_FAIL, "reconnect");
-
-                    CameraUtil.showErrorAndFinish(CameraActivity.this,
-                            R.string.cannot_connect_camera);
+                    showOpenCameraErrorDialog();
                 }
 
                 @Override
                 public void onStartPreviewFailure(int cameraId) {
                     UsageStatistics.onEvent(UsageStatistics.COMPONENT_CAMERA,
                             UsageStatistics.ACTION_START_PREVIEW_FAIL, "startpreview");
-
-                    CameraUtil.showErrorAndFinish(CameraActivity.this,
-                            R.string.cannot_connect_camera);
+                    showOpenCameraErrorDialog();
                 }
             };
 
@@ -1448,11 +1440,6 @@ public class CameraActivity extends Activity
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
-        if (checkPermissions() || !mHasCriticalPermissions) {
-            Log.v(TAG, "onCreate: Missing critical permissions.");
-            finish();
-            return;
-        }
         // Check if this is in the secure camera mode.
         Intent intent = getIntent();
         String action = intent.getAction();
@@ -1463,8 +1450,6 @@ public class CameraActivity extends Activity
         } else {
             mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
         }
-
-        mCursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
 
         if (mSecureCamera) {
             // Change the window flags so that secure camera can show when locked
@@ -1479,9 +1464,20 @@ public class CameraActivity extends Activity
                 Log.d(TAG, "acquire wake lock");
             }
             win.setAttributes(params);
-
-
         }
+
+        if (mSecureCamera && !hasCriticalPermissions()) {
+            return;
+        }
+
+        if (isStartRequsetPermission()) {
+            Log.v(TAG, "onCreate: Missing critical permissions.");
+            finish();
+            return;
+        }
+
+        mCursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                null, null, null, null);
         GcamHelper.init(getContentResolver());
 
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
@@ -1679,6 +1675,10 @@ public class CameraActivity extends Activity
 
     @Override
     public void onPause() {
+        if (mSecureCamera && !hasCriticalPermissions()) {
+            super.onPause();
+            return;
+        }
         // Delete photos that are pending deletion
         performDeletion();
         mOrientationListener.disable();
@@ -1727,9 +1727,8 @@ public class CameraActivity extends Activity
      * Critical permissions are: camera, microphone and storage. The app cannot run without them.
      * Non-critical permission is location.
      */
-    private boolean checkPermissions() {
-        boolean requestPermission = false;
-
+    private boolean hasCriticalPermissions() {
+        boolean hasCriticalPermission = false;
         if (checkSelfPermission(Manifest.permission.CAMERA) ==
                         PackageManager.PERMISSION_GRANTED &&
                 checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
@@ -1738,27 +1737,38 @@ public class CameraActivity extends Activity
                         PackageManager.PERMISSION_GRANTED &&
                 checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
                         PackageManager.PERMISSION_GRANTED) {
-            mHasCriticalPermissions = true;
+            hasCriticalPermission = true;
         } else {
-            mHasCriticalPermissions = false;
+            hasCriticalPermission = false;
         }
+        return hasCriticalPermission;
+    }
+
+    private boolean isStartRequsetPermission() {
+        boolean isStartPermissionActivity = false;
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean isRequestShown = prefs.getBoolean(CameraSettings.KEY_REQUEST_PERMISSION, false);
-        if(!isRequestShown || !mHasCriticalPermissions) {
-            Log.v(TAG, "Request permission");
+
+        if(!mSecureCamera && (!isRequestShown || !hasCriticalPermissions())) {
+            Log.v(TAG, "Start Request Permission");
             Intent intent = new Intent(this, PermissionsActivity.class);
             startActivity(intent);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean(CameraSettings.KEY_REQUEST_PERMISSION, true);
             editor.apply();
-            requestPermission = true;
-       }
-        return requestPermission;
+            isStartPermissionActivity = true;
+        }
+        return isStartPermissionActivity;
     }
 
     @Override
     public void onResume() {
-        if (checkPermissions() || !mHasCriticalPermissions) {
+        if (mSecureCamera && !hasCriticalPermissions()) {
+            super.onResume();
+            showOpenCameraErrorDialog();
+            return;
+        }
+        if (isStartRequsetPermission()) {
             super.onResume();
             Log.v(TAG, "onResume: Missing critical permissions.");
             finish();
@@ -1816,6 +1826,9 @@ public class CameraActivity extends Activity
     @Override
     public void onStart() {
         super.onStart();
+        if (mSecureCamera && !hasCriticalPermissions()) {
+            return;
+        }
         bindMediaSaveService();
         mPanoramaViewHelper.onStart();
     }
@@ -1823,6 +1836,9 @@ public class CameraActivity extends Activity
     @Override
     protected void onStop() {
         super.onStop();
+        if (mSecureCamera && !hasCriticalPermissions()) {
+            return;
+        }
         mPanoramaViewHelper.onStop();
         unbindMediaSaveService();
     }
@@ -2357,5 +2373,15 @@ public class CameraActivity extends Activity
     // For debugging purposes only.
     public CameraModule getCurrentModule() {
         return mCurrentModule;
+    }
+
+    private void showOpenCameraErrorDialog() {
+        if (!hasCriticalPermissions()) {
+            CameraUtil.showErrorAndFinish(CameraActivity.this,
+                    R.string.error_permissions);
+        } else {
+            CameraUtil.showErrorAndFinish(CameraActivity.this,
+                    R.string.cannot_connect_camera);
+        }
     }
 }
