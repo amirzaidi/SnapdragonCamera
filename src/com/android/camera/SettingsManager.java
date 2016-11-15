@@ -754,7 +754,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
             } catch (IllegalArgumentException ex) {
                 Log.w(TAG, "HFR is not supported for this resolution " + ex);
             }
+
+            // 60 fps goes through normal sesssion if it is supported by device
+            int maxFpsForNormalSession = getSupportedMaximumVideoFPSForNormalSession(mCameraId, videoSize);
+            supported.add("hfr" + maxFpsForNormalSession);
+            supported.add("hsr" + maxFpsForNormalSession);
         }
+
         return supported;
     }
 
@@ -886,6 +892,37 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return res;
     }
 
+    private boolean checkAeAvailableTargetFpsRanges(int cameraId, int fps) {
+        boolean supported = false;
+        Range[] aeFpsRanges = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+
+        for (Range r : aeFpsRanges) {
+            Log.d(TAG, "["+r.getLower()+", "+r.getUpper()+"]");
+            if ((fps <= (int)r.getUpper()) &&
+                (fps >= (int)r.getLower())) {
+                supported = true;
+                break;
+            }
+        }
+        return supported;
+    }
+
+    private int getSupportedMaximumVideoFPSForNormalSession(int cameraId, Size videoSize) {
+        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        long duration = map.getOutputMinFrameDuration(MediaRecorder.class, videoSize);
+        int fps =  (int)(1000000000.0/duration);
+        if (!checkAeAvailableTargetFpsRanges(cameraId, fps)) {
+            Log.d(TAG, "FPS="+fps+" is not in available target FPS range");
+            fps = 0;
+        }
+        Log.d(TAG, "Size="+videoSize.getWidth()+"x"+videoSize.getHeight()+
+                ", Min Duration ="+duration+", Max fps=" + fps);
+        return fps;
+    }
+
+
     public Size[] getSupportedThumbnailSizes(int cameraId) {
         return mCharacteristics.get(cameraId).get(
                 CameraCharacteristics.JPEG_AVAILABLE_THUMBNAIL_SIZES);
@@ -930,6 +967,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
         StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         return map.getHighSpeedVideoFpsRangesFor(videoSize);
+    }
+
+    public int getHighSpeedVideoEncoderBitRate(CamcorderProfile profile, int targetRate) {
+        int bitRate;
+        String key = profile.videoFrameWidth+"x"+profile.videoFrameHeight+":"+targetRate;
+        if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(key)) {
+            bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(key);
+        } else {
+            Log.i(TAG, "No pre-defined bitrate for "+key);
+            bitRate = profile.videoBitRate * (targetRate / profile.videoFrameRate);
+        }
+        return bitRate;
     }
 
     private List<String> getSupportedRedeyeReduction(int cameraId) {
