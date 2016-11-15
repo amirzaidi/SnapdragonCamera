@@ -38,10 +38,12 @@ public class ListPreference extends CameraPreference {
     private static final String TAG = "ListPreference";
     private final String mKey;
     private String mValue;
-    public final CharSequence[] mDefaultValues;
+    private final CharSequence[] mDefaultValues;
 
     private CharSequence[] mEntries;
     private CharSequence[] mEntryValues;
+    private CharSequence[] mInitialEntries;
+    private CharSequence[] mInitialEntryValues;
     private CharSequence[] mDependencyList;
     private CharSequence[] mLabels;
     private boolean mLoaded = false;
@@ -72,6 +74,9 @@ public class ListPreference extends CameraPreference {
         setEntries(a.getTextArray(R.styleable.ListPreference_entries));
         setEntryValues(a.getTextArray(
                 R.styleable.ListPreference_entryValues));
+        mInitialEntryValues = mEntryValues;
+        mInitialEntries = mEntries;
+
         setLabels(a.getTextArray(
                 R.styleable.ListPreference_labelList));
         setDependencyList(a.getTextArray(
@@ -222,6 +227,10 @@ public class ListPreference extends CameraPreference {
         mEntryValues = entryValues.toArray(new CharSequence[size]);
     }
 
+    public void reloadInitialEntriesAndEntryValues() {
+        mEntries = mInitialEntries;
+        mEntryValues = mInitialEntryValues;
+    }
     public void print() {
         Log.v(TAG, "Preference key=" + getKey() + ". value=" + getValue());
         for (int i = 0; i < mEntryValues.length; i++) {

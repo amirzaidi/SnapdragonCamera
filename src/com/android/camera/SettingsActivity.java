@@ -73,6 +73,7 @@ public class SettingsActivity extends PreferenceActivity {
             }
             if (key.equals(SettingsManager.KEY_VIDEO_QUALITY)) {
                 updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+                updatePreference(SettingsManager.KEY_VIDEO_ENCODER);
             }
             List<String> list = mSettingsManager.getDependentKeys(key);
             if (list != null) {
@@ -151,6 +152,7 @@ public class SettingsActivity extends PreferenceActivity {
         updatePreference(SettingsManager.KEY_VIDEO_QUALITY);
         updatePreference(SettingsManager.KEY_EXPOSURE);
         updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+        updatePreference(SettingsManager.KEY_VIDEO_ENCODER);
 
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         Set<Map.Entry<String, SettingsManager.Values>> set = map.entrySet();
@@ -199,9 +201,15 @@ public class SettingsActivity extends PreferenceActivity {
     private void updatePreference(String key) {
         ListPreference pref = (ListPreference) findPreference(key);
         if (pref != null) {
-            pref.setEntries(mSettingsManager.getEntries(key));
-            pref.setEntryValues(mSettingsManager.getEntryValues(key));
-            pref.setValueIndex(mSettingsManager.getValueIndex(key));
+            if (mSettingsManager.getEntries(key) != null) {
+                pref.setEntries(mSettingsManager.getEntries(key));
+                pref.setEntryValues(mSettingsManager.getEntryValues(key));
+                int idx = mSettingsManager.getValueIndex(key);
+                if (idx < 0 ) {
+                    idx = 0;
+                }
+                pref.setValueIndex(idx);
+            }
         }
     }
 

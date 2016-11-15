@@ -1041,7 +1041,7 @@ public class CameraSettings {
         return false;
     }
 
-    public static boolean filterUnsupportedOptions(PreferenceGroup group,
+    private static boolean filterUnsupportedOptions(PreferenceGroup group,
             ListPreference pref, List<String> supported) {
 
         // Remove the preference if the parameter is not supported or there is
@@ -1061,7 +1061,7 @@ public class CameraSettings {
         return false;
     }
 
-    public static boolean filterSimilarPictureSize(PreferenceGroup group,
+    private static boolean filterSimilarPictureSize(PreferenceGroup group,
             ListPreference pref) {
         pref.filterDuplicated();
         if (pref.getEntries().length <= 1) {
