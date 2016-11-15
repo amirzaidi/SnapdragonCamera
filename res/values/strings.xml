@@ -749,4 +749,8 @@ CHAR LIMIT = NONE] -->
     <string name="remaining_photos_format">%d left</string>
     <string name="initial_recording_seconds">00:00</string>
     <string name="makeup_video_size_limit">Makeup works only under VGA size in video recording.</string>
+
+    <string name="pref_camera2_category_system">System</string>
+    <string name="pref_camera2_restore_default">Restore defaults</string>
+    <string name="pref_camera2_restore_default_hint">Camera settings will be restored to default settings</string>
  </resources>

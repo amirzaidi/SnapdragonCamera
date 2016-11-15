@@ -29,6 +29,8 @@
 
 package com.android.camera;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -117,6 +119,10 @@ public class SettingsActivity extends PreferenceActivity {
                             } else {
                                 privateCounter = 0;
                             }
+                        }
+
+                        if ( preference.getKey().equals(SettingsManager.KEY_RESTORE_DEFAULT) ) {
+                            onRestoreDefaultSettingsClick();
                         }
                         return false;
                     }
@@ -221,5 +227,23 @@ public class SettingsActivity extends PreferenceActivity {
     protected void onStop() {
         super.onStop();
         mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mSharedPreferenceChangeListener);
+    }
+    private
+    void onRestoreDefaultSettingsClick() {
+        new AlertDialog.Builder(this)
+                .setMessage(R.string.pref_camera2_restore_default_hint)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        restoreSettings();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void restoreSettings() {
+        mSettingsManager.restoreSettings();
+        filterPreferences();
+        initializePreferences();
     }
 }

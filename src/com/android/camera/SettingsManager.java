@@ -40,6 +40,7 @@ import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
@@ -127,6 +128,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_SELFIE_FLASH = "pref_selfie_flash_key";
     public static final String KEY_SHUTTER_SOUND = "pref_camera2_shutter_sound_key";
     public static final String KEY_DEVELOPER_MENU = "pref_camera2_developer_menu_key";
+    public static final String KEY_RESTORE_DEFAULT = "pref_camera2_restore_default_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -1248,4 +1250,28 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (!dependencyMap.has(value)) value = "default";
         return value;
     }
+
+    public void restoreSettings() {
+        clearPerCameraPreferences();
+        init();
+    }
+
+    private void clearPerCameraPreferences() {
+        String[] preferencesNames = ComboPreferences.getSharedPreferencesNames(mContext);
+        for ( String name : preferencesNames ) {
+            SharedPreferences.Editor editor =
+                    mContext.getSharedPreferences(name, Context.MODE_PRIVATE).edit();
+            editor.clear();
+            editor.commit();
+        }
+
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(mContext);
+        boolean requestPermission = pref.getBoolean(CameraSettings.KEY_REQUEST_PERMISSION, false );
+        SharedPreferences.Editor editor =
+                PreferenceManager.getDefaultSharedPreferences(mContext).edit();
+        editor.clear();
+        editor.putBoolean(CameraSettings.KEY_REQUEST_PERMISSION, requestPermission);
+        editor.commit();
+    }
+
 }
