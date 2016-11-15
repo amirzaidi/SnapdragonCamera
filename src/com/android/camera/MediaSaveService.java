@@ -134,6 +134,20 @@ public class MediaSaveService extends Service {
         t.execute();
     }
 
+    public void addRawImage(final byte[] data, String title, String pictureFormat) {
+        if (isQueueFull()) {
+            Log.e(TAG, "Cannot add image when the queue is full");
+            return;
+        }
+        RawImageSaveTask t = new RawImageSaveTask(data, title, pictureFormat);
+
+        mMemoryUse += data.length;
+        if (isQueueFull()) {
+            onQueueFull();
+        }
+        t.execute();
+    }
+
     public void addImage(final byte[] data, String title, long date, Location loc,
                          int orientation, ExifInterface exif,
                          OnMediaSavedListener l, ContentResolver resolver) {
@@ -247,6 +261,36 @@ public class MediaSaveService extends Service {
             mMemoryUse -= size;
             if (isQueueFull() != previouslyFull)
                 onQueueAvailable();
+        }
+    }
+
+    private class RawImageSaveTask extends AsyncTask<Void, Void, Long> {
+        private byte[] data;
+        private String title;
+        private String pictureFormat;
+
+        public RawImageSaveTask(byte[] data, String title, String pictureFormat) {
+            this.data = data;
+            this.title = title;
+            this.pictureFormat = pictureFormat;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Long doInBackground(Void... params) {
+            long length = Storage.addRawImage(title, data, pictureFormat);
+            return new Long(length);
+        }
+
+        @Override
+        protected void onPostExecute(Long l) {
+            boolean previouslyFull = isQueueFull();
+            mMemoryUse -= data.length;
+            if (isQueueFull() != previouslyFull) onQueueAvailable();
         }
     }
 
