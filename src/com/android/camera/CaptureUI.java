@@ -392,6 +392,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                     mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
                 } else {
                     mMakeupButton.setImageResource(R.drawable.beautify);
+                    mMakeupSeekBarLayout.setVisibility(View.GONE);
                 }
             }
         });

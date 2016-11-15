@@ -194,12 +194,13 @@ public class SettingsActivity extends PreferenceActivity {
     }
 
     private void updatePreferenceButton(String key) {
-        ListPreference pref = (ListPreference) findPreference(key);
-        if (pref != null) {
-            if (pref.getEntryValues().length == 1) {
-                pref.setEnabled(false);
+        Preference pref =  findPreference(key);
+        if (pref != null && pref instanceof ListPreference) {
+            ListPreference pref2 = (ListPreference) pref;
+            if (pref2.getEntryValues().length == 1) {
+                pref2.setEnabled(false);
             } else {
-                pref.setEnabled(true);
+                pref2.setEnabled(true);
             }
         }
     }

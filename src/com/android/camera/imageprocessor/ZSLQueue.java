@@ -36,7 +36,9 @@ import android.util.Log;
 import com.android.camera.CaptureModule;
 import android.os.SystemProperties;
 
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
 public class ZSLQueue {
     private static final String CIRCULAR_BUFFER_SIZE_PERSIST = "persist.camera.zsl.buffer.size";
@@ -46,28 +48,10 @@ public class ZSLQueue {
     private int mImageHead;
     private int mMetaHead;
     private Object mLock = new Object();
-    private LinkedList<PendingRequest> mPendingRequestList = new LinkedList<PendingRequest>();
     private CaptureModule mModule;
     private static final boolean DEBUG  = false;
     private static final boolean DEBUG_QUEUE  = false;
     private static final String TAG = "ZSLQueue";
-    private static final int REQUEST_LIFESPAN = 5; //This is in frame count.
-
-    class PendingRequest {
-        private int mLifeTimeInFrame;
-
-        public PendingRequest(){
-            mLifeTimeInFrame = 0;
-        }
-
-        public int getLifeTime() {
-            return mLifeTimeInFrame;
-        }
-
-        public void incLifeTime() {
-            mLifeTimeInFrame++;
-        }
-    }
 
     public ZSLQueue(CaptureModule module) {
         mCircularBufferSize = SystemProperties.getInt(CIRCULAR_BUFFER_SIZE_PERSIST, CIRCULAR_BUFFER_SIZE_DEFAULT);
@@ -75,7 +59,6 @@ public class ZSLQueue {
             mBuffer = new ImageItem[mCircularBufferSize];
             mImageHead = 0;
             mMetaHead = 0;
-            mPendingRequestList.clear();
             mModule = module;
         }
     }
@@ -141,40 +124,6 @@ public class ZSLQueue {
         }
 
         if(DEBUG_QUEUE) Log.d(TAG, "imageIndex: " + lastIndex + " " + image.getTimestamp());
-
-        if(mPendingRequestList.size() != 0) {
-            if(lastIndex != -1) {
-                processPendingRequest(lastIndex);
-            }
-            for(int i=0; i < mPendingRequestList.size(); i++) {
-                mPendingRequestList.get(i).incLifeTime();
-            }
-        }
-    }
-
-    private void processPendingRequest(int index) {
-        ImageItem item;
-        synchronized (mLock) {
-            if(mBuffer == null)
-                return;
-            item = mBuffer[index];
-            if (item != null && item.isValid() && checkImageRequirement(item.getMetadata())) {
-                if(DEBUG && (mBuffer[index].getMetadata().get(CaptureResult.SENSOR_TIMESTAMP)).longValue() !=
-                        mBuffer[index].getImage().getTimestamp()) {
-                    Log.e(TAG,"Not matching image coming through");
-                }
-                mBuffer[index] = null;
-                mPendingRequestList.removeFirst();
-                for(PendingRequest request : mPendingRequestList) {
-                    if(request.getLifeTime() >= REQUEST_LIFESPAN) {
-                        mPendingRequestList.remove(request);
-                    }
-                }
-            } else {
-                return;
-            }
-        }
-        mModule.getPostProcessor().onMatchingZSLPictureAvailable(item);
     }
 
     public void add(TotalCaptureResult metadata) {
@@ -224,15 +173,6 @@ public class ZSLQueue {
         }
 
         if(DEBUG_QUEUE) Log.d(TAG, "Meta: " + lastIndex + " " + metadata.get(CaptureResult.SENSOR_TIMESTAMP));
-
-        if(mPendingRequestList.size() != 0) {
-            if(lastIndex != -1) {
-                processPendingRequest(lastIndex);
-            }
-            for(int i=0; i < mPendingRequestList.size(); i++) {
-                mPendingRequestList.get(i).incLifeTime();
-            }
-        }
     }
 
     public ImageItem tryToGetMatchingItem() {
@@ -252,13 +192,6 @@ public class ZSLQueue {
         return null;
     }
 
-    public void addPictureRequest() {
-        if(DEBUG) Log.d(TAG, "RequsetPendingCount: "+mPendingRequestList.size());
-        synchronized (mLock) {
-            mPendingRequestList.addLast(new PendingRequest());
-        }
-    }
-
     public void onClose() {
         synchronized (mLock) {
             for (int i = 0; i < mBuffer.length; i++) {
@@ -271,7 +204,6 @@ public class ZSLQueue {
             mBuffer = null;
             mImageHead = 0;
             mMetaHead = 0;
-            mPendingRequestList.clear();
         }
     }
 
@@ -304,7 +236,7 @@ public class ZSLQueue {
         return true;
     }
 
-    class ImageItem {
+    static class ImageItem {
         private Image mImage = null;
         private TotalCaptureResult mMetadata = null;
 
