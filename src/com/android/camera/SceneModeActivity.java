@@ -38,6 +38,8 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
@@ -49,6 +51,7 @@ import org.codeaurora.snapcam.R;
 import com.android.camera.ui.DotsView;
 import com.android.camera.ui.DotsViewItem;
 import com.android.camera.ui.RotateImageView;
+import com.android.camera.util.CameraUtil;
 
 public class SceneModeActivity extends Activity {
     private ViewPager mPager;
@@ -86,6 +89,11 @@ public class SceneModeActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final boolean isSecureCamera = getIntent().getBooleanExtra(
+                CameraUtil.KEY_IS_SECURE_CAMERA, false);
+        if (isSecureCamera) {
+            setShowInLockScreen();
+        }
         setContentView(R.layout.scene_mode_menu_layout);
         mSettingsManager = SettingsManager.getInstance();
 
@@ -137,6 +145,7 @@ public class SceneModeActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getBaseContext(), SettingsActivity.class);
+                intent.putExtra(CameraUtil.KEY_IS_SECURE_CAMERA, isSecureCamera);
                 startActivity(intent);
                 finish();
             }
@@ -170,6 +179,20 @@ public class SceneModeActivity extends Activity {
 
     public int getCurrentScene() {
         return mCurrentScene;
+    }
+
+    private void setShowInLockScreen() {
+        // Change the window flags so that secure camera can show when locked
+        Window win = getWindow();
+        WindowManager.LayoutParams params = win.getAttributes();
+        params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+        win.setAttributes(params);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        finish();
     }
 }
 

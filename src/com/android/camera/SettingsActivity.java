@@ -41,10 +41,13 @@ import android.preference.PreferenceGroup;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
+import android.view.Window;
+import android.view.WindowManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import org.codeaurora.snapcam.R;
+import com.android.camera.util.CameraUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -89,6 +92,11 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final boolean isSecureCamera = getIntent().getBooleanExtra(
+                CameraUtil.KEY_IS_SECURE_CAMERA, false);
+        if (isSecureCamera) {
+            setShowInLockScreen();
+        }
         mSettingsManager = SettingsManager.getInstance();
         if (mSettingsManager == null) {
             finish();
@@ -232,6 +240,15 @@ public class SettingsActivity extends PreferenceActivity {
     protected void onStop() {
         super.onStop();
         mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mSharedPreferenceChangeListener);
+        finish();
+    }
+
+    private void setShowInLockScreen() {
+        // Change the window flags so that secure camera can show when locked
+        Window win = getWindow();
+        WindowManager.LayoutParams params = win.getAttributes();
+        params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+        win.setAttributes(params);
     }
     private
     void onRestoreDefaultSettingsClick() {

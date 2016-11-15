@@ -124,6 +124,8 @@ public class CameraUtil {
 
     /** Has to be in sync with the receiving MovieActivity. */
     public static final String KEY_TREAT_UP_AS_BACK = "treat-up-as-back";
+    /** Judge the value whether is from lockscreen come in or not */
+    public static final String KEY_IS_SECURE_CAMERA = "is_secure_camera";
 
     public static final int RATIO_UNKNOWN = 0;
     public static final int RATIO_16_9 = 1;
