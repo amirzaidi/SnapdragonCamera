@@ -90,6 +90,10 @@ public class SettingsActivity extends PreferenceActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mSettingsManager = SettingsManager.getInstance();
+        if (mSettingsManager == null) {
+            finish();
+            return;
+        }
         addPreferencesFromResource(R.xml.setting_menu_preferences);
 
         mSharedPreferences = getPreferenceManager().getSharedPreferences();
