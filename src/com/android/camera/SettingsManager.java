@@ -53,10 +53,13 @@ import com.android.camera.imageprocessor.filter.BestpictureFilter;
 import com.android.camera.imageprocessor.filter.BlurbusterFilter;
 import com.android.camera.imageprocessor.filter.ChromaflashFilter;
 import com.android.camera.imageprocessor.filter.OptizoomFilter;
+import com.android.camera.imageprocessor.filter.SharpshooterFilter;
+import com.android.camera.imageprocessor.filter.StillmoreFilter;
 import com.android.camera.imageprocessor.filter.TrackingFocusFrameListener;
 import com.android.camera.imageprocessor.filter.UbifocusFilter;
 import com.android.camera.ui.ListMenu;
 import com.android.camera.ui.PanoCaptureProcessView;
+import com.android.camera.ui.TrackingFocusRenderer;
 import com.android.camera.util.SettingTranslation;
 
 import org.codeaurora.snapcam.R;
@@ -89,6 +92,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final int SCENE_MODE_PANORAMA_INT = 104;
     public static final int SCENE_MODE_CHROMAFLASH_INT = 105;
     public static final int SCENE_MODE_BLURBUSTER_INT = 106;
+    public static final int SCENE_MODE_SHARPSHOOTER_INT = 107;
+    public static final int SCENE_MODE_TRACKINGFOCUS_INT = 108;
     public static final String SCENE_MODE_DUAL_STRING = "100";
     public static final String KEY_CAMERA_SAVEPATH = "pref_camera2_savepath_key";
     public static final String KEY_RECORD_LOCATION = "pref_camera2_recordlocation_key";
@@ -97,7 +102,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_FLASH_MODE = "pref_camera2_flashmode_key";
     public static final String KEY_WHITE_BALANCE = "pref_camera2_whitebalance_key";
     public static final String KEY_MAKEUP = "pref_camera2_makeup_key";
-    public static final String KEY_TRACKINGFOCUS = "pref_camera2_trackingfocus_key";
     public static final String KEY_MONO_ONLY = "pref_camera2_mono_only_key";
     public static final String KEY_MONO_PREVIEW = "pref_camera2_mono_preview_key";
     public static final String KEY_CLEARSIGHT = "pref_camera2_clearsight_key";
@@ -529,7 +533,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
         ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
         ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
-        ListPreference trackingfocus = mPreferenceGroup.findPreference(KEY_TRACKINGFOCUS);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -614,11 +617,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (!isFaceDetectionSupported(cameraId)) {
                 removePreference(mPreferenceGroup, KEY_FACE_DETECTION);
             }
-        }
-
-        if (trackingfocus != null) {
-            if (!TrackingFocusFrameListener.isSupportedStatic())
-                removePreference(mPreferenceGroup, KEY_TRACKINGFOCUS);
         }
 
         // filter dynamic lists.
@@ -1019,6 +1017,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (PanoCaptureProcessView.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_PANORAMA_INT + "");
         if (ChromaflashFilter.isSupportedStatic() && cameraId == CaptureModule.BAYER_ID) modes.add(SCENE_MODE_CHROMAFLASH_INT + "");
         if (BlurbusterFilter.isSupportedStatic()) modes.add(SCENE_MODE_BLURBUSTER_INT + "");
+        if (SharpshooterFilter.isSupportedStatic()) modes.add(SCENE_MODE_SHARPSHOOTER_INT + "");
+        if (TrackingFocusFrameListener.isSupportedStatic()) modes.add(SCENE_MODE_TRACKINGFOCUS_INT + "");
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }

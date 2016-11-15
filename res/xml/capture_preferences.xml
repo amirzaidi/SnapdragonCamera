@@ -270,13 +270,6 @@
         camera:singleIcon="@drawable/ic_settings_facerec"
         camera:title="@string/pref_camera_facedetection_title"/>
 
-    <ListPreference
-        camera:defaultValue="off"
-        camera:key="pref_camera2_trackingfocus_key"
-        camera:entries="@array/pref_camera2_trackingfocus_entries"
-        camera:entryValues="@array/pref_camera2_trackingfocus_entryvalues"
-        camera:title="@string/pref_camera2_trackingfocus_title"/>
-
     <IconListPreference
         camera:defaultValue="@string/pref_camera_hfr_default"
         camera:entries="@array/pref_camera_hfr_entries"

@@ -343,8 +343,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mTrackingFocusRenderer = new TrackingFocusRenderer(mActivity, mModule, this);
             mRenderOverlay.addRenderer(mTrackingFocusRenderer);
         }
-        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
-        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+        if(mModule.isTrackingFocusSettingOn()) {
             mTrackingFocusRenderer.setVisible(true);
         } else {
             mTrackingFocusRenderer.setVisible(false);
@@ -409,8 +408,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initFilterModeButton();
         initFlashButton();
         setMakeupButtonIcon();
-        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
-        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+        if(mModule.isTrackingFocusSettingOn()) {
             mTrackingFocusRenderer.setVisible(false);
             mTrackingFocusRenderer.setVisible(true);
         } else {
@@ -576,8 +574,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void resetTrackingFocus() {
-        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
-        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+        if(mModule.isTrackingFocusSettingOn()) {
             mTrackingFocusRenderer.setVisible(false);
             mTrackingFocusRenderer.setVisible(true);
         }
@@ -1030,8 +1027,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     private FocusIndicator getFocusIndicator() {
-        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
-        if (trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+        if (mModule.isTrackingFocusSettingOn()) {
             if (mPieRenderer != null) {
                 mPieRenderer.clear();
             }

@@ -85,6 +85,7 @@ import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
 import com.android.camera.imageprocessor.filter.SharpshooterFilter;
 import com.android.camera.imageprocessor.filter.StillmoreFilter;
+import com.android.camera.imageprocessor.filter.UbifocusFilter;
 import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.RotateTextToast;
@@ -1877,12 +1878,23 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(scene != null && !scene.equalsIgnoreCase("0")) {
             filters.add(FrameProcessor.FILTER_MAKEUP);
         }
-        String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
-        if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
+        if(isTrackingFocusSettingOn()) {
             filters.add(FrameProcessor.LISTENER_TRACKING_FOCUS);
         }
 
         return filters;
+    }
+
+    public boolean isTrackingFocusSettingOn() {
+        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        try {
+            int mode = Integer.parseInt(scene);
+            if (mode == SettingsManager.SCENE_MODE_TRACKINGFOCUS_INT) {
+                return true;
+            }
+        } catch (Exception e) {
+        }
+        return false;
     }
 
     public void setRefocusLastTaken(final boolean value) {
@@ -1897,18 +1909,17 @@ public class CaptureModule implements CameraModule, PhotoController,
     private int getPostProcFilterId(int mode) {
         if (mode == SettingsManager.SCENE_MODE_OPTIZOOM_INT) {
             return PostProcessor.FILTER_OPTIZOOM;
-        } else if (mode == SettingsManager.SCENE_MODE_NIGHT_INT && SharpshooterFilter.isSupportedStatic()) {
-            return PostProcessor.FILTER_SHARPSHOOTER;
+        } else if (mode == SettingsManager.SCENE_MODE_NIGHT_INT && StillmoreFilter.isSupportedStatic()) {
+            return PostProcessor.FILTER_STILLMORE;
         } else if (mode == SettingsManager.SCENE_MODE_CHROMAFLASH_INT && ChromaflashFilter.isSupportedStatic()) {
             return PostProcessor.FILTER_CHROMAFLASH;
         } else if (mode == SettingsManager.SCENE_MODE_BLURBUSTER_INT && BlurbusterFilter.isSupportedStatic()) {
             return PostProcessor.FILTER_BLURBUSTER;
-        } else if (mode == SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
+        } else if (mode == SettingsManager.SCENE_MODE_UBIFOCUS_INT && UbifocusFilter.isSupportedStatic()) {
             return PostProcessor.FILTER_UBIFOCUS;
-        }// else if (mode == SettingsManager.SCENE_MODE_AUTO_INT && StillmoreFilter.isSupportedStatic()) {
-         //   return PostProcessor.FILTER_STILLMORE;
-         //TODO: Need to put this back
-        else if (mode == SettingsManager.SCENE_MODE_BESTPICTURE_INT) {
+        } else if (mode == SettingsManager.SCENE_MODE_SHARPSHOOTER_INT && SharpshooterFilter.isSupportedStatic()) {
+            return PostProcessor.FILTER_SHARPSHOOTER;
+        } else if (mode == SettingsManager.SCENE_MODE_BESTPICTURE_INT) {
             return PostProcessor.FILTER_BESTPICTURE;
         }
         return PostProcessor.FILTER_NONE;
@@ -1971,7 +1982,6 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void openProcessors() {
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         boolean isFlashOn = false;
-        boolean isTrackingFocusOn = false;
         boolean isMakeupOn = false;
         boolean isSelfieMirrorOn = false;
         if(mPostProcessor != null) {
@@ -1987,16 +1997,12 @@ public class CaptureModule implements CameraModule, PhotoController,
             if(flashMode != null && flashMode.equalsIgnoreCase("on")) {
                 isFlashOn = true;
             }
-            String trackingFocus = mSettingsManager.getValue(SettingsManager.KEY_TRACKINGFOCUS);
-            if(trackingFocus != null && trackingFocus.equalsIgnoreCase("on")) {
-                isTrackingFocusOn = true;
-            }
             if (scene != null) {
                 int mode = Integer.parseInt(scene);
                 Log.d(TAG, "Chosen postproc filter id : " + getPostProcFilterId(mode));
-                mPostProcessor.onOpen(getPostProcFilterId(mode), isFlashOn, isTrackingFocusOn, isMakeupOn, isSelfieMirrorOn);
+                mPostProcessor.onOpen(getPostProcFilterId(mode), isFlashOn, isTrackingFocusSettingOn(), isMakeupOn, isSelfieMirrorOn);
             } else {
-                mPostProcessor.onOpen(PostProcessor.FILTER_NONE, isFlashOn, isTrackingFocusOn, isMakeupOn, isSelfieMirrorOn);
+                mPostProcessor.onOpen(PostProcessor.FILTER_NONE, isFlashOn, isTrackingFocusSettingOn(), isMakeupOn, isSelfieMirrorOn);
             }
         }
         if(mFrameProcessor != null) {
@@ -3634,6 +3640,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             mUI.showSurfaceView();
         } else {
             createSessions();
+        }
+
+        if(isTrackingFocusSettingOn()) {
+            mUI.resetTrackingFocus();
         }
     }
 
