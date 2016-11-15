@@ -32,29 +32,40 @@ import android.os.SystemProperties;
 
 public class PersistUtil {
 
-    private static final String PERSIST_MEMORY_LIMIT = "persist.camera.perf.memlimit";
-    private static final String PERSIST_SKIP_MEMORY_CHECK = "persist.camera.perf.skip_memck";
-    private static final String PERSIST_LONGSHOT_SHOT_LIMIT = "persist.camera.longshot.shotnum";
-    private static final String PERSIST_CAMERA_PREVIEW_SIZE = "persist.camera.preview.size";
-    private static final String PERSIST_CAMERA_CAMERA2 = "persist.camera.camera2";
+    private static final int PERSIST_MEMORY_LIMIT =
+            SystemProperties.getInt("persist.camera.perf.memlimit", 60);
+    private static final boolean PERSIST_SKIP_MEMORY_CHECK =
+            SystemProperties.getBoolean("persist.camera.perf.skip_memck", false);
+    private static final int PERSIST_LONGSHOT_SHOT_LIMIT =
+            SystemProperties.getInt("persist.camera.longshot.shotnum", 50);
+    private static final int PERSIST_CAMERA_PREVIEW_SIZE =
+            SystemProperties.getInt("persist.camera.preview.size", 0);
+    private static final boolean PERSIST_CAMERA_CAMERA2 =
+            SystemProperties.getBoolean("persist.camera.camera2", false);
+    private static final boolean PERSIST_CAMERA_ZSL =
+            SystemProperties.getBoolean("persist.camera.zsl.disabled", false);
 
     public static int getMemoryLimit() {
-        return SystemProperties.getInt(PERSIST_MEMORY_LIMIT, 60);
+        return PERSIST_MEMORY_LIMIT;
     }
 
     public static boolean getSkipMemoryCheck() {
-        return SystemProperties.getBoolean(PERSIST_SKIP_MEMORY_CHECK, false);
+        return PERSIST_SKIP_MEMORY_CHECK;
     }
 
     public static int getLongshotShotLimit() {
-        return SystemProperties.getInt(PERSIST_LONGSHOT_SHOT_LIMIT, 20);
+        return PERSIST_LONGSHOT_SHOT_LIMIT;
     }
 
     public static int getCameraPreviewSize() {
-        return SystemProperties.getInt(PERSIST_CAMERA_PREVIEW_SIZE, 0);
+        return PERSIST_CAMERA_PREVIEW_SIZE;
     }
 
     public static boolean getCamera2Mode() {
-        return SystemProperties.getBoolean(PERSIST_CAMERA_CAMERA2, false);
+        return PERSIST_CAMERA_CAMERA2;
+    }
+
+    public static boolean getCameraZSLDisabled() {
+        return PERSIST_CAMERA_ZSL;
     }
 }
