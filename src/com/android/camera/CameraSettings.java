@@ -277,6 +277,8 @@ public class CameraSettings {
             VIDEO_ENCODER_TABLE = new HashMap<Integer, String>();
     public static final HashMap<String, Integer>
             VIDEO_QUALITY_TABLE = new HashMap<String, Integer>();
+    public static final HashMap<String, Integer>
+            VIDEO_ENCODER_BITRATE = new HashMap<String, Integer>();
 
     static {
         //video encoders
@@ -303,6 +305,14 @@ public class CameraSettings {
         VIDEO_QUALITY_TABLE.put("352x288",   CamcorderProfile.QUALITY_CIF);
         VIDEO_QUALITY_TABLE.put("320x240",   CamcorderProfile.QUALITY_QVGA);
         VIDEO_QUALITY_TABLE.put("176x144",   CamcorderProfile.QUALITY_QCIF);
+
+        //video encoder bitrate
+        VIDEO_ENCODER_BITRATE.put("1920x1080:60",  32000000);
+        VIDEO_ENCODER_BITRATE.put("1920x1080:120", 50000000);
+        VIDEO_ENCODER_BITRATE.put("1280x720:120",  35000000);
+        VIDEO_ENCODER_BITRATE.put("1280x720:240",  72000000);
+        VIDEO_ENCODER_BITRATE.put("720:480:120",   5200000);
+
    }
 
    // Following maps help find a corresponding time-lapse or high-speed quality
@@ -1041,7 +1051,7 @@ public class CameraSettings {
         return false;
     }
 
-    public static boolean filterUnsupportedOptions(PreferenceGroup group,
+    private static boolean filterUnsupportedOptions(PreferenceGroup group,
             ListPreference pref, List<String> supported) {
 
         // Remove the preference if the parameter is not supported or there is
@@ -1061,7 +1071,7 @@ public class CameraSettings {
         return false;
     }
 
-    public static boolean filterSimilarPictureSize(PreferenceGroup group,
+    private static boolean filterSimilarPictureSize(PreferenceGroup group,
             ListPreference pref) {
         pref.filterDuplicated();
         if (pref.getEntries().length <= 1) {

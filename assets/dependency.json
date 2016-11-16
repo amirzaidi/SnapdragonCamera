@@ -69,6 +69,13 @@
   {
     "0":{},
     "default":
-      {"pref_camera2_facedetection_key":"on"}
+      {"pref_camera2_facedetection_key":"on",
+       "pref_camera2_video_quality_key":"720x480",
+       "pref_camera2_longshot_key":"off"}
+  },
+  "pref_camera2_selfiemirror_key":
+  {
+    "on":{"pref_camera2_longshot_key":"off"},
+    "off":{}
   }
 }

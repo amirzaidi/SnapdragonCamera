@@ -124,6 +124,8 @@ public class CameraUtil {
 
     /** Has to be in sync with the receiving MovieActivity. */
     public static final String KEY_TREAT_UP_AS_BACK = "treat-up-as-back";
+    /** Judge the value whether is from lockscreen come in or not */
+    public static final String KEY_IS_SECURE_CAMERA = "is_secure_camera";
 
     public static final int RATIO_UNKNOWN = 0;
     public static final int RATIO_16_9 = 1;
@@ -840,6 +842,34 @@ public class CameraUtil {
         animation.setDuration(400);
         view.startAnimation(animation);
         view.setVisibility(View.GONE);
+    }
+
+    public static Rect getFinalCropRect(Rect rect, float targetRatio) {
+        Rect finalRect = new Rect(rect);
+        float rectRatio = (float) rect.width()/(float) rect.height();
+
+        // if ratios are different, adjust crop rect to fit ratio
+        // if ratios are same, no need to adjust crop
+        Log.d(TAG, "getFinalCropRect - rect: " + rect.toString());
+        Log.d(TAG, "getFinalCropRect - ratios: " + rectRatio + ", " + targetRatio);
+        if(rectRatio > targetRatio) {
+            // ratio indicates need for horizontal crop
+            // add .5 to round up if necessary
+            int newWidth = (int)(((float)rect.height() * targetRatio) + .5f);
+            int newXoffset = (rect.width() - newWidth)/2 + rect.left;
+            finalRect.left = newXoffset;
+            finalRect.right = newXoffset + newWidth;
+        } else if(rectRatio < targetRatio) {
+            // ratio indicates need for vertical crop
+            // add .5 to round up if necessary
+            int newHeight = (int)(((float)rect.width() / targetRatio) + .5f);
+            int newYoffset = (rect.height() - newHeight)/2 + rect.top;
+            finalRect.top = newYoffset;
+            finalRect.bottom = newYoffset + newHeight;
+        }
+
+        Log.d(TAG, "getFinalCropRect - final rect: " + finalRect.toString());
+        return finalRect;
     }
 
     public static int getJpegRotation(int cameraId, int orientation) {

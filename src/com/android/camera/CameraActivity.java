@@ -1486,8 +1486,6 @@ public class CameraActivity extends Activity
 
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
 
-        SettingsManager.createInstance(this);
-
         LayoutInflater inflater = getLayoutInflater();
         View rootLayout = inflater.inflate(R.layout.camera, null, false);
         mCameraRootFrame = (FrameLayout)rootLayout.findViewById(R.id.camera_root_frame);
@@ -1832,10 +1830,6 @@ public class CameraActivity extends Activity
         if (mWakeLock != null && mWakeLock.isHeld()) {
             mWakeLock.release();
             Log.d(TAG, "wake lock release");
-        }
-        SettingsManager settingsMngr = SettingsManager.getInstance();
-        if (settingsMngr != null) {
-            settingsMngr.destroyInstance();
         }
         if (mCursor != null) {
             getContentResolver().unregisterContentObserver(mLocalImagesObserver);

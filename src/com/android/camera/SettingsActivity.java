@@ -29,6 +29,8 @@
 
 package com.android.camera;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -39,10 +41,13 @@ import android.preference.PreferenceGroup;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
+import android.view.Window;
+import android.view.WindowManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import org.codeaurora.snapcam.R;
+import com.android.camera.util.CameraUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -73,6 +78,7 @@ public class SettingsActivity extends PreferenceActivity {
             }
             if (key.equals(SettingsManager.KEY_VIDEO_QUALITY)) {
                 updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+                updatePreference(SettingsManager.KEY_VIDEO_ENCODER);
             }
             List<String> list = mSettingsManager.getDependentKeys(key);
             if (list != null) {
@@ -86,7 +92,16 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final boolean isSecureCamera = getIntent().getBooleanExtra(
+                CameraUtil.KEY_IS_SECURE_CAMERA, false);
+        if (isSecureCamera) {
+            setShowInLockScreen();
+        }
         mSettingsManager = SettingsManager.getInstance();
+        if (mSettingsManager == null) {
+            finish();
+            return;
+        }
         addPreferencesFromResource(R.xml.setting_menu_preferences);
 
         mSharedPreferences = getPreferenceManager().getSharedPreferences();
@@ -116,6 +131,10 @@ public class SettingsActivity extends PreferenceActivity {
                             } else {
                                 privateCounter = 0;
                             }
+                        }
+
+                        if ( preference.getKey().equals(SettingsManager.KEY_RESTORE_DEFAULT) ) {
+                            onRestoreDefaultSettingsClick();
                         }
                         return false;
                     }
@@ -151,6 +170,7 @@ public class SettingsActivity extends PreferenceActivity {
         updatePreference(SettingsManager.KEY_VIDEO_QUALITY);
         updatePreference(SettingsManager.KEY_EXPOSURE);
         updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+        updatePreference(SettingsManager.KEY_VIDEO_ENCODER);
 
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         Set<Map.Entry<String, SettingsManager.Values>> set = map.entrySet();
@@ -186,12 +206,13 @@ public class SettingsActivity extends PreferenceActivity {
     }
 
     private void updatePreferenceButton(String key) {
-        ListPreference pref = (ListPreference) findPreference(key);
-        if (pref != null) {
-            if (pref.getEntryValues().length == 1) {
-                pref.setEnabled(false);
+        Preference pref =  findPreference(key);
+        if (pref != null && pref instanceof ListPreference) {
+            ListPreference pref2 = (ListPreference) pref;
+            if (pref2.getEntryValues().length == 1) {
+                pref2.setEnabled(false);
             } else {
-                pref.setEnabled(true);
+                pref2.setEnabled(true);
             }
         }
     }
@@ -199,9 +220,15 @@ public class SettingsActivity extends PreferenceActivity {
     private void updatePreference(String key) {
         ListPreference pref = (ListPreference) findPreference(key);
         if (pref != null) {
-            pref.setEntries(mSettingsManager.getEntries(key));
-            pref.setEntryValues(mSettingsManager.getEntryValues(key));
-            pref.setValueIndex(mSettingsManager.getValueIndex(key));
+            if (mSettingsManager.getEntries(key) != null) {
+                pref.setEntries(mSettingsManager.getEntries(key));
+                pref.setEntryValues(mSettingsManager.getEntryValues(key));
+                int idx = mSettingsManager.getValueIndex(key);
+                if (idx < 0 ) {
+                    idx = 0;
+                }
+                pref.setValueIndex(idx);
+            }
         }
     }
 
@@ -213,5 +240,32 @@ public class SettingsActivity extends PreferenceActivity {
     protected void onStop() {
         super.onStop();
         mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mSharedPreferenceChangeListener);
+        finish();
+    }
+
+    private void setShowInLockScreen() {
+        // Change the window flags so that secure camera can show when locked
+        Window win = getWindow();
+        WindowManager.LayoutParams params = win.getAttributes();
+        params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+        win.setAttributes(params);
+    }
+    private
+    void onRestoreDefaultSettingsClick() {
+        new AlertDialog.Builder(this)
+                .setMessage(R.string.pref_camera2_restore_default_hint)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        restoreSettings();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void restoreSettings() {
+        mSettingsManager.restoreSettings();
+        filterPreferences();
+        initializePreferences();
     }
 }

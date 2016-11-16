@@ -383,6 +383,12 @@ class AndroidCameraManagerImpl implements CameraManager {
                 }
             } catch (RuntimeException e) {
                 if (msg.what != RELEASE && mCamera != null) {
+                    if (msg.what == SET_PARAMETERS) {
+                        mParametersIsDirty = false;
+                        Log.e(TAG,"Fail to set parameters");
+                        mSig.open();
+                        return;
+                    }
                     try {
                         mCamera.release();
                     } catch (Exception ex) {

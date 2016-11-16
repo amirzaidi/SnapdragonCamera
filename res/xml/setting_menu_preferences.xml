@@ -252,14 +252,18 @@
             android:layout="@layout/preference"
             android:summary="%s"
             android:title="@string/pref_camera_hfr_title" />
+    </PreferenceCategory>
 
-        <SwitchPreference
+    <PreferenceCategory
+        android:layout="@layout/preferences_category"
+        android:title="@string/pref_camera2_category_system"
+        android:textAllCaps="false">
+        <Preference
             android:defaultValue="false"
-            android:icon="@drawable/tracking_focus"
-            android:key="pref_camera2_trackingfocus_key"
+            android:icon="@drawable/restore_defaults"
+            android:key="pref_camera2_restore_default_key"
             android:layout="@layout/preference"
-            android:title="@string/pref_camera2_trackingfocus_title" />
-
+            android:title="@string/pref_camera2_restore_default" />
         <Preference
             android:defaultValue="false"
             android:icon="@drawable/version_info"
