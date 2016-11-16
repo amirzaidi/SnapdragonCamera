@@ -1080,5 +1080,11 @@
 
     <string name="pref_camera2_not_show_again">Do not show again</string>
     <string name="pref_camera2_scene_mode_instructional_ok" translatable="true">OK</string>
+
+    <string name="pref_camera2_instant_aec_title" translatable="true">Instant AEC</string>
+    <string name="pref_camera2_instant_aec_default" translatable="false">0</string>
+    <string name="pref_camera2_instant_aec_entry_disable" translatable="true">Disable</string>
+    <string name="pref_camera2_instant_aec_entry_aggressive" translatable="true">Aggressive AEC</string>
+    <string name="pref_camera2_instant_aec_entry_fast" translatable="true">Fast AEC</string>
 </resources>
 

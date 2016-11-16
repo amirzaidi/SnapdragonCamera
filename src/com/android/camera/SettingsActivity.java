@@ -40,6 +40,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.view.Window;
 import android.view.WindowManager;
@@ -142,6 +143,7 @@ public class SettingsActivity extends PreferenceActivity {
                                     mDeveloperMenuEnabled = true;
                                     mSharedPreferences.edit().putBoolean(SettingsManager.KEY_DEVELOPER_MENU, true).apply();
                                     Toast.makeText(SettingsActivity.this, "Camera developer option is enabled now", Toast.LENGTH_SHORT).show();
+                                    recreate();
                                 }
                             } else {
                                 privateCounter = 0;
@@ -161,12 +163,16 @@ public class SettingsActivity extends PreferenceActivity {
     }
 
     private void filterPreferences() {
-        String[] categories = {"photo", "video", "general"};
+        String[] categories = {"photo", "video", "general", "developer"};
         Set<String> set = mSettingsManager.getFilteredKeys();
         if (!mDeveloperMenuEnabled) {
             set.add(SettingsManager.KEY_MONO_PREVIEW);
             set.add(SettingsManager.KEY_MONO_ONLY);
             set.add(SettingsManager.KEY_CLEARSIGHT);
+
+            PreferenceScreen parent = getPreferenceScreen();
+            PreferenceGroup developer = (PreferenceGroup)findPreference("developer");
+            parent.removePreference(developer);
         }
 
         for (String key : set) {

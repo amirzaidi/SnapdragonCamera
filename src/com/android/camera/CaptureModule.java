@@ -204,6 +204,10 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static CaptureRequest.Key<Long> ISO_EXP =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.iso_exp_priority.use_iso_exp_priority",
                     Long.class);
+    public static CameraCharacteristics.Key<int[]> InstantAecAvailableModes =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.instant_aec.instant_aec_available_modes", int[].class);
+    public static final CaptureRequest.Key<Integer> INSTANT_AEC_MODE =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.instant_aec.instant_aec_mode", Integer.class);
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
     private int mLastResultAFState = -1;
@@ -1836,6 +1840,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyColorEffect(builder);
         applySceneMode(builder);
         applyZoom(builder, id);
+        applyInstantAEC(builder);
     }
 
     /**
@@ -3448,6 +3453,14 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyZoom(CaptureRequest.Builder request, int id) {
         request.set(CaptureRequest.SCALER_CROP_REGION, cropRegionForZoom(id));
+    }
+
+    private void applyInstantAEC(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_INSTANT_AEC);
+        if (value == null || value.equals("0"))
+            return;
+        int intValue = Integer.parseInt(value);
+        request.set(CaptureModule.INSTANT_AEC_MODE, intValue);
     }
 
     private boolean applyPreferenceToPreview(int cameraId, String key, String value) {

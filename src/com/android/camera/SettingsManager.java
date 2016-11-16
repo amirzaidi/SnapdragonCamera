@@ -138,6 +138,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_DEVELOPER_MENU = "pref_camera2_developer_menu_key";
     public static final String KEY_RESTORE_DEFAULT = "pref_camera2_restore_default_key";
     public static final String KEY_FOCUS_DISTANCE = "pref_camera2_focus_distance_key";
+    public static final String KEY_INSTANT_AEC = "pref_camera2_instant_aec_key";
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -582,6 +583,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
         ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
         ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
+        ListPreference instantAec = mPreferenceGroup.findPreference(KEY_INSTANT_AEC);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -599,6 +601,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (colorEffect != null) {
             if (filterUnsupportedOptions(colorEffect, getSupportedColorEffects(cameraId))) {
                 mFilteredKeys.add(colorEffect.getKey());
+            }
+        }
+
+        if (instantAec != null) {
+            if (filterUnsupportedOptions(instantAec,
+                    getSupportedInstantAecAvailableModes(cameraId))) {
+                mFilteredKeys.add(instantAec.getKey());
             }
         }
 
@@ -1204,6 +1213,19 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
         resetIfInvalid(pref);
         return false;
+    }
+
+    public List<String> getSupportedInstantAecAvailableModes(int cameraId) {
+        int[] instantAecAvailableModes = mCharacteristics.get(cameraId).get(
+                                           CaptureModule.InstantAecAvailableModes);
+        if (instantAecAvailableModes == null) {
+            return null;
+        }
+        List<String> modes = new ArrayList<>();
+        for (int i : instantAecAvailableModes) {
+            modes.add(""+i);
+        }
+        return  modes;
     }
 
     private boolean filterUnsupportedOptions(ListPreference pref, List<String> supported) {
