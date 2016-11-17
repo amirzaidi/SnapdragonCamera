@@ -2540,7 +2540,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private void startRecordingVideo(int cameraId) {
+    private void startRecordingVideo(final int cameraId) {
         if (null == mCameraDevice[cameraId]) {
             return;
         }
@@ -2567,7 +2567,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             createVideoSnapshotImageReader();
             mVideoRequestBuilder = mCameraDevice[cameraId].createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             mVideoRequestBuilder.setTag(cameraId);
-
+            mPreviewRequestBuilder[cameraId] = mVideoRequestBuilder;
             List<Surface> surfaces = new ArrayList<>();
 
             Surface surface = getPreviewSurfaceForSession(cameraId);
@@ -2593,6 +2593,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     @Override
                     public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                         mCurrentSession = cameraCaptureSession;
+                        mCaptureSession[cameraId] = cameraCaptureSession;
                         CameraConstrainedHighSpeedCaptureSession session =
                                     (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
                         try {
@@ -2636,6 +2637,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                         Log.d(TAG, "StartRecordingVideo session onConfigured");
                         mCurrentSession = cameraCaptureSession;
+                        mCaptureSession[cameraId] = cameraCaptureSession;
                         try {
                             setUpVideoCaptureRequestBuilder(mVideoRequestBuilder);
                             mCurrentSession.setRepeatingRequest(mVideoRequestBuilder.build(),
