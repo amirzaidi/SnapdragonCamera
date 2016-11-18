@@ -94,6 +94,7 @@ import com.android.camera.util.CameraUtil;
 import com.android.camera.util.PersistUtil;
 import com.android.camera.util.SettingTranslation;
 import com.android.camera.util.ApiHelper;
+import com.android.camera.util.AccessibilityUtils;
 import com.android.internal.util.MemInfoReader;
 
 import org.codeaurora.snapcam.R;
@@ -116,7 +117,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         MediaSaveService.Listener, ClearSightImageProcessor.Callback,
         SettingsManager.Listener, LocationManager.Listener,
         CountDownView.OnCountDownFinishedListener,
-        MediaRecorder.OnInfoListener{
+        MediaRecorder.OnErrorListener, MediaRecorder.OnInfoListener {
     public static final int DUAL_MODE = 0;
     public static final int BAYER_MODE = 1;
     public static final int MONO_MODE = 2;
@@ -224,6 +225,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private int mDisplayOrientation;
     private boolean mIsRefocus = false;
     private int mChosenImageFormat;
+    private Toast mToast;
 
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -1828,6 +1830,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onPauseBeforeSuper() {
         mPaused = true;
+        mToast = null;
         mUI.onPause();
         if (mIsRecordingVideo) {
             stopRecordingVideo(getMainCameraId());
@@ -2828,14 +2831,30 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void stopRecordingVideo(int cameraId) {
         Log.d(TAG, "stopRecordingVideo " + cameraId);
 
+        boolean shouldAddToMediaStoreNow = false;
         // Stop recording
         mFrameProcessor.setVideoOutputSurface(null);
         mFrameProcessor.onClose();
         closePreviewSession();
-        mMediaRecorder.stop();
-        mMediaRecorder.reset();
-        mMediaRecorder.setOnInfoListener(null);
-        saveVideo();
+        try {
+            mMediaRecorder.setOnErrorListener(null);
+            mMediaRecorder.setOnInfoListener(null);
+            mMediaRecorder.stop();
+            shouldAddToMediaStoreNow = true;
+            AccessibilityUtils.makeAnnouncement(mUI.getVideoButton(),
+                    mActivity.getString(R.string.video_recording_stopped));
+        } catch (RuntimeException e) {
+            Log.e(TAG, "MediaRecoder stop fail",  e);
+            if (mVideoFilename != null) deleteVideoFile(mVideoFilename);
+        }
+        if (shouldAddToMediaStoreNow) {
+            saveVideo();
+        }
+
+        // release media recorder
+        releaseMediaRecorder();
+        releaseAudioFocus();
+
         mUI.showRecordingUI(false, false);
         mUI.enableShutter(true);
 
@@ -2933,6 +2952,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mCaptureTimeLapse) {
             size = CameraSettings.getTimeLapseQualityFor(size);
         }
+
+        if (mMediaRecorder == null) mMediaRecorder = new MediaRecorder();
+
         updateHFRSetting();
         boolean hfr = mHighSpeedCapture && !mHighSpeedRecordingMode;
         mProfile = CamcorderProfile.get(cameraId, size);
@@ -3004,7 +3026,15 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             mMediaRecorder.setOrientationHint(rotation);
         }
-        mMediaRecorder.prepare();
+        try {
+            mMediaRecorder.prepare();
+        } catch (IOException e) {
+            Log.e(TAG, "prepare failed for " + mVideoFilename, e);
+            releaseMediaRecorder();
+            throw new RuntimeException(e);
+        }
+
+        mMediaRecorder.setOnErrorListener(this);
         mMediaRecorder.setOnInfoListener(this);
     }
 
@@ -3835,6 +3865,18 @@ public class CaptureModule implements CameraModule, PhotoController,
         enableRecordingLocation(false);
     }
 
+    // from MediaRecorder.OnErrorListener
+    @Override
+    public void onError(MediaRecorder mr, int what, int extra) {
+        Log.e(TAG, "MediaRecorder error. what=" + what + ". extra=" + extra);
+        stopRecordingVideo(getMainCameraId());
+        mUI.showUIafterRecording();
+        if (what == MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN) {
+            // We may have run out of space on the sdcard.
+            mActivity.updateStorageSpaceAndHint();
+        }
+    }
+
     // from MediaRecorder.OnInfoListener
     @Override
     public void onInfo(MediaRecorder mr, int what, int extra) {
@@ -3862,5 +3904,50 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updateSaveStorageState() {
         Storage.setSaveSDCard(mSettingsManager.getValue(SettingsManager
                 .KEY_CAMERA_SAVEPATH).equals("1"));
+    }
+
+    private void deleteVideoFile(String fileName) {
+        Log.v(TAG, "Deleting video " + fileName);
+        File f = new File(fileName);
+        if (!f.delete()) {
+            Log.v(TAG, "Could not delete " + fileName);
+        }
+    }
+
+    private void releaseMediaRecorder() {
+        Log.v(TAG, "Releasing media recorder.");
+        if (mMediaRecorder != null) {
+            cleanupEmptyFile();
+            mMediaRecorder.reset();
+            mMediaRecorder.release();
+            mMediaRecorder = null;
+        }
+        mVideoFilename = null;
+    }
+
+    private void cleanupEmptyFile() {
+        if (mVideoFilename != null) {
+            File f = new File(mVideoFilename);
+            if (f.length() == 0 && f.delete()) {
+                Log.v(TAG, "Empty video file deleted: " + mVideoFilename);
+                mVideoFilename = null;
+            }
+        }
+    }
+
+    private void releaseAudioFocus() {
+        AudioManager am = (AudioManager)mActivity.getSystemService(Context.AUDIO_SERVICE);
+        int result = am.abandonAudioFocus(null);
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
+            Log.v(TAG, "Audio focus release failed");
+        }
+    }
+
+    private void showToast(String tips) {
+        if (mToast == null) {
+            mToast = Toast.makeText(mActivity, tips, Toast.LENGTH_LONG);
+        }
+        mToast.setText(tips);
+        mToast.show();
     }
 }
