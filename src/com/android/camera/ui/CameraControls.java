@@ -247,7 +247,6 @@ public class CameraControls extends RotatableLayout {
         } else {
             mHdrSwitcher.setEnabled(enable);
         }
-        mSceneModeSwitcher.setEnabled(enable);
         mPreview.setEnabled(enable);
 
     }
