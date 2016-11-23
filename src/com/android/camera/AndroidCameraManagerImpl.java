@@ -200,6 +200,30 @@ class AndroidCameraManagerImpl implements CameraManager {
             return true;
         }
 
+        public boolean waitDone(long timeout) {
+            final Object waitDoneLock = new Object();
+            final Runnable unlockRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (waitDoneLock) {
+                        waitDoneLock.notifyAll();
+                    }
+                }
+            };
+
+            synchronized (waitDoneLock) {
+                mCameraHandler.post(unlockRunnable);
+                try {
+                    waitDoneLock.wait(timeout);
+                    mCameraHandler.removeCallbacks(unlockRunnable);
+                } catch (InterruptedException ex) {
+                    Log.v(TAG, "waitDone interrupted");
+                    return false;
+                }
+            }
+            return true;
+        }
+
         /**
          * This method does not deal with the API level check.  Everyone should
          * check first for supported operations before sending message to this handler.
@@ -499,7 +523,7 @@ class AndroidCameraManagerImpl implements CameraManager {
         @Override
         public void stopPreview() {
             mCameraHandler.sendEmptyMessage(STOP_PREVIEW);
-            mCameraHandler.waitDone();
+            mCameraHandler.waitDone(200);
         }
 
         @Override
