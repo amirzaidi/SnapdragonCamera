@@ -728,7 +728,7 @@ public class PhotoUI implements PieListener,
         // make sure the correct value was found
         // otherwise use auto index
         mOnScreenIndicators.updateWBIndicator(wbIndex < 0 ? 2 : wbIndex);
-        boolean location = RecordLocationPreference.get(prefs);
+        boolean location = RecordLocationPreference.get(prefs, CameraSettings.KEY_RECORD_LOCATION);
         mOnScreenIndicators.updateLocationIndicator(location);
     }
 
