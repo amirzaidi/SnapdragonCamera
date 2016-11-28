@@ -35,32 +35,42 @@ rs_allocation gIn;
 uint32_t width;
 uint32_t height;
 uint32_t pad;
-bool gFlip;
+uint32_t degree;
 
 uchar __attribute__((kernel)) rotate90andMerge(uint32_t x, uint32_t y) {
     uchar yValue = rsGetElementAt_uchar(gIn, x + y*width);
 
-    if(gFlip) {
+    if(degree == 180) {
         if(x >= width - pad)
             return (uchar)0;
         rsSetElementAt_uchar(gOut, yValue, (width-1-x-pad)*height + height - 1 - y);
-    } else {
+    } else if (degree == 90) {
         rsSetElementAt_uchar(gOut, yValue, x*height + height - 1 - y);
+    } else if (degree == 270) {
+        if(x >= width - pad)
+            return (uchar)0;
+        rsSetElementAt_uchar(gOut, yValue, (width-1-x-pad)*height + y);
     }
+
 
     if(x%2 == 0 && y%2 == 0) {
         uint32_t ySize = width*height;
         uint32_t index = ySize + x + ((y/2) * width);
         uchar vValue = rsGetElementAt_uchar(gIn, index);
         uchar uValue = rsGetElementAt_uchar(gIn, index + 1);
-        if(gFlip) {
+        if(degree == 180) {
             if(x >= width - pad)
                 return (uchar)0;
             rsSetElementAt_uchar(gOut, uValue, ySize + (width-2-x-pad)/2*height + height - 1 - y);
             rsSetElementAt_uchar(gOut, vValue, ySize + (width-2-x-pad)/2*height + height - 1 - y - 1);
-        } else {
+        } else if (degree == 90) {
             rsSetElementAt_uchar(gOut, uValue, ySize + x/2*height + height - 1 - y);
             rsSetElementAt_uchar(gOut, vValue, ySize + x/2*height + height - 1 - y - 1);
+        } else if (degree == 270) {
+            if(x >= (width - pad))
+                 return (uchar)0;
+            rsSetElementAt_uchar(gOut, uValue, ySize + (width-1-x-pad)/2*height + y -1);
+            rsSetElementAt_uchar(gOut, vValue, ySize + (width-1-x-pad)/2*height + y);
         }
     }
     return (uchar)0;
