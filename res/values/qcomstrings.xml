@@ -1029,6 +1029,7 @@
     <string name="pref_camera_scenemode_entry_sharpshooter" translatable="true">SharpPhoto</string>
     <string name="pref_camera_scenemode_entry_trackingfocus" translatable="true">TrackingFocus</string>
     <string name="pref_camera_scenemode_entry_panorama" translatable="true">Panorama</string>
+    <string name="pref_camera_scenemode_entry_promode" translatable="true">ProMode</string>
     <string name="bestpicture_done" translatable="true">DONE</string>
     <string name="bestpicture_at_least_one_picture" translatable="true">At least, one picture has to be chosen.</string>
 

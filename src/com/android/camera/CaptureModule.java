@@ -193,6 +193,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static CameraCharacteristics.Key<Byte> MetaDataMonoOnlyKey =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.sensor_meta_data.is_mono_only",
                     Byte.class);
+    public static CaptureRequest.Key<Integer> SELECT_PRIORITY =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.iso_exp_priority.select_priority",
+                    Integer.class);
+    public static CaptureRequest.Key<Long> ISO_EXP =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.iso_exp_priority.use_iso_exp_priority",
+                    Long.class);
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
     private int mLastResultAFState = -1;
@@ -779,6 +785,13 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             return mFrameProcessor.getFrameFilters();
         }
+    }
+
+    private void applyFocusDistance(CaptureRequest.Builder builder, String value) {
+        if (value == null) return;
+        float valueF = Float.valueOf(value);
+        builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
+        builder.set(CaptureRequest.LENS_FOCUS_DISTANCE, valueF);
     }
 
     private void createSessions() {
@@ -2069,6 +2082,13 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.enableShutter(true);
 
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        boolean promode = false;
+        if (scene != null) {
+            int mode = Integer.parseInt(scene);
+            if (mode == SettingsManager.SCENE_MODE_PROMODE_INT) promode = true;
+        }
+        mUI.initializeProMode(promode);
+
         if(isPanoSetting(scene)) {
             mActivity.onModuleSelected(ModuleSwitcher.PANOCAPTURE_MODULE_INDEX);
         }
@@ -2284,16 +2304,17 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private boolean isTouchToFocusAllowed() {
-        if (isTakingPicture() || mIsRecordingVideo || isSceneModeOn()) return false;
+        if (isTakingPicture() || mIsRecordingVideo || isTouchAfEnabledSceneMode()) return false;
         return true;
     }
 
-    private boolean isSceneModeOn() {
+    private boolean isTouchAfEnabledSceneMode() {
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (scene == null) return false;
         int mode = Integer.parseInt(scene);
-        if (mode != SettingsManager.SCENE_MODE_DUAL_INT && mode != CaptureRequest
-                .CONTROL_SCENE_MODE_DISABLED) return true;
+        if (mode != CaptureRequest.CONTROL_SCENE_MODE_DISABLED
+                && mode < SettingsManager.SCENE_MODE_CUSTOM_START)
+            return true;
         return false;
     }
 
@@ -3228,6 +3249,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 updatePreview = true;
                 applyFaceDetection(mPreviewRequestBuilder[cameraId]);
                 break;
+            case SettingsManager.KEY_FOCUS_DISTANCE:
+                updatePreview = true;
+                applyFocusDistance(mPreviewRequestBuilder[cameraId], value);
         }
         return updatePreview;
     }
@@ -3277,8 +3301,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             return;
         }
-        if (mode != CaptureRequest.CONTROL_SCENE_MODE_DISABLED && mode !=
-                SettingsManager.SCENE_MODE_DUAL_INT) {
+        if (mode != CaptureRequest.CONTROL_SCENE_MODE_DISABLED
+                && mode != SettingsManager.SCENE_MODE_DUAL_INT
+                && mode != SettingsManager.SCENE_MODE_PROMODE_INT) {
             request.set(CaptureRequest.CONTROL_SCENE_MODE, mode);
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_USE_SCENE_MODE);
         } else {
@@ -3296,9 +3321,14 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void applyIso(CaptureRequest.Builder request) {
         String value = mSettingsManager.getValue(SettingsManager.KEY_ISO);
         if (value == null) return;
-        if (value.equals("auto")) return;
-        int intValue = Integer.parseInt(value);
-        request.set(CaptureRequest.SENSOR_SENSITIVITY, intValue);
+        if (value.equals("auto")) {
+            request.set(SELECT_PRIORITY, null);
+            request.set(ISO_EXP, null);
+        } else {
+            long intValue = Integer.parseInt(value);
+            request.set(SELECT_PRIORITY, 0);
+            request.set(ISO_EXP, intValue);
+        }
     }
 
     private void applyColorEffect(CaptureRequest.Builder request) {
@@ -3541,6 +3571,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                     return;
                 case SettingsManager.KEY_FLASH_MODE:
                     if (count == 0) restartSession(false);
+                    return;
+                case SettingsManager.KEY_SCENE_MODE:
+                    restartAll();
                     return;
             }
 
