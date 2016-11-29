@@ -156,12 +156,14 @@ public class ProMode extends View {
         super.onLayout(changed, left, top, right, bottom);
         mWidth = right - left;
         mHeight = bottom - top;
+
         mCurveLeft = mWidth / 10;
         mCurveRight = mWidth - mCurveLeft;
         mCurveHeight = mWidth / 7;
         mCurveY = (int) (mHeight * 0.67);
 
         float cx = (mCurveLeft + mCurveRight) / 2;
+        mCurvePath.reset();
         mCurvePath.moveTo(mCurveLeft, mCurveY);
         mCurvePath.quadTo(cx, mCurveY - mCurveHeight, mCurveRight, mCurveY);
         mCurveMeasure = new PathMeasure(mCurvePath, false);
