@@ -422,6 +422,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
         mListeners.add(listener);
     }
 
+    public void unregisterListener(Listener listener) {
+        mListeners.remove(listener);
+    }
+
     private void notifyListeners(List<SettingState> changes) {
         for (Listener listener : mListeners) {
             listener.onSettingsChanged(changes);
