@@ -1383,4 +1383,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+
+    public ImageView getVideoButton() {
+        return mVideoButton;
+    }
 }
