@@ -1342,6 +1342,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     unlockFocus(id);
                                 }
                             }, mCaptureCallbackHandler);
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mUI.enableVideo(false);
+                        }
+                    });
+
                 } else {
                     checkAndPlayShutterSound(id);
                     if(isMpoOn()) {
@@ -1598,6 +1605,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     public void run() {
                         mUI.stopSelfieFlash();
                         mUI.enableShutter(true);
+                        mUI.enableVideo(true);
                     }
                 });
             }
@@ -2111,7 +2119,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         });
         mUI.enableShutter(true);
-
+        mUI.enableVideo(true);
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         boolean promode = false;
         if (scene != null) {
@@ -3209,6 +3217,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             return true;
         }
 
+        if ( mIsRecordingVideo ) {
+            Log.e(TAG, " cancel longshot:not supported when recording");
+            return true;
+        }
         return false;
     }
 

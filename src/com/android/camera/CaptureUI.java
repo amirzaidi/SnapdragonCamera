@@ -893,6 +893,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+    /**
+     * Enables or disables the video button.
+     */
+    public void enableVideo(boolean enabled) {
+        if (mVideoButton != null) {
+            mVideoButton.setEnabled(enabled);
+        }
+    }
+
     private boolean handleBackKeyOnMenu() {
         if (mFilterMenuStatus == FILTER_MENU_ON) {
             removeFilterMenu(true);
