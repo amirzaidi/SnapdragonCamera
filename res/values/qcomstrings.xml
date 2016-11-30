@@ -1029,6 +1029,7 @@
     <string name="pref_camera_scenemode_entry_sharpshooter" translatable="true">SharpPhoto</string>
     <string name="pref_camera_scenemode_entry_trackingfocus" translatable="true">TrackingFocus</string>
     <string name="pref_camera_scenemode_entry_panorama" translatable="true">Panorama</string>
+    <string name="pref_camera_scenemode_entry_promode" translatable="true">ProMode</string>
     <string name="bestpicture_done" translatable="true">DONE</string>
     <string name="bestpicture_at_least_one_picture" translatable="true">At least, one picture has to be chosen.</string>
 
@@ -1040,10 +1041,10 @@
     <string name="pref_camera2_shutter_sound_entry_off" translatable="true">Off</string>
     <string name="pref_camera2_shutter_sound_title" translatable="true">Shutter Sound</string>
 
-    <string name="pref_camera2_timer_entry_off" translatable="false">Off</string>
-    <string name="pref_camera2_timer_entry_2sec" translatable="false">2 seconds</string>
-    <string name="pref_camera2_timer_entry_5sec" translatable="false">5 seconds</string>
-    <string name="pref_camera2_timer_entry_10sec" translatable="false">10 seconds</string>
+    <string name="pref_camera2_timer_entry_off" translatable="true">Off</string>
+    <string name="pref_camera2_timer_entry_2sec" translatable="true">2 seconds</string>
+    <string name="pref_camera2_timer_entry_5sec" translatable="true">5 seconds</string>
+    <string name="pref_camera2_timer_entry_10sec" translatable="true">10 seconds</string>
 
     <string name="pref_camera2_timer_value_off" translatable="false">0</string>
     <string name="pref_camera2_timer_value_2sec" translatable="false">2</string>
@@ -1056,5 +1057,11 @@
     <string name="makeup_ui_ok_button" translatable="true">OK</string>
     <string name="makeup_seekbar_low" translatable="true">low</string>
     <string name="makeup_seekbar_high" translatable="true">high</string>
+
+    <string name="perf_camera2_version_info" translatable="true">Version Info</string>
+    <string name="perf_camera2_preferences_category_general" translatable="true">General</string>
+    <string name="perf_camera2_preferences_category_photo" translatable="true">Still camera</string>
+    <string name="perf_camera2_preferences_category_video" translatable="true">Video camera</string>
+    <string name="perf_camera2_preferences_category_system" translatable="true">System</string>
 </resources>
 

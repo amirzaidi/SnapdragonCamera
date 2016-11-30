@@ -184,6 +184,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private PauseButton mPauseButton;
     private RotateImageView mMuteButton;
     private ImageView mSeekbarToggleButton;
+    private View mProModeCloseButton;
 
     int mPreviewWidth;
     int mPreviewHeight;
@@ -283,6 +284,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         });
         setMakeupButtonIcon();
         mFlashButton = (FlashToggleButton) mRootView.findViewById(R.id.flash_button);
+        mProModeCloseButton = mRootView.findViewById(R.id.promode_close_button);
+        mProModeCloseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSettingsManager.setValue(SettingsManager.KEY_SCENE_MODE, "" + SettingsManager.SCENE_MODE_AUTO_INT);
+            }
+        });
         initFilterModeButton();
         initSceneModeButton();
         initSwitchCamera();
@@ -423,6 +431,12 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 mSurfaceViewMono.setVisibility(View.GONE);
             }
         }
+    }
+
+    public void initializeProMode(boolean promode) {
+        mCameraControls.setProMode(promode);
+        if (promode) mVideoButton.setVisibility(View.INVISIBLE);
+        else mVideoButton.setVisibility(View.VISIBLE);
     }
 
     // called from onResume but only the first time
@@ -879,6 +893,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+    /**
+     * Enables or disables the video button.
+     */
+    public void enableVideo(boolean enabled) {
+        if (mVideoButton != null) {
+            mVideoButton.setEnabled(enabled);
+        }
+    }
+
     private boolean handleBackKeyOnMenu() {
         if (mFilterMenuStatus == FILTER_MENU_ON) {
             removeFilterMenu(true);
@@ -1315,6 +1338,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void showSurfaceView() {
+        Log.d(TAG, "showSurfaceView");
         mSurfaceView.getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
         mSurfaceView.setAspectRatio(mPreviewHeight, mPreviewWidth);
         mSurfaceView.setVisibility(View.VISIBLE);
@@ -1359,4 +1383,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+
+    public ImageView getVideoButton() {
+        return mVideoButton;
+    }
 }

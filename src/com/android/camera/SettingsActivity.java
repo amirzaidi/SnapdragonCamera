@@ -89,6 +89,20 @@ public class SettingsActivity extends PreferenceActivity {
         }
     };
 
+    private SettingsManager.Listener mListener = new SettingsManager.Listener(){
+        @Override
+        public void onSettingsChanged(List<SettingsManager.SettingState> settings){
+            Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
+            for( SettingsManager.SettingState state : settings) {
+                SettingsManager.Values values = map.get(state.key);
+                boolean enabled = values.overriddenValue == null;
+                Preference pref = findPreference(state.key);
+                if (pref != null) {
+                    pref.setEnabled(enabled);
+                }
+            }
+        }
+    };
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,6 +116,7 @@ public class SettingsActivity extends PreferenceActivity {
             finish();
             return;
         }
+        mSettingsManager.registerListener(mListener);
         addPreferencesFromResource(R.xml.setting_menu_preferences);
 
         mSharedPreferences = getPreferenceManager().getSharedPreferences();
@@ -207,12 +222,16 @@ public class SettingsActivity extends PreferenceActivity {
 
     private void updatePreferenceButton(String key) {
         Preference pref =  findPreference(key);
-        if (pref != null && pref instanceof ListPreference) {
-            ListPreference pref2 = (ListPreference) pref;
-            if (pref2.getEntryValues().length == 1) {
-                pref2.setEnabled(false);
-            } else {
-                pref2.setEnabled(true);
+        if (pref != null ) {
+            if( pref instanceof ListPreference) {
+                ListPreference pref2 = (ListPreference) pref;
+                if (pref2.getEntryValues().length == 1) {
+                    pref2.setEnabled(false);
+                } else {
+                    pref2.setEnabled(true);
+                }
+            }else {
+                pref.setEnabled(false);
             }
         }
     }
@@ -241,6 +260,12 @@ public class SettingsActivity extends PreferenceActivity {
         super.onStop();
         mSharedPreferences.unregisterOnSharedPreferenceChangeListener(mSharedPreferenceChangeListener);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mSettingsManager.unregisterListener(mListener);
     }
 
     private void setShowInLockScreen() {

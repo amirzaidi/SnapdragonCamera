@@ -31,7 +31,7 @@
     <PreferenceCategory
         android:key="general"
         android:layout="@layout/preferences_category"
-        android:title="GENERAL">
+        android:title="@string/perf_camera2_preferences_category_general">
         <SwitchPreference
             android:defaultValue="false"
             android:icon="@drawable/gps_location"
@@ -60,7 +60,7 @@
     <PreferenceCategory
         android:key="photo"
         android:layout="@layout/preferences_category"
-        android:title="STILL CAMERA">
+        android:title="@string/perf_camera2_preferences_category_photo">
         <ListPreference
             android:defaultValue="@string/pref_camera2_timer_value_off"
             android:entries="@array/pref_camera2_timer_entries"
@@ -169,7 +169,7 @@
     <PreferenceCategory
         android:key="video"
         android:layout="@layout/preferences_category"
-        android:title="VIDEO CAMERA">
+        android:title="@string/perf_camera2_preferences_category_video">
         <ListPreference
             android:entries="@array/pref_camera2_video_quality_entries"
             android:entryValues="@array/pref_camera2_video_quality_entryvalues"
