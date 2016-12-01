@@ -535,8 +535,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         public void onError(CameraDevice cameraDevice, int error) {
             int id = Integer.parseInt(cameraDevice.getId());
             Log.e(TAG, "onError " + id + " " + error);
-            cameraDevice.close();
-            mCameraDevice[id] = null;
             mCameraOpenCloseLock.release();
             mCamerasOpened = false;
             if (null != mActivity) {
