@@ -153,16 +153,21 @@ public class CountDownView extends FrameLayout {
 
     public void setOrientation(int orientation) {
         mRemainingSecondsView.setRotation(-orientation);
-
         mCountDownTitle.setRotation(-orientation);
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = mCountDownTitle.getMeasuredHeight();
+        if (height == 0) {
+            measure(MeasureSpec.UNSPECIFIED,MeasureSpec.UNSPECIFIED);
+            height = mCountDownTitle.getMeasuredHeight();
+        }
         int dx = 0, dy = 0;
         switch (orientation) {
             case 90:
-                dy = (mCountDownTitle.getWidth() - mCountDownTitle.getHeight()) / 2;
+                dy = (width - height) / 2;
                 dx = -dy;
                 break;
             case 270:
-                dx = dy = (mCountDownTitle.getWidth() - mCountDownTitle.getHeight()) / 2;
+                dx = dy = (width - height) / 2;
                 break;
             case 180:
                 break;
