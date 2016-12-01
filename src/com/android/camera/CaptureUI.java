@@ -77,6 +77,7 @@ import org.codeaurora.snapcam.R;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class CaptureUI implements FocusOverlayManager.FocusUI,
         PreviewGestures.SingleTapListener,
@@ -554,6 +555,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         String value = mSettingsManager.getValue(SettingsManager.KEY_COLOR_EFFECT);
         if (value == null) return;
 
+        enableView(mFilterModeSwitcher, SettingsManager.KEY_COLOR_EFFECT);
+
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -563,6 +566,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 updateMenus();
             }
         });
+    }
+
+    private void enableView(View view, String key) {
+        Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
+        SettingsManager.Values values = map.get(key);
+        boolean enabled = values.overriddenValue == null;
+        view.setEnabled(enabled);
     }
 
     public void showTimeLapseUI(boolean enable) {
@@ -1327,6 +1337,12 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     @Override
     public void onSettingsChanged(List<SettingsManager.SettingState> settings) {
+        for( SettingsManager.SettingState state : settings) {
+            if( state.key.equals(SettingsManager.KEY_COLOR_EFFECT) ) {
+                enableView(mFilterModeSwitcher, SettingsManager.KEY_COLOR_EFFECT);
+                break;
+            }
+        }
     }
 
     public void startSelfieFlash() {
