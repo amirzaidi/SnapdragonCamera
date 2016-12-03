@@ -912,6 +912,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                         @Override
                         public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
                             Log.e(TAG, "cameracapturesession - onConfigureFailed "+id);
+                            if (mActivity.isFinishing()) {
+                                return;
+                            }
                             new AlertDialog.Builder(mActivity)
                                     .setTitle("Camera Initialization Failed")
                                     .setMessage("Closing SnapdragonCamera")
@@ -1183,6 +1186,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             setAFModeToPreview(id, mControlAFMode);
             Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, mCameraId[id]);
+            message.arg1 = id;
             mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
         } catch (CameraAccessException e) {
             e.printStackTrace();
