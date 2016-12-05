@@ -40,6 +40,7 @@ import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.Type;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.widget.Toast;
@@ -155,10 +156,12 @@ public class FrameProcessor {
         mRsRotator.set_width(width);
         mRsRotator.set_height(height);
         mRsRotator.set_pad(stridePad);
-        if(mModule.getMainCameraCharacteristics() != null &&
-                mModule.getMainCameraCharacteristics().get(CameraCharacteristics.SENSOR_ORIENTATION) == 270) {
-            mRsRotator.set_gFlip(true);
+        int degree = 90;
+        if(mModule.getMainCameraCharacteristics() != null) {
+            degree = mModule.getMainCameraCharacteristics().
+                    get(CameraCharacteristics.SENSOR_ORIENTATION);
         }
+        mRsRotator.set_degree(degree);
         mRsYuvToRGB.set_gIn(mProcessAllocation);
         mRsYuvToRGB.set_width(height);
         mRsYuvToRGB.set_height(width);
