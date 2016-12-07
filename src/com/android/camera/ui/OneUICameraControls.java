@@ -532,6 +532,7 @@ public class OneUICameraControls extends RotatableLayout {
         mProModeOn = promode;
         initializeProMode(mProModeOn);
         resetProModeIcons();
+        mProMode.reinit();
     }
 
     private void resetProModeIcons() {
