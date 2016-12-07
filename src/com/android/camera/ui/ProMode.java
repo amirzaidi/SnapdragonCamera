@@ -203,7 +203,7 @@ public class ProMode extends View {
         if (mMode == MANUAL_MODE) {
             minFocus = mSettingsManager
                     .getMinimumFocusDistance(mSettingsManager.getCurrentCameraId());
-            float value = 0.5f;
+            float value = mSettingsManager.getFocusValue(SettingsManager.KEY_FOCUS_DISTANCE);
             setSlider(value);
             int stride = mCurveRight - mCurveLeft;
             for (int i = 0; i < 2; i++) {
@@ -292,7 +292,7 @@ public class ProMode extends View {
 
     public void setSlider(float slider) {
         mSlider = slider;
-        mSettingsManager.setFocusDistance(mSlider * minFocus);
+        mSettingsManager.setFocusDistance(SettingsManager.KEY_FOCUS_DISTANCE, mSlider, minFocus);
         mUI.updateProModeText(mMode, "Manual");
         invalidate();
     }

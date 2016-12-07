@@ -1928,6 +1928,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mFirstPreviewLoaded = false;
         stopBackgroundThread();
         mLastJpegData = null;
+        setProModeVisible();
     }
 
     @Override
@@ -2142,14 +2143,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         });
         mUI.enableShutter(true);
         mUI.enableVideo(true);
-        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
-        boolean promode = false;
-        if (scene != null) {
-            int mode = Integer.parseInt(scene);
-            if (mode == SettingsManager.SCENE_MODE_PROMODE_INT) promode = true;
-        }
-        mUI.initializeProMode(promode);
+        setProModeVisible();
 
+        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if(isPanoSetting(scene)) {
             mActivity.onModuleSelected(ModuleSwitcher.PANOCAPTURE_MODULE_INDEX);
         }
@@ -4203,5 +4199,17 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void keepScreenOn() {
         mHandler.removeMessages(CLEAR_SCREEN_DELAY);
         mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    private void setProModeVisible() {
+        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        boolean promode = false;
+        if (scene != null) {
+            int mode = Integer.parseInt(scene);
+            if (mode == SettingsManager.SCENE_MODE_PROMODE_INT) {
+                promode = true;
+            }
+        }
+        mUI.initializeProMode(!mPaused && promode);
     }
 }
