@@ -56,11 +56,14 @@ import android.media.ImageReader;
 import android.media.MediaActionSound;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
+import android.media.EncoderCapabilities;
+import android.media.EncoderCapabilities.VideoEncoderCap;
 import android.net.Uri;
 import android.os.Debug;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Bundle;
 import android.os.Message;
 import android.os.SystemClock;
 import android.provider.MediaStore;
@@ -235,6 +238,13 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mIsRefocus = false;
     private int mChosenImageFormat;
     private Toast mToast;
+
+    private boolean mStartRecPending = false;
+    private boolean mStopRecPending = false;
+
+    boolean mUnsupportedResolution = false;
+
+    private static final int SDCARD_SIZE_LIMIT = 4000 * 1024 * 1024;
 
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -2603,30 +2613,54 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private void startRecordingVideo(final int cameraId) {
+    private boolean startRecordingVideo(final int cameraId) {
         if (null == mCameraDevice[cameraId]) {
-            return;
+            return false;
         }
         Log.d(TAG, "StartRecordingVideo " + cameraId);
+        mStartRecPending = true;
         mIsRecordingVideo = true;
         mMediaRecorderPausing = false;
         mUI.hideUIwhileRecording();
-        mUI.clearFocus();
-        mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[cameraId]);
-        mState[cameraId] = STATE_PREVIEW;
-        mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
-        closePreviewSession();
-        mFrameProcessor.onClose();
-        boolean changed = mUI.setPreviewSize(mVideoPreviewSize.getWidth(),
-                mVideoPreviewSize.getHeight());
-        if (changed) {
-            mUI.hideSurfaceView();
-            mUI.showSurfaceView();
+
+        mActivity.updateStorageSpaceAndHint();
+        if (mActivity.getStorageSpaceBytes() <= Storage.LOW_STORAGE_THRESHOLD_BYTES) {
+            Log.w(TAG, "Storage issue, ignore the start request");
+            mStartRecPending = false;
+            mIsRecordingVideo = false;
+            return false;
         }
-        mUI.resetTrackingFocus();
 
         try {
             setUpMediaRecorder(cameraId);
+            if (mUnsupportedResolution == true ) {
+                Log.v(TAG, "Unsupported Resolution according to target");
+                mStartRecPending = false;
+                mIsRecordingVideo = false;
+                return false;
+            }
+            if (mMediaRecorder == null) {
+                Log.e(TAG, "Fail to initialize media recorder");
+                mStartRecPending = false;
+                mIsRecordingVideo = false;
+                return false;
+            }
+
+            requestAudioFocus();
+            mUI.clearFocus();
+            mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[cameraId]);
+            mState[cameraId] = STATE_PREVIEW;
+            mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+            closePreviewSession();
+            mFrameProcessor.onClose();
+            boolean changed = mUI.setPreviewSize(mVideoPreviewSize.getWidth(),
+                    mVideoPreviewSize.getHeight());
+            if (changed) {
+                mUI.hideSurfaceView();
+                mUI.showSurfaceView();
+            }
+            mUI.resetTrackingFocus();
+
             createVideoSnapshotImageReader();
             mVideoRequestBuilder = mCameraDevice[cameraId].createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             mVideoRequestBuilder.setTag(cameraId);
@@ -2676,7 +2710,17 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         + e.getMessage());
                             e.printStackTrace();
                         }
-                        mMediaRecorder.start();
+                        try {
+                            mMediaRecorder.start(); // Recording is now started
+                        } catch (RuntimeException e) {
+                            Toast.makeText(mActivity,"Could not start media recorder.\n " +
+                                    "Can't start video recording.", Toast.LENGTH_LONG).show();
+                            releaseMediaRecorder();
+                            releaseAudioFocus();
+                            mStartRecPending = false;
+                            mIsRecordingVideo = false;
+                            return;
+                        }
                         mUI.clearFocus();
                         mUI.resetPauseButton();
                         mRecordingTotalTime = 0L;
@@ -2709,7 +2753,17 @@ public class CaptureModule implements CameraModule, PhotoController,
                         } catch (CameraAccessException e) {
                             e.printStackTrace();
                         }
-                        mMediaRecorder.start();
+                        try {
+                            mMediaRecorder.start(); // Recording is now started
+                        } catch (RuntimeException e) {
+                            Toast.makeText(mActivity,"Could not start media recorder.\n " +
+                                    "Can't start video recording.", Toast.LENGTH_LONG).show();
+                            releaseMediaRecorder();
+                            releaseAudioFocus();
+                            mStartRecPending = false;
+                            mIsRecordingVideo = false;
+                            return;
+                        }
                         mUI.clearFocus();
                         mUI.resetPauseButton();
                         mRecordingTotalTime = 0L;
@@ -2730,6 +2784,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         } catch (IOException e) {
             e.printStackTrace();
         }
+        mStartRecPending = false;
+        return true;
     }
 
     private void updateTimeLapseSetting() {
@@ -2903,6 +2959,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void stopRecordingVideo(int cameraId) {
         Log.d(TAG, "stopRecordingVideo " + cameraId);
 
+        mStopRecPending = true;
         boolean shouldAddToMediaStoreNow = false;
         // Stop recording
         mFrameProcessor.setVideoOutputSurface(null);
@@ -2916,7 +2973,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             AccessibilityUtils.makeAnnouncement(mUI.getVideoButton(),
                     mActivity.getString(R.string.video_recording_stopped));
         } catch (RuntimeException e) {
-            Log.e(TAG, "MediaRecoder stop fail",  e);
+            Log.w(TAG, "MediaRecoder stop fail",  e);
             if (mVideoFilename != null) deleteVideoFile(mVideoFilename);
         }
         if (shouldAddToMediaStoreNow) {
@@ -2943,6 +3000,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         createSessions();
         mUI.showUIafterRecording();
         mUI.resetTrackingFocus();
+        mStopRecPending = false;
     }
 
     private void closePreviewSession() {
@@ -3024,11 +3082,19 @@ public class CaptureModule implements CameraModule, PhotoController,
             size = CameraSettings.getTimeLapseQualityFor(size);
         }
 
+        Intent intent = mActivity.getIntent();
+        Bundle myExtras = intent.getExtras();
+
         if (mMediaRecorder == null) mMediaRecorder = new MediaRecorder();
 
         updateHFRSetting();
         boolean hfr = mHighSpeedCapture && !mHighSpeedRecordingMode;
+
         mProfile = CamcorderProfile.get(cameraId, size);
+        int videoWidth = mProfile.videoFrameWidth;
+        int videoHeight = mProfile.videoFrameHeight;
+        mUnsupportedResolution = false;
+
         int videoEncoder = SettingTranslation
                 .getVideoEncoder(mSettingsManager.getValue(SettingsManager.KEY_VIDEO_ENCODER));
         int audioEncoder = SettingTranslation
@@ -3081,6 +3147,54 @@ public class CaptureModule implements CameraModule, PhotoController,
             mMediaRecorder.setVideoEncodingBitRate(scaledBitrate);
         }
 
+        long requestedSizeLimit = 0;
+        if (isVideoCaptureIntent() && myExtras != null) {
+            requestedSizeLimit = myExtras.getLong(MediaStore.EXTRA_SIZE_LIMIT);
+        }
+        //check if codec supports the resolution, otherwise throw toast
+        List<VideoEncoderCap> videoEncoders = EncoderCapabilities.getVideoEncoders();
+        for (VideoEncoderCap videoEnc: videoEncoders) {
+            if (videoEnc.mCodec == videoEncoder) {
+                if (videoWidth > videoEnc.mMaxFrameWidth ||
+                        videoWidth < videoEnc.mMinFrameWidth ||
+                        videoHeight > videoEnc.mMaxFrameHeight ||
+                        videoHeight < videoEnc.mMinFrameHeight) {
+                    Log.e(TAG, "Selected codec " + videoEncoder +
+                            " does not support "+ videoWidth + "x" + videoHeight
+                            + " resolution");
+                    Log.e(TAG, "Codec capabilities: " +
+                            "mMinFrameWidth = " + videoEnc.mMinFrameWidth + " , " +
+                            "mMinFrameHeight = " + videoEnc.mMinFrameHeight + " , " +
+                            "mMaxFrameWidth = " + videoEnc.mMaxFrameWidth + " , " +
+                            "mMaxFrameHeight = " + videoEnc.mMaxFrameHeight);
+                    mUnsupportedResolution = true;
+                    RotateTextToast.makeText(mActivity, R.string.error_app_unsupported,
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                break;
+            }
+        }
+
+        // Set maximum file size.
+        long maxFileSize = mActivity.getStorageSpaceBytes() - Storage.LOW_STORAGE_THRESHOLD_BYTES;
+        if (requestedSizeLimit > 0 && requestedSizeLimit < maxFileSize) {
+            maxFileSize = requestedSizeLimit;
+        }
+
+        if (Storage.isSaveSDCard() && maxFileSize > SDCARD_SIZE_LIMIT) {
+            maxFileSize = SDCARD_SIZE_LIMIT;
+        }
+        Log.i(TAG, "MediaRecorder setMaxFileSize: " + maxFileSize);
+        try {
+            mMediaRecorder.setMaxFileSize(maxFileSize);
+        } catch (RuntimeException exception) {
+            // We are going to ignore failure of setMaxFileSize here, as
+            // a) The composer selected may simply not support it, or
+            // b) The underlying media framework may not handle 64-bit range
+            // on the size restriction.
+        }
+
         Location loc = mLocationManager.getCurrentLocation();
         if (loc != null) {
             mMediaRecorder.setLocation((float) loc.getLatitude(),
@@ -3110,11 +3224,17 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void onVideoButtonClick() {
+        if (isRecorderReady() == false) return;
+
         if (getCameraMode() == DUAL_MODE) return;
         if (mIsRecordingVideo) {
             stopRecordingVideo(getMainCameraId());
         } else {
-            startRecordingVideo(getMainCameraId());
+            if (!startRecordingVideo(getMainCameraId())) {
+                // Show ui when start recording failed.
+                mUI.showUIafterRecording();
+                releaseMediaRecorder();
+            }
         }
     }
 
@@ -4026,6 +4146,36 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void showToast(String tips) {
+        if (mToast == null) {
+            mToast = Toast.makeText(mActivity, tips, Toast.LENGTH_LONG);
+        }
+        mToast.setText(tips);
+        mToast.show();
+    }
+
+    private boolean isRecorderReady() {
+        if ((mStartRecPending == true || mStopRecPending == true))
+            return false;
+        else
+            return true;
+    }
+
+    /*
+     * Make sure we're not recording music playing in the background, ask the
+     * MediaPlaybackService to pause playback.
+     */
+    private void requestAudioFocus() {
+        AudioManager am = (AudioManager)mActivity.getSystemService(Context.AUDIO_SERVICE);
+        // Send request to obtain audio focus. This will stop other
+        // music stream.
+        int result = am.requestAudioFocus(null, AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
+            Log.v(TAG, "Audio focus request failed");
+        }
+    }
+
     private void releaseAudioFocus() {
         AudioManager am = (AudioManager)mActivity.getSystemService(Context.AUDIO_SERVICE);
         int result = am.abandonAudioFocus(null);
@@ -4034,12 +4184,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private void showToast(String tips) {
-        if (mToast == null) {
-            mToast = Toast.makeText(mActivity, tips, Toast.LENGTH_LONG);
-        }
-        mToast.setText(tips);
-        mToast.show();
+    private boolean isVideoCaptureIntent() {
+        String action = mActivity.getIntent().getAction();
+        return (MediaStore.ACTION_VIDEO_CAPTURE.equals(action));
     }
 
     private void resetScreenOn() {
