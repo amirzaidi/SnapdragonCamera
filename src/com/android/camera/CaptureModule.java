@@ -1183,8 +1183,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[id] = STATE_WAITING_TOUCH_FOCUS;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             setAFModeToPreview(id, mControlAFMode);
-            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, mCameraId[id]);
-            message.arg1 = id;
+            Message message = mCameraHandler.obtainMessage(
+                    CANCEL_TOUCH_FOCUS, Integer.valueOf(mCameraId[id]), 0);
             mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
         } catch (CameraAccessException e) {
             e.printStackTrace();
