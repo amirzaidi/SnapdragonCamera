@@ -52,6 +52,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -623,18 +624,26 @@ public class ClearSightImageProcessor {
                 ReprocessableImage bayer = mBayerFrames.peek();
                 ReprocessableImage mono = mMonoFrames.peek();
 
+                long bayerTsSOF = bayer.mCaptureResult.get(CaptureResult.SENSOR_TIMESTAMP);
+                long bayerTsEOF = bayerTsSOF + bayer.mCaptureResult.get(
+                        CaptureResult.SENSOR_EXPOSURE_TIME);
+                long monoTsSOF = mono.mCaptureResult.get(CaptureResult.SENSOR_TIMESTAMP);
+                long monoTsEOF = monoTsSOF + mono.mCaptureResult.get(
+                        CaptureResult.SENSOR_EXPOSURE_TIME);
+
+
                 Log.d(TAG,
-                        "checkForValidFramePair - bayer ts: "
-                                + bayer.mImage.getTimestamp() + " mono ts: "
-                                + mono.mImage.getTimestamp());
+                        "checkForValidFramePair - bayer ts SOF: "
+                                + bayerTsSOF + ", EOF: " + bayerTsEOF
+                                + ", mono ts SOF: " + monoTsSOF + ", EOF: " + monoTsEOF);
                 Log.d(TAG,
-                        "checkForValidFramePair - difference: "
-                                + Math.abs(bayer.mImage.getTimestamp()
-                                        - mono.mImage.getTimestamp()));
+                        "checkForValidFramePair - difference SOF: "
+                                + Math.abs(bayerTsSOF - monoTsSOF)
+                                + ", EOF: " + Math.abs(bayerTsEOF - monoTsEOF));
                 // if timestamps are within threshold, keep frames
-                if (Math.abs(bayer.mImage.getTimestamp()
-                        - mono.mImage.getTimestamp()) > mTimestampThresholdNs) {
-                    if(bayer.mImage.getTimestamp() > mono.mImage.getTimestamp()) {
+                if ((Math.abs(bayerTsSOF - monoTsSOF) > mTimestampThresholdNs) &&
+                        (Math.abs(bayerTsEOF - monoTsEOF) > mTimestampThresholdNs)) {
+                    if(bayerTsSOF > monoTsSOF) {
                         Log.d(TAG, "checkForValidFramePair - toss mono");
                         // no match, toss
                         mono = mMonoFrames.poll();
