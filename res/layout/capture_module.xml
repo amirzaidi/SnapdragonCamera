@@ -67,30 +67,24 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.android.camera.ui.RotateLayout
-        android:id="@+id/recording_time_rect"
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <LinearLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
+        <com.android.camera.ui.RotateLayout
+            android:id="@+id/recording_time_rect"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <com.android.camera.PauseButton
-                android:id="@+id/video_pause"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="70dp"
-                android:padding="23dp"
-                android:src="@drawable/btn_pause_recording"/>
-
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:visibility="gone"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="80dp">
             <include
                 android:id="@+id/labels"
                 layout="@layout/viewfinder_labels_video"/>
-        </LinearLayout>
-    </com.android.camera.ui.RotateLayout>
+        </com.android.camera.ui.RotateLayout>
+    </FrameLayout>
 
     <include
         style="@style/CameraControls"

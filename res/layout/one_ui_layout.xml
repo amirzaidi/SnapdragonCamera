@@ -40,8 +40,8 @@
 
     <com.android.camera.ShutterButton
         android:id="@+id/shutter_button"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="@dimen/one_ui_bottom_large"
+        android:layout_height="@dimen/one_ui_bottom_large"
         android:clickable="true"
         android:contentDescription="@string/accessibility_shutter_button"
         android:focusable="true"
@@ -50,13 +50,23 @@
 
     <com.android.camera.ui.RotateImageView
         android:id="@+id/video_button"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
+        android:layout_width="@dimen/one_ui_bottom_small"
+        android:layout_height="@dimen/one_ui_bottom_small"
         android:clickable="true"
         android:contentDescription="@string/accessibility_shutter_button"
         android:focusable="true"
         android:scaleType="fitCenter"
         android:src="@drawable/video_capture" />
+
+    <com.android.camera.PauseButton
+        android:id="@+id/video_pause"
+        android:layout_width="@dimen/one_ui_bottom_small"
+        android:layout_height="@dimen/one_ui_bottom_small"
+        android:focusable="true"
+        android:clickable="true"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        android:src="@drawable/btn_pause_recording"/>
 
     <com.android.camera.ui.RotateImageView
         android:id="@+id/preview_thumb"
