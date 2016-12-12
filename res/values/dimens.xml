@@ -180,4 +180,7 @@
     <dimen name="refocus_circle_diameter_3">95dp</dimen>
     <dimen name="refocus_cross_length">19dp</dimen>
     <dimen name="refocus_stroke_width">2dp</dimen>
+
+    <dimen name="one_ui_bottom_large">75dp</dimen>
+    <dimen name="one_ui_bottom_small">55dp</dimen>
 </resources>

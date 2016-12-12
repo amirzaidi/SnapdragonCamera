@@ -36,11 +36,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.util.Log;
 
+import com.android.camera.ui.RotateImageView;
+
 /**
  * A button designed to be used for the on-screen recording
  * pausing-continue button.
  */
-public class PauseButton extends ImageView {
+public class PauseButton extends RotateImageView {
 
     public interface OnPauseButtonListener {
         void onButtonPause();

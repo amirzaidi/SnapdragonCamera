@@ -72,6 +72,7 @@ import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.camera.exif.ExifInterface;
@@ -167,6 +168,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final int LONGSHOT_CANCEL_THRESHOLD = 40 * 1024 * 1024;
 
     private static final int NORMAL_SESSION_MAX_FPS = 60;
+
+    private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
     MeteringRectangle[][] mAFRegions = new MeteringRectangle[MAX_NUM_CAM][];
     MeteringRectangle[][] mAERegions = new MeteringRectangle[MAX_NUM_CAM][];
@@ -289,6 +292,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private int mTimeBetweenTimeLapseFrameCaptureMs = 0;
     private boolean mCaptureTimeLapse = false;
     private CamcorderProfile mProfile;
+    private static final int CLEAR_SCREEN_DELAY = 4;
     private static final int UPDATE_RECORD_TIME = 5;
     private ContentValues mCurrentVideoValues;
     private String mVideoFilename;
@@ -535,8 +539,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         public void onError(CameraDevice cameraDevice, int error) {
             int id = Integer.parseInt(cameraDevice.getId());
             Log.e(TAG, "onError " + id + " " + error);
-            cameraDevice.close();
-            mCameraDevice[id] = null;
             mCameraOpenCloseLock.release();
             mCamerasOpened = false;
             if (null != mActivity) {
@@ -1034,7 +1036,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void reinit() {
-        mSettingsManager.reinit(getMainCameraId());
+        mSettingsManager.init();
     }
 
     public boolean isRefocus() {
@@ -1185,8 +1187,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[id] = STATE_WAITING_TOUCH_FOCUS;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             setAFModeToPreview(id, mControlAFMode);
-            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, mCameraId[id]);
-            message.arg1 = id;
+            Message message = mCameraHandler.obtainMessage(
+                    CANCEL_TOUCH_FOCUS, Integer.valueOf(mCameraId[id]), 0);
             mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -1899,6 +1901,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (selfieThread != null) {
             selfieThread.interrupt();
         }
+        resetScreenOn();
         mUI.stopSelfieFlash();
     }
 
@@ -2681,6 +2684,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mUI.enableShutter(false);
                         mUI.showRecordingUI(true, true);
                         updateRecordingTime();
+                        keepScreenOn();
                     }
 
                     @Override
@@ -2712,6 +2716,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mRecordingStartTime = SystemClock.uptimeMillis();
                         mUI.showRecordingUI(true, false);
                         updateRecordingTime();
+                        keepScreenOn();
                     }
 
                     @Override
@@ -2917,7 +2922,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (shouldAddToMediaStoreNow) {
             saveVideo();
         }
-
+        keepScreenOnAwhile();
         // release media recorder
         releaseMediaRecorder();
         releaseAudioFocus();
@@ -3934,6 +3939,11 @@ public class CaptureModule implements CameraModule, PhotoController,
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
+                case CLEAR_SCREEN_DELAY: {
+                    mActivity.getWindow().clearFlags(
+                            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    break;
+                }
                 case UPDATE_RECORD_TIME: {
                     updateRecordingTime();
                     break;
@@ -4031,5 +4041,21 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         mToast.setText(tips);
         mToast.show();
+    }
+
+    private void resetScreenOn() {
+        mHandler.removeMessages(CLEAR_SCREEN_DELAY);
+        mActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    private void keepScreenOnAwhile() {
+        mHandler.removeMessages(CLEAR_SCREEN_DELAY);
+        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        mHandler.sendEmptyMessageDelayed(CLEAR_SCREEN_DELAY, SCREEN_DELAY);
+    }
+
+    private void keepScreenOn() {
+        mHandler.removeMessages(CLEAR_SCREEN_DELAY);
+        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 }

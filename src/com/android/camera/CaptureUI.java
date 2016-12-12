@@ -194,7 +194,15 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private void previewUIReady() {
         if((mSurfaceHolder != null && mSurfaceHolder.getSurface().isValid())) {
             mModule.onPreviewUIReady();
-            mActivity.updateThumbnail(mThumbnail);
+            if (mIsVideoUI && mThumbnail != null) {
+                mThumbnail.setVisibility(View.INVISIBLE);
+                mThumbnail = null;
+                mActivity.updateThumbnail(mThumbnail);
+            } else if (!mIsVideoUI){
+                if (mThumbnail == null)
+                    mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
+                mActivity.updateThumbnail(mThumbnail);
+            }
         }
     }
 
@@ -369,7 +377,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mRenderOverlay.requestLayout();
 
         mActivity.setPreviewGestures(mGestures);
-        ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
+        mRecordingTimeRect.setVisibility(View.GONE);
         showFirstTimeHelp();
     }
 
@@ -590,13 +598,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             }
             mVideoButton.setImageResource(R.drawable.video_stop);
             mRecordingTimeView.setText("");
-            ((ViewGroup)mRootView).addView(mRecordingTimeRect);
+            mRecordingTimeRect.setVisibility(View.VISIBLE);
             mMuteButton.setVisibility(View.VISIBLE);
         } else {
             mFlashButton.setVisibility(View.VISIBLE);
             mFlashButton.init(false);
             mVideoButton.setImageResource(R.drawable.video_capture);
-            ((ViewGroup)mRootView).removeView(mRecordingTimeRect);
+            mRecordingTimeRect.setVisibility(View.GONE);
             mMuteButton.setVisibility(View.INVISIBLE);
         }
     }
@@ -609,25 +617,26 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void hideUIwhileRecording() {
-        mCameraControls.setWillNotDraw(true);
+        mCameraControls.setVideoMode(true);
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         mFilterModeSwitcher.setVisibility(View.INVISIBLE);
         mSceneModeSwitcher.setVisibility(View.INVISIBLE);
-
         String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
         if(value != null && value.equals("0")) {
             mMakeupButton.setVisibility(View.INVISIBLE);
         }
         mIsVideoUI = true;
+        mPauseButton.setVisibility(View.VISIBLE);
     }
 
     public void showUIafterRecording() {
-        mCameraControls.setWillNotDraw(false);
+        mCameraControls.setVideoMode(false);
         mFrontBackSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
         mMakeupButton.setVisibility(View.VISIBLE);
         mIsVideoUI = false;
+        mPauseButton.setVisibility(View.INVISIBLE);
     }
 
     public void addFilterMode() {
@@ -1198,13 +1207,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             }
         }
         if (mRecordingTimeRect != null) {
-            if (orientation == 180) {
-                mRecordingTimeRect.setOrientation(0, false);
-                mRecordingTimeView.setRotation(180);
-            } else {
-                mRecordingTimeView.setRotation(0);
-                mRecordingTimeRect.setOrientation(orientation, false);
-            }
+            mRecordingTimeView.setRotation(-orientation);
         }
         if (mFaceView != null) {
             mFaceView.setDisplayRotation(orientation);
