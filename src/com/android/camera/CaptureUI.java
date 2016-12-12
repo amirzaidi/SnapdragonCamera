@@ -228,7 +228,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         return mDisplaySize;
     }
 
-    public CaptureUI(CameraActivity activity, CaptureModule module, View parent) {
+    public CaptureUI(CameraActivity activity, final CaptureModule module, View parent) {
         mActivity = activity;
         mModule = module;
         mRootView = parent;
@@ -298,8 +298,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                toggleMakeup();
-                updateMenus();
+                if (module != null && !module.isAllSessionClosed()) {
+                    toggleMakeup();
+                    updateMenus();
+                }
             }
         });
         setMakeupButtonIcon();
