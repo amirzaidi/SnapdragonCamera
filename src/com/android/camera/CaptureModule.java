@@ -923,7 +923,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                         @Override
                         public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                            Log.e(TAG, "cameracapturesession - onConfigureFailed "+id);
+                            Log.e(TAG, "cameracapturesession - onConfigureFailed "+ id);
                             if (mActivity.isFinishing()) {
                                 return;
                             }
@@ -1144,6 +1144,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void lockFocus(int id) {
         if (mActivity == null || mCameraDevice[id] == null
                 || !checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            mUI.enableShutter(true);
             warningToast("Camera is not ready yet to take a picture.");
             return;
         }
@@ -3343,7 +3344,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void estimateJpegFileSize() {
-    String quality = mSettingsManager.getValue(SettingsManager
+        String quality = mSettingsManager.getValue(SettingsManager
             .KEY_JPEG_QUALITY);
         int[] ratios = mActivity.getResources().getIntArray(R.array.jpegquality_compression_ratio);
         String[] qualities = mActivity.getResources().getStringArray(
@@ -3903,6 +3904,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void restartSession(boolean isSurfaceChanged) {
+        Log.d(TAG, "restartSession isSurfaceChanged = " + isSurfaceChanged);
         if (isAllSessionClosed()) return;
 
         closeProcessors();
@@ -3921,7 +3923,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(isTrackingFocusSettingOn()) {
             mUI.resetTrackingFocus();
         }
+        resetStateMachine();
     }
+
+    private void resetStateMachine() {
+        for (int i = 0; i < MAX_NUM_CAM; i++) {
+            mState[i] = STATE_PREVIEW;
+        }
+        mUI.enableShutter(true);
+    }
+
 
     private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes, int screenW, int
             screenH) {
