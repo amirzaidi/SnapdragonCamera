@@ -16,12 +16,14 @@
 
 package com.android.camera;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -645,7 +647,12 @@ public class PhotoModule
         /* Enable the location at the begining, always.
            If the user denies the permission, it will be disabled
            right away due to exception */
-        enableRecordingLocation(true);
+        boolean enableRecordingLocation = false;
+        if (mActivity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            enableRecordingLocation = true;
+        }
+        enableRecordingLocation(enableRecordingLocation);
     }
 
     @Override
