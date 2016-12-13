@@ -561,6 +561,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public void initFlashButton() {
         mFlashButton.init(false);
+        enableView(mFlashButton, SettingsManager.KEY_FLASH_MODE);
     }
 
     public void initSceneModeButton() {
@@ -601,8 +602,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private void enableView(View view, String key) {
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         SettingsManager.Values values = map.get(key);
-        boolean enabled = values.overriddenValue == null;
-        view.setEnabled(enabled);
+        if ( values != null ) {
+            boolean enabled = values.overriddenValue == null;
+            view.setEnabled(enabled);
+        }
     }
 
     public void showTimeLapseUI(boolean enable) {
@@ -1504,6 +1507,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                     }
                     showSceneModeLabel();
                 }
+            }else if(state.key.equals(SettingsManager.KEY_FLASH_MODE) ) {
+                enableView(mFlashButton, SettingsManager.KEY_FLASH_MODE);
             }
         }
     }
