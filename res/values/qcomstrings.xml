@@ -1063,5 +1063,22 @@
     <string name="perf_camera2_preferences_category_photo" translatable="true">Still camera</string>
     <string name="perf_camera2_preferences_category_video" translatable="true">Video camera</string>
     <string name="perf_camera2_preferences_category_system" translatable="true">System</string>
+
+    <string name="pref_camera2_scene_mode_dual_camera_instructional_content" translatable="true">In dual camera mode, your pictures will be clearer. You can also apply background effects, by editing your dual camera pictures in the Gallery.</string>
+    <string name="pref_camera2_scene_mode_ubi_focus_instructional_content"  translatable="true">With UbiFocus, your camera will take five pictures and combine them into one picture,where everything is in focus. You can choose to re-focus, after you take the picture.</string>
+    <string name="pref_camera2_scene_mode_opti_zoom_instructional_content"  translatable="true">Use Optizoom when you want to zoom in for a clear picture.You can zoom before, or after taking the picture.</string>
+    <string name="pref_camera2_scene_mode_sports_instructional_content"  translatable="true">Sports mode helps you take better sports or action shots.\n\nImporves your photos, but has no effect on video recording.</string>
+    <string name="pref_camera2_scene_mode_hdr_instructional_content"  translatable="true">When you are in mixed lighting conditions such as low light and backlit scenes select "HDR" for best possible pictures.</string>
+    <string name="pref_camera2_scene_mode_best_photo_instructional_content"  translatable="true">Allows you to take a burst of 10 photos, and you can choose the best one(s).</string>
+    <string name="pref_camera2_scene_mode_chroma_flash_instructional_content"  translatable="true">With ChromaFlash, the lighting in your flash photos will be optimized for all of the people and objects in your pictures.This feature applies only to the back camera.</string>
+    <string name="pref_camera2_scene_mode_sharp_photo_instructional_content"  translatable="true">Sharp Phot reduces blur that is due to motion in the scene, or due to hand motion.</string>
+    <string name="pref_camera2_scene_mode_tracking_focus_instructional_content"  translatable="true">Allows you to track and focus a selected person or object while taking pictures or videos. To start, position the focus rectangle on a person or object you want to track.</string>
+    <string name="pref_camera2_scene_mode_time_lapse_instructional_content"  translatable="true">With Time Lapse, you can transform a long video recording into a few seconds of video.This effect applies to videos, but not photos.</string>
+    <string name="pref_camera2_scene_mode_panorama_instructional_content"  translatable="true">Allows you to pan left or right to take a wide landscape photo. You can alse pan up or down to take tall photos.</string>
+    <string name="pref_camera2_scene_mode_blur_buster_instructional_content"  translatable="true">BlurBuster reduces blur from shaky hands.It can be helpful when taking photos in difficult places.</string>
+    <string name="pref_camera2_scene_mode_pro_instructional_content"  translatable="true">With Pro Mode, you can manually control settings for ISO,Exposure, White Balance, and Focus. You will have easy access to all of these advanced settings</string>
+
+    <string name="pref_camera2_not_show_again">Do not show again</string>
+    <string name="pref_camera2_scene_mode_instructional_ok" translatable="true">OK</string>
 </resources>
 
