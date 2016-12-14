@@ -655,7 +655,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 (LayoutInflater)mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.scene_mode_instructional, null);
 
-        int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
+       final int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
         TextView name = (TextView)view.findViewById(R.id.scene_mode_name);
         CharSequence sceneModeNameArray[] =
                 mSettingsManager.getEntries(SettingsManager.KEY_SCENE_MODE);
