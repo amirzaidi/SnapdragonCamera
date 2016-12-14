@@ -120,6 +120,7 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
     private static final boolean DEBUG = false; //TODO: This has to be false before release
     private BitmapArrayOutputStream mBitmapStream;
     private static boolean mIsSupported = false;
+    private Object mBitmapStreamLock = new Object();
 
     private boolean mIsFrameProcessing = false;
     enum PANO_STATUS {
@@ -337,13 +338,15 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
 
     public void onPause() {
         mSensorManager.unregisterListener(this, mRotationSensor);
-        if(mBitmapStream != null) {
-            try {
-                mBitmapStream.close();
-            } catch (IOException e) {
-                //Ignore
+        synchronized (mBitmapStreamLock) {
+            if(mBitmapStream != null) {
+                try {
+                    mBitmapStream.close();
+                } catch (IOException e) {
+                    //Ignore
+                }
+                mBitmapStream = null;
             }
-            mBitmapStream = null;
         }
     }
 
@@ -510,13 +513,16 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
         }
 
         private void doTask(BitmapTask bitmapTask) {
-            if(mBitmapStream == null) {
-                mBitmapStream = new BitmapArrayOutputStream(1024*1204);
+            int rtv = -1;
+            synchronized (mBitmapStreamLock) {
+                if(mBitmapStream == null) {
+                    mBitmapStream = new BitmapArrayOutputStream(1024*1204);
+                }
+                mBitmapStream.reset();
+                bitmapTask.bitmap.compress(Bitmap.CompressFormat.JPEG, 100, mBitmapStream);
+                rtv = callNativeProcessKeyFrame(mBitmapStream.toByteArray(), mBitmapStream.size(),
+                        bitmapTask.x, bitmapTask.y, 0, bitmapTask.dir);
             }
-            mBitmapStream.reset();
-            bitmapTask.bitmap.compress(Bitmap.CompressFormat.JPEG, 100, mBitmapStream);
-            int rtv = callNativeProcessKeyFrame(mBitmapStream.toByteArray(), mBitmapStream.size(),
-                    bitmapTask.x, bitmapTask.y, 0, bitmapTask.dir);
             if(rtv < 0) {
                 mShouldFinish = true;
                 stopPano(false, mActivity.getResources().getString(R.string.panocapture_direction_is_changed));
