@@ -213,6 +213,59 @@
         <item>@drawable/promode</item>
     </array>
 
+    <array name="pref_camera2_scenemode_black_thumbnails" translatable="false">
+        <item>@drawable/ic_scene_mode_black_auto</item>
+        <item>@drawable/ic_scene_mode_black_dual_camera</item>
+        <item>@drawable/ic_scene_mode_black_hdr</item>
+        <item>@drawable/ic_scene_mode_black_ubifocus</item>
+        <item>@drawable/ic_scene_mode_black_optizoom</item>
+        <item>@drawable/ic_scene_mode_black_portrait</item>
+        <item>@drawable/ic_scene_mode_black_landscape</item>
+        <item>@drawable/ic_scene_mode_black_sports</item>
+        <item>@drawable/ic_scene_mode_black_flowers</item>
+        <item>@drawable/ic_scene_mode_black_backlight</item>
+        <item>@drawable/ic_scene_mode_black_candlelight</item>
+        <item>@drawable/ic_scene_mode_black_sunset</item>
+        <item>@drawable/ic_scene_mode_black_night</item>
+        <item>@drawable/ic_scene_mode_black_beach</item>
+        <item>@drawable/ic_scene_mode_black_snow</item>
+        <item>@drawable/ic_scene_mode_smartauto</item>
+        <item>@drawable/ic_scene_mode_black_best_photo</item>
+        <item>@drawable/ic_scene_mode_black_chroma_flash</item>
+        <item>@drawable/ic_scene_mode_black_blur_buster</item>
+        <item>@drawable/ic_scene_mode_black_sharp_photo</item>
+        <item>@drawable/ic_scene_mode_black_tracking_focus</item>
+        <item>@drawable/ic_scene_mode_black_panorama</item>
+        <item>@drawable/ic_scene_mode_black_dual_camera</item>
+    </array>
+
+    <!-- Camera Preferences Scene Mode dialog box entries -->
+    <string-array name="pref_camera2_scenemode_instructional_entries" translatable="false">
+        <item>@string/pref_camera_scenemode_entry_auto</item>
+        <item>@string/pref_camera2_scene_mode_dual_camera_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_hdr_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_ubi_focus_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_opti_zoom_instructional_content</item>
+        <item>""</item>
+        <item>""</item>
+        <item>@string/pref_camera2_scene_mode_sports_instructional_content</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>@string/pref_camera2_scene_mode_best_photo_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_chroma_flash_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_blur_buster_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_sharp_photo_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_tracking_focus_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_panorama_instructional_content</item>
+        <item>@string/pref_camera2_scene_mode_pro_instructional_content</item>
+    </string-array>
+
     <string-array name="pref_camera2_whitebalance_entryvalues" translatable="false">
         <item>1</item>
         <item>2</item>

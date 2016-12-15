@@ -73,7 +73,7 @@ public class ComboPreferences implements
         return context.getPackageName() + "_preferences_" + cameraId;
     }
 
-    private static String getGlobalSharedPreferencesName(Context context) {
+    public static String getGlobalSharedPreferencesName(Context context) {
         return context.getPackageName() + "_preferences_camera";
     }
 

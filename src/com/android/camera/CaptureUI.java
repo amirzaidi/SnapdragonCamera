@@ -38,8 +38,10 @@ import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicYuvToRGB;
 import android.renderscript.Type;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -49,12 +51,14 @@ import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.Camera2FaceView;
 import com.android.camera.ui.CameraControls;
@@ -186,10 +190,16 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private RotateImageView mMuteButton;
     private ImageView mSeekbarToggleButton;
     private View mProModeCloseButton;
+    private RotateLayout mSceneModeLabelRect;
+    private LinearLayout mSceneModeLabelView;
+    private TextView mSceneModeName;
+    private ImageView mSceneModeLabelCloseIcon;
+    private AlertDialog  mSceneModeInstructionalDialog = null;
 
     int mPreviewWidth;
     int mPreviewHeight;
     private boolean mIsVideoUI = false;
+    private boolean mIsSceneModeLabelClose = false;
 
     private void previewUIReady() {
         if((mSurfaceHolder != null && mSurfaceHolder.getSurface().isValid())) {
@@ -334,6 +344,17 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         RotateImageView muteButton = (RotateImageView) mRootView.findViewById(R.id.mute_button);
         muteButton.setVisibility(View.GONE);
 
+        mSceneModeLabelRect = (RotateLayout)mRootView.findViewById(R.id.scene_mode_label_rect);
+        mSceneModeName = (TextView)mRootView.findViewById(R.id.scene_mode_label);
+        mSceneModeLabelCloseIcon = (ImageView)mRootView.findViewById(R.id.scene_mode_label_close);
+        mSceneModeLabelCloseIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mIsSceneModeLabelClose = true;
+                mSceneModeLabelRect.setVisibility(View.GONE);
+            }
+        });
+
         mCameraControls = (OneUICameraControls) mRootView.findViewById(R.id.camera_controls);
         mFaceView = (Camera2FaceView) mRootView.findViewById(R.id.face_view);
 
@@ -426,6 +447,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initFilterModeButton();
         initFlashButton();
         setMakeupButtonIcon();
+        showSceneModeLabel();
         if(mModule.isTrackingFocusSettingOn()) {
             mTrackingFocusRenderer.setVisible(false);
             mTrackingFocusRenderer.setVisible(true);
@@ -539,6 +561,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public void initFlashButton() {
         mFlashButton.init(false);
+        enableView(mFlashButton, SettingsManager.KEY_FLASH_MODE);
     }
 
     public void initSceneModeButton() {
@@ -579,8 +602,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private void enableView(View view, String key) {
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         SettingsManager.Values values = map.get(key);
-        boolean enabled = values.overriddenValue == null;
-        view.setEnabled(enabled);
+        if ( values != null ) {
+            boolean enabled = values.overriddenValue == null;
+            view.setEnabled(enabled);
+        }
     }
 
     public void showTimeLapseUI(boolean enable) {
@@ -608,6 +633,117 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mMuteButton.setVisibility(View.INVISIBLE);
         }
     }
+
+    private boolean needShowInstructional() {
+        boolean needShow = true;
+        final SharedPreferences pref = mActivity.getSharedPreferences(
+                ComboPreferences.getGlobalSharedPreferencesName(mActivity), Context.MODE_PRIVATE);
+        int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
+        if ( index < 1 ) {
+            needShow = false;
+        }else{
+            final String instructionalKey = SettingsManager.KEY_SCENE_MODE + "_" + index;
+            needShow = pref.getBoolean(instructionalKey, false) ? false : true;
+        }
+
+        return needShow;
+
+    }
+
+    private void showSceneInstructionalDialog(int orientation) {
+        LayoutInflater inflater =
+                (LayoutInflater)mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.layout.scene_mode_instructional, null);
+
+        int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
+        TextView name = (TextView)view.findViewById(R.id.scene_mode_name);
+        CharSequence sceneModeNameArray[] =
+                mSettingsManager.getEntries(SettingsManager.KEY_SCENE_MODE);
+        name.setText(sceneModeNameArray[index]);
+
+        ImageView icon = (ImageView)view.findViewById(R.id.scene_mode_icon);
+        int[] resId = mSettingsManager.getResource(SettingsManager.KEY_SCEND_MODE_INSTRUCTIONAL,
+                SettingsManager.RESOURCE_TYPE_THUMBNAIL);
+        icon.setImageResource(resId[index]);
+
+        TextView instructional = (TextView)view.findViewById(R.id.scene_mode_instructional);
+        CharSequence instructionalArray[] =
+                mSettingsManager.getEntries(SettingsManager.KEY_SCEND_MODE_INSTRUCTIONAL);
+        if ( instructionalArray[index].length() == 0 ) {
+            //For now, not all scene mode has instructional
+            return;
+        }
+        instructional.setText(instructionalArray[index]);
+
+        final CheckBox remember = (CheckBox)view.findViewById(R.id.remember_selected);
+        Button ok = (Button)view.findViewById(R.id.scene_mode_instructional_ok);
+        ok.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+
+                if ( remember.isChecked()) {
+                    final SharedPreferences pref = mActivity.getSharedPreferences(
+                            ComboPreferences.getGlobalSharedPreferencesName(mActivity),
+                            Context.MODE_PRIVATE);
+
+                    String instructionalKey = SettingsManager.KEY_SCENE_MODE + "_" + index;
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putBoolean(instructionalKey, true);
+                    editor.commit();
+                }
+                mSceneModeInstructionalDialog.dismiss();
+                mSceneModeInstructionalDialog = null;
+            }
+        });
+
+        mSceneModeInstructionalDialog =
+                new AlertDialog.Builder(mActivity, AlertDialog.THEME_HOLO_LIGHT)
+                        .setView(view).create();
+        try {
+            mSceneModeInstructionalDialog.show();
+        }catch(Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        if ( orientation != 0 ) {
+            rotationSceneModeInstructionalDialog(view, orientation);
+        }
+    }
+
+    private int getScreenWidth() {
+        DisplayMetrics metric = new DisplayMetrics();
+        mActivity.getWindowManager().getDefaultDisplay().getMetrics(metric);
+        return metric.widthPixels < metric.heightPixels ? metric.widthPixels : metric.heightPixels;
+    }
+
+    private void rotationSceneModeInstructionalDialog(View view, int orientation) {
+        view.setRotation(-orientation);
+        int screenWidth = getScreenWidth();
+        int dialogSize = screenWidth*9/10;
+        Window dialogWindow = mSceneModeInstructionalDialog.getWindow();
+        WindowManager.LayoutParams lp = dialogWindow.getAttributes();
+        dialogWindow.setGravity(Gravity.CENTER);
+        lp.width = lp.height = dialogSize;
+        dialogWindow.setAttributes(lp);
+        if ( orientation == 180 ) {
+            dialogSize -= 40;
+            RelativeLayout layout = (RelativeLayout)view.findViewById(R.id.mode_layout_rect);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dialogSize, dialogSize);
+            layout.setLayoutParams(params);
+        }
+    }
+
+    private void showSceneModeLabel() {
+        mIsSceneModeLabelClose = false;
+        int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
+        CharSequence sceneModeNameArray[] = mSettingsManager.getEntries(SettingsManager.KEY_SCENE_MODE);
+        if ( index > 0 && index < sceneModeNameArray.length ) {
+            mSceneModeName.setText(sceneModeNameArray[index]);
+            mSceneModeLabelRect.setVisibility(View.VISIBLE);
+        }else{
+            mSceneModeLabelRect.setVisibility(View.GONE);
+        }
+    }
+
 
     public void resetTrackingFocus() {
         if(mModule.isTrackingFocusSettingOn()) {
@@ -1218,6 +1354,24 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         if (mZoomRenderer != null) {
             mZoomRenderer.setOrientation(orientation);
         }
+
+        if ( mSceneModeLabelRect != null ) {
+            if (orientation == 180) {
+                mSceneModeName.setRotation(180);
+                mSceneModeLabelCloseIcon.setRotation(180);
+                mSceneModeLabelRect.setOrientation(0, false);
+            } else {
+                mSceneModeName.setRotation(0);
+                mSceneModeLabelCloseIcon.setRotation(0);
+                mSceneModeLabelRect.setOrientation(orientation, false);
+            }
+        }
+
+        if ( mSceneModeInstructionalDialog != null && mSceneModeInstructionalDialog.isShowing()) {
+            mSceneModeInstructionalDialog.dismiss();
+            mSceneModeInstructionalDialog = null;
+            showSceneInstructionalDialog(orientation);
+        }
     }
 
     public int getOrientation() {
@@ -1341,9 +1495,20 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     @Override
     public void onSettingsChanged(List<SettingsManager.SettingState> settings) {
         for( SettingsManager.SettingState state : settings) {
-            if( state.key.equals(SettingsManager.KEY_COLOR_EFFECT) ) {
+            if (state.key.equals(SettingsManager.KEY_COLOR_EFFECT)) {
                 enableView(mFilterModeSwitcher, SettingsManager.KEY_COLOR_EFFECT);
-                break;
+            } else if (state.key.equals(SettingsManager.KEY_SCENE_MODE)) {
+                String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+                if ( value.equals("104") ) {//panorama
+                    mSceneModeLabelRect.setVisibility(View.GONE);
+                }else{
+                    if ( needShowInstructional() ) {
+                        showSceneInstructionalDialog(mOrientation);
+                    }
+                    showSceneModeLabel();
+                }
+            }else if(state.key.equals(SettingsManager.KEY_FLASH_MODE) ) {
+                enableView(mFlashButton, SettingsManager.KEY_FLASH_MODE);
             }
         }
     }
@@ -1428,4 +1593,5 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public ImageView getVideoButton() {
         return mVideoButton;
     }
+
 }

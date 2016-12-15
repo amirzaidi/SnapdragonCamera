@@ -87,6 +87,9 @@
     </FrameLayout>
 
     <include
+        layout="@layout/scene_mode_label"/>
+
+    <include
         style="@style/CameraControls"
         layout="@layout/one_ui_layout"
         android:layout_gravity="center" />
