@@ -651,9 +651,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     private void showSceneInstructionalDialog(int orientation) {
+        int layoutId = R.layout.scene_mode_instructional;
+        if ( orientation == 90 || orientation == 270 ) {
+            layoutId = R.layout.scene_mode_instructional_landscape;
+        }
         LayoutInflater inflater =
                 (LayoutInflater)mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.scene_mode_instructional, null);
+        View view = inflater.inflate(layoutId, null);
 
         int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
         TextView name = (TextView)view.findViewById(R.id.scene_mode_name);
@@ -724,12 +728,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         dialogWindow.setGravity(Gravity.CENTER);
         lp.width = lp.height = dialogSize;
         dialogWindow.setAttributes(lp);
-        if ( orientation == 180 ) {
-            dialogSize -= 40;
-            RelativeLayout layout = (RelativeLayout)view.findViewById(R.id.mode_layout_rect);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dialogSize, dialogSize);
-            layout.setLayoutParams(params);
-        }
+        RelativeLayout layout = (RelativeLayout)view.findViewById(R.id.mode_layout_rect);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dialogSize, dialogSize);
+        layout.setLayoutParams(params);
     }
 
     private void showSceneModeLabel() {

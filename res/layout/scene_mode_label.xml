@@ -37,7 +37,6 @@
             <TextView
                 android:id="@+id/scene_mode_label"
                 android:singleLine="true"
-                android:text="@string/pref_camera_scenemode_entry_chromaflash"
                 android:textColor="@android:color/white"
                 android:textSize="16dp"
                 style="@style/OnViewfinderSceneLabel" />
