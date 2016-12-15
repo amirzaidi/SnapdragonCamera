@@ -2660,8 +2660,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                         CameraConstrainedHighSpeedCaptureSession session =
                                     (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
                         try {
-                            List list = session
-                                        .createHighSpeedRequestList(mVideoRequestBuilder.build());
+                            List list = CameraUtil
+                                 .createHighSpeedRequestList(mVideoRequestBuilder.build(),cameraId);
                             session.setRepeatingBurst(list, mCaptureCallback, mCameraHandler);
                         } catch (CameraAccessException e) {
                             Log.e(TAG, "Failed to start high speed video recording "
