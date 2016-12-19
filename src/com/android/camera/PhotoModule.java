@@ -2159,6 +2159,9 @@ public class PhotoModule
     public void onStop() {}
 
     @Override
+    public void onDestroy() {}
+
+    @Override
     public void onCaptureCancelled() {
         mActivity.setResultEx(Activity.RESULT_CANCELED, new Intent());
         mActivity.finish();

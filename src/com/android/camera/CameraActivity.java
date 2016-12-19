@@ -1858,6 +1858,9 @@ public class CameraActivity extends Activity
         if (mAutoTestEnabled) {
             unregisterReceiver(mAutoTestReceiver);
         }
+        if(mCurrentModule != null){
+            mCurrentModule.onDestroy();
+        }
         super.onDestroy();
     }
 

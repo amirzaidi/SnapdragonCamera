@@ -2189,6 +2189,13 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     @Override
+    public void onDestroy() {
+        if(mFrameProcessor != null){
+            mFrameProcessor.onDestory();
+        }
+    }
+
+    @Override
     public void installIntentFilter() {
 
     }
