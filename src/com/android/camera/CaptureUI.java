@@ -317,6 +317,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initSceneModeButton();
         initSwitchCamera();
         initFlashButton();
+        updateMenus();
 
         mRecordingTimeView = (TextView) mRootView.findViewById(R.id.recording_time);
         mRecordingTimeRect = (RotateLayout) mRootView.findViewById(R.id.recording_time_rect);
@@ -450,6 +451,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initFlashButton();
         setMakeupButtonIcon();
         showSceneModeLabel();
+        updateMenus();
         if(mModule.isTrackingFocusSettingOn()) {
             mTrackingFocusRenderer.setVisible(false);
             mTrackingFocusRenderer.setVisible(true);
@@ -1044,13 +1046,18 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         boolean enableSceneMenu = true;
         String makeupValue = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
         int colorEffect = mSettingsManager.getValueIndex(SettingsManager.KEY_COLOR_EFFECT);
+        String sceneMode = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (makeupValue != null && !makeupValue.equals("0")) {
             enableSceneMenu = false;
             enableFilterMenu = false;
         } else if (colorEffect != 0 || mFilterMenuStatus == FILTER_MENU_ON){
             enableSceneMenu = false;
             enableMakeupMenu = false;
+        }else if ( sceneMode != null && !sceneMode.equals("0")){
+             enableMakeupMenu = false;
+             enableFilterMenu = false;
         }
+
         mMakeupButton.setEnabled(enableMakeupMenu);
         mFilterModeSwitcher.setEnabled(enableFilterMenu);
         mSceneModeSwitcher.setEnabled(enableSceneMenu);
