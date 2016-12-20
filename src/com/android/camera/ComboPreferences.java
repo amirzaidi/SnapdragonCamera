@@ -68,7 +68,7 @@ public class ComboPreferences implements
         }
     }
 
-    private static String getLocalSharedPreferencesName(
+    public static String getLocalSharedPreferencesName(
             Context context, int cameraId) {
         return context.getPackageName() + "_preferences_" + cameraId;
     }
