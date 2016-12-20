@@ -160,6 +160,9 @@ public class FrameProcessor {
         if(mModule.getMainCameraCharacteristics() != null) {
             degree = mModule.getMainCameraCharacteristics().
                     get(CameraCharacteristics.SENSOR_ORIENTATION);
+            if (mModule.getMainCameraId() == CaptureModule.FRONT_ID) {
+                degree = Math.abs(degree - 90);
+            }
         }
         mRsRotator.set_degree(degree);
         mRsYuvToRGB.set_gIn(mProcessAllocation);
