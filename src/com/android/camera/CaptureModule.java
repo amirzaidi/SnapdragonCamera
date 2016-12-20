@@ -79,7 +79,6 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.camera.exif.ExifInterface;
-import com.android.camera.Exif;
 import com.android.camera.imageprocessor.filter.BlurbusterFilter;
 import com.android.camera.imageprocessor.filter.ChromaflashFilter;
 import com.android.camera.imageprocessor.filter.ImageFilter;
@@ -321,6 +320,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private MediaActionSound mSound;
     private Size mSupportedMaxPictureSize;
+
 
     private class SelfieThread extends Thread {
         public void run() {
@@ -642,10 +642,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 break;
             }
             case STATE_AF_AE_LOCKED: {
-                    Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    Log.d(TAG, "STATE_AF_AE_LOCKED id: " + id + " afState:" + afState + " aeState:" + aeState);
-                    break;
+                Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
+                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                Log.d(TAG, "STATE_AF_AE_LOCKED id: " + id + " afState:" + afState + " aeState:" + aeState);
+                break;
             }
             case STATE_WAITING_TOUCH_FOCUS:
                 break;
@@ -996,6 +996,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void setAFModeToPreview(int id, int afMode) {
+        if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            return;
+        }
         Log.d(TAG, "setAFModeToPreview " + afMode);
         mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AF_MODE, afMode);
         applyAFRegions(mPreviewRequestBuilder[id], id);
@@ -1004,14 +1007,17 @@ public class CaptureModule implements CameraModule, PhotoController,
         try {
             mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                     .build(), mCaptureCallback, mCameraHandler);
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
 
     public void setFlashModeToPreview(int id, boolean isFlashOn) {
         Log.d(TAG, "setFlashModeToPreview " + isFlashOn);
-        if(isFlashOn) {
+        if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            return;
+        }
+        if (isFlashOn) {
             mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
             mPreviewRequestBuilder[id].set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
         } else {
@@ -1024,23 +1030,26 @@ public class CaptureModule implements CameraModule, PhotoController,
         try {
             mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                     .build(), mCaptureCallback, mCameraHandler);
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
 
     public void setFocusDistanceToPreview(int id, float fd) {
+        if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            return;
+        }
         mPreviewRequestBuilder[id].set(CaptureRequest.LENS_FOCUS_DISTANCE, fd);
         mPreviewRequestBuilder[id].setTag(id);
         try {
-            if(id == MONO_ID && !canStartMonoPreview()) {
+            if (id == MONO_ID && !canStartMonoPreview()) {
                 mCaptureSession[id].capture(mPreviewRequestBuilder[id]
                         .build(), mCaptureCallback, mCameraHandler);
             } else {
                 mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                         .build(), mCaptureCallback, mCameraHandler);
             }
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
@@ -1133,7 +1142,8 @@ public class CaptureModule implements CameraModule, PhotoController,
      * Lock the focus as the first step for a still image capture.
      */
     private void lockFocus(int id) {
-        if (mActivity == null || mCameraDevice[id] == null) {
+        if (mActivity == null || mCameraDevice[id] == null
+                || !checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
             warningToast("Camera is not ready yet to take a picture.");
             return;
         }
@@ -1176,14 +1186,15 @@ public class CaptureModule implements CameraModule, PhotoController,
             mLockRequestHashCode[id] = request.hashCode();
             mState[id] = STATE_WAITING_AF_LOCK;
             mCaptureSession[id].capture(request, mCaptureCallback, mCameraHandler);
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
 
     private void autoFocusTrigger(int id) {
         Log.d(TAG, "autoFocusTrigger " + id);
-        if (null == mActivity || null == mCameraDevice[id]) {
+        if (null == mActivity || null == mCameraDevice[id]
+                || !checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
             warningToast("Camera is not ready yet to take a picture.");
             return;
         }
@@ -1200,7 +1211,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             Message message = mCameraHandler.obtainMessage(
                     CANCEL_TOUCH_FOCUS, Integer.valueOf(mCameraId[id]), 0);
             mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
@@ -1443,6 +1454,9 @@ public class CaptureModule implements CameraModule, PhotoController,
      */
     private void runPrecaptureSequence(int id) {
         Log.d(TAG, "runPrecaptureSequence: " + id);
+        if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            return;
+        }
         try {
             CaptureRequest.Builder builder = getRequestBuilder(id);
             builder.setTag(id);
@@ -1453,7 +1467,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
             mState[id] = STATE_WAITING_PRECAPTURE;
             mCaptureSession[id].capture(request, mCaptureCallback, mCameraHandler);
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
@@ -1598,6 +1612,9 @@ public class CaptureModule implements CameraModule, PhotoController,
      */
     public void unlockFocus(int id) {
         Log.d(TAG, "unlockFocus " + id);
+        if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            return;
+        }
         try {
             CaptureRequest.Builder builder = getRequestBuilder(id);
             builder.setTag(id);
@@ -1629,12 +1646,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     }
                 });
             }
-        } catch (NullPointerException e) {
+        } catch (NullPointerException | IllegalStateException | CameraAccessException e) {
             Log.w(TAG, "Session is already closed");
-        } catch (IllegalStateException e) {
-            Log.w(TAG, "Session is already closed");
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
         }
     }
 
@@ -1653,6 +1666,15 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(mFrameProcessor != null) {
             mFrameProcessor.onClose();
         }
+    }
+
+    public boolean isAllSessionClosed() {
+        for (int i = MAX_NUM_CAM - 1; i >= 0; i--) {
+            if (mCaptureSession[i] != null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void closeSessions() {
@@ -1737,13 +1759,16 @@ public class CaptureModule implements CameraModule, PhotoController,
      * Lock the exposure for capture
      */
     private void lockExposure(int id) {
+        if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            return;
+        }
         Log.d(TAG, "lockExposure: " + id);
         try {
             applySettingsForLockExposure(mPreviewRequestBuilder[id], id);
             mState[id] = STATE_WAITING_AE_LOCK;
             mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id].build(),
                     mCaptureCallback, mCameraHandler);
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
@@ -2745,8 +2770,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                         try {
                             setUpVideoCaptureRequestBuilder(mVideoRequestBuilder);
                             mCurrentSession.setRepeatingRequest(mVideoRequestBuilder.build(),
-                                mCaptureCallback, mCameraHandler);
+                                    mCaptureCallback, mCameraHandler);
                         } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        } catch (IllegalStateException e) {
                             e.printStackTrace();
                         }
                         try {
@@ -3423,6 +3450,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private boolean applyPreferenceToPreview(int cameraId, String key, String value) {
+        if (!checkSessionAndBuilder(mCaptureSession[cameraId], mPreviewRequestBuilder[cameraId])) {
+            return false;
+        }
         boolean updatePreview = false;
         switch (key) {
             case SettingsManager.KEY_WHITE_BALANCE:
@@ -3457,6 +3487,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void applyZoomAndUpdate(int id) {
+        if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
+            return;
+        }
         applyZoom(mPreviewRequestBuilder[id], id);
         try {
             if(id == MONO_ID && !canStartMonoPreview()) {
@@ -3466,7 +3499,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                         .build(), mCaptureCallback, mCameraHandler);
             }
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
         }
     }
@@ -3580,11 +3613,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void applyFaceDetection(CaptureRequest.Builder request) {
-            String value = mSettingsManager.getValue(SettingsManager.KEY_FACE_DETECTION);
-            if (value != null && value.equals("on")) {
-                request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
-                        CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE);
-            }
+        String value = mSettingsManager.getValue(SettingsManager.KEY_FACE_DETECTION);
+        if (value != null && value.equals("on")) {
+            request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
+                    CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE);
+        }
     }
 
     private void applyFlash(CaptureRequest.Builder request, int id) {
@@ -3797,30 +3830,39 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         if (updatePreviewBayer) {
             try {
-                mCaptureSession[BAYER_ID].setRepeatingRequest(mPreviewRequestBuilder[BAYER_ID]
-                        .build(), mCaptureCallback, mCameraHandler);
-            } catch (CameraAccessException e) {
+                if (checkSessionAndBuilder(mCaptureSession[BAYER_ID],
+                        mPreviewRequestBuilder[BAYER_ID])) {
+                    mCaptureSession[BAYER_ID].setRepeatingRequest(mPreviewRequestBuilder[BAYER_ID]
+                            .build(), mCaptureCallback, mCameraHandler);
+                }
+            } catch (CameraAccessException | IllegalStateException e) {
                 e.printStackTrace();
             }
         }
         if (updatePreviewMono) {
             try {
-                if(canStartMonoPreview()) {
-                    mCaptureSession[MONO_ID].setRepeatingRequest(mPreviewRequestBuilder[MONO_ID]
-                            .build(), mCaptureCallback, mCameraHandler);
-                } else {
-                    mCaptureSession[MONO_ID].capture(mPreviewRequestBuilder[MONO_ID]
-                            .build(), mCaptureCallback, mCameraHandler);
+                if (checkSessionAndBuilder(mCaptureSession[MONO_ID],
+                        mPreviewRequestBuilder[MONO_ID])) {
+                    if (canStartMonoPreview()) {
+                        mCaptureSession[MONO_ID].setRepeatingRequest(mPreviewRequestBuilder[MONO_ID]
+                                .build(), mCaptureCallback, mCameraHandler);
+                    } else {
+                        mCaptureSession[MONO_ID].capture(mPreviewRequestBuilder[MONO_ID]
+                                .build(), mCaptureCallback, mCameraHandler);
+                    }
                 }
-            } catch (CameraAccessException e) {
+            } catch (CameraAccessException | IllegalStateException e) {
                 e.printStackTrace();
             }
         }
         if (updatePreviewFront) {
             try {
-                mCaptureSession[FRONT_ID].setRepeatingRequest(mPreviewRequestBuilder[FRONT_ID]
-                        .build(), mCaptureCallback, mCameraHandler);
-            } catch (CameraAccessException e) {
+                if (checkSessionAndBuilder(mCaptureSession[FRONT_ID],
+                        mPreviewRequestBuilder[FRONT_ID])) {
+                    mCaptureSession[FRONT_ID].setRepeatingRequest(mPreviewRequestBuilder[FRONT_ID]
+                            .build(), mCaptureCallback, mCameraHandler);
+                }
+            } catch (CameraAccessException | IllegalStateException e) {
                 e.printStackTrace();
             }
         }
@@ -3861,6 +3903,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void restartSession(boolean isSurfaceChanged) {
+        if (isAllSessionClosed()) return;
+
         closeProcessors();
         closeSessions();
 
@@ -4201,6 +4245,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
+
     private void setProModeVisible() {
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         boolean promode = false;
@@ -4211,5 +4256,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         }
         mUI.initializeProMode(!mPaused && promode);
+    }
+	
+    boolean checkSessionAndBuilder(CameraCaptureSession session, CaptureRequest.Builder builder) {
+        return session != null && builder != null;
     }
 }
