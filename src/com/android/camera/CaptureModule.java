@@ -3745,19 +3745,18 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void restartSession(boolean isSurfaceChanged) {
-        if(isSurfaceChanged) {
-            mUI.hideSurfaceView();
-        }
         closeProcessors();
         closeSessions();
+
+        if(isSurfaceChanged) {
+            mUI.hideSurfaceView();
+            mUI.showSurfaceView();
+        }
+
         initializeValues();
         updatePreviewSize();
         openProcessors();
-        if(isSurfaceChanged) {
-            mUI.showSurfaceView();
-        } else {
-            createSessions();
-        }
+        createSessions();
 
         if(isTrackingFocusSettingOn()) {
             mUI.resetTrackingFocus();
