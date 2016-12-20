@@ -33,7 +33,8 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="20dp"
             android:background="#90000000"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
             <TextView
                 android:id="@+id/scene_mode_label"
                 android:singleLine="true"
@@ -43,8 +44,13 @@
                 style="@style/OnViewfinderSceneLabel" />
             <ImageView
                 android:id="@+id/scene_mode_label_close"
-                android:src="@drawable/x"
-                style="@style/OnViewfinderSceneLabel"/>
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:src="@drawable/x" />
         </LinearLayout>
     </com.android.camera.ui.RotateLayout>
 </LinearLayout>
