@@ -1405,7 +1405,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void captureVideoSnapshot(final int id) {
         Log.d(TAG, "captureStillPicture " + id);
         try {
-            if (null == mActivity || null == mCameraDevice[id]) {
+            if (null == mActivity || null == mCameraDevice[id] || mCurrentSession == null) {
                 warningToast("Camera is not ready yet to take a video snapshot.");
                 return;
             }
