@@ -169,6 +169,10 @@ public class ProMode extends View {
         mCurveMeasure = new PathMeasure(mCurvePath, false);
     }
 
+    public void reinit() {
+        init();
+    }
+
     public void setOrientation(int orientation) {
         mOrientation = orientation;
         if (mAddedViews != null) {
