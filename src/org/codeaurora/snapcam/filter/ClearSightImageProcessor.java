@@ -912,6 +912,12 @@ public class ClearSightImageProcessor {
             mImageEncodeHandler.obtainMessage(MSG_START_CAPTURE).sendToTarget();
 
             short encodeRequest = 0;
+            /* In same case, timeout will reset ClearSightNativeEngine object, so fields
+               in the object is not initial, need to return and skip process.
+            */
+            if (ClearSightNativeEngine.getInstance().getReferenceImage(true) == null) {
+                return;
+            }
             long csTs = ClearSightNativeEngine.getInstance().getReferenceImage(true).getTimestamp();
             CaptureRequest.Builder csRequest = createEncodeReprocRequest(
                     ClearSightNativeEngine.getInstance().getReferenceResult(true), CAM_TYPE_BAYER);
