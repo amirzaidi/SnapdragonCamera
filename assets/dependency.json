@@ -86,6 +86,14 @@
     "103":
     {"pref_camera2_coloreffect_key":"0"}
     ,
+    "104":
+    {"pref_camera2_coloreffect_key":"0"}
+    ,
+    "105":
+    {"pref_camera2_flashmode_key":"off",
+      "pref_camera2_coloreffect_key":"0",
+      "pref_camera2_longshot_key":"off"}
+    ,
     "106":
     {"pref_camera2_coloreffect_key":"0"}
     ,
@@ -95,13 +103,8 @@
     "108":
     {"pref_camera2_coloreffect_key":"0"}
     ,
-    "104":
+    "109":
     {"pref_camera2_coloreffect_key":"0"}
-    ,
-    "105":
-      {"pref_camera2_flashmode_key":"off",
-        "pref_camera2_coloreffect_key":"0",
-        "pref_camera2_longshot_key":"off"}
   },
   "pref_camera2_clearsight_key":
   {

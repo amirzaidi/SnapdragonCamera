@@ -228,7 +228,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         return mDisplaySize;
     }
 
-    public CaptureUI(CameraActivity activity, CaptureModule module, View parent) {
+    public CaptureUI(CameraActivity activity, final CaptureModule module, View parent) {
         mActivity = activity;
         mModule = module;
         mRootView = parent;
@@ -298,8 +298,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                toggleMakeup();
-                updateMenus();
+                if (module != null && !module.isAllSessionClosed()) {
+                    toggleMakeup();
+                    updateMenus();
+                }
             }
         });
         setMakeupButtonIcon();
@@ -315,6 +317,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initSceneModeButton();
         initSwitchCamera();
         initFlashButton();
+        updateMenus();
 
         mRecordingTimeView = (TextView) mRootView.findViewById(R.id.recording_time);
         mRecordingTimeRect = (RotateLayout) mRootView.findViewById(R.id.recording_time_rect);
@@ -448,6 +451,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         initFlashButton();
         setMakeupButtonIcon();
         showSceneModeLabel();
+        updateMenus();
         if(mModule.isTrackingFocusSettingOn()) {
             mTrackingFocusRenderer.setVisible(false);
             mTrackingFocusRenderer.setVisible(true);
@@ -655,7 +659,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 (LayoutInflater)mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.scene_mode_instructional, null);
 
-        int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
+       final int index = mSettingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
         TextView name = (TextView)view.findViewById(R.id.scene_mode_name);
         CharSequence sceneModeNameArray[] =
                 mSettingsManager.getEntries(SettingsManager.KEY_SCENE_MODE);
@@ -1042,13 +1046,18 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         boolean enableSceneMenu = true;
         String makeupValue = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
         int colorEffect = mSettingsManager.getValueIndex(SettingsManager.KEY_COLOR_EFFECT);
+        String sceneMode = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (makeupValue != null && !makeupValue.equals("0")) {
             enableSceneMenu = false;
             enableFilterMenu = false;
         } else if (colorEffect != 0 || mFilterMenuStatus == FILTER_MENU_ON){
             enableSceneMenu = false;
             enableMakeupMenu = false;
+        }else if ( sceneMode != null && !sceneMode.equals("0")){
+             enableMakeupMenu = false;
+             enableFilterMenu = false;
         }
+
         mMakeupButton.setEnabled(enableMakeupMenu);
         mFilterModeSwitcher.setEnabled(enableFilterMenu);
         mSceneModeSwitcher.setEnabled(enableSceneMenu);
