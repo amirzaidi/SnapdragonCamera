@@ -1020,6 +1020,8 @@ public class VideoUI implements PieRenderer.PieListener,
         CameraUtil.fadeIn(mReviewPlayButton);
         mReviewImage.setVisibility(View.VISIBLE);
         mMenuButton.setVisibility(View.GONE);
+        mCameraControls.hideUI();
+        mVideoMenu.hideUI();
         mOnScreenIndicators.setVisibility(View.GONE);
     }
 
@@ -1027,6 +1029,8 @@ public class VideoUI implements PieRenderer.PieListener,
         mReviewImage.setVisibility(View.GONE);
         mShutterButton.setEnabled(true);
         mMenuButton.setVisibility(View.VISIBLE);
+        mCameraControls.showUI();
+        mVideoMenu.showUI();
         mOnScreenIndicators.setVisibility(View.VISIBLE);
         CameraUtil.fadeOut(mReviewDoneButton);
         CameraUtil.fadeOut(mReviewPlayButton);
