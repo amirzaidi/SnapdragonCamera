@@ -307,4 +307,32 @@
         camera:entryValues="@array/pref_camera2_instant_aec_entryvalues"
         camera:key="pref_camera2_instant_aec_key"
         camera:title="@string/pref_camera2_instant_aec_title" />
+
+    <ListPreference
+        camera:defaultValue="@string/pref_camera2_saturation_level_default"
+        camera:entries="@array/pref_camera2_saturation_level_entries"
+        camera:entryValues="@array/pref_camera2_saturation_level_entryvalues"
+        camera:key="pref_camera2_saturation_level_key"
+        camera:title="@string/pref_camera2_saturation_level_title" />
+
+    <ListPreference
+        camera:defaultValue="@string/pref_camera2_anti_banding_level_default"
+        camera:entries="@array/pref_camera2_anti_banding_level_entries"
+        camera:entryValues="@array/pref_camera2_anti_banding_level_entryvalues"
+        camera:key="pref_camera2_anti_banding_level_key"
+        camera:title="@string/pref_camera2_anti_banding_level_title" />
+
+    <ListPreference
+        camera:defaultValue="@string/pref_camera2_histogram_default"
+        camera:entries="@array/pref_camera2_histogram_entries"
+        camera:entryValues="@array/pref_camera2_histogram_entryvalues"
+        camera:key="pref_camera2_histogram_key"
+        camera:title="@string/pref_camera2_histogram_title" />
+
+    <ListPreference
+        camera:defaultValue="@string/pref_camera2_hdr_default"
+        camera:entries="@array/pref_camera2_hdr_entries"
+        camera:entryValues="@array/pref_camera2_hdr_entryvalues"
+        camera:key="pref_camera2_hdr_key"
+        camera:title="@string/pref_camera2_hdr_title" />
 </PreferenceGroup>

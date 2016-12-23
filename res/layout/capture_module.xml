@@ -60,6 +60,34 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone"/>
+        <com.android.camera.Camera2GraphView
+            android:id="@+id/graph_view_r"
+            android:visibility="gone"
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_marginTop="70dip"
+            android:layout_marginLeft="10dip" />
+        <com.android.camera.Camera2GraphView
+            android:id="@+id/graph_view_gr"
+            android:visibility="gone"
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_marginTop="70dip"
+            android:layout_marginLeft="120dip" />
+        <com.android.camera.Camera2GraphView
+            android:id="@+id/graph_view_gb"
+            android:visibility="gone"
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_marginTop="70dip"
+            android:layout_marginLeft="230dip" />
+        <com.android.camera.Camera2GraphView
+            android:id="@+id/graph_view_b"
+            android:visibility="gone"
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_marginTop="180dip"
+            android:layout_marginLeft="10dip" />
     </FrameLayout>
 
     <com.android.camera.ui.RenderOverlay

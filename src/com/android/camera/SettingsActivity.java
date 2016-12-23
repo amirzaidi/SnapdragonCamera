@@ -53,6 +53,7 @@ import com.android.camera.util.CameraUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Arrays;
 
 public class SettingsActivity extends PreferenceActivity {
     private SettingsManager mSettingsManager;
@@ -173,6 +174,16 @@ public class SettingsActivity extends PreferenceActivity {
             PreferenceScreen parent = getPreferenceScreen();
             PreferenceGroup developer = (PreferenceGroup)findPreference("developer");
             parent.removePreference(developer);
+        }
+
+        CharSequence[] entries = mSettingsManager.getEntries(SettingsManager.KEY_SCENE_MODE);
+        List<CharSequence> list = Arrays.asList(entries);
+        if (mDeveloperMenuEnabled && !list.contains("HDR")){
+            Preference p = findPreference("pref_camera2_hdr_key");
+            if (p != null){
+                PreferenceGroup developer = (PreferenceGroup)findPreference("developer");
+                developer.removePreference(p);
+            }
         }
 
         for (String key : set) {
