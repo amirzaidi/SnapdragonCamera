@@ -142,7 +142,6 @@ public class VideoMenu extends MenuController
                 CameraSettings.KEY_VIDEO_TNR_MODE,
                 CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE
         };
-        mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);
     }
 
@@ -482,7 +481,6 @@ public class VideoMenu extends MenuController
             resid = pref.getSingleIcon();
         }
         ((ImageView) switcher).setImageResource(resid);
-        switcher.setVisibility(View.VISIBLE);
         mPreferences.add(pref);
         mPreferenceMap.put(pref, switcher);
         switcher.setOnClickListener(new OnClickListener() {
