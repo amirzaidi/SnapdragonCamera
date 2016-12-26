@@ -238,26 +238,32 @@ public class OneUICameraControls extends RotatableLayout {
     }
 
     @Override
+    public void onSizeChanged(int w, int h, int oldw, int oldh){
+        super.onSizeChanged(w, h, oldw, oldh);
+
+        mWidth = w;
+        mHeight = h;
+        if(mMakeupSeekBar != null) {
+            mMakeupSeekBar.setMinimumWidth(mWidth/2);
+        }
+        ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(mWidth/ 4,mWidth/4);
+        mExposureLayout.setLayoutParams(lp);
+        mManualLayout.setLayoutParams(lp);
+        mWhiteBalanceLayout.setLayoutParams(lp);
+        mIsoLayout.setLayoutParams(lp);
+
+    }
+
+    @Override
     public void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         r = r - l;
         b = b - t;
         l = 0;
         t = 0;
-        mWidth = r;
-        mHeight = b;
+
         setLocation(r - l, b - t);
         layoutRemaingPhotos();
-        if(mMakeupSeekBar != null) {
-            mMakeupSeekBar.setMinimumWidth(mWidth/2);
-        }
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(mWidth/ 4,mWidth/4);
-        mExposureLayout.setLayoutParams(lp);
-
-        mManualLayout.setLayoutParams(lp);
-        mWhiteBalanceLayout.setLayoutParams(lp);
-        mIsoLayout.setLayoutParams(lp);
         initializeProMode(mProModeOn);
     }
 
