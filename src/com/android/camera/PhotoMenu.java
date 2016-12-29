@@ -1399,14 +1399,15 @@ public class PhotoMenu extends MenuController
                 setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
             }
             updateSceneModeIcon((IconListPreference) scenePref);
-	} else if (same(pref, CameraSettings.KEY_CAMERA_HDR, mSettingOn)) {
+            updateFilterModeIcon(scenePref, pref);
+        } else if (same(pref, CameraSettings.KEY_CAMERA_HDR, mSettingOn)) {
             ListPreference scenePref =
                     mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
             if (scenePref != null && notSame(scenePref, CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_HDR)) {
                 setPreference(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_HDR);
             }
             updateSceneModeIcon((IconListPreference) scenePref);
-	} else if (notSame(pref,CameraSettings.KEY_AE_BRACKET_HDR,"Off")) {
+        } else if (notSame(pref,CameraSettings.KEY_AE_BRACKET_HDR,"Off")) {
             RotateTextToast.makeText(mActivity,
                            R.string.flash_aebracket_message,Toast.LENGTH_SHORT).show();
             setPreference(CameraSettings.KEY_FLASH_MODE,Parameters.FLASH_MODE_OFF);
