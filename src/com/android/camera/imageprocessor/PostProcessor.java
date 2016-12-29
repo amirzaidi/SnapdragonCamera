@@ -943,7 +943,15 @@ public class PostProcessor{
                         }
 
                         if(isSelfieMirrorOn() && !mController.isBackCamera()) {
-                            nativeFlipNV21(resultImage.outBuffer.array(), resultImage.stride, resultImage.height, resultImage.stride - resultImage.width, true);
+                            boolean isVertical = true;
+                            if (mOrientation == 0 || mOrientation == 180) {
+                                isVertical = false;
+                            } else {
+                                isVertical = true;
+                            }
+                            nativeFlipNV21(resultImage.outBuffer.array(), resultImage.stride,
+                                    resultImage.height, resultImage.stride - resultImage.width,
+                                    isVertical);
                         }
                     }
                     //End processing FrameProessor filter
