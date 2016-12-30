@@ -2358,6 +2358,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(mFrameProcessor != null){
             mFrameProcessor.onDestory();
         }
+        mSettingsManager.unregisterListener(this);
+        mSettingsManager.unregisterListener(mUI);
     }
 
     @Override
