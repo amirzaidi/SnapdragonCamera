@@ -603,8 +603,9 @@ public class PostProcessor{
             if(mHandler != null) {
                 mHandler.setInActive();
             }
-            stopBackgroundThread();
         }
+        stopBackgroundThread();
+
         setFilter(FILTER_NONE);
         if(mZSLQueue != null) {
             mZSLQueue.onClose();
@@ -704,29 +705,31 @@ public class PostProcessor{
             mHandlerThread = null;
             mHandler = null;
         }
-        if (mZSLHandlerThread != null) {
-            mZSLHandlerThread.quitSafely();
-            try {
-                mZSLHandlerThread.join();
-            } catch (InterruptedException e) {
+        synchronized (lock){
+            if (mZSLHandlerThread != null) {
+                mZSLHandlerThread.quitSafely();
+                try {
+                    mZSLHandlerThread.join();
+                } catch (InterruptedException e) {
+                }
+                mZSLHandlerThread = null;
+                mZSLHandler = null;
             }
-            mZSLHandlerThread = null;
-            mZSLHandler = null;
-        }
-        if (mSavingHandlerThread != null) {
-            mSavingHandlerThread.quitSafely();
-            try {
-                mSavingHandlerThread.join();
-            } catch (InterruptedException e) {
+            if (mSavingHandlerThread != null) {
+                mSavingHandlerThread.quitSafely();
+                try {
+                    mSavingHandlerThread.join();
+                } catch (InterruptedException e) {
+                }
+                mSavingHandlerThread = null;
+                mSavingHander = null;
             }
-            mSavingHandlerThread = null;
-            mSavingHander = null;
+            if(mWatchdog != null) {
+                mWatchdog.kill();
+                mWatchdog = null;
+            }
+            clear();
         }
-        if(mWatchdog != null) {
-            mWatchdog.kill();
-            mWatchdog = null;
-        }
-        clear();
     }
 
     public boolean setFilter(int index) {
