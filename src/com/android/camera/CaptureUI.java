@@ -624,7 +624,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     public void openSettingsMenu() {
-        if (mPreviewLayout.getVisibility() == View.VISIBLE) {
+        if (mPreviewLayout != null && mPreviewLayout.getVisibility() == View.VISIBLE) {
             return;
         }
         clearFocus();
@@ -1665,6 +1665,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         boolean changed = (width != mPreviewWidth) || (height != mPreviewHeight);
         mPreviewWidth = width;
         mPreviewHeight = height;
+        if (changed) {
+            showSurfaceView();
+        }
         return changed;
     }
 
