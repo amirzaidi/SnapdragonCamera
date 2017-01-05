@@ -958,4 +958,76 @@ for time lapse recording -->
         <item>@string/pref_camera2_instant_aec_entry_aggressive</item>
         <item>@string/pref_camera2_instant_aec_entry_fast</item>
     </string-array>
+
+    <string-array name="pref_camera2_anti_banding_level_entryvalues" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="pref_camera2_anti_banding_level_entries" translatable="true">
+        <item>@string/pref_camera2_anti_banding_level_entry_off</item>
+        <item>@string/pref_camera2_anti_banding_level_entry_50hz</item>
+        <item>@string/pref_camera2_anti_banding_level_entry_60hz</item>
+        <item>@string/pref_camera2_anti_banding_level_entry_auto</item>
+    </string-array>
+
+    <string-array name="pref_camera2_saturation_level_entryvalues" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+    </string-array>
+
+    <string-array name="pref_camera2_saturation_level_entries" translatable="true">
+        <item>@string/pref_camera2_saturation_level_entry_0</item>
+        <item>@string/pref_camera2_saturation_level_entry_1</item>
+        <item>@string/pref_camera2_saturation_level_entry_2</item>
+        <item>@string/pref_camera2_saturation_level_entry_3</item>
+        <item>@string/pref_camera2_saturation_level_entry_4</item>
+        <item>@string/pref_camera2_saturation_level_entry_5</item>
+        <item>@string/pref_camera2_saturation_level_entry_6</item>
+        <item>@string/pref_camera2_saturation_level_entry_7</item>
+        <item>@string/pref_camera2_saturation_level_entry_8</item>
+        <item>@string/pref_camera2_saturation_level_entry_9</item>
+        <item>@string/pref_camera2_saturation_level_entry_10</item>
+    </string-array>
+
+    <string-array name="pref_camera2_histogram_entryvalues" translatable="false">
+        <item>enable</item>
+        <item>disable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_histogram_entries" translatable="true">
+        <item>@string/pref_camera2_histogram_entry_enable</item>
+        <item>@string/pref_camera2_histogram_entry_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_hdr_entryvalues" translatable="false">
+        <item>enable</item>
+        <item>disable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_hdr_entries" translatable="true">
+        <item>@string/pref_camera2_hdr_entry_enable</item>
+        <item>@string/pref_camera2_hdr_entry_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_auto_hdr_entryvalues" translatable="false">
+        <item>enable</item>
+        <item>disable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_auto_hdr_entries" translatable="true">
+        <item>@string/pref_camera2_auto_hdr_entry_enable</item>
+        <item>@string/pref_camera2_auto_hdr_entry_disable</item>
+    </string-array>
 </resources>

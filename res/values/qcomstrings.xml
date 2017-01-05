@@ -1086,5 +1086,41 @@
     <string name="pref_camera2_instant_aec_entry_disable" translatable="true">Disable</string>
     <string name="pref_camera2_instant_aec_entry_aggressive" translatable="true">Aggressive AEC</string>
     <string name="pref_camera2_instant_aec_entry_fast" translatable="true">Fast AEC</string>
+
+    <string name="pref_camera2_saturation_level_title" translatable="true">Saturation Level</string>
+    <string name="pref_camera2_saturation_level_default" translatable="false">5</string>
+    <string name="pref_camera2_saturation_level_entry_0" translatable="true">Level 0</string>
+    <string name="pref_camera2_saturation_level_entry_1" translatable="true">Level 1</string>
+    <string name="pref_camera2_saturation_level_entry_2" translatable="true">Level 2</string>
+    <string name="pref_camera2_saturation_level_entry_3" translatable="true">Level 3</string>
+    <string name="pref_camera2_saturation_level_entry_4" translatable="true">Level 4</string>
+    <string name="pref_camera2_saturation_level_entry_5" translatable="true">Level 5(Default)</string>
+    <string name="pref_camera2_saturation_level_entry_6" translatable="true">Level 6</string>
+    <string name="pref_camera2_saturation_level_entry_7" translatable="true">Level 7</string>
+    <string name="pref_camera2_saturation_level_entry_8" translatable="true">Level 8</string>
+    <string name="pref_camera2_saturation_level_entry_9" translatable="true">Level 9</string>
+    <string name="pref_camera2_saturation_level_entry_10" translatable="true">Level 10</string>
+
+    <string name="pref_camera2_anti_banding_level_title" translatable="true">Anti Banding Level</string>
+    <string name="pref_camera2_anti_banding_level_default" translatable="false">0</string>
+    <string name="pref_camera2_anti_banding_level_entry_off" translatable="true">Off</string>
+    <string name="pref_camera2_anti_banding_level_entry_50hz" translatable="true">50HZ</string>
+    <string name="pref_camera2_anti_banding_level_entry_60hz" translatable="true">60HZ</string>
+    <string name="pref_camera2_anti_banding_level_entry_auto" translatable="true">Auto</string>
+
+    <string name="pref_camera2_histogram_title" translatable="true">Histogram</string>
+    <string name="pref_camera2_histogram_default" translatable="false">disable</string>
+    <string name="pref_camera2_histogram_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_histogram_entry_disable" translatable="true">Disable</string>
+
+    <string name="pref_camera2_hdr_title" translatable="true">HDR &amp; Non-HDR</string>
+    <string name="pref_camera2_hdr_default" translatable="false">disable</string>
+    <string name="pref_camera2_hdr_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_hdr_entry_disable" translatable="true">Disable</string>
+
+    <string name="pref_camera2_auto_hdr_title" translatable="true">AUTO HDR</string>
+    <string name="pref_camera2_auto_hdr_default" translatable="false">disable</string>
+    <string name="pref_camera2_auto_hdr_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_auto_hdr_entry_disable" translatable="true">Disable</string>
 </resources>
 

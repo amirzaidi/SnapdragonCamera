@@ -578,7 +578,8 @@ public class PostProcessor{
         mImageHandlerTask = new ImageHandlerTask();
 
         if(setFilter(postFilterId) || isFlashModeOn || isTrackingFocusOn || isMakeupOn || isSelfieMirrorOn
-                || PersistUtil.getCameraZSLDisabled()) {
+                || PersistUtil.getCameraZSLDisabled()
+                || SettingsManager.getInstance().isCamera2HDRSupport()) {
             mUseZSL = false;
         } else {
             mUseZSL = true;
