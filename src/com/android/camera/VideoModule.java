@@ -602,6 +602,9 @@ public class VideoModule implements CameraModule,
     @Override
     public void onStop() {}
 
+    @Override
+    public void onDestroy() {}
+
     private void loadCameraPreferences() {
         CameraSettings settings = new CameraSettings(mActivity, mParameters,
                 mCameraId, CameraHolder.instance().getCameraInfo());
