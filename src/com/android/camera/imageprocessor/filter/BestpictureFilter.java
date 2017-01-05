@@ -220,6 +220,9 @@ public class BestpictureFilter implements ImageFilter {
 
     @Override
     public boolean isSupported() {
+        if (mModule.getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
+            return false;
+        }
         return mIsSupported;
     }
 

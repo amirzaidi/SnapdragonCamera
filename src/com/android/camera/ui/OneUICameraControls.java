@@ -34,6 +34,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.android.camera.CaptureModule;
 import com.android.camera.Storage;
 import com.android.camera.imageprocessor.filter.BeautificationFilter;
 
@@ -57,6 +58,7 @@ public class OneUICameraControls extends RotatableLayout {
     private View mMakeupSeekBarLowText;
     private View mMakeupSeekBarHighText;
     private View mMakeupSeekBarLayout;
+    private View mCancelButton;
     private ViewGroup mProModeLayout;
     private View mProModeCloseButton;
 
@@ -85,6 +87,7 @@ public class OneUICameraControls extends RotatableLayout {
     private int mBottomLargeSize;
     private int mBottomSmallSize;
 
+    private int mIntentMode = CaptureModule.INTENT_MODE_NORMAL;
     private ProMode mProMode;
     private ImageView mExposureIcon;
     private ImageView mManualIcon;
@@ -125,6 +128,14 @@ public class OneUICameraControls extends RotatableLayout {
         this(context, null);
     }
 
+    public void setIntentMode(int mode) {
+        mIntentMode = mode;
+    }
+
+    public int getIntentMode() {
+        return mIntentMode;
+    }
+
     @Override
     public void onFinishInflate() {
         super.onFinishInflate();
@@ -145,6 +156,7 @@ public class OneUICameraControls extends RotatableLayout {
         mFilterModeSwitcher = findViewById(R.id.filter_mode_switcher);
         mRemainingPhotos = (LinearLayout) findViewById(R.id.remaining_photos);
         mRemainingPhotosText = (TextView) findViewById(R.id.remaining_photos_text);
+        mCancelButton = findViewById(R.id.cancel_button);
         mProModeLayout = (ViewGroup) findViewById(R.id.pro_mode_layout);
         mProModeCloseButton = findViewById(R.id.promode_close_button);
 
@@ -225,15 +237,14 @@ public class OneUICameraControls extends RotatableLayout {
         mViews = new View[]{
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
                 mTsMakeupSwitcher, mFlashButton, mShutter, mPreview, mVideoShutter,
-                mPauseButton
+                mPauseButton, mCancelButton
         };
         mBottomLargeSize = getResources().getDimensionPixelSize(
                 R.dimen.one_ui_bottom_large);
         mBottomSmallSize = getResources().getDimensionPixelSize(
                 R.dimen.one_ui_bottom_small);
         if(!BeautificationFilter.isSupportedStatic()) {
-            mTsMakeupSwitcher.setVisibility(View.GONE);
-            mTsMakeupSwitcher = null;
+            mTsMakeupSwitcher.setEnabled(false);
         }
     }
 
@@ -333,9 +344,17 @@ public class OneUICameraControls extends RotatableLayout {
             setLocation(mFrontBackSwitcher, true, 2);
             setLocation(mTsMakeupSwitcher, true, 3);
             setLocation(mFlashButton, true, 4);
-            setLocation(mPreview, false, 0);
-            setLocation(mShutter, false, 2);
-            setLocation(mVideoShutter, false, 3.15f);
+            if (mIntentMode == CaptureModule.INTENT_MODE_CAPTURE) {
+                setLocation(mShutter, false, 2);
+                setLocation(mCancelButton, false, 0.85f);
+            } else if (mIntentMode == CaptureModule.INTENT_MODE_VIDEO) {
+                setLocation(mVideoShutter, false, 2);
+                setLocation(mCancelButton, false, 0.85f);
+            } else {
+                setLocation(mShutter, false, 2);
+                setLocation(mPreview, false, 0);
+                setLocation(mVideoShutter, false, 3.15f);
+            }
         }
         setLocationCustomBottom(mMakeupSeekBarLayout, 0, 1);
         setLocation(mProModeCloseButton, false, 4);
@@ -411,8 +430,14 @@ public class OneUICameraControls extends RotatableLayout {
             setBottomButtionSize(mVideoShutter, mBottomLargeSize, mBottomLargeSize);
             setBottomButtionSize(mShutter, mBottomSmallSize, mBottomSmallSize);
         } else {
-            setBottomButtionSize(mShutter, mBottomLargeSize, mBottomLargeSize);
-            setBottomButtionSize(mVideoShutter, mBottomSmallSize, mBottomSmallSize);
+            if (mIntentMode == CaptureModule.INTENT_MODE_CAPTURE) {
+                setBottomButtionSize(mShutter, mBottomLargeSize, mBottomLargeSize);
+            } else if (mIntentMode == CaptureModule.INTENT_MODE_VIDEO) {
+                setBottomButtionSize(mVideoShutter, mBottomLargeSize, mBottomLargeSize);
+            } else {
+                setBottomButtionSize(mShutter, mBottomLargeSize, mBottomLargeSize);
+                setBottomButtionSize(mVideoShutter, mBottomSmallSize, mBottomSmallSize);
+            }
         }
     }
 

@@ -363,6 +363,7 @@ public class PostProcessor{
     }
 
     public boolean takeZSLPicture() {
+        mController.setJpegImageData(null);
         ZSLQueue.ImageItem imageItem = mZSLQueue.tryToGetMatchingItem();
         if(mController.getPreviewCaptureResult() == null ||
                 mController.getPreviewCaptureResult().get(CaptureResult.CONTROL_AE_STATE) == CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED) {
@@ -968,6 +969,16 @@ public class PostProcessor{
                                     mOrientation, null, mediaSavedListener, contentResolver, "jpeg");
                         }
                         bytes = nv21ToJpeg(resultImage, mOrientation, waitForMetaData(0));
+                        if (mController.getCurrentIntentMode() ==
+                                CaptureModule.INTENT_MODE_CAPTURE) {
+                            mController.setJpegImageData(bytes);
+                            if (mController.isQuickCapture()) {
+                                mController.onCaptureDone();
+                            } else {
+                                mController.showCapturedReview(
+                                        bytes, mOrientation, isSelfieMirrorOn());
+                            }
+                        }
                         mActivity.getMediaSaveService().addImage(
                                     bytes, title, date, null, resultImage.outRoi.width(), resultImage.outRoi.height(),
                                     mOrientation, null, mediaSavedListener, contentResolver, "jpeg");
@@ -1034,11 +1045,21 @@ public class PostProcessor{
                     image.getPlanes()[0].getBuffer().get(bytes, 0, size);
                     ExifInterface exif = Exif.getExif(bytes);
                     int orientation = Exif.getOrientation(exif);
-                    mActivity.getMediaSaveService().addImage(
-                            bytes, title, date, null, image.getCropRect().width(), image.getCropRect().height(),
-                            orientation, null, mController.getMediaSavedListener(), mActivity.getContentResolver(), "jpeg");
-                    mController.updateThumbnailJpegData(bytes);
-                    image.close();
+                    if (mController.getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
+                        mController.setJpegImageData(bytes);
+                        if (mController.isQuickCapture()) {
+                            mController.onCaptureDone();
+                        } else {
+                            mController.showCapturedReview(bytes,
+                                            orientation, isSelfieMirrorOn());
+                        }
+                    } else {
+                        mActivity.getMediaSaveService().addImage(
+                                bytes, title, date, null, image.getCropRect().width(), image.getCropRect().height(),
+                                orientation, null, mController.getMediaSavedListener(), mActivity.getContentResolver(), "jpeg");
+                        mController.updateThumbnailJpegData(bytes);
+                        image.close();
+                    }
                 }
             });
         }

@@ -19,19 +19,23 @@
 
 package com.android.camera;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -59,12 +63,14 @@ import android.media.MediaRecorder;
 import android.media.EncoderCapabilities;
 import android.media.EncoderCapabilities.VideoEncoderCap;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Debug;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Bundle;
 import android.os.Message;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -104,13 +110,17 @@ import org.codeaurora.snapcam.R;
 import org.codeaurora.snapcam.filter.ClearSightImageProcessor;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.lang.reflect.Method;
@@ -126,6 +136,10 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static final int BAYER_ID = 0;
     public static int MONO_ID = -1;
     public static int FRONT_ID = -1;
+    public static final int INTENT_MODE_NORMAL = 0;
+    public static final int INTENT_MODE_CAPTURE = 1;
+    public static final int INTENT_MODE_VIDEO = 2;
+    public static final int INTENT_MODE_CAPTURE_SECURE = 3;
     private static final int BACK_MODE = 0;
     private static final int FRONT_MODE = 1;
     private static final int CANCEL_TOUCH_FOCUS_DELAY = 3000;
@@ -134,6 +148,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final int MAX_NUM_CAM = 3;
     private static final MeteringRectangle[] ZERO_WEIGHT_3A_REGION = new MeteringRectangle[]{
             new MeteringRectangle(0, 0, 0, 0, 0)};
+    private static final String EXTRA_QUICK_CAPTURE =
+            "android.intent.extra.quickCapture";
     /**
      * Camera state: Showing camera preview.
      */
@@ -248,6 +264,15 @@ public class CaptureModule implements CameraModule, PhotoController,
     boolean mUnsupportedResolution = false;
 
     private static final int SDCARD_SIZE_LIMIT = 4000 * 1024 * 1024;
+    private static final String sTempCropFilename = "crop-temp";
+    private static final int REQUEST_CROP = 1000;
+    private int mIntentMode = INTENT_MODE_NORMAL;
+    private String mCropValue;
+    private Uri mCurrentVideoUri;
+    private ParcelFileDescriptor mVideoFileDescriptor;
+    private Uri mSaveUri;
+    private boolean mQuickCapture;
+    private byte[] mJpegImageData;
 
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -384,6 +409,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 public void onMediaSaved(Uri uri) {
                     if (uri != null) {
                         mActivity.notifyNewMedia(uri);
+                        mCurrentVideoUri = uri;
                     }
                 }
             };
@@ -1092,11 +1118,55 @@ public class CaptureModule implements CameraModule, PhotoController,
         mFrameProcessor = new FrameProcessor(mActivity, this);
 
         mContentResolver = mActivity.getContentResolver();
+        initModeByIntent();
         mUI = new CaptureUI(activity, this, parent);
         mUI.initializeControlByIntent();
 
         mFocusStateListener = new FocusStateListener(mUI);
         mLocationManager = new LocationManager(mActivity, this);
+    }
+
+    private void initModeByIntent() {
+        String action = mActivity.getIntent().getAction();
+        if (MediaStore.ACTION_IMAGE_CAPTURE.equals(action)) {
+            mIntentMode = INTENT_MODE_CAPTURE;
+        } else if (CameraActivity.ACTION_IMAGE_CAPTURE_SECURE.equals(action)) {
+            mIntentMode = INTENT_MODE_CAPTURE_SECURE;
+        } else if (MediaStore.ACTION_VIDEO_CAPTURE.equals(action)) {
+            mIntentMode = INTENT_MODE_VIDEO;
+        }
+        mQuickCapture = mActivity.getIntent().getBooleanExtra(EXTRA_QUICK_CAPTURE, false);
+        Bundle myExtras = mActivity.getIntent().getExtras();
+        if (myExtras != null) {
+            mSaveUri = (Uri) myExtras.getParcelable(MediaStore.EXTRA_OUTPUT);
+            mCropValue = myExtras.getString("crop");
+        }
+    }
+
+    public boolean isQuickCapture() {
+        return mQuickCapture;
+    }
+
+    public void setJpegImageData(byte[] data) {
+        mJpegImageData = data;
+    }
+
+    public void showCapturedReview(byte[] jpegData, int orientation, boolean mirror) {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mUI.showCapturedImageForReview(jpegData, orientation, mirror);
+            }
+        });
+    }
+
+
+    public int getCurrentIntentMode() {
+        return mIntentMode;
+    }
+
+    public void cancelCapture() {
+        mActivity.finish();
     }
 
     /**
@@ -1249,6 +1319,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void captureStillPicture(final int id) {
         Log.d(TAG, "captureStillPicture " + id);
+        mJpegImageData = null;
         mIsRefocus = false;
         CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
 
@@ -1553,14 +1624,24 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     ExifInterface exif = Exif.getExif(bytes);
                                     int orientation = Exif.getOrientation(exif);
 
-                                    mActivity.getMediaSaveService().addImage(bytes, title, date,
-                                            null, image.getWidth(), image.getHeight(), orientation, null,
-                                            mOnMediaSavedListener, mContentResolver, "jpeg");
-
-                                    if(mLongshotActive) {
-                                        mLastJpegData = bytes;
+                                    if (getCameraMode() != CaptureModule.INTENT_MODE_NORMAL) {
+                                        mJpegImageData = bytes;
+                                        if (!mQuickCapture) {
+                                            showCapturedReview(bytes, orientation,
+                                                    mPostProcessor.isSelfieMirrorOn());
+                                        } else {
+                                            onCaptureDone();
+                                        }
                                     } else {
-                                        mActivity.updateThumbnail(bytes);
+                                        mActivity.getMediaSaveService().addImage(bytes, title, date,
+                                                null, image.getWidth(), image.getHeight(), orientation, null,
+                                                mOnMediaSavedListener, mContentResolver, "jpeg");
+
+                                        if(mLongshotActive) {
+                                            mLastJpegData = bytes;
+                                        } else {
+                                            mActivity.updateThumbnail(bytes);
+                                        }
                                     }
                                     image.close();
                                 }
@@ -1960,6 +2041,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         stopBackgroundThread();
         mLastJpegData = null;
         setProModeVisible();
+        mJpegImageData = null;
+        closeVideoFileDescriptor();
     }
 
     @Override
@@ -2178,7 +2261,13 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if(isPanoSetting(scene)) {
-            mActivity.onModuleSelected(ModuleSwitcher.PANOCAPTURE_MODULE_INDEX);
+            if (mIntentMode != CaptureModule.INTENT_MODE_NORMAL) {
+                mSettingsManager.setValue(
+                        SettingsManager.KEY_SCENE_MODE, ""+SettingsManager.SCENE_MODE_AUTO_INT);
+                showToast("Pano Capture is not supported in this mode");
+            } else {
+                mActivity.onModuleSelected(ModuleSwitcher.PANOCAPTURE_MODULE_INDEX);
+            }
         }
     }
 
@@ -2316,7 +2405,99 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onCaptureDone() {
+        if (mPaused) {
+            return;
+        }
 
+        byte[] data = mJpegImageData;
+
+        if (mCropValue == null) {
+            // First handle the no crop case -- just return the value.  If the
+            // caller specifies a "save uri" then write the data to its
+            // stream. Otherwise, pass back a scaled down version of the bitmap
+            // directly in the extras.
+            if (mSaveUri != null) {
+                OutputStream outputStream = null;
+                try {
+                    outputStream = mContentResolver.openOutputStream(mSaveUri);
+                    outputStream.write(data);
+                    outputStream.close();
+
+                    mActivity.setResultEx(Activity.RESULT_OK);
+                    mActivity.finish();
+                } catch (IOException ex) {
+                    // ignore exception
+                } finally {
+                    CameraUtil.closeSilently(outputStream);
+                }
+            } else {
+                ExifInterface exif = Exif.getExif(data);
+                int orientation = Exif.getOrientation(exif);
+                Bitmap bitmap = CameraUtil.makeBitmap(data, 50 * 1024);
+                bitmap = CameraUtil.rotate(bitmap, orientation);
+                mActivity.setResultEx(Activity.RESULT_OK,
+                        new Intent("inline-data").putExtra("data", bitmap));
+                mActivity.finish();
+            }
+        } else {
+            // Save the image to a temp file and invoke the cropper
+            Uri tempUri = null;
+            FileOutputStream tempStream = null;
+            try {
+                File path = mActivity.getFileStreamPath(sTempCropFilename);
+                path.delete();
+                tempStream = mActivity.openFileOutput(sTempCropFilename, 0);
+                tempStream.write(data);
+                tempStream.close();
+                tempUri = Uri.fromFile(path);
+            } catch (FileNotFoundException ex) {
+                mActivity.setResultEx(Activity.RESULT_CANCELED);
+                mActivity.finish();
+                return;
+            } catch (IOException ex) {
+                mActivity.setResultEx(Activity.RESULT_CANCELED);
+                mActivity.finish();
+                return;
+            } finally {
+                CameraUtil.closeSilently(tempStream);
+            }
+
+            Bundle newExtras = new Bundle();
+            if (mCropValue.equals("circle")) {
+                newExtras.putString("circleCrop", "true");
+            }
+            if (mSaveUri != null) {
+                newExtras.putParcelable(MediaStore.EXTRA_OUTPUT, mSaveUri);
+            } else {
+                newExtras.putBoolean(CameraUtil.KEY_RETURN_DATA, true);
+            }
+            if (mActivity.isSecureCamera()) {
+                newExtras.putBoolean(CameraUtil.KEY_SHOW_WHEN_LOCKED, true);
+            }
+
+            // TODO: Share this constant.
+            final String CROP_ACTION = "com.android.camera.action.CROP";
+            Intent cropIntent = new Intent(CROP_ACTION);
+
+            cropIntent.setData(tempUri);
+            cropIntent.putExtras(newExtras);
+
+            mActivity.startActivityForResult(cropIntent, REQUEST_CROP);
+        }
+    }
+
+    public void onRecordingDone(boolean valid) {
+        Intent resultIntent = new Intent();
+        int resultCode;
+        if (valid) {
+            resultCode = Activity.RESULT_OK;
+            resultIntent.setData(mCurrentVideoUri);
+            resultIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } else {
+            resultCode = Activity.RESULT_CANCELED;
+        }
+        mActivity.setResultEx(resultCode, resultIntent);
+        mActivity.finish();
     }
 
     @Override
@@ -3024,6 +3205,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.enableShutter(true);
 
         mIsRecordingVideo = false;
+        if (mIntentMode == INTENT_MODE_VIDEO) {
+            if (isQuickCapture()) {
+                onRecordingDone(true);
+            } else {
+                Bitmap thumbnail = getVideoThumbnail();
+                mUI.showRecordVideoForReview(thumbnail);
+            }
+        }
 
         if(mFrameProcessor != null) {
             mFrameProcessor.onOpen(getFrameProcFilterId(), mPreviewSize);
@@ -3085,28 +3274,30 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void saveVideo() {
-        File origFile = new File(mVideoFilename);
-        if (!origFile.exists() || origFile.length() <= 0) {
-            Log.e(TAG, "Invalid file");
-            mCurrentVideoValues = null;
-            return;
+        if (mVideoFileDescriptor == null) {
+            File origFile = new File(mVideoFilename);
+            if (!origFile.exists() || origFile.length() <= 0) {
+                Log.e(TAG, "Invalid file");
+                mCurrentVideoValues = null;
+                return;
+            }
+
+            long duration = 0L;
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+
+            try {
+                retriever.setDataSource(mVideoFilename);
+                duration = Long.valueOf(retriever.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_DURATION));
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "cannot access the file");
+            }
+            retriever.release();
+
+            mActivity.getMediaSaveService().addVideo(mVideoFilename,
+                    duration, mCurrentVideoValues,
+                    mOnVideoSavedListener, mContentResolver);
         }
-
-        long duration = 0L;
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-
-        try {
-            retriever.setDataSource(mVideoFilename);
-            duration = Long.valueOf(retriever.extractMetadata(
-                    MediaMetadataRetriever.METADATA_KEY_DURATION));
-        } catch (IllegalArgumentException e) {
-            Log.e(TAG, "cannot access the file");
-        }
-        retriever.release();
-
-        mActivity.getMediaSaveService().addVideo(mVideoFilename,
-                duration, mCurrentVideoValues,
-                mOnVideoSavedListener, mContentResolver);
         mCurrentVideoValues = null;
     }
 
@@ -3114,11 +3305,20 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "setUpMediaRecorder");
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         int size = CameraSettings.VIDEO_QUALITY_TABLE.get(videoSize);
+        Intent intent = mActivity.getIntent();
+        if (intent.hasExtra(MediaStore.EXTRA_VIDEO_QUALITY)) {
+            int extraVideoQuality =
+                    intent.getIntExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
+            if (extraVideoQuality > 0) {
+                size = CamcorderProfile.QUALITY_HIGH;
+            } else {  // 0 is mms.
+                size = CamcorderProfile.QUALITY_LOW;
+            }
+        }
         if (mCaptureTimeLapse) {
             size = CameraSettings.getTimeLapseQualityFor(size);
         }
 
-        Intent intent = mActivity.getIntent();
         Bundle myExtras = intent.getExtras();
 
         if (mMediaRecorder == null) mMediaRecorder = new MediaRecorder();
@@ -3147,9 +3347,26 @@ public class CaptureModule implements CameraModule, PhotoController,
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
 
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
-        String fileName = generateVideoFilename(mProfile.fileFormat);
-        Log.v(TAG, "New video filename: " + fileName);
-        mMediaRecorder.setOutputFile(fileName);
+        closeVideoFileDescriptor();
+        if (mIntentMode == CaptureModule.INTENT_MODE_VIDEO && myExtras != null) {
+            Uri saveUri = (Uri) myExtras.getParcelable(MediaStore.EXTRA_OUTPUT);
+            if (saveUri != null) {
+                try {
+                    mCurrentVideoUri = saveUri;
+                    mVideoFileDescriptor =
+                            mContentResolver.openFileDescriptor(saveUri, "rw");
+                    mCurrentVideoUri = saveUri;
+                } catch (java.io.FileNotFoundException ex) {
+                    // invalid uri
+                    Log.e(TAG, ex.toString());
+                }
+            }
+            mMediaRecorder.setOutputFile(mVideoFileDescriptor.getFileDescriptor());
+        } else {
+            String fileName = generateVideoFilename(mProfile.fileFormat);
+            Log.v(TAG, "New video filename: " + fileName);
+            mMediaRecorder.setOutputFile(fileName);
+        }
         mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
         mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
         if(mFrameProcessor.isFrameFilterEnabled()) {
@@ -4186,6 +4403,55 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updateSaveStorageState() {
         Storage.setSaveSDCard(mSettingsManager.getValue(SettingsManager
                 .KEY_CAMERA_SAVEPATH).equals("1"));
+    }
+
+    public void startPlayVideoActivity() {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(mCurrentVideoUri,
+                CameraUtil.convertOutputFormatToMimeType(mProfile.fileFormat));
+        try {
+            mActivity
+                    .startActivityForResult(intent, CameraActivity.REQ_CODE_DONT_SWITCH_TO_PREVIEW);
+        } catch (ActivityNotFoundException ex) {
+            Log.e(TAG, "Couldn't view video " + mCurrentVideoUri, ex);
+        }
+    }
+
+    private void closeVideoFileDescriptor() {
+        if (mVideoFileDescriptor != null) {
+            try {
+                mVideoFileDescriptor.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Fail to close fd", e);
+            }
+            mVideoFileDescriptor = null;
+        }
+    }
+
+    private Bitmap getVideoThumbnail() {
+        Bitmap bitmap = null;
+        if (mVideoFileDescriptor != null) {
+            bitmap = Thumbnail.createVideoThumbnailBitmap(mVideoFileDescriptor.getFileDescriptor(),
+                    mVideoPreviewSize.getWidth());
+        } else if (mCurrentVideoUri != null) {
+            try {
+                mVideoFileDescriptor = mContentResolver.openFileDescriptor(mCurrentVideoUri, "r");
+                bitmap = Thumbnail.createVideoThumbnailBitmap(
+                        mVideoFileDescriptor.getFileDescriptor(), mVideoPreviewSize.getWidth());
+            } catch (java.io.FileNotFoundException ex) {
+                // invalid uri
+                Log.e(TAG, ex.toString());
+            }
+        }
+
+        if (bitmap != null) {
+            // MetadataRetriever already rotates the thumbnail. We should rotate
+            // it to match the UI orientation (and mirror if it is front-facing camera).
+            Camera.CameraInfo[] info = CameraHolder.instance().getCameraInfo();
+            boolean mirror = mPostProcessor.isSelfieMirrorOn();
+            bitmap = CameraUtil.rotateAndMirror(bitmap, 0, mirror);
+        }
+        return bitmap;
     }
 
     private void deleteVideoFile(String fileName) {

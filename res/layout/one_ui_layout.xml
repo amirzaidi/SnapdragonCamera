@@ -69,6 +69,26 @@
         android:src="@drawable/btn_pause_recording"/>
 
     <com.android.camera.ui.RotateImageView
+        android:id="@+id/cancel_button"
+        android:layout_width="@dimen/one_ui_bottom_small"
+        android:layout_height="@dimen/one_ui_bottom_small"
+        android:clickable="true"
+        android:focusable="true"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        android:src="@drawable/ic_menu_cancel_holo_light" />
+
+    <com.android.camera.PauseButton
+        android:id="@+id/video_pause"
+        android:layout_width="@dimen/one_ui_bottom_small"
+        android:layout_height="@dimen/one_ui_bottom_small"
+        android:focusable="true"
+        android:clickable="true"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        android:src="@drawable/btn_pause_recording"/>
+
+    <com.android.camera.ui.RotateImageView
         android:id="@+id/preview_thumb"
         android:layout_width="@dimen/capture_size"
         android:layout_height="@dimen/capture_size"
