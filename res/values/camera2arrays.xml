@@ -946,4 +946,16 @@ for time lapse recording -->
         <item>@string/pref_camera2_shutter_sound_value_on</item>
         <item>@string/pref_camera2_shutter_sound_value_off</item>
     </string-array>
+
+    <string-array name="pref_camera2_instant_aec_entryvalues" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="pref_camera2_instant_aec_entries" translatable="true">
+        <item>@string/pref_camera2_instant_aec_entry_disable</item>
+        <item>@string/pref_camera2_instant_aec_entry_aggressive</item>
+        <item>@string/pref_camera2_instant_aec_entry_fast</item>
+    </string-array>
 </resources>
