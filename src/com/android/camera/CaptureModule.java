@@ -554,14 +554,16 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
                 updateFaceView(faces);
 
-
-                int[] histogramStats = result.get(CaptureModule.histogramStats);
-                if (histogramStats != null && mHiston) {
-                    /*The first element in the array stores max hist value . Stats data begin from second value*/
-                    synchronized(statsdata) {
-                        System.arraycopy(histogramStats,0,statsdata,0,1024);
+                if (SettingsManager.getInstance().isHistogramSupport()) {
+                    int[] histogramStats = result.get(CaptureModule.histogramStats);
+                    if (histogramStats != null && mHiston) {
+                    /*The first element in the array stores max hist value . Stats data begin
+                    from second value*/
+                        synchronized (statsdata) {
+                            System.arraycopy(histogramStats, 0, statsdata, 0, 1024);
+                        }
+                        updateGraghView();
                     }
-                    updateGraghView();
                 }
             }
             processCaptureResult(result);

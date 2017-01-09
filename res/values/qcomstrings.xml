@@ -1,5 +1,5 @@
 <!--
-    Copyright (c) 2012-2014, 2016, The Linux Foundation. All rights reserved.
+    Copyright (c) 2012-2014, 2016-2017 The Linux Foundation. All rights reserved.
 
     Not a Contribution.
 
@@ -1030,7 +1030,7 @@
     <string name="pref_camera_scenemode_entry_trackingfocus" translatable="true">TrackingFocus</string>
     <string name="pref_camera_scenemode_entry_panorama" translatable="true">Panorama</string>
     <string name="pref_camera_scenemode_entry_promode" translatable="true">ProMode</string>
-    <string name="bestpicture_done" translatable="true">DONE</string>
+    <string name="bestpicture_done" translatable="true">SAVE</string>
     <string name="bestpicture_at_least_one_picture" translatable="true">At least, one picture has to be chosen.</string>
 
     <string name="pref_camera2_shutter_sound_default" translatable="true">on</string>

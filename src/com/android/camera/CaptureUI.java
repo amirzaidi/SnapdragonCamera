@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2012 The Android Open Source Project
@@ -101,6 +101,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private static final int FILTER_MENU_ON = 2;
     private static final int ANIMATION_DURATION = 300;
     private static final int CLICK_THRESHOLD = 200;
+    private static final int AUTOMATIC_MODE = 0;
     private CameraActivity mActivity;
     private View mRootView;
     private View mPreviewCover;
@@ -199,6 +200,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private RotateLayout mSceneModeLabelRect;
     private LinearLayout mSceneModeLabelView;
     private TextView mSceneModeName;
+    private ImageView mExitBestMode;
     private ImageView mSceneModeLabelCloseIcon;
     private AlertDialog  mSceneModeInstructionalDialog = null;
 
@@ -280,6 +282,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mRenderOverlay = (RenderOverlay) mRootView.findViewById(R.id.render_overlay);
         mShutterButton = (ShutterButton) mRootView.findViewById(R.id.shutter_button);
         mVideoButton = (ImageView) mRootView.findViewById(R.id.video_button);
+        mExitBestMode = (ImageView) mRootView.findViewById(R.id.exit_best_mode);
         mFilterModeSwitcher = mRootView.findViewById(R.id.filter_mode_switcher);
         mSceneModeSwitcher = mRootView.findViewById(R.id.scene_mode_switcher);
         mFrontBackSwitcher = mRootView.findViewById(R.id.front_back_switcher);
@@ -359,6 +362,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                     mMuteButton.setImageResource(R.drawable.ic_unmuted_button);
                 else
                     mMuteButton.setImageResource(R.drawable.ic_muted_button);
+            }
+        });
+
+        mExitBestMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SettingsManager.getInstance().setValueIndex(SettingsManager.KEY_SCENE_MODE,
+                        AUTOMATIC_MODE);
             }
         });
 
@@ -840,8 +851,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         if ( index > 0 && index < sceneModeNameArray.length ) {
             mSceneModeName.setText(sceneModeNameArray[index]);
             mSceneModeLabelRect.setVisibility(View.VISIBLE);
+            mExitBestMode.setVisibility(View.VISIBLE);
         }else{
             mSceneModeLabelRect.setVisibility(View.GONE);
+            mExitBestMode.setVisibility(View.GONE);
         }
     }
 
