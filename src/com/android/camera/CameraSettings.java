@@ -23,6 +23,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
@@ -126,6 +127,10 @@ public class CameraSettings {
 
     public static final String KEY_LONGSHOT = "pref_camera_longshot_key";
     public static final String KEY_INSTANT_CAPTURE = "pref_camera_instant_capture_key";
+
+    public static final String KEY_BOKEH_MODE = "pref_camera_bokeh_mode_key";
+    public static final String KEY_BOKEH_MPO = "pref_camera_bokeh_mpo_key";
+    public static final String KEY_BOKEH_BLUR_VALUE = "pref_camera_bokeh_blur_degree_key";
 
     private static final String KEY_QC_SUPPORTED_AE_BRACKETING_MODES = "ae-bracket-hdr-values";
     private static final String KEY_QC_SUPPORTED_AF_BRACKETING_MODES = "af-bracket-values";
@@ -240,6 +245,14 @@ public class CameraSettings {
     public static final String KEY_QC_SUPPORTED_MANUAL_FOCUS_MODES = "manual-focus-modes";
     public static final String KEY_QC_SUPPORTED_MANUAL_EXPOSURE_MODES = "manual-exposure-modes";
     public static final String KEY_QC_SUPPORTED_MANUAL_WB_MODES = "manual-wb-modes";
+
+    //Bokeh
+    public static final String KEY_QC_IS_BOKEH_MODE_SUPPORTED = "is-bokeh-supported";
+    public static final String KEY_QC_IS_BOKEH_MPO_SUPPORTED = "is-bokeh-mpo-supported";
+    public static final String KEY_QC_BOKEH_MODE = "bokeh-mode";
+    public static final String KEY_QC_BOKEH_MPO_MODE = "bokeh-mpo-mode";
+    public static final String KEY_QC_SUPPORTED_DEGREES_OF_BLUR = "supported-blur-degrees";
+    public static final String KEY_QC_BOKEH_BLUR_VALUE = "bokeh-blur-value";
 
     public static final String KEY_TS_MAKEUP_UILABLE       = "pref_camera_tsmakeup_key";
     public static final String KEY_TS_MAKEUP_PARAM         = "tsmakeup"; // on/of
@@ -686,10 +699,26 @@ public class CameraSettings {
         ListPreference manualExposure = group.findPreference(KEY_MANUAL_EXPOSURE);
         ListPreference manualWB = group.findPreference(KEY_MANUAL_WB);
         ListPreference instantCapture = group.findPreference(KEY_INSTANT_CAPTURE);
+        ListPreference bokehMode = group.findPreference(KEY_BOKEH_MODE);
+        ListPreference bokehMpo = group.findPreference(KEY_BOKEH_MPO);
+        ListPreference bokehBlurDegree = group.findPreference(KEY_BOKEH_BLUR_VALUE);
 
         if (instantCapture != null) {
             if (!isInstantCaptureSupported(mParameters)) {
                 removePreference(group, instantCapture.getKey());
+            }
+        }
+
+        if (bokehMode != null) {
+            if (!isBokehModeSupported(mParameters)) {
+                removePreference(group, bokehMode.getKey());
+                removePreference(group, bokehBlurDegree.getKey());
+            }
+        }
+
+        if (bokehMpo != null) {
+            if (!isBokehMPOSupported(mParameters)) {
+                removePreference(group, bokehMpo.getKey());
             }
         }
 
@@ -1026,6 +1055,10 @@ public class CameraSettings {
             removePreference(group, preference.getKey());
             return;
         }
+
+//        if (numOfCameras > 2 ) {
+//            numOfCameras = 2;
+//        }
 
         CharSequence[] entryValues = new CharSequence[numOfCameras];
         for (int i = 0; i < numOfCameras; ++i) {
@@ -1426,5 +1459,36 @@ public class CameraSettings {
             }
         }
         return ret;
+    }
+
+    public static boolean isBokehModeSupported(Parameters params) {
+        boolean ret = false;
+        if (null != params) {
+            String val = params.get(KEY_QC_IS_BOKEH_MODE_SUPPORTED);
+            if ("1".equals(val)) {
+                ret = true;
+            }
+        }
+        return ret;
+    }
+
+    public static boolean isBokehMPOSupported(Parameters params) {
+        boolean ret = false;
+        if (null != params) {
+            String val = params.get(KEY_QC_IS_BOKEH_MPO_SUPPORTED);
+            if ("1".equals(val)) {
+                ret = true;
+            }
+        }
+        return ret;
+    }
+
+    public static List<String> getSupportedDegreesOfBlur(Parameters params) {
+        String str = params.get(KEY_QC_SUPPORTED_DEGREES_OF_BLUR);
+        if (str == null) {
+            return null;
+        }
+        Log.d(TAG,"getSupportedDegreesOfBlur str =" +str);
+        return split(str);
     }
 }
