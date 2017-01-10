@@ -777,7 +777,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         return false;
     }
 
-    private int getCameraMode() {
+    public int getCameraMode() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (value != null && value.equals(SettingsManager.SCENE_MODE_DUAL_STRING)) return DUAL_MODE;
         value = mSettingsManager.getValue(SettingsManager.KEY_MONO_ONLY);
