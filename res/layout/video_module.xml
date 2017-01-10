@@ -77,19 +77,26 @@
                 android:id="@+id/labels" />
         </LinearLayout>
     </com.android.camera.ui.RotateLayout>
-    <ImageView android:id="@+id/review_image"
-        android:layout_height="match_parent"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:visibility="gone"
-        android:background="@android:color/black"/>
-    <ImageView
-        android:id="@+id/btn_play"
-        style="@style/ReviewControlIcon"
-        android:layout_centerInParent="true"
-        android:src="@drawable/ic_gallery_play_big"
-        android:scaleType="center"
-        android:visibility="gone"
-        android:onClick="onReviewPlayClicked"/>
+        android:layout_height="match_parent">
+        <ImageView android:id="@+id/review_image"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:background="@android:color/black"/>
+
+        <ImageView
+            android:id="@+id/btn_play"
+            style="@style/ReviewControlIcon"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_gallery_play_big"
+            android:scaleType="center"
+            android:visibility="gone"
+            android:layout_gravity="center"
+            android:onClick="onReviewPlayClicked"/>
+    </FrameLayout>
+
     <include layout="@layout/camera_controls"
         android:layout_gravity="center"
         style="@style/CameraControls"/>

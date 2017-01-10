@@ -112,6 +112,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_FILTER_MODE = "pref_camera2_filter_mode_key";
     public static final String KEY_COLOR_EFFECT = "pref_camera2_coloreffect_key";
     public static final String KEY_SCENE_MODE = "pref_camera2_scenemode_key";
+    public static final String KEY_SCEND_MODE_INSTRUCTIONAL = "pref_camera2_scenemode_instructional";
     public static final String KEY_REDEYE_REDUCTION = "pref_camera2_redeyereduction_key";
     public static final String KEY_CAMERA_ID = "pref_camera2_id_key";
     public static final String KEY_PICTURE_SIZE = "pref_camera2_picturesize_key";
@@ -450,6 +451,28 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return pref.findIndexOfValue(value);
     }
 
+    private boolean setFocusValue(String key, float value) {
+        boolean result = false;
+        String prefName = ComboPreferences.getLocalSharedPreferencesName(mContext, mCameraId);
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences(prefName,
+                Context.MODE_PRIVATE);
+        float prefValue = sharedPreferences.getFloat(key, 0.5f);
+        if (prefValue != value) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putFloat(key, value);
+            editor.apply();
+            result = true;
+        }
+        return result;
+    }
+
+    public float getFocusValue(String key) {
+        String prefName = ComboPreferences.getLocalSharedPreferencesName(mContext, mCameraId);
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences(prefName,
+                Context.MODE_PRIVATE);
+        return sharedPreferences.getFloat(key, 0.5f);
+    }
+
     public boolean isOverriden(String key) {
         Values values = mValuesMap.get(key);
         return values.overriddenValue != null;
@@ -478,12 +501,15 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
     }
 
-    public void setFocusDistance(float value) {
-        List<SettingState> list = new ArrayList<>();
-        Values values = new Values("" + value, null);
-        SettingState ss = new SettingState(KEY_FOCUS_DISTANCE, values);
-        list.add(ss);
-        notifyListeners(list);
+    public void setFocusDistance(String key, float value, float minFocus) {
+        boolean isSuccess = setFocusValue(key, value);
+        if (isSuccess) {
+            List<SettingState> list = new ArrayList<>();
+            Values values = new Values("" + value * minFocus, null);
+            SettingState ss = new SettingState(KEY_FOCUS_DISTANCE, values);
+            list.add(ss);
+            notifyListeners(list);
+        }
     }
 
     private void updateMapAndNotify(ListPreference pref) {
@@ -540,6 +566,9 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference flashMode = mPreferenceGroup.findPreference(KEY_FLASH_MODE);
         ListPreference colorEffect = mPreferenceGroup.findPreference(KEY_COLOR_EFFECT);
         ListPreference sceneMode = mPreferenceGroup.findPreference(KEY_SCENE_MODE);
+        ListPreference sceneModeInstructional =
+                mPreferenceGroup.findPreference(KEY_SCEND_MODE_INSTRUCTIONAL);
+
         ListPreference cameraIdPref = mPreferenceGroup.findPreference(KEY_CAMERA_ID);
         ListPreference pictureSize = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
         ListPreference exposure = mPreferenceGroup.findPreference(KEY_EXPOSURE);
@@ -576,6 +605,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (sceneMode != null) {
             if (filterUnsupportedOptions(sceneMode, getSupportedSceneModes(cameraId))) {
                 mFilteredKeys.add(sceneMode.getKey());
+            }
+        }
+
+        if ( sceneModeInstructional != null ) {
+            if (filterUnsupportedOptions(sceneModeInstructional,
+                    getSupportedSceneModes(cameraId)) ){
+                mFilteredKeys.add(sceneModeInstructional.getKey());
             }
         }
 
@@ -1063,6 +1099,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     private boolean isFlashAvailable(int cameraId) {
         return mCharacteristics.get(cameraId).get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+    }
+
+    public StreamConfigurationMap getStreamConfigurationMap(int cameraId){
+        return mCharacteristics.get(cameraId)
+                .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
     }
 
     public List<String> getSupportedColorEffects(int cameraId) {

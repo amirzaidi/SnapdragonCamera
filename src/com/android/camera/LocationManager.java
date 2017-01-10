@@ -16,7 +16,9 @@
 
 package com.android.camera;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationProvider;
 import android.os.Bundle;
@@ -65,7 +67,7 @@ public class LocationManager {
         if (mRecordLocation != recordLocation) {
             /* Don't change the location until permission request
                result is received */
-            if (!mWaitingLocPermResult) {
+            if (!mWaitingLocPermResult && hasLoationPermission()) {
                 mRecordLocation = recordLocation;
                 if (recordLocation) {
                     startReceivingLocationUpdates();
@@ -74,6 +76,11 @@ public class LocationManager {
                 }
             }
         }
+    }
+
+    private boolean hasLoationPermission() {
+        return mContext.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     public void waitingLocationPermissionResult(boolean waitingResult) {

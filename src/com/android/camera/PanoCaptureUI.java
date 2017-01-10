@@ -24,16 +24,29 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.hardware.Camera.Face;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLayoutChangeListener;
 import android.view.ViewGroup;
+
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.CameraControls;
@@ -41,6 +54,7 @@ import com.android.camera.ui.CameraRootView;
 import com.android.camera.ui.FocusIndicator;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.PanoCaptureProcessView;
+import com.android.camera.ui.RotateLayout;
 import com.android.camera.util.CameraUtil;
 
 import org.codeaurora.snapcam.R;
@@ -60,6 +74,12 @@ public class PanoCaptureUI implements
     private ShutterButton mShutterButton;
     private ModuleSwitcher mSwitcher;
     private CameraControls mCameraControls;
+    private RotateLayout mSceneModeLabelRect;
+    private LinearLayout mSceneModeLabelView;
+    private TextView mSceneModeName;
+    private ImageView mSceneModeLabelCloseIcon;
+    private AlertDialog  mSceneModeInstructionalDialog = null;
+
     // Small indicators which show the camera settings in the viewfinder.
     private OnScreenIndicators mOnScreenIndicators;
 
@@ -74,6 +94,7 @@ public class PanoCaptureUI implements
     private ImageView mThumbnail;
 
     private int mOrientation;
+    private boolean mIsSceneModeLabelClose = false;
 
     public void clearSurfaces() {
         mSurfaceHolder = null;
@@ -193,12 +214,26 @@ public class PanoCaptureUI implements
             }
         });
 
+        mSceneModeLabelRect = (RotateLayout)mRootView.findViewById(R.id.scene_mode_label_rect);
+        mSceneModeName = (TextView)mRootView.findViewById(R.id.scene_mode_label);
+        mSceneModeName.setText(R.string.pref_camera_scenemode_entry_panorama);
+        mSceneModeLabelCloseIcon = (ImageView)mRootView.findViewById(R.id.scene_mode_label_close);
+        mSceneModeLabelCloseIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mIsSceneModeLabelClose = true;
+                mSceneModeLabelRect.setVisibility(View.GONE);
+            }
+        });
         initIndicators();
 
         Point size = new Point();
         mActivity.getWindowManager().getDefaultDisplay().getSize(size);
         calculateMargins(size);
         mCameraControls.setMargins(mTopMargin, mBottomMargin);
+        if ( needShowInstructional() ) {
+            showSceneInstructionalDialog(mOrientation);
+        }
     }
 
     private void calculateMargins(Point size) {
@@ -381,6 +416,24 @@ public class PanoCaptureUI implements
         mOrientation = orientation;
         mCameraControls.setOrientation(orientation, animation);
         mPreviewProcessView.setOrientation(orientation);
+
+        if ( mSceneModeLabelRect != null ) {
+            if (orientation == 180) {
+                mSceneModeName.setRotation(180);
+                mSceneModeLabelCloseIcon.setRotation(180);
+                mSceneModeLabelRect.setOrientation(0, false);
+            } else {
+                mSceneModeName.setRotation(0);
+                mSceneModeLabelCloseIcon.setRotation(0);
+                mSceneModeLabelRect.setOrientation(orientation, false);
+            }
+        }
+
+        if ( mSceneModeInstructionalDialog != null && mSceneModeInstructionalDialog.isShowing()) {
+            mSceneModeInstructionalDialog.dismiss();
+            mSceneModeInstructionalDialog = null;
+            showSceneInstructionalDialog(orientation);
+        }
     }
 
     public int getOrientation() {
@@ -390,5 +443,85 @@ public class PanoCaptureUI implements
     @Override
     public void onErrorListener(int error) {
 
+    }
+
+    private boolean needShowInstructional() {
+        final SharedPreferences pref = mActivity.getSharedPreferences(
+                ComboPreferences.getGlobalSharedPreferencesName(mActivity), Context.MODE_PRIVATE);
+        SettingsManager settingsManager = SettingsManager.getInstance();
+        int index = settingsManager.getValueIndex(SettingsManager.KEY_SCENE_MODE);
+        final String instructionalKey = SettingsManager.KEY_SCENE_MODE + "_" + index;
+        return !pref.getBoolean(instructionalKey, false);
+    }
+
+    private void showSceneInstructionalDialog(int orientation) {
+        int layoutId = R.layout.scene_mode_instructional;
+        if ( orientation == 90 || orientation == 270 ) {
+            layoutId = R.layout.scene_mode_instructional_landscape;
+        }
+        LayoutInflater inflater =
+                (LayoutInflater)mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(layoutId, null);
+
+        TextView name = (TextView)view.findViewById(R.id.scene_mode_name);
+        name.setText(R.string.pref_camera_scenemode_entry_panorama);
+
+        ImageView icon = (ImageView)view.findViewById(R.id.scene_mode_icon);
+        icon.setImageResource(R.drawable.ic_scene_mode_black_panorama);
+
+        TextView instructional = (TextView)view.findViewById(R.id.scene_mode_instructional);
+        instructional.setText(R.string.pref_camera2_scene_mode_panorama_instructional_content);
+
+        final CheckBox remember = (CheckBox)view.findViewById(R.id.remember_selected);
+        Button ok = (Button)view.findViewById(R.id.scene_mode_instructional_ok);
+        ok.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                SharedPreferences pref = mActivity.getSharedPreferences(
+                        ComboPreferences.getGlobalSharedPreferencesName(mActivity),
+                        Context.MODE_PRIVATE);
+                int index =
+                        SettingsManager.getInstance().getValueIndex(SettingsManager.KEY_SCENE_MODE);
+                String instructionalKey = SettingsManager.KEY_SCENE_MODE + "_" + index;
+                if ( remember.isChecked()) {
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putBoolean(instructionalKey, true);
+                    editor.commit();
+                }
+                mSceneModeInstructionalDialog.dismiss();
+                mSceneModeInstructionalDialog = null;
+            }
+        });
+        mSceneModeInstructionalDialog =
+                new AlertDialog.Builder(mActivity, AlertDialog.THEME_HOLO_LIGHT)
+                        .setView(view).create();
+        try {
+            mSceneModeInstructionalDialog.show();
+        }catch(Exception e){
+            e.printStackTrace();
+            return;
+        }
+        if ( orientation != 0 ) {
+            rotationSceneModeInstructionalDialog(view, orientation);
+        }
+    }
+
+    private int getScreenWidth() {
+        DisplayMetrics metric = new DisplayMetrics();
+        mActivity.getWindowManager().getDefaultDisplay().getMetrics(metric);
+        return metric.widthPixels < metric.heightPixels ? metric.widthPixels : metric.heightPixels;
+    }
+
+    private void rotationSceneModeInstructionalDialog(View view, int orientation) {
+        view.setRotation(-orientation);
+        int screenWidth = getScreenWidth();
+        int dialogSize = screenWidth*9/10;
+        Window dialogWindow = mSceneModeInstructionalDialog.getWindow();
+        WindowManager.LayoutParams lp = dialogWindow.getAttributes();
+        dialogWindow.setGravity(Gravity.CENTER);
+        lp.width = lp.height = dialogSize;
+        dialogWindow.setAttributes(lp);
+        RelativeLayout layout = (RelativeLayout)view.findViewById(R.id.mode_layout_rect);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dialogSize, dialogSize);
+        layout.setLayoutParams(params);
     }
 }

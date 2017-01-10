@@ -50,6 +50,10 @@ uchar __attribute__((kernel)) rotate90andMerge(uint32_t x, uint32_t y) {
         if(x >= width - pad)
             return (uchar)0;
         rsSetElementAt_uchar(gOut, yValue, (width-1-x-pad)*height + y);
+    } else if (degree == 0) {
+        if(x >= width - pad)
+            return (uchar)0;
+         rsSetElementAt_uchar(gOut, yValue, x*height + y);
     }
 
 
@@ -71,6 +75,11 @@ uchar __attribute__((kernel)) rotate90andMerge(uint32_t x, uint32_t y) {
                  return (uchar)0;
             rsSetElementAt_uchar(gOut, uValue, ySize + (width-1-x-pad)/2*height + y -1);
             rsSetElementAt_uchar(gOut, vValue, ySize + (width-1-x-pad)/2*height + y);
+        } else if (degree == 0) {
+            if(x >= (width - pad))
+                 return (uchar)0;
+            rsSetElementAt_uchar(gOut, uValue, ySize + x/2*height + y - 1);
+            rsSetElementAt_uchar(gOut, vValue, ySize + x/2*height + y);
         }
     }
     return (uchar)0;
