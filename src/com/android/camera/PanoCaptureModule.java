@@ -458,6 +458,11 @@ public class PanoCaptureModule implements CameraModule, PhotoController {
 
     }
 
+    @Override
+    public void onDestroy() {
+
+    }
+
     public Uri savePanorama(byte[] jpegData, int width, int height, int orientation) {
         long timeTaken = System.currentTimeMillis();
 

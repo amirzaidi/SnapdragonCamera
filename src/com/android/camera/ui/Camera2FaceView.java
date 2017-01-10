@@ -111,7 +111,6 @@ public class Camera2FaceView extends FaceView {
             translateMatrix.postScale(2000f / mCameraBound.width(), 2000f / mCameraBound.height());
 
             int dx = (getWidth() - rw) / 2;
-            ;
             int dy = (getHeight() - rh) / 2;
 
             // Focus indicator is directional. Rotate the matrix and the canvas
@@ -119,6 +118,10 @@ public class Camera2FaceView extends FaceView {
             canvas.save();
             mMatrix.postRotate(mOrientation); // postRotate is clockwise
             canvas.rotate(-mOrientation); // rotate is counter-clockwise (for canvas)
+
+            float rectWidth;
+            float rectHeight;
+            float diameter;
             for (int i = 0; i < mFaces.length; i++) {
                 if (mFaces[i].getScore() < 50) continue;
                 Rect faceBound = mFaces[i].getBounds();
@@ -129,7 +132,11 @@ public class Camera2FaceView extends FaceView {
                 mPaint.setColor(mColor);
                 mRect.offset(dx, dy);
 
-                canvas.drawOval(mRect, mPaint);
+                rectHeight = mRect.bottom-mRect.top;
+                rectWidth = mRect.right - mRect.left;
+                diameter = rectHeight > rectWidth ? rectWidth : rectHeight;
+
+                canvas.drawCircle(mRect.centerX(), mRect.centerY(), diameter/2, mPaint);
             }
             canvas.restore();
         }

@@ -39,6 +39,8 @@ public interface CameraModule {
 
     public void onStop();
 
+    public void onDestroy();
+
     public void installIntentFilter();
 
     public void onActivityResult(int requestCode, int resultCode, Intent data);

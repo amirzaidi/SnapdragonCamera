@@ -1225,6 +1225,9 @@ public class WideAnglePanoramaModule
     }
 
     @Override
+    public void onDestroy() {}
+
+    @Override
     public void installIntentFilter() {
     }
 
