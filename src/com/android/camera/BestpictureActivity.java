@@ -44,6 +44,8 @@ import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
@@ -66,7 +68,12 @@ public class BestpictureActivity extends FragmentActivity{
     public static final String[] NAMES = {
         "00", "01", "02", "03", "04", "05", "06", "07", "08", "09"
     };
-
+    private static final String INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE =
+            "android.media.action.STILL_IMAGE_CAMERA_SECURE";
+    public static final String ACTION_IMAGE_CAPTURE_SECURE =
+            "android.media.action.IMAGE_CAPTURE_SECURE";
+    public static final String SECURE_CAMERA_EXTRA = "secure_camera";
+    private boolean mSecureCamera;
     public static final int NUM_IMAGES = 10;
 
     private ViewPager mImagePager;
@@ -142,6 +149,22 @@ public class BestpictureActivity extends FragmentActivity{
     public void onCreate(Bundle state) {
         super.onCreate(state);
         mActivity = this;
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        if (INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)
+                || ACTION_IMAGE_CAPTURE_SECURE.equals(action)) {
+            mSecureCamera = true;
+        } else {
+            mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
+        }
+
+        if (mSecureCamera) {
+            // Change the window flags so that secure camera can show when locked
+            Window win = getWindow();
+            WindowManager.LayoutParams params = win.getAttributes();
+            params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+            win.setAttributes(params);
+        }
         mFilesPath = getFilesDir()+"/Bestpicture";
         setContentView(R.layout.bestpicture_editor);
         Display display = getWindowManager().getDefaultDisplay();
