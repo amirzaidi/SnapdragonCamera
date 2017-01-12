@@ -335,4 +335,11 @@
         camera:entryValues="@array/pref_camera2_hdr_entryvalues"
         camera:key="pref_camera2_hdr_key"
         camera:title="@string/pref_camera2_hdr_title" />
+
+    <ListPreference
+        camera:key="pref_camera2_saveraw_key"
+        camera:defaultValue="@string/pref_camera2_saveraw_default"
+        camera:title="@string/pref_camera2_saveraw_title"
+        camera:entries="@array/pref_camera2_saveraw_entries"
+        camera:entryValues="@array/pref_camera2_saveraw_entryvalues" />
 </PreferenceGroup>

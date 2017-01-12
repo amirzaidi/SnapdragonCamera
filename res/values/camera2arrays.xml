@@ -1030,4 +1030,15 @@ for time lapse recording -->
         <item>@string/pref_camera2_auto_hdr_entry_enable</item>
         <item>@string/pref_camera2_auto_hdr_entry_disable</item>
     </string-array>
+
+    <string-array name="pref_camera2_saveraw_entries" translatable="false">
+        <item>@string/pref_camera2_saveraw_entry_disable</item>
+        <item>@string/pref_camera2_saveraw_entry_enable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_saveraw_entryvalues" translatable="false">
+        <item>@string/pref_camera2_saveraw_value_disable</item>
+        <item>@string/pref_camera2_saveraw_value_enable</item>
+    </string-array>
+
 </resources>

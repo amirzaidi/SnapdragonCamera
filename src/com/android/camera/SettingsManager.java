@@ -143,6 +143,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_ANTI_BANDING_LEVEL = "pref_camera2_anti_banding_level_key";
     public static final String KEY_HISTOGRAM = "pref_camera2_histogram_key";
     public static final String KEY_HDR = "pref_camera2_hdr_key";
+    public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
+
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
