@@ -4647,6 +4647,10 @@ public class PhotoModule
             mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, pref.getValue());
         }
 
+        if (CameraSettings.KEY_ADVANCED_FEATURES.equals(pref.getKey())) {
+            mUI.setPreference(CameraSettings.KEY_QC_CHROMA_FLASH, pref.getValue());
+        }
+
         String ubiFocusOff = mActivity.getString(R.string.
                 pref_camera_advanced_feature_value_ubifocus_off);
         String chromaFlashOff = mActivity.getString(R.string.
