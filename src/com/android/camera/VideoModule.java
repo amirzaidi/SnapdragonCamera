@@ -1728,6 +1728,12 @@ public class VideoModule implements CameraModule,
 
     private void saveVideo() {
         if (mVideoFileDescriptor == null) {
+            //use the recording stop timestamp to generate the video's file name.
+            String videoSourcePath = mVideoFilename;
+            generateVideoFilename(mProfile.fileFormat);
+            mCurrentVideoFilename = mVideoFilename;
+            File sourceFile = new File(videoSourcePath);
+            sourceFile.renameTo(new File(mCurrentVideoFilename));
             File origFile = new File(mCurrentVideoFilename);
             if (!origFile.exists() || origFile.length() <= 0) {
                 Log.e(TAG, "Invalid file");
