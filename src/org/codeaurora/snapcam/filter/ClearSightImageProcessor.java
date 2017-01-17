@@ -29,7 +29,6 @@
 
 package org.codeaurora.snapcam.filter;
 
-import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -146,6 +145,7 @@ public class ClearSightImageProcessor {
     private boolean mDumpImages;
     private boolean mDumpYUV;
     private boolean mIsClosing;
+    private int mFinishReprocessNum;
 
     private static ClearSightImageProcessor mInstance;
 
@@ -480,6 +480,7 @@ public class ClearSightImageProcessor {
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 mCaptureDone = false;
+                mFinishReprocessNum = 0;
                 mHasFailures = false;
                 mReprocessingPairCount = 0;
                 mReprocessedBayerCount = 0;
@@ -600,13 +601,20 @@ public class ClearSightImageProcessor {
                 checkForValidFramePairAndReprocess();
             }
 
-            Log.d(TAG, "processNewCaptureEvent - imagestoprocess[bayer] " + mNumImagesToProcess[CAM_TYPE_BAYER] +
-                    " imagestoprocess[mono]: " + mNumImagesToProcess[CAM_TYPE_MONO]);
-
+            Log.d(TAG, "processNewCaptureEvent - " +
+                    "imagestoprocess[bayer] " + mNumImagesToProcess[CAM_TYPE_BAYER] +
+                    " imagestoprocess[mono]: " + mNumImagesToProcess[CAM_TYPE_MONO] +
+                    " mReprocessingPairCount: " + mReprocessingPairCount +
+                    " mNumFrameCount: " + mNumFrameCount +
+                    " mFinishReprocessNum" + mFinishReprocessNum);
             if (mReprocessingPairCount == mNumFrameCount ||
                     (mNumImagesToProcess[CAM_TYPE_BAYER] == 0
                     && mNumImagesToProcess[CAM_TYPE_MONO] == 0)) {
                 processFinalPair();
+                if (mReprocessingPairCount != 0 &&
+                        mFinishReprocessNum == mReprocessingPairCount * 2) {
+                    checkReprocessDone();
+                }
             }
         }
 
@@ -809,7 +817,7 @@ public class ClearSightImageProcessor {
                 Log.d(TAG, "reprocess - setReferenceResult: " + msg.obj);
                 ClearSightNativeEngine.getInstance().setReferenceResult(isBayer, result);
             }
-
+            mFinishReprocessNum++;
             checkReprocessDone();
         }
 
@@ -819,6 +827,7 @@ public class ClearSightImageProcessor {
             mReprocessingRequests.remove(failure.getRequest());
             mReprocessingFrames.delete(msg.arg2);
             mHasFailures = true;
+            mFinishReprocessNum++;
             checkReprocessDone();
         }
 
