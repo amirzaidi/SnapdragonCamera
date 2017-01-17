@@ -244,8 +244,6 @@ public class CameraControls extends RotatableLayout {
         mFrontBackSwitcher.setEnabled(enable);
         if(TsMakeupManager.HAS_TS_MAKEUP) {
             mTsMakeupSwitcher.setEnabled(enable);
-        } else {
-            mHdrSwitcher.setEnabled(enable);
         }
         mPreview.setEnabled(enable);
 
