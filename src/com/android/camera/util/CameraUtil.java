@@ -25,6 +25,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -87,6 +88,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
+import static android.content.Context.MODE_PRIVATE;
+
 /**
  * Collection of utility functions used in this package.
  */
@@ -144,6 +147,12 @@ public class CameraUtil {
     public static final int RATIO_16_9 = 1;
     public static final int RATIO_4_3 = 2;
     public static final int RATIO_3_2 = 3;
+    public static final int MODE_TWO_BT = 1;
+    public static final int MODE_ONE_BT = 0;
+    private static final String DIALOG_CONFIG = "dialog_config";
+    public static final String KEY_SAVE = "save";
+    public static final String KEY_DELETE = "delete";
+    public static final String KEY_DELETE_ALL = "delete_all";
 
     public static boolean isSupported(String value, List<String> supported) {
         return supported == null ? false : supported.indexOf(value) >= 0;
@@ -1368,5 +1377,33 @@ public class CameraUtil {
         }
 
         return Collections.unmodifiableList(requestList);
+    }
+
+    public static int dip2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
+    public static void saveDialogShowConfig(Context context, String key, boolean needRequest) {
+        SharedPreferences sp = context.getSharedPreferences(DIALOG_CONFIG, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean(key, needRequest);
+        editor.apply();
+    }
+
+    public static boolean loadDialogShowConfig(Context context, String key) {
+        SharedPreferences sp = context.getSharedPreferences(DIALOG_CONFIG, MODE_PRIVATE);
+        return sp.getBoolean(key, true);
+    }
+
+    public static Bitmap adjustPhotoRotation(Bitmap bm, final int orientationDegree) {
+        Matrix m = new Matrix();
+        m.setRotate(orientationDegree, (float) bm.getWidth() / 2, (float) bm.getHeight() / 2);
+        try {
+            return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m, true);
+        } catch (OutOfMemoryError ex) {
+            ex.printStackTrace();
+        }
+        return null;
     }
 }

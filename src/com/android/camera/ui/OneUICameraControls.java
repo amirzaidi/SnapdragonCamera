@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -46,6 +46,7 @@ public class OneUICameraControls extends RotatableLayout {
 
     private View mShutter;
     private View mVideoShutter;
+    private View mExitBestPhotpMode;
     private View mPauseButton;
     private View mFlashButton;
     private View mMute;
@@ -141,6 +142,7 @@ public class OneUICameraControls extends RotatableLayout {
         super.onFinishInflate();
         mShutter = findViewById(R.id.shutter_button);
         mVideoShutter = findViewById(R.id.video_button);
+        mExitBestPhotpMode = findViewById(R.id.exit_best_mode);
         mPauseButton = findViewById(R.id.video_pause);
         mFrontBackSwitcher = findViewById(R.id.front_back_switcher);
         mTsMakeupSwitcher = findViewById(R.id.ts_makeup_switcher);
@@ -346,6 +348,7 @@ public class OneUICameraControls extends RotatableLayout {
             setLocation(mPauseButton, false, 3.15f);
             setLocation(mShutter, false , 0.85f);
             setLocation(mVideoShutter, false, 2);
+            setLocation(mExitBestPhotpMode ,false, 4);
         } else {
             setLocation(mFrontBackSwitcher, true, 2);
             setLocation(mTsMakeupSwitcher, true, 3);
@@ -361,6 +364,7 @@ public class OneUICameraControls extends RotatableLayout {
                 setLocation(mPreview, false, 0);
                 setLocation(mVideoShutter, false, 3.15f);
             }
+            setLocation(mExitBestPhotpMode ,false, 4);
         }
         setLocationCustomBottom(mMakeupSeekBarLayout, 0, 1);
         setLocation(mProModeCloseButton, false, 4);
@@ -500,7 +504,7 @@ public class OneUICameraControls extends RotatableLayout {
         View[] views = {
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
                 mTsMakeupSwitcher, mFlashButton, mPreview, mMute, mShutter, mVideoShutter,
-                mMakeupSeekBarLowText, mMakeupSeekBarHighText, mPauseButton
+                mMakeupSeekBarLowText, mMakeupSeekBarHighText, mPauseButton, mExitBestPhotpMode
         };
 
         for (View v : views) {

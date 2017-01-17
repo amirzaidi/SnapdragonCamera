@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2016, The Linux Foundation. All rights reserved.
+<!-- Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
      Not a Contribution.
 
      Copyright (C) 2013 The Android Open Source Project
@@ -96,6 +96,18 @@
         android:background="@android:color/transparent"
         android:contentDescription="@string/switch_photo_filmstrip"
         android:scaleType="fitCenter" />
+
+    <com.android.camera.ui.RotateImageView
+        android:id="@+id/exit_best_mode"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:clickable="true"
+        android:contentDescription="@string/accessibility_exit_best_mode_button"
+        android:focusable="true"
+        android:layout_gravity="top|left"
+        android:scaleType="fitCenter"
+        android:src="@drawable/x"
+        android:visibility="gone"/>
 
     <com.android.camera.ui.RotateImageView
         android:id="@+id/front_back_switcher"

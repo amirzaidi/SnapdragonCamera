@@ -1308,6 +1308,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return  modes;
     }
 
+    public boolean isHistogramSupport(){
+        String value = getValue(KEY_HISTOGRAM);
+        return value != null && value.equals("enable");
+    }
+
     public boolean isCamera2HDRSupport(){
         String value = getValue(KEY_HDR);
         return value != null && value.equals("enable");

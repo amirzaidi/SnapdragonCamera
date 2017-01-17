@@ -576,6 +576,8 @@
 
     <!-- The shutter button. [CHAR LIMIT = NONE] -->
     <string name="accessibility_shutter_button">Shutter</string>
+    <!-- The exit best photo mode button. [CHAR LIMIT = NONE] -->
+    <string name="accessibility_exit_best_mode_button">Exit best photo mode</string>
     <!-- The menu button. [CHAR LIMIT = NONE] -->
     <string name="accessibility_menu_button">Menu button</string>
     <!-- The mode picker to switch between camera, video and panorama. [CHAR LIMIT = NONE] -->
@@ -753,4 +755,21 @@ CHAR LIMIT = NONE] -->
     <string name="pref_camera2_category_system">System</string>
     <string name="pref_camera2_restore_default">Restore defaults</string>
     <string name="pref_camera2_restore_default_hint">Camera settings will be restored to default settings</string>
+
+    <string name="save_best_dialog_content">%1$d of 10 images will be saved and the rest will deleted.</string>
+    <string name="save_best_dialog_title">Save select images ?</string>
+    <string name="save_best_dialog_positive_bt">OK</string>
+    <string name="save_best_dialog_native_bt">Cancel</string>
+    <string name="save_best_image_toast">%1$d of 10 images saved.</string>
+    <string name="dialog_do_not_show">Do not show again</string>
+    <string name="delete_best_dialog_title">Delete All ?</string>
+    <string name="delete_best_dialog_content">Are you sure to delete all 10 pictures taken?</string>
+    <string name="delete_best_dialog_native_bt">Cancel</string>
+    <string name="delete_best_dialog_positive_bt">Delete</string>
+    <string name="delete_all_best_dialog_title">Delete All ?</string>
+    <string name="delete_all_best_dialog_content">Are you sure to delete all images?</string>
+    <string name="delete_all_best_dialog_native_bt">Cancel</string>
+    <string name="delete_all_best_dialog_positive_bt">Delete All</string>
+    <string name="overflow_best_item1">Save All</string>
+    <string name="overflow_best_item2">Delete All</string>
  </resources>
