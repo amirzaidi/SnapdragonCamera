@@ -2371,6 +2371,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         setProModeVisible();
 
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        if (Integer.parseInt(scene) != SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
+            setRefocusLastTaken(false);
+        }
         if(isPanoSetting(scene)) {
             if (mIntentMode != CaptureModule.INTENT_MODE_NORMAL) {
                 mSettingsManager.setValue(
@@ -4367,6 +4370,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         onPauseAfterSuper();
         onResumeBeforeSuper();
         onResumeAfterSuper();
+        setRefocusLastTaken(false);
     }
 
     public void restartSession(boolean isSurfaceChanged) {
