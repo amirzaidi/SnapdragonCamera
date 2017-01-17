@@ -601,12 +601,23 @@ public class ClearSightImageProcessor {
                 checkForValidFramePairAndReprocess();
             }
 
+
             Log.d(TAG, "processNewCaptureEvent - " +
                     "imagestoprocess[bayer] " + mNumImagesToProcess[CAM_TYPE_BAYER] +
                     " imagestoprocess[mono]: " + mNumImagesToProcess[CAM_TYPE_MONO] +
                     " mReprocessingPairCount: " + mReprocessingPairCount +
                     " mNumFrameCount: " + mNumFrameCount +
                     " mFinishReprocessNum" + mFinishReprocessNum);
+
+            if ((mNumImagesToProcess[CAM_TYPE_BAYER] == 0
+                    && mNumImagesToProcess[CAM_TYPE_MONO] == 0)
+                    && mReprocessingPairCount != mNumFrameCount) {
+                while (!mBayerFrames.isEmpty() && !mMonoFrames.isEmpty()
+                        && mReprocessingPairCount != mNumFrameCount) {
+                    checkForValidFramePairAndReprocess();
+                }
+            }
+
             if (mReprocessingPairCount == mNumFrameCount ||
                     (mNumImagesToProcess[CAM_TYPE_BAYER] == 0
                     && mNumImagesToProcess[CAM_TYPE_MONO] == 0)) {
