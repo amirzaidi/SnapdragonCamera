@@ -670,7 +670,8 @@ public class PostProcessor{
         mSaveRaw = isSaveRaw;
         if(setFilter(postFilterId) || isFlashModeOn || isTrackingFocusOn || isMakeupOn || isSelfieMirrorOn
                 || PersistUtil.getCameraZSLDisabled()
-                || SettingsManager.getInstance().isCamera2HDRSupport()) {
+                || SettingsManager.getInstance().isCamera2HDRSupport()
+                || mController.getCameraMode() == CaptureModule.DUAL_MODE) {
             mUseZSL = false;
         } else {
             mUseZSL = true;
