@@ -594,6 +594,9 @@ public class CameraActivity extends Activity
                 intent.setClass(this, RefocusActivity.class);
                 intent.setData(uri);
                 intent.setFlags(RefocusActivity.MAP_ROTATED);
+                if (isSecureCamera()) {
+                    intent.setAction(INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE);
+                }
                 startActivityForResult(intent, REFOCUS_ACTIVITY_CODE);
                 return;
             }
@@ -742,7 +745,17 @@ public class CameraActivity extends Activity
             if (!isSecureCamera()) {
                 mThumbnail.setVisibility(View.VISIBLE);
             } else {
-                mThumbnail.setVisibility(View.GONE);
+                //under SecureCamera and UbiFocus mode, if click shutter button, if it is
+                // Refocus,should display the thumbnail.
+                if (mCurrentModule instanceof CaptureModule) {
+                    if (((CaptureModule) mCurrentModule).isRefocus()) {
+                        mThumbnail.setVisibility(View.VISIBLE);
+                    } else {
+                        mThumbnail.setVisibility(View.GONE);
+                    }
+                } else {
+                    mThumbnail.setVisibility(View.GONE);
+                }
             }
        }
     }
@@ -755,7 +768,17 @@ public class CameraActivity extends Activity
             if (!isSecureCamera()) {
                 mThumbnail.setVisibility(View.VISIBLE);
             } else {
-                mThumbnail.setVisibility(View.GONE);
+                //under SecureCamera and UbiFocus mode, when back from RefocusActivity,if not save
+                // image and is Refocus ,still need to display the thumbnail.
+                if (mCurrentModule instanceof CaptureModule) {
+                    if (((CaptureModule) mCurrentModule).isRefocus()) {
+                        mThumbnail.setVisibility(View.VISIBLE);
+                    } else {
+                        mThumbnail.setVisibility(View.GONE);
+                    }
+                } else {
+                    mThumbnail.setVisibility(View.GONE);
+                }
             }
         }
     }
