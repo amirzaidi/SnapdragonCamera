@@ -3906,6 +3906,7 @@ public class PhotoModule
                 .pref_camera_advanced_feature_value_refocus_on);
         String optizoomOn = mActivity.getString(R.string
                 .pref_camera_advanced_feature_value_optizoom_on);
+        String scenModeStr = mSceneMode;
         if (refocusOn.equals(mSceneMode)) {
             try {
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
@@ -3929,6 +3930,9 @@ public class PhotoModule
 
         if (CameraUtil.isSupported(mSceneMode, mParameters.getSupportedSceneModes())) {
             if (!mParameters.getSceneMode().equals(mSceneMode)) {
+                if (mHandler.getLooper() == Looper.myLooper()) {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, scenModeStr);
+                }
                 mParameters.setSceneMode(mSceneMode);
 
                 // Setting scene mode will change the settings of flash mode,
@@ -4649,6 +4653,11 @@ public class PhotoModule
 
         if (CameraSettings.KEY_ADVANCED_FEATURES.equals(pref.getKey())) {
             mUI.setPreference(CameraSettings.KEY_QC_CHROMA_FLASH, pref.getValue());
+            mUI.setPreference(CameraSettings.KEY_SCENE_MODE, pref.getValue());
+        }
+
+        if (CameraSettings.KEY_CAMERA_HDR.equals(pref.getKey())) {
+            mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, pref.getValue());
         }
 
         String ubiFocusOff = mActivity.getString(R.string.
