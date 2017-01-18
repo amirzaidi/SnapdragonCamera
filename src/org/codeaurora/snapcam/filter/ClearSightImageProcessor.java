@@ -29,7 +29,6 @@
 
 package org.codeaurora.snapcam.filter;
 
-import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -146,6 +145,7 @@ public class ClearSightImageProcessor {
     private boolean mDumpImages;
     private boolean mDumpYUV;
     private boolean mIsClosing;
+    private int mFinishReprocessNum;
 
     private static ClearSightImageProcessor mInstance;
 
@@ -459,7 +459,7 @@ public class ClearSightImageProcessor {
         private ArrayDeque<Image> mMonoImages = new ArrayDeque<Image>(
                 mNumBurstCount);
 
-        private SparseLongArray mReprocessingFrames = new SparseLongArray();
+        private SparseLongArray[] mReprocessingFrames = new SparseLongArray[NUM_CAM];
         private ArrayList<CaptureRequest> mReprocessingRequests = new ArrayList<CaptureRequest>();
         private int mReprocessingPairCount;
         private int mReprocessedBayerCount;
@@ -471,6 +471,8 @@ public class ClearSightImageProcessor {
 
         ImageProcessHandler(Looper looper) {
             super(looper);
+            mReprocessingFrames[CAM_TYPE_BAYER] = new SparseLongArray();
+            mReprocessingFrames[CAM_TYPE_MONO] = new SparseLongArray();
         }
 
         @Override
@@ -480,6 +482,7 @@ public class ClearSightImageProcessor {
             switch (msg.what) {
             case MSG_START_CAPTURE:
                 mCaptureDone = false;
+                mFinishReprocessNum = 0;
                 mHasFailures = false;
                 mReprocessingPairCount = 0;
                 mReprocessedBayerCount = 0;
@@ -516,7 +519,8 @@ public class ClearSightImageProcessor {
             Log.d(TAG, "handleTimeout");
             releaseBayerFrames();
             releaseMonoFrames();
-            mReprocessingFrames.clear();
+            mReprocessingFrames[CAM_TYPE_BAYER].clear();
+            mReprocessingFrames[CAM_TYPE_MONO].clear();
             mReprocessingRequests.clear();
 
             removeMessages(MSG_NEW_CAPTURE_RESULT);
@@ -536,10 +540,11 @@ public class ClearSightImageProcessor {
         }
 
         private void processImg(Message msg) {
-            Log.d(TAG, "processImg: " + msg.arg1);
+            int camId = msg.arg1;
+            Log.d(TAG, "processImg: " + camId);
             Image image = (Image) msg.obj;
-            if(mReprocessingFrames.size() > 0
-                    && mReprocessingFrames.indexOfValue(image.getTimestamp()) >= 0) {
+            if(mReprocessingFrames[camId].size() > 0
+                    && mReprocessingFrames[camId].indexOfValue(image.getTimestamp()) >= 0) {
                 // reproc frame
                 processNewReprocessImage(msg);
             } else {
@@ -600,13 +605,31 @@ public class ClearSightImageProcessor {
                 checkForValidFramePairAndReprocess();
             }
 
-            Log.d(TAG, "processNewCaptureEvent - imagestoprocess[bayer] " + mNumImagesToProcess[CAM_TYPE_BAYER] +
-                    " imagestoprocess[mono]: " + mNumImagesToProcess[CAM_TYPE_MONO]);
+
+            Log.d(TAG, "processNewCaptureEvent - " +
+                    "imagestoprocess[bayer] " + mNumImagesToProcess[CAM_TYPE_BAYER] +
+                    " imagestoprocess[mono]: " + mNumImagesToProcess[CAM_TYPE_MONO] +
+                    " mReprocessingPairCount: " + mReprocessingPairCount +
+                    " mNumFrameCount: " + mNumFrameCount +
+                    " mFinishReprocessNum: " + mFinishReprocessNum);
+
+            if ((mNumImagesToProcess[CAM_TYPE_BAYER] == 0
+                    && mNumImagesToProcess[CAM_TYPE_MONO] == 0)
+                    && mReprocessingPairCount != mNumFrameCount) {
+                while (!mBayerFrames.isEmpty() && !mMonoFrames.isEmpty()
+                        && mReprocessingPairCount != mNumFrameCount) {
+                    checkForValidFramePairAndReprocess();
+                }
+            }
 
             if (mReprocessingPairCount == mNumFrameCount ||
                     (mNumImagesToProcess[CAM_TYPE_BAYER] == 0
                     && mNumImagesToProcess[CAM_TYPE_MONO] == 0)) {
                 processFinalPair();
+                if (mReprocessingPairCount != 0 &&
+                        mFinishReprocessNum == mReprocessingPairCount * 2) {
+                    checkReprocessDone();
+                }
             }
         }
 
@@ -683,7 +706,7 @@ public class ClearSightImageProcessor {
                 Long ts = Long.valueOf(reprocImg.mImage.getTimestamp());
                 Integer hash = ts.hashCode();
                 reprocRequest.setTag(hash);
-                mReprocessingFrames.put(hash, ts);
+                mReprocessingFrames[camId].put(hash, ts);
                 Log.d(TAG, "sendReprocessRequest - adding reproc frame - hash: " + hash + ", ts: " + ts);
 
                 mImageWriter[camId].queueInputImage(reprocImg.mImage);
@@ -779,7 +802,8 @@ public class ClearSightImageProcessor {
 
             Image image = (Image) msg.obj;
             long ts = image.getTimestamp();
-            Log.d(TAG, "processNewReprocessImage - cam: " + msg.arg1 + ", ts: " + ts);
+            int camId = msg.arg1;
+            Log.d(TAG, "processNewReprocessImage - cam: " + camId + ", ts: " + ts);
             int frameCount = isBayer?++mReprocessedBayerCount:++mReprocessedMonoCount;
 
             if(mDumpImages) {
@@ -793,7 +817,7 @@ public class ClearSightImageProcessor {
             mClearsightRegisterHandler.obtainMessage(MSG_NEW_IMG,
                     msg.arg1, 0, msg.obj).sendToTarget();
 
-            mReprocessingFrames.removeAt(mReprocessingFrames.indexOfValue(ts));
+            mReprocessingFrames[camId].removeAt(mReprocessingFrames[camId].indexOfValue(ts));
             checkReprocessDone();
         }
 
@@ -809,24 +833,30 @@ public class ClearSightImageProcessor {
                 Log.d(TAG, "reprocess - setReferenceResult: " + msg.obj);
                 ClearSightNativeEngine.getInstance().setReferenceResult(isBayer, result);
             }
-
+            mFinishReprocessNum++;
             checkReprocessDone();
         }
 
         private void processNewReprocessFailure(Message msg) {
-            Log.d(TAG, "processNewReprocessFailure: " + msg.arg1);
+            int camId = msg.arg1;
+            Log.d(TAG, "processNewReprocessFailure: " + camId);
             CaptureFailure failure = (CaptureFailure)msg.obj;
             mReprocessingRequests.remove(failure.getRequest());
-            mReprocessingFrames.delete(msg.arg2);
+            mReprocessingFrames[camId].delete(msg.arg2);
             mHasFailures = true;
+            mFinishReprocessNum++;
             checkReprocessDone();
         }
 
         private void checkReprocessDone() {
-            Log.d(TAG, "checkReprocessDone capture done: " + mCaptureDone
-                    + ", reproc frames: " + mReprocessingFrames.size());
+            Log.d(TAG, "checkReprocessDone capture done: " + mCaptureDone +
+                    ", reproc frames[bay]: " + mReprocessingFrames[CAM_TYPE_BAYER].size() +
+                    ", reproc frames[mono]: " + mReprocessingFrames[CAM_TYPE_MONO].size() +
+                    ", mReprocessingRequests: " + mReprocessingRequests.size());
             // If all burst frames and results have been processed
-            if(mCaptureDone && mReprocessingFrames.size() == 0 && mReprocessingRequests.isEmpty()) {
+            if(mCaptureDone && mReprocessingFrames[CAM_TYPE_BAYER].size() == 0
+                    && mReprocessingFrames[CAM_TYPE_MONO].size() == 0
+                    && mReprocessingRequests.isEmpty()) {
                 mClearsightRegisterHandler.obtainMessage(MSG_END_CAPTURE, mHasFailures?1:0, 0).sendToTarget();
                 removeMessages(MSG_NEW_REPROC_RESULT);
                 removeMessages(MSG_NEW_REPROC_FAIL);

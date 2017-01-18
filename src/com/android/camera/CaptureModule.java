@@ -557,14 +557,16 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
                 updateFaceView(faces);
 
-
-                int[] histogramStats = result.get(CaptureModule.histogramStats);
-                if (histogramStats != null && mHiston) {
-                    /*The first element in the array stores max hist value . Stats data begin from second value*/
-                    synchronized(statsdata) {
-                        System.arraycopy(histogramStats,0,statsdata,0,1024);
+                if (SettingsManager.getInstance().isHistogramSupport()) {
+                    int[] histogramStats = result.get(CaptureModule.histogramStats);
+                    if (histogramStats != null && mHiston) {
+                    /*The first element in the array stores max hist value . Stats data begin
+                    from second value*/
+                        synchronized (statsdata) {
+                            System.arraycopy(histogramStats, 0, statsdata, 0, 1024);
+                        }
+                        updateGraghView();
                     }
-                    updateGraghView();
                 }
             }
             processCaptureResult(result);
@@ -780,7 +782,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         return false;
     }
 
-    private int getCameraMode() {
+    public int getCameraMode() {
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (value != null && value.equals(SettingsManager.SCENE_MODE_DUAL_STRING)) return DUAL_MODE;
         value = mSettingsManager.getValue(SettingsManager.KEY_MONO_ONLY);
@@ -1231,7 +1233,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mJpegImageData = data;
     }
 
-    public void showCapturedReview(byte[] jpegData, int orientation, boolean mirror) {
+    public void showCapturedReview(final byte[] jpegData, int orientation, boolean mirror) {
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -2371,6 +2373,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         setProModeVisible();
 
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        if (Integer.parseInt(scene) != SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
+            setRefocusLastTaken(false);
+        }
         if(isPanoSetting(scene)) {
             if (mIntentMode != CaptureModule.INTENT_MODE_NORMAL) {
                 mSettingsManager.setValue(
@@ -4367,6 +4372,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         onPauseAfterSuper();
         onResumeBeforeSuper();
         onResumeAfterSuper();
+        setRefocusLastTaken(false);
     }
 
     public void restartSession(boolean isSurfaceChanged) {

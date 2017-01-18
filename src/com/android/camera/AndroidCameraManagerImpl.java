@@ -293,7 +293,9 @@ class AndroidCameraManagerImpl implements CameraManager {
                         try {
                             mCamera.setPreviewDisplay((SurfaceHolder) msg.obj);
                         } catch (IOException e) {
-                            throw new RuntimeException(e);
+                            Log.d(TAG,"setPreviewDisplay failed, surface is destoried");
+                            if (errorCbInstance != null)
+                                errorCbInstance.onStartPreviewFailure(msg.arg1);
                         }
                         return;
 
