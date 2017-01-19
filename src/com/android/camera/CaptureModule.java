@@ -1233,7 +1233,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         mJpegImageData = data;
     }
 
-    public void showCapturedReview(final byte[] jpegData, int orientation, boolean mirror) {
+    public void showCapturedReview(final byte[] jpegData, final int orientation,
+                                   final boolean mirror) {
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
