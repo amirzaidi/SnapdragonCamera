@@ -142,6 +142,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_SATURATION_LEVEL = "pref_camera2_saturation_level_key";
     public static final String KEY_ANTI_BANDING_LEVEL = "pref_camera2_anti_banding_level_key";
     public static final String KEY_HISTOGRAM = "pref_camera2_histogram_key";
+    public static final String KEY_AUTO_HDR = "pref_camera2_auto_hdr_key";
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
     public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
@@ -955,6 +956,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         Integer maxAfRegions = mCharacteristics.get(id).get(
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
         return maxAfRegions != null && maxAfRegions > 0;
+    }
+
+    public boolean isHdrScene(int id) {
+        Integer hdrScene = mCharacteristics.get(id).get(
+                CaptureModule.isHdrScene);
+        return hdrScene != null && hdrScene == 1;
     }
 
     public boolean isFixedFocus(int id) {

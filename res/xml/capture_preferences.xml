@@ -330,6 +330,13 @@
         camera:title="@string/pref_camera2_histogram_title" />
 
     <ListPreference
+        camera:defaultValue="@string/pref_camera2_auto_hdr_default"
+        camera:entries="@array/pref_camera2_auto_hdr_entries"
+        camera:entryValues="@array/pref_camera2_auto_hdr_entryvalues"
+        camera:key="pref_camera2_auto_hdr_key"
+        camera:title="@string/pref_camera2_auto_hdr_title" />
+
+    <ListPreference
         camera:defaultValue="@string/pref_camera2_hdr_default"
         camera:entries="@array/pref_camera2_hdr_entries"
         camera:entryValues="@array/pref_camera2_hdr_entryvalues"
