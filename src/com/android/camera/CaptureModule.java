@@ -4404,6 +4404,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     updateVideoFlash();
                     return;
                 case SettingsManager.KEY_FLASH_MODE:
+                case SettingsManager.KEY_ZSL:
                 case SettingsManager.KEY_AUTO_HDR:
                 case SettingsManager.KEY_SAVERAW:
                 case SettingsManager.KEY_HDR:
