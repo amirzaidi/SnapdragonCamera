@@ -122,7 +122,11 @@ public class CameraUtil {
     // pressed the shutter button.
     public static final String ACTION_CAMERA_SHUTTER_CLICK =
             "com.android.camera.action.SHUTTER_CLICK";
-
+    public static final String INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE =
+            "android.media.action.STILL_IMAGE_CAMERA_SECURE";
+    public static final String ACTION_IMAGE_CAPTURE_SECURE =
+            "android.media.action.IMAGE_CAPTURE_SECURE";
+    public static final String SECURE_CAMERA_EXTRA = "secure_camera";
     // Fields from android.hardware.Camera.Parameters
     public static final String FOCUS_MODE_CONTINUOUS_PICTURE = "continuous-picture";
     public static final String RECORDING_HINT = "recording-hint";
