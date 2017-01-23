@@ -487,17 +487,25 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     protected void showCapturedImageForReview(byte[] jpegData, int orientation, boolean mirror) {
         mDecodeTaskForReview = new CaptureUI.DecodeImageForReview(jpegData, orientation, mirror);
         mDecodeTaskForReview.execute();
-        mPreviewLayout.setVisibility(View.VISIBLE);
-        CameraUtil.fadeIn(mReviewDoneButton);
-        CameraUtil.fadeIn(mReviewRetakeButton);
+        if (getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
+            mPreviewLayout.setVisibility(View.VISIBLE);
+            CameraUtil.fadeIn(mReviewDoneButton);
+            CameraUtil.fadeIn(mReviewRetakeButton);
+        }
     }
 
     protected void showRecordVideoForReview(Bitmap preview) {
-        mReviewImage.setImageBitmap(preview);
-        mPreviewLayout.setVisibility(View.VISIBLE);
-        mReviewPlayButton.setVisibility(View.VISIBLE);
-        CameraUtil.fadeIn(mReviewDoneButton);
-        CameraUtil.fadeIn(mReviewRetakeButton);
+        if (getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
+            mReviewImage.setImageBitmap(preview);
+            mPreviewLayout.setVisibility(View.VISIBLE);
+            mReviewPlayButton.setVisibility(View.VISIBLE);
+            CameraUtil.fadeIn(mReviewDoneButton);
+            CameraUtil.fadeIn(mReviewRetakeButton);
+        }
+    }
+
+    private int getCurrentIntentMode() {
+        return mModule.getCurrentIntentMode();
     }
 
     private void toggleMakeup() {
