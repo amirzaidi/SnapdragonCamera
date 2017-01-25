@@ -87,7 +87,7 @@ public class ZSLQueue {
         return -1;
     }
 
-    public void add(Image image) {
+    public void add(Image image, Image rawImage) {
         int lastIndex = -1;
         synchronized (mLock) {
             if(mBuffer == null)
@@ -99,7 +99,7 @@ public class ZSLQueue {
             }
             if(mBuffer[mImageHead].getMetadata() != null) {
                 if((mBuffer[mImageHead].getMetadata().get(CaptureResult.SENSOR_TIMESTAMP)).longValue() == image.getTimestamp()) {
-                    mBuffer[mImageHead].setImage(image);
+                    mBuffer[mImageHead].setImage(image,rawImage);
                     lastIndex = mImageHead;
                     mImageHead = (mImageHead + 1) % mBuffer.length;
                 } else if((mBuffer[mImageHead].getMetadata().get(CaptureResult.SENSOR_TIMESTAMP)).longValue() > image.getTimestamp()) {
@@ -107,17 +107,17 @@ public class ZSLQueue {
                 } else {
                     int i = findMeta(image.getTimestamp(), mImageHead);
                     if(i == -1) {
-                        mBuffer[mImageHead].setImage(image);
+                        mBuffer[mImageHead].setImage(image, rawImage);
                         mBuffer[mImageHead].setMetadata(null);
                         mImageHead = (mImageHead + 1) % mBuffer.length;
                     } else {
                         lastIndex = mImageHead = i;
-                        mBuffer[mImageHead].setImage(image);
+                        mBuffer[mImageHead].setImage(image, rawImage);
                         mImageHead = (mImageHead + 1) % mBuffer.length;
                     }
                 }
             } else {
-                mBuffer[mImageHead].setImage(image);
+                mBuffer[mImageHead].setImage(image, rawImage);
                 lastIndex = mImageHead;
                 mImageHead = (mImageHead + 1) % mBuffer.length;
             }
@@ -156,7 +156,7 @@ public class ZSLQueue {
                 } else {
                     int i = findImage(timestamp, mMetaHead);
                     if(i == -1) {
-                        mBuffer[mMetaHead].setImage(null);
+                        mBuffer[mMetaHead].setImage(null, null);
                         mBuffer[mMetaHead].setMetadata(metadata);
                         mMetaHead = (mMetaHead + 1) % mBuffer.length;
                     } else {
@@ -238,17 +238,24 @@ public class ZSLQueue {
 
     static class ImageItem {
         private Image mImage = null;
+        private Image mRawImage = null;
         private TotalCaptureResult mMetadata = null;
 
         public Image getImage() {
             return mImage;
         }
 
-        public void setImage(Image image) {
+        public Image getRawImage() {return mRawImage;}
+
+        public void setImage(Image image, Image rawImage) {
             if(mImage != null) {
                 mImage.close();
             }
+            if(mRawImage != null) {
+                mRawImage.close();
+            }
             mImage = image;
+            mRawImage =rawImage;
         }
 
         public TotalCaptureResult getMetadata() {
@@ -262,6 +269,9 @@ public class ZSLQueue {
         public void closeImage() {
             if(mImage != null) {
                 mImage.close();
+            }
+            if(mRawImage != null) {
+                mRawImage.close();
             }
             mImage = null;
         }

@@ -74,7 +74,8 @@ public class BestpictureFilter implements ImageFilter {
     final String[] NAMES = {"00.jpg", "01.jpg", "02.jpg", "03.jpg",
             "04.jpg", "05.jpg", "06.jpg", "07.jpg", "08.jpg"
             ,"09.jpg"};
-
+    private static final String INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE =
+            "android.media.action.STILL_IMAGE_CAMERA_SECURE";
     private final static int TIME_DELAY = 50;
     private int mSavedCount = 0;
     private PhotoModule.NamedImages mNamedImages;
@@ -214,12 +215,18 @@ public class BestpictureFilter implements ImageFilter {
         Log("Start best picture activity");
         Intent intent = new Intent();
         intent.setData(uri);
+        if (mActivity.isSecureCamera()) {
+            intent.setAction(INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE);
+        }
         intent.setClass(mActivity, BestpictureActivity.class);
         mActivity.startActivityForResult(intent, BestpictureActivity.BESTPICTURE_ACTIVITY_CODE);
     }
 
     @Override
     public boolean isSupported() {
+        if (mModule.getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
+            return false;
+        }
         return mIsSupported;
     }
 

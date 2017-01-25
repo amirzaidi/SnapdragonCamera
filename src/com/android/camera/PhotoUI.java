@@ -1016,6 +1016,7 @@ public class PhotoUI implements PieListener,
         CameraUtil.fadeIn(mReviewDoneButton);
         mShutterButton.setVisibility(View.INVISIBLE);
         CameraUtil.fadeIn(mReviewRetakeButton);
+        setOrientation(mOrientation, true);
         mMenu.hideTopMenu(true);
         pauseFaceDetection();
     }

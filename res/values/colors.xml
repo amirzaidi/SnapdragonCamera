@@ -94,4 +94,8 @@
     <color name="help_menu_switcher_1">#00ff00</color>
     <color name="help_menu_switcher_2">#ffffff</color>
     <color name="help_menu_switcher_3">#ffffff</color>
+    <color name="dialog_background">#ffffff</color>
+    <color name="dialog_text">#000000</color>
+    <color name="dialog_button">#008B8B</color>
+    <color name="dialog_hr">#C4C4C4</color>
 </resources>

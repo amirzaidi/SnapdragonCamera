@@ -138,6 +138,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_DEVELOPER_MENU = "pref_camera2_developer_menu_key";
     public static final String KEY_RESTORE_DEFAULT = "pref_camera2_restore_default_key";
     public static final String KEY_FOCUS_DISTANCE = "pref_camera2_focus_distance_key";
+    public static final String KEY_INSTANT_AEC = "pref_camera2_instant_aec_key";
+    public static final String KEY_SATURATION_LEVEL = "pref_camera2_saturation_level_key";
+    public static final String KEY_ANTI_BANDING_LEVEL = "pref_camera2_anti_banding_level_key";
+    public static final String KEY_HISTOGRAM = "pref_camera2_histogram_key";
+    public static final String KEY_HDR = "pref_camera2_hdr_key";
+    public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
+
     private static final String TAG = "SnapCam_SettingsManager";
 
     private static SettingsManager sInstance;
@@ -582,6 +589,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference audioEncoder = mPreferenceGroup.findPreference(KEY_AUDIO_ENCODER);
         ListPreference noiseReduction = mPreferenceGroup.findPreference(KEY_NOISE_REDUCTION);
         ListPreference faceDetection = mPreferenceGroup.findPreference(KEY_FACE_DETECTION);
+        ListPreference instantAec = mPreferenceGroup.findPreference(KEY_INSTANT_AEC);
+        ListPreference saturationLevel = mPreferenceGroup.findPreference(KEY_SATURATION_LEVEL);
+        ListPreference antiBandingLevel = mPreferenceGroup.findPreference(KEY_ANTI_BANDING_LEVEL);
+        ListPreference histogram = mPreferenceGroup.findPreference(KEY_HISTOGRAM);
+        ListPreference hdr = mPreferenceGroup.findPreference(KEY_HDR);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -599,6 +611,41 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (colorEffect != null) {
             if (filterUnsupportedOptions(colorEffect, getSupportedColorEffects(cameraId))) {
                 mFilteredKeys.add(colorEffect.getKey());
+            }
+        }
+
+        if (instantAec != null) {
+            if (filterUnsupportedOptions(instantAec,
+                    getSupportedInstantAecAvailableModes(cameraId))) {
+                mFilteredKeys.add(instantAec.getKey());
+            }
+        }
+
+        if (saturationLevel != null) {
+            if (filterUnsupportedOptions(saturationLevel,
+                    getSupportedSaturationLevelAvailableModes(cameraId))) {
+                mFilteredKeys.add(saturationLevel.getKey());
+            }
+        }
+
+        if (antiBandingLevel != null) {
+            if (filterUnsupportedOptions(antiBandingLevel,
+                    getSupportedAntiBandingLevelAvailableModes(cameraId))) {
+                mFilteredKeys.add(antiBandingLevel.getKey());
+            }
+        }
+
+        if (histogram != null) {
+            if (filterUnsupportedOptions(histogram,
+                    getSupportedHistogramAvailableModes(cameraId))) {
+                mFilteredKeys.add(histogram.getKey());
+            }
+        }
+
+        if (hdr != null){
+            if (filterUnsupportedOptions(hdr,
+                    getSupportedHdrAvailableModes(cameraId))) {
+                mFilteredKeys.add(hdr.getKey());
             }
         }
 
@@ -1209,6 +1256,66 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
         resetIfInvalid(pref);
         return false;
+    }
+
+    public List<String> getSupportedInstantAecAvailableModes(int cameraId) {
+        int[] instantAecAvailableModes = mCharacteristics.get(cameraId).get(
+                                           CaptureModule.InstantAecAvailableModes);
+        if (instantAecAvailableModes == null) {
+            return null;
+        }
+        List<String> modes = new ArrayList<>();
+        for (int i : instantAecAvailableModes) {
+            modes.add(""+i);
+        }
+        return  modes;
+    }
+
+    public List<String> getSupportedSaturationLevelAvailableModes(int cameraId) {
+        int[] saturationLevelAvailableModes = {0,1,2,3,4,5,6,7,8,9,10};
+        List<String> modes = new ArrayList<>();
+        for (int i : saturationLevelAvailableModes) {
+            modes.add(""+i);
+        }
+        return  modes;
+    }
+
+    public List<String> getSupportedAntiBandingLevelAvailableModes(int cameraId) {
+        int[] antiBandingLevelAvailableModes = mCharacteristics.get(cameraId).get(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_ANTIBANDING_MODES);
+        List<String> modes = new ArrayList<>();
+        for (int i : antiBandingLevelAvailableModes) {
+            modes.add(""+i);
+        }
+        return  modes;
+    }
+
+    public List<String> getSupportedHistogramAvailableModes(int cameraId) {
+        String[] data = {"enable","disable"};
+        List<String> modes = new ArrayList<>();
+        for (String i : data) {
+            modes.add(i);
+        }
+        return  modes;
+    }
+
+    public List<String> getSupportedHdrAvailableModes(int cameraId) {
+        String[] data = {"enable","disable"};
+        List<String> modes = new ArrayList<>();
+        for (String i : data) {
+            modes.add(i);
+        }
+        return  modes;
+    }
+
+    public boolean isHistogramSupport(){
+        String value = getValue(KEY_HISTOGRAM);
+        return value != null && value.equals("enable");
+    }
+
+    public boolean isCamera2HDRSupport(){
+        String value = getValue(KEY_HDR);
+        return value != null && value.equals("enable");
     }
 
     private boolean filterUnsupportedOptions(ListPreference pref, List<String> supported) {

@@ -1,5 +1,5 @@
 <!--
-    Copyright (c) 2012-2014, 2016, The Linux Foundation. All rights reserved.
+    Copyright (c) 2012-2014, 2016-2017 The Linux Foundation. All rights reserved.
 
     Not a Contribution.
 
@@ -1030,7 +1030,7 @@
     <string name="pref_camera_scenemode_entry_trackingfocus" translatable="true">TrackingFocus</string>
     <string name="pref_camera_scenemode_entry_panorama" translatable="true">Panorama</string>
     <string name="pref_camera_scenemode_entry_promode" translatable="true">ProMode</string>
-    <string name="bestpicture_done" translatable="true">DONE</string>
+    <string name="bestpicture_done" translatable="true">SAVE</string>
     <string name="bestpicture_at_least_one_picture" translatable="true">At least, one picture has to be chosen.</string>
 
     <string name="pref_camera2_shutter_sound_default" translatable="true">on</string>
@@ -1050,6 +1050,14 @@
     <string name="pref_camera2_timer_value_2sec" translatable="false">2</string>
     <string name="pref_camera2_timer_value_5sec" translatable="false">5</string>
     <string name="pref_camera2_timer_value_10sec" translatable="false">10</string>
+    <string name="pref_camera2_saveraw_default">disable</string>
+    <string name="pref_camera2_saveraw_title">Save with RAW format</string>
+    <string name="pref_camera2_saveraw_value_disable" translatable="false">disable</string>
+    <string name="pref_camera2_saveraw_value_enable" translatable="false">enable</string>
+
+    <string name="pref_camera2_saveraw_entry_disable">disable</string>
+    <string name="pref_camera2_saveraw_entry_enable">enable</string>
+
     <string name="panocapture_direction_is_not_determined" translatable="true">Move constantly in one direciton.</string>
     <string name="panocapture_intro" translatable="true">Press camera button to start.</string>
     <string name="panocapture_direction_is_changed" translatable="true">Direction is changed. Stopping now...</string>
@@ -1080,5 +1088,47 @@
 
     <string name="pref_camera2_not_show_again">Do not show again</string>
     <string name="pref_camera2_scene_mode_instructional_ok" translatable="true">OK</string>
+
+    <string name="pref_camera2_instant_aec_title" translatable="true">Instant AEC</string>
+    <string name="pref_camera2_instant_aec_default" translatable="false">0</string>
+    <string name="pref_camera2_instant_aec_entry_disable" translatable="true">Disable</string>
+    <string name="pref_camera2_instant_aec_entry_aggressive" translatable="true">Aggressive AEC</string>
+    <string name="pref_camera2_instant_aec_entry_fast" translatable="true">Fast AEC</string>
+
+    <string name="pref_camera2_saturation_level_title" translatable="true">Saturation Level</string>
+    <string name="pref_camera2_saturation_level_default" translatable="false">5</string>
+    <string name="pref_camera2_saturation_level_entry_0" translatable="true">Level 0</string>
+    <string name="pref_camera2_saturation_level_entry_1" translatable="true">Level 1</string>
+    <string name="pref_camera2_saturation_level_entry_2" translatable="true">Level 2</string>
+    <string name="pref_camera2_saturation_level_entry_3" translatable="true">Level 3</string>
+    <string name="pref_camera2_saturation_level_entry_4" translatable="true">Level 4</string>
+    <string name="pref_camera2_saturation_level_entry_5" translatable="true">Level 5(Default)</string>
+    <string name="pref_camera2_saturation_level_entry_6" translatable="true">Level 6</string>
+    <string name="pref_camera2_saturation_level_entry_7" translatable="true">Level 7</string>
+    <string name="pref_camera2_saturation_level_entry_8" translatable="true">Level 8</string>
+    <string name="pref_camera2_saturation_level_entry_9" translatable="true">Level 9</string>
+    <string name="pref_camera2_saturation_level_entry_10" translatable="true">Level 10</string>
+
+    <string name="pref_camera2_anti_banding_level_title" translatable="true">Anti Banding Level</string>
+    <string name="pref_camera2_anti_banding_level_default" translatable="false">0</string>
+    <string name="pref_camera2_anti_banding_level_entry_off" translatable="true">Off</string>
+    <string name="pref_camera2_anti_banding_level_entry_50hz" translatable="true">50HZ</string>
+    <string name="pref_camera2_anti_banding_level_entry_60hz" translatable="true">60HZ</string>
+    <string name="pref_camera2_anti_banding_level_entry_auto" translatable="true">Auto</string>
+
+    <string name="pref_camera2_histogram_title" translatable="true">Histogram</string>
+    <string name="pref_camera2_histogram_default" translatable="false">disable</string>
+    <string name="pref_camera2_histogram_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_histogram_entry_disable" translatable="true">Disable</string>
+
+    <string name="pref_camera2_hdr_title" translatable="true">HDR &amp; Non-HDR</string>
+    <string name="pref_camera2_hdr_default" translatable="false">disable</string>
+    <string name="pref_camera2_hdr_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_hdr_entry_disable" translatable="true">Disable</string>
+
+    <string name="pref_camera2_auto_hdr_title" translatable="true">AUTO HDR</string>
+    <string name="pref_camera2_auto_hdr_default" translatable="false">disable</string>
+    <string name="pref_camera2_auto_hdr_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_auto_hdr_entry_disable" translatable="true">Disable</string>
 </resources>
 

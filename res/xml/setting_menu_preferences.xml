@@ -275,4 +275,68 @@
             android:summary="Version"
             android:title="Version Info" />
     </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="developer"
+        android:layout="@layout/preferences_category"
+        android:title="DEVELOPER OPTIONS">
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_instant_aec_default"
+            android:entries="@array/pref_camera2_instant_aec_entries"
+            android:entryValues="@array/pref_camera2_instant_aec_entryvalues"
+            android:key="pref_camera2_instant_aec_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_instant_aec_title" />
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_saturation_level_default"
+            android:entries="@array/pref_camera2_saturation_level_entries"
+            android:entryValues="@array/pref_camera2_saturation_level_entryvalues"
+            android:key="pref_camera2_saturation_level_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_saturation_level_title" />
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_anti_banding_level_default"
+            android:entries="@array/pref_camera2_anti_banding_level_entries"
+            android:entryValues="@array/pref_camera2_anti_banding_level_entryvalues"
+            android:key="pref_camera2_anti_banding_level_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_anti_banding_level_title" />
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_histogram_default"
+            android:entries="@array/pref_camera2_histogram_entries"
+            android:entryValues="@array/pref_camera2_histogram_entryvalues"
+            android:key="pref_camera2_histogram_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_histogram_title" />
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_hdr_default"
+            android:entries="@array/pref_camera2_hdr_entries"
+            android:entryValues="@array/pref_camera2_hdr_entryvalues"
+            android:key="pref_camera2_hdr_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_hdr_title" />
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_auto_hdr_default"
+            android:entries="@array/pref_camera2_auto_hdr_entries"
+            android:entryValues="@array/pref_camera2_auto_hdr_entryvalues"
+            android:key="pref_camera2_auto_hdr_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_auto_hdr_title" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_camera2_saveraw_default"
+            android:entries="@array/pref_camera2_saveraw_entries"
+            android:entryValues="@array/pref_camera2_saveraw_entryvalues"
+            android:key="pref_camera2_saveraw_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera2_saveraw_title" />
+    </PreferenceCategory>
 </PreferenceScreen>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -28,6 +28,8 @@
  */
 package com.android.camera;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -42,15 +44,24 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.support.v4.app.FragmentActivity;
+import android.widget.CheckBox;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.camera.exif.ExifInterface;
+import com.android.camera.ui.BestPictureActionDialogLayout;
 import com.android.camera.ui.DotsView;
 import com.android.camera.ui.DotsViewItem;
 import com.android.camera.ui.RotateTextToast;
+import com.android.camera.ui.RotateImageView;
 import com.android.camera.util.CameraUtil;
 
 import org.codeaurora.snapcam.R;
@@ -61,12 +72,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class BestpictureActivity extends FragmentActivity{
+import static android.app.Activity.RESULT_OK;
+
+public class BestpictureActivity extends FragmentActivity {
     private static final String TAG = "BestpictureActivity";
     public static final String[] NAMES = {
         "00", "01", "02", "03", "04", "05", "06", "07", "08", "09"
     };
-
+    private static final String INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE =
+            "android.media.action.STILL_IMAGE_CAMERA_SECURE";
+    public static final String ACTION_IMAGE_CAPTURE_SECURE =
+            "android.media.action.IMAGE_CAPTURE_SECURE";
+    public static final String SECURE_CAMERA_EXTRA = "secure_camera";
+    private boolean mSecureCamera;
     public static final int NUM_IMAGES = 10;
 
     private ViewPager mImagePager;
@@ -81,6 +99,11 @@ public class BestpictureActivity extends FragmentActivity{
     private ImageLoadingThread mLoadingThread;
     private PhotoModule.NamedImages mNamedImages;
     private Uri mPlaceHolderUri;
+    private Dialog mDialog;
+    private AlertDialog.Builder mBuilder;
+    private View mDialogRoot;
+    private CheckBox mshowAgainCheck;
+
     public static int BESTPICTURE_ACTIVITY_CODE = 11;
 
     static class ImageItems implements DotsViewItem {
@@ -142,6 +165,22 @@ public class BestpictureActivity extends FragmentActivity{
     public void onCreate(Bundle state) {
         super.onCreate(state);
         mActivity = this;
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        if (INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)
+                || ACTION_IMAGE_CAPTURE_SECURE.equals(action)) {
+            mSecureCamera = true;
+        } else {
+            mSecureCamera = intent.getBooleanExtra(SECURE_CAMERA_EXTRA, false);
+        }
+
+        if (mSecureCamera) {
+            // Change the window flags so that secure camera can show when locked
+            Window win = getWindow();
+            WindowManager.LayoutParams params = win.getAttributes();
+            params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+            win.setAttributes(params);
+        }
         mFilesPath = getFilesDir()+"/Bestpicture";
         setContentView(R.layout.bestpicture_editor);
         Display display = getWindowManager().getDefaultDisplay();
@@ -172,22 +211,302 @@ public class BestpictureActivity extends FragmentActivity{
         findViewById(R.id.bestpicture_done).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                int index = -1;
-                for(int i=0; i < mImageItems.mChosen.length; i++) {
+                int choosenCount = 0;
+                for (int i = 0; i < mImageItems.mChosen.length; i++) {
                     if (mImageItems.mChosen[i]) {
-                        if(index != -1) {
-                            new SaveImageTask().execute(mFilesPath + "/" + NAMES[i] + ".jpg");
-                        } else {
-                            index = i;
-                            saveForground(mFilesPath + "/" + NAMES[i] + ".jpg");
-                        }
+                        choosenCount++;
                     }
                 }
-                setResult(RESULT_OK, new Intent());
-                finish();
+                boolean showSaveDialog = CameraUtil.loadDialogShowConfig(BestpictureActivity
+                        .this,CameraUtil.KEY_SAVE);
+                if (showSaveDialog) {
+                    //add save dialog
+                    initSaveDialog(CameraUtil.MODE_TWO_BT, choosenCount);
+                    mDialog.show();
+                    setDialogLayoutPararms();
+                } else {
+                    saveImages(choosenCount, false);
+                }
+            }
+        });
+        findViewById(R.id.delete_best).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                boolean showDeleteDialog = CameraUtil.loadDialogShowConfig(BestpictureActivity.this
+                        ,CameraUtil.KEY_DELETE);
+                if (showDeleteDialog) {
+                    initDeleteDialog(CameraUtil.MODE_TWO_BT);
+                    mDialog.show();
+                    setDialogLayoutPararms();
+                } else {
+                    backToViewfinder();
+                }
+            }
+        });
+        RotateImageView moreView = (RotateImageView) findViewById(R.id.best_more);
+        Bitmap mMoreBp = BitmapFactory.decodeResource(getResources(), R.drawable.more_options);
+        mMoreBp = CameraUtil.adjustPhotoRotation(mMoreBp, 90);
+        moreView.setImageBitmap(mMoreBp);
+        moreView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                initOverFlow(v);
             }
         });
     }
+
+    private void initOverFlow(View v) {
+        View popView = getLayoutInflater().inflate(R.layout.overflow, null);
+        PopupWindow pop = new PopupWindow(popView, CameraUtil.dip2px(BestpictureActivity.this, 150),
+                CameraUtil.dip2px(BestpictureActivity.this, 100), true);
+        pop.setOutsideTouchable(true);
+        pop.showAtLocation(v, Gravity.RIGHT | Gravity.TOP,
+                CameraUtil.dip2px(BestpictureActivity.this, 5),
+                CameraUtil.dip2px(BestpictureActivity.this, 10));
+        TextView saveAllText = (TextView) popView.findViewById(R.id.overflow_item1);
+        TextView deleteAllText = (TextView) popView.findViewById(R.id.overflow_item2);
+        saveAllText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pop.dismiss();
+                saveImages(mImageItems.mChosen.length, true);
+
+            }
+        });
+        deleteAllText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pop.dismiss();
+                boolean showDeleteAllDialog = CameraUtil.loadDialogShowConfig(
+                        BestpictureActivity.this, CameraUtil.KEY_DELETE_ALL);
+                if (showDeleteAllDialog) {
+                    initDeleteAllDialog(CameraUtil.MODE_TWO_BT);
+                    mDialog.show();
+                    setDialogLayoutPararms();
+                } else {
+                    backToViewfinder();
+                }
+            }
+        });
+    }
+
+    private void initDeleteDialog(int mode) {
+        BestPictureActionDialogLayout layout = getDialogLayout(mode);
+        layout.setDialogDataControler(mDialogRoot, new BestPictureActionDialogLayout
+                .IDialogDataControler() {
+            @Override
+            public String getTitleString() {
+                return getResources().getString(R.string.delete_best_dialog_title);
+            }
+
+            @Override
+            public String getContentString() {
+                return getResources().getString(R.string.delete_best_dialog_content);
+            }
+
+            @Override
+            public String getPositionButtonString() {
+                return getResources().getString(R.string.delete_best_dialog_positive_bt);
+            }
+
+            @Override
+            public String getNativeButtonString() {
+                return getResources().getString(R.string.delete_best_dialog_native_bt);
+            }
+
+            @Override
+            public String getOKButtonString() {
+                return "";
+            }
+
+            @Override
+            public void doClickPositionBtAction() {
+                if (mshowAgainCheck.isChecked()) {
+                    CameraUtil.saveDialogShowConfig(BestpictureActivity.this,
+                            CameraUtil.KEY_DELETE, false);
+                }
+                mDialog.dismiss();
+                backToViewfinder();
+            }
+
+            @Override
+            public void doClickNativeBtAction() {
+                if (mshowAgainCheck.isChecked()) {
+                    CameraUtil.saveDialogShowConfig(BestpictureActivity.this,
+                            CameraUtil.KEY_DELETE, false);
+                }
+                mDialog.dismiss();
+            }
+
+            @Override
+            public void doClickOKBtAction() {
+            }
+        });
+    }
+
+    private void initDeleteAllDialog(int mode) {
+        BestPictureActionDialogLayout layout = getDialogLayout(mode);
+        layout.setDialogDataControler(mDialogRoot, new BestPictureActionDialogLayout
+                .IDialogDataControler() {
+            @Override
+            public String getTitleString() {
+                return getResources().getString(R.string.delete_all_best_dialog_title);
+            }
+
+            @Override
+            public String getContentString() {
+                return getResources().getString(R.string.delete_all_best_dialog_content);
+            }
+
+            @Override
+            public String getPositionButtonString() {
+                return getResources().getString(R.string.delete_all_best_dialog_positive_bt);
+            }
+
+            @Override
+            public String getNativeButtonString() {
+                return getResources().getString(R.string.delete_all_best_dialog_native_bt);
+            }
+
+            @Override
+            public String getOKButtonString() {
+                return "";
+            }
+
+            @Override
+            public void doClickPositionBtAction() {
+                if (mshowAgainCheck.isChecked()) {
+                    CameraUtil.saveDialogShowConfig(BestpictureActivity.this,
+                            CameraUtil.KEY_DELETE_ALL, false);
+                }
+                mDialog.dismiss();
+                backToViewfinder();
+            }
+
+            @Override
+            public void doClickNativeBtAction() {
+                if (mshowAgainCheck.isChecked()) {
+                    CameraUtil.saveDialogShowConfig(BestpictureActivity.this,
+                            CameraUtil.KEY_DELETE_ALL, false);
+                }
+                mDialog.dismiss();
+            }
+
+            @Override
+            public void doClickOKBtAction() {
+            }
+        });
+    }
+
+    private void initSaveDialog(int mode, int choosenCount) {
+
+        BestPictureActionDialogLayout layout = getDialogLayout(mode);
+        layout.setDialogDataControler(mDialogRoot, new BestPictureActionDialogLayout
+                .IDialogDataControler() {
+
+            @Override
+            public String getTitleString() {
+                return getResources().getString(R.string.save_best_dialog_title);
+            }
+
+            @Override
+            public String getContentString() {
+                return getResources().getString(R.string.save_best_dialog_content, choosenCount);
+            }
+
+            @Override
+            public String getPositionButtonString() {
+                return getResources().getString(R.string.save_best_dialog_positive_bt);
+            }
+
+            @Override
+            public String getNativeButtonString() {
+                return getResources().getString(R.string.save_best_dialog_native_bt);
+            }
+
+            @Override
+            public String getOKButtonString() {
+                return "";
+            }
+
+            @Override
+            public void doClickPositionBtAction() {
+                if (mshowAgainCheck.isChecked()) {
+                    CameraUtil.saveDialogShowConfig(BestpictureActivity.this,
+                            CameraUtil.KEY_SAVE, false);
+                }
+                mDialog.dismiss();
+                saveImages(choosenCount, false);
+            }
+
+            @Override
+            public void doClickNativeBtAction() {
+                if (mshowAgainCheck.isChecked()) {
+                    CameraUtil.saveDialogShowConfig(BestpictureActivity.this,
+                            CameraUtil.KEY_SAVE, false);
+                }
+                mDialog.dismiss();
+            }
+
+            @Override
+            public void doClickOKBtAction() {
+                mDialog.dismiss();
+            }
+        });
+    }
+
+    private BestPictureActionDialogLayout getDialogLayout(int mode) {
+        BestPictureActionDialogLayout layout;
+        mBuilder = new AlertDialog.Builder(BestpictureActivity.this);
+        mDialogRoot = LayoutInflater.from(BestpictureActivity.this)
+                .inflate(R.layout.bestpicture_action_dialog, null);
+        mDialogRoot.setTag(mode);
+        mBuilder.setView(mDialogRoot);
+        mDialog = mBuilder.create();
+        layout = (BestPictureActionDialogLayout) mDialogRoot.findViewById(R.id.mlayout);
+        mshowAgainCheck = (CheckBox) mDialogRoot.findViewById(R.id.mcheck);
+        return layout;
+    }
+
+    private void setDialogLayoutPararms() {
+        //measure and layout width and height for dialog.
+        int width = CameraUtil.dip2px(BestpictureActivity.this, 320);
+        int height = CameraUtil.dip2px(BestpictureActivity.this, 250);
+        mDialog.getWindow().setLayout(width, height);
+    }
+
+    private void saveImages(int toSaveCount, boolean saveAll) {
+        int index = -1;
+        for (int i = 0; i < mImageItems.mChosen.length; i++) {
+            if (saveAll) {
+                if (index != -1) {
+                    new SaveImageTask().execute(mFilesPath + "/" + NAMES[i] + ".jpg");
+                } else {
+                    index = i;
+                    saveForground(mFilesPath + "/" + NAMES[i] + ".jpg");
+                }
+            } else {
+                if (mImageItems.mChosen[i]) {
+                    if (index != -1) {
+                        new SaveImageTask().execute(mFilesPath + "/" + NAMES[i] + ".jpg");
+                    } else {
+                        index = i;
+                        saveForground(mFilesPath + "/" + NAMES[i] + ".jpg");
+                    }
+                }
+            }
+        }
+        String toastString = getResources().getString(R.string.save_best_image_toast,
+        toSaveCount);
+        Toast.makeText(BestpictureActivity.this, toastString, Toast.LENGTH_SHORT).show();
+        backToViewfinder();
+    }
+
+    private void backToViewfinder() {
+        setResult(RESULT_OK, new Intent());
+        finish();
+    }
+
 
     private class ImageLoadingThread extends Thread {
         public void run() {

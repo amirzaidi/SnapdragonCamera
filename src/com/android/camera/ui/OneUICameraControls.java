@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -34,6 +34,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.android.camera.CaptureModule;
 import com.android.camera.Storage;
 import com.android.camera.imageprocessor.filter.BeautificationFilter;
 
@@ -45,6 +46,7 @@ public class OneUICameraControls extends RotatableLayout {
 
     private View mShutter;
     private View mVideoShutter;
+    private View mExitBestPhotpMode;
     private View mPauseButton;
     private View mFlashButton;
     private View mMute;
@@ -57,6 +59,7 @@ public class OneUICameraControls extends RotatableLayout {
     private View mMakeupSeekBarLowText;
     private View mMakeupSeekBarHighText;
     private View mMakeupSeekBarLayout;
+    private View mCancelButton;
     private ViewGroup mProModeLayout;
     private View mProModeCloseButton;
 
@@ -85,6 +88,7 @@ public class OneUICameraControls extends RotatableLayout {
     private int mBottomLargeSize;
     private int mBottomSmallSize;
 
+    private int mIntentMode = CaptureModule.INTENT_MODE_NORMAL;
     private ProMode mProMode;
     private ImageView mExposureIcon;
     private ImageView mManualIcon;
@@ -125,11 +129,20 @@ public class OneUICameraControls extends RotatableLayout {
         this(context, null);
     }
 
+    public void setIntentMode(int mode) {
+        mIntentMode = mode;
+    }
+
+    public int getIntentMode() {
+        return mIntentMode;
+    }
+
     @Override
     public void onFinishInflate() {
         super.onFinishInflate();
         mShutter = findViewById(R.id.shutter_button);
         mVideoShutter = findViewById(R.id.video_button);
+        mExitBestPhotpMode = findViewById(R.id.exit_best_mode);
         mPauseButton = findViewById(R.id.video_pause);
         mFrontBackSwitcher = findViewById(R.id.front_back_switcher);
         mTsMakeupSwitcher = findViewById(R.id.ts_makeup_switcher);
@@ -145,6 +158,7 @@ public class OneUICameraControls extends RotatableLayout {
         mFilterModeSwitcher = findViewById(R.id.filter_mode_switcher);
         mRemainingPhotos = (LinearLayout) findViewById(R.id.remaining_photos);
         mRemainingPhotosText = (TextView) findViewById(R.id.remaining_photos_text);
+        mCancelButton = findViewById(R.id.cancel_button);
         mProModeLayout = (ViewGroup) findViewById(R.id.pro_mode_layout);
         mProModeCloseButton = findViewById(R.id.promode_close_button);
 
@@ -225,16 +239,32 @@ public class OneUICameraControls extends RotatableLayout {
         mViews = new View[]{
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
                 mTsMakeupSwitcher, mFlashButton, mShutter, mPreview, mVideoShutter,
-                mPauseButton
+                mPauseButton, mCancelButton
         };
         mBottomLargeSize = getResources().getDimensionPixelSize(
                 R.dimen.one_ui_bottom_large);
         mBottomSmallSize = getResources().getDimensionPixelSize(
                 R.dimen.one_ui_bottom_small);
         if(!BeautificationFilter.isSupportedStatic()) {
-            mTsMakeupSwitcher.setVisibility(View.GONE);
-            mTsMakeupSwitcher = null;
+            mTsMakeupSwitcher.setEnabled(false);
         }
+    }
+
+    @Override
+    public void onSizeChanged(int w, int h, int oldw, int oldh){
+        super.onSizeChanged(w, h, oldw, oldh);
+
+        mWidth = w;
+        mHeight = h;
+        if(mMakeupSeekBar != null) {
+            mMakeupSeekBar.setMinimumWidth(mWidth/2);
+        }
+        ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(mWidth/ 4,mWidth/4);
+        mExposureLayout.setLayoutParams(lp);
+        mManualLayout.setLayoutParams(lp);
+        mWhiteBalanceLayout.setLayoutParams(lp);
+        mIsoLayout.setLayoutParams(lp);
+
     }
 
     @Override
@@ -244,20 +274,9 @@ public class OneUICameraControls extends RotatableLayout {
         b = b - t;
         l = 0;
         t = 0;
-        mWidth = r;
-        mHeight = b;
+
         setLocation(r - l, b - t);
         layoutRemaingPhotos();
-        if(mMakeupSeekBar != null) {
-            mMakeupSeekBar.setMinimumWidth(mWidth/2);
-        }
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(mWidth/ 4,mWidth/4);
-        mExposureLayout.setLayoutParams(lp);
-
-        mManualLayout.setLayoutParams(lp);
-        mWhiteBalanceLayout.setLayoutParams(lp);
-        mIsoLayout.setLayoutParams(lp);
         initializeProMode(mProModeOn);
     }
 
@@ -329,13 +348,23 @@ public class OneUICameraControls extends RotatableLayout {
             setLocation(mPauseButton, false, 3.15f);
             setLocation(mShutter, false , 0.85f);
             setLocation(mVideoShutter, false, 2);
+            setLocation(mExitBestPhotpMode ,false, 4);
         } else {
             setLocation(mFrontBackSwitcher, true, 2);
             setLocation(mTsMakeupSwitcher, true, 3);
             setLocation(mFlashButton, true, 4);
-            setLocation(mPreview, false, 0);
-            setLocation(mShutter, false, 2);
-            setLocation(mVideoShutter, false, 3.15f);
+            if (mIntentMode == CaptureModule.INTENT_MODE_CAPTURE) {
+                setLocation(mShutter, false, 2);
+                setLocation(mCancelButton, false, 0.85f);
+            } else if (mIntentMode == CaptureModule.INTENT_MODE_VIDEO) {
+                setLocation(mVideoShutter, false, 2);
+                setLocation(mCancelButton, false, 0.85f);
+            } else {
+                setLocation(mShutter, false, 2);
+                setLocation(mPreview, false, 0);
+                setLocation(mVideoShutter, false, 3.15f);
+            }
+            setLocation(mExitBestPhotpMode ,false, 4);
         }
         setLocationCustomBottom(mMakeupSeekBarLayout, 0, 1);
         setLocation(mProModeCloseButton, false, 4);
@@ -411,8 +440,14 @@ public class OneUICameraControls extends RotatableLayout {
             setBottomButtionSize(mVideoShutter, mBottomLargeSize, mBottomLargeSize);
             setBottomButtionSize(mShutter, mBottomSmallSize, mBottomSmallSize);
         } else {
-            setBottomButtionSize(mShutter, mBottomLargeSize, mBottomLargeSize);
-            setBottomButtionSize(mVideoShutter, mBottomSmallSize, mBottomSmallSize);
+            if (mIntentMode == CaptureModule.INTENT_MODE_CAPTURE) {
+                setBottomButtionSize(mShutter, mBottomLargeSize, mBottomLargeSize);
+            } else if (mIntentMode == CaptureModule.INTENT_MODE_VIDEO) {
+                setBottomButtionSize(mVideoShutter, mBottomLargeSize, mBottomLargeSize);
+            } else {
+                setBottomButtionSize(mShutter, mBottomLargeSize, mBottomLargeSize);
+                setBottomButtionSize(mVideoShutter, mBottomSmallSize, mBottomSmallSize);
+            }
         }
     }
 
@@ -469,7 +504,7 @@ public class OneUICameraControls extends RotatableLayout {
         View[] views = {
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
                 mTsMakeupSwitcher, mFlashButton, mPreview, mMute, mShutter, mVideoShutter,
-                mMakeupSeekBarLowText, mMakeupSeekBarHighText, mPauseButton
+                mMakeupSeekBarLowText, mMakeupSeekBarHighText, mPauseButton, mExitBestPhotpMode
         };
 
         for (View v : views) {

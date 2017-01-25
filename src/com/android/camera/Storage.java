@@ -168,6 +168,18 @@ public class Storage {
          return insertImage(resolver, values);
     }
 
+    public static long addRawImage(String title, byte[] data,
+                                  String mimeType) {
+        String path = generateFilepath(title, mimeType);
+        int size = writeFile(path, data, null, mimeType);
+        // Try to get the real image size after add exif.
+        File f = new File(path);
+        if (f.exists() && f.isFile()) {
+            size = (int) f.length();
+        }
+        return size;
+    }
+
     // Overwrites the file and updates the MediaStore, or inserts the image if
     // one does not already exist.
     public static void updateImage(Uri imageUri, ContentResolver resolver, String title, long date,

@@ -92,22 +92,22 @@ public class FrameProcessor {
     public static final int LISTENER_TRACKING_FOCUS = 2;
     private CaptureModule mModule;
     private boolean mIsVideoOn = false;
-    private boolean mIsInitialized = false;
 
     public FrameProcessor(Activity activity, CaptureModule module) {
         mActivity = activity;
         mModule = module;
         mPreviewFilters = new ArrayList<ImageFilter>();
         mFinalFilters = new ArrayList<ImageFilter>();
+
+        mRs = RenderScript.create(mActivity);
+        mRsYuvToRGB = new ScriptC_YuvToRgb(mRs);
+        mRsRotator = new ScriptC_rotator(mRs);
     }
 
     private void init(Size previewDim) {
         mIsActive = true;
         mSize = previewDim;
         synchronized (mAllocationLock) {
-            mRs = RenderScript.create(mActivity);
-            mRsYuvToRGB = new ScriptC_YuvToRgb(mRs);
-            mRsRotator = new ScriptC_rotator(mRs);
             mInputImageReader = ImageReader.newInstance(mSize.getWidth(), mSize.getHeight(), ImageFormat.YUV_420_888, 8);
 
             Type.Builder rgbTypeBuilder = new Type.Builder(mRs, Element.RGBA_8888(mRs));
@@ -138,7 +138,6 @@ public class FrameProcessor {
             mTask = new ProcessingTask();
             mInputImageReader.setOnImageAvailableListener(mTask, mProcessingHandler);
             mIsAllocationEverUsed = false;
-            mIsInitialized = true;
         }
     }
 
@@ -197,13 +196,7 @@ public class FrameProcessor {
             }
         }
         if(isFrameFilterEnabled() || isFrameListnerEnabled()) {
-            new Thread() {
-                public void run() {
-                    init(size);
-                }
-            }.start();
-        } else {
-            mIsInitialized = true;
+            init(size);
         }
     }
 
@@ -224,18 +217,8 @@ public class FrameProcessor {
 
     }
 
-    private void waitForInitialization() {
-        while(!mIsInitialized) {
-            try {
-                Thread.sleep(10);
-            } catch(InterruptedException e) {
-            }
-        }
-    }
-
     public void onClose() {
         mIsActive = false;
-        waitForInitialization();
         synchronized (mAllocationLock) {
             if (mIsAllocationEverUsed) {
                 if (mInputAllocation != null) {
@@ -251,15 +234,10 @@ public class FrameProcessor {
                     mVideoOutputAllocation.destroy();
                 }
             }
-            if (mRs != null) {
-                mRs.destroy();
-            }
-            mRs = null;
             mProcessAllocation = null;
             mOutputAllocation = null;
             mInputAllocation = null;
             mVideoOutputAllocation = null;
-            mIsInitialized = false;
         }
         if (mProcessingThread != null) {
             mProcessingThread.quitSafely();
@@ -294,6 +272,13 @@ public class FrameProcessor {
         for (ImageFilter filter : mFinalFilters) {
             filter.deinit();
         }
+    }
+
+    public void onDestory(){
+        if (mRs != null) {
+            mRs.destroy();
+        }
+        mRs = null;
     }
 
     private Surface getReaderSurface() {
@@ -339,7 +324,6 @@ public class FrameProcessor {
     }
 
     public void setOutputSurface(Surface surface) {
-        waitForInitialization();
         mSurfaceAsItIs = surface;
         if (mFinalFilters.size() != 0) {
             mOutputAllocation.setSurface(surface);
@@ -347,7 +331,6 @@ public class FrameProcessor {
     }
 
     public void setVideoOutputSurface(Surface surface) {
-        waitForInitialization();
         if (surface == null) {
             synchronized (mAllocationLock) {
                 if (mVideoOutputAllocation != null) {
