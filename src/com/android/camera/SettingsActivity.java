@@ -29,6 +29,7 @@
 
 package com.android.camera;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -108,6 +109,14 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        int flag = WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        Window window = getWindow();
+        window.setFlags(flag, flag);
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(getResources().getString(R.string.settings_title));
+        }
         final boolean isSecureCamera = getIntent().getBooleanExtra(
                 CameraUtil.KEY_IS_SECURE_CAMERA, false);
         if (isSecureCamera) {
