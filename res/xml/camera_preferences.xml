@@ -381,6 +381,28 @@
             camera:entryValues="@array/pref_camera_instant_capture_entry_values" />
 
     <ListPreference
+        camera:key="pref_camera_bokeh_mode_key"
+        camera:defaultValue="@string/pref_camera_bokeh_mode_default"
+        camera:title="@string/pref_camera_bokeh_mode_title"
+        camera:entries="@array/pref_camera_bokeh_mode_entries"
+        camera:entryValues="@array/pref_camera_bokeh_mode_entry_values" />
+
+    <ListPreference
+        camera:key="pref_camera_bokeh_mpo_key"
+        camera:defaultValue="@string/pref_camera_bokeh_mpo_default"
+        camera:title="@string/pref_camera_bokeh_mpo_title"
+        camera:entries="@array/pref_camera_bokeh_mpo_entries"
+        camera:entryValues="@array/pref_camera_bokeh_mpo_entry_values" />
+
+    <ListPreference
+        camera:key="pref_camera_bokeh_blur_degree_key"
+        camera:defaultValue="@string/pref_camera_bokeh_blur_degree_default"
+        camera:title="@string/pref_camera_bokeh_blur_degree_title"
+        camera:entries="@array/pref_camera_bokeh_blur_degree_entries"
+        camera:entryValues="@array/pref_camera_bokeh_blur_degree_entry_values" />
+
+
+    <ListPreference
             camera:key="pref_camera2_camera2_key"
             camera:defaultValue="@string/setting_off_value"
             camera:title="@string/pref_camera2_camera2_title"
