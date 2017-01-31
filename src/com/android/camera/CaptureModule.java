@@ -1724,7 +1724,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         ExifInterface exif = Exif.getExif(bytes);
                                         int orientation = Exif.getOrientation(exif);
 
-                                        if (getCameraMode() != CaptureModule.INTENT_MODE_NORMAL) {
+                                        if (mIntentMode != CaptureModule.INTENT_MODE_NORMAL) {
                                             mJpegImageData = bytes;
                                             if (!mQuickCapture) {
                                                 showCapturedReview(bytes, orientation,
@@ -4275,6 +4275,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     return;
                 case SettingsManager.KEY_FLASH_MODE:
                 case SettingsManager.KEY_SAVERAW:
+                case SettingsManager.KEY_HDR:
                     if (count == 0) restartSession(false);
                     return;
                 case SettingsManager.KEY_SCENE_MODE:
