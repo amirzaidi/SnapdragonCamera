@@ -776,19 +776,21 @@ public class VideoMenu extends MenuController
                 .getInt("persist.camcorder.eis.maxfps", 30);
         ListPreference hfrPref = mPreferenceGroup
                 .findPreference(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE);
-        String highFrameRate = hfrPref.getValue();
-        boolean isHFR = "hfr".equals(highFrameRate.substring(0,3));
-        boolean isHSR = "hsr".equals(highFrameRate.substring(0,3));
-        int rate = 0;
-        if ( isHFR || isHSR ) {
-            String hfrRate = highFrameRate.substring(3);
-            rate = Integer.parseInt(hfrRate);
-        }
+        if (hfrPref != null) {
+            String highFrameRate = hfrPref.getValue();
+            boolean isHFR = "hfr".equals(highFrameRate.substring(0,3));
+            boolean isHSR = "hsr".equals(highFrameRate.substring(0,3));
+            int rate = 0;
+            if ( isHFR || isHSR ) {
+                String hfrRate = highFrameRate.substring(3);
+                rate = Integer.parseInt(hfrRate);
+            }
 
-        if ((disMode.equals("enable") && rate > PERSIST_EIS_MAX_FPS)
-                || !videoHDR.equals("off")
-                || timeLapseInterval != 0) {
-            mListMenu.setPreferenceEnabled(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE, false);
+            if ((disMode.equals("enable") && rate > PERSIST_EIS_MAX_FPS)
+                    || !videoHDR.equals("off")
+                    || timeLapseInterval != 0) {
+                mListMenu.setPreferenceEnabled(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE, false);
+            }
         }
 
     }
