@@ -556,17 +556,16 @@ public class CaptureModule implements CameraModule, PhotoController,
                 updateFocusStateChange(result);
                 Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
                 updateFaceView(faces);
-
-                if (SettingsManager.getInstance().isHistogramSupport()) {
-                    int[] histogramStats = result.get(CaptureModule.histogramStats);
-                    if (histogramStats != null && mHiston) {
+            }
+            if (SettingsManager.getInstance().isHistogramSupport()) {
+                int[] histogramStats = result.get(CaptureModule.histogramStats);
+                if (histogramStats != null && mHiston) {
                     /*The first element in the array stores max hist value . Stats data begin
                     from second value*/
-                        synchronized (statsdata) {
-                            System.arraycopy(histogramStats, 0, statsdata, 0, 1024);
-                        }
-                        updateGraghView();
+                    synchronized (statsdata) {
+                        System.arraycopy(histogramStats, 0, statsdata, 0, 1024);
                     }
+                    updateGraghView();
                 }
             }
             processCaptureResult(result);
@@ -3868,7 +3867,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyHistogram(CaptureRequest.Builder request) {
         String value = mSettingsManager.getValue(SettingsManager.KEY_HISTOGRAM);
-        if (value != null && isBackCamera()) {
+        if (value != null ) {
             if (value.equals("enable")){
                 final byte enable = 1;
                 request.set(CaptureModule.histMode, enable);
