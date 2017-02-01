@@ -556,17 +556,16 @@ public class CaptureModule implements CameraModule, PhotoController,
                 updateFocusStateChange(result);
                 Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
                 updateFaceView(faces);
-
-                if (SettingsManager.getInstance().isHistogramSupport()) {
-                    int[] histogramStats = result.get(CaptureModule.histogramStats);
-                    if (histogramStats != null && mHiston) {
+            }
+            if (SettingsManager.getInstance().isHistogramSupport()) {
+                int[] histogramStats = result.get(CaptureModule.histogramStats);
+                if (histogramStats != null && mHiston) {
                     /*The first element in the array stores max hist value . Stats data begin
                     from second value*/
-                        synchronized (statsdata) {
-                            System.arraycopy(histogramStats, 0, statsdata, 0, 1024);
-                        }
-                        updateGraghView();
+                    synchronized (statsdata) {
+                        System.arraycopy(histogramStats, 0, statsdata, 0, 1024);
                     }
+                    updateGraghView();
                 }
             }
             processCaptureResult(result);
@@ -1233,7 +1232,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         mJpegImageData = data;
     }
 
-    public void showCapturedReview(final byte[] jpegData, int orientation, boolean mirror) {
+    public void showCapturedReview(final byte[] jpegData, final int orientation,
+                                   final boolean mirror) {
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1724,7 +1724,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         ExifInterface exif = Exif.getExif(bytes);
                                         int orientation = Exif.getOrientation(exif);
 
-                                        if (getCameraMode() != CaptureModule.INTENT_MODE_NORMAL) {
+                                        if (mIntentMode != CaptureModule.INTENT_MODE_NORMAL) {
                                             mJpegImageData = bytes;
                                             if (!mQuickCapture) {
                                                 showCapturedReview(bytes, orientation,
@@ -3868,7 +3868,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyHistogram(CaptureRequest.Builder request) {
         String value = mSettingsManager.getValue(SettingsManager.KEY_HISTOGRAM);
-        if (value != null && isBackCamera()) {
+        if (value != null ) {
             if (value.equals("enable")){
                 final byte enable = 1;
                 request.set(CaptureModule.histMode, enable);
@@ -4275,6 +4275,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     return;
                 case SettingsManager.KEY_FLASH_MODE:
                 case SettingsManager.KEY_SAVERAW:
+                case SettingsManager.KEY_HDR:
                     if (count == 0) restartSession(false);
                     return;
                 case SettingsManager.KEY_SCENE_MODE:
