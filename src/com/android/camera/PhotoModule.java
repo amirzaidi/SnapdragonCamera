@@ -360,6 +360,8 @@ public class PhotoModule
     private float[] mR = new float[16];
     private int mHeading = -1;
 
+    private static final int MAX_ZOOM = 10;
+    private int[] mZoomIdxTbl = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     // True if all the parameters needed to start preview is ready.
     private boolean mCameraPreviewParamsReady = false;
 
@@ -3846,6 +3848,61 @@ public class PhotoModule
             mParameters.setMeteringAreas(mFocusManager.getMeteringAreas());
         }
     }
+    private void setZoomMenuValue() {
+        String zoomMenuValue = mPreferences.getString(CameraSettings.KEY_ZOOM,
+                                mActivity.getString(R.string.pref_camera_zoom_default));
+        if (!zoomMenuValue.equals("0")) {
+            int zoomValue = Integer.parseInt(zoomMenuValue);
+            if (mZoomIdxTbl[0] == -1) {
+                /* update the index table once */
+                Log.d(TAG, "Update the zoom index table.");
+                List<Integer> zoomRatios = mParameters.getZoomRatios();
+                int lastZoomIdx = 0;
+                for (int zoom = 1; zoom <= MAX_ZOOM; zoom++) {
+                    int zoomIdx = zoomRatios.indexOf(zoom*100);
+                    if (zoomIdx == -1) {
+                       Log.d(TAG, "Can't find matching zoom value "+zoom);
+                       int nextZoom = 0;
+                       while ((++lastZoomIdx < zoomRatios.size()) &&
+                              (nextZoom < (zoom*100))){
+                           nextZoom = zoomRatios.get(lastZoomIdx);
+                           zoomIdx = lastZoomIdx;
+                       }
+                       if (lastZoomIdx < zoomRatios.size()) {
+                           zoomIdx = lastZoomIdx - 1;
+                       } else {
+                           break;
+                       }
+                    }
+                    mZoomIdxTbl[zoom-1] = zoomIdx;
+                    lastZoomIdx = zoomIdx;
+                }
+            }
+
+            if ((zoomValue <= mZoomIdxTbl.length) &&
+                (mZoomIdxTbl[zoomValue-1] != -1)) {
+                int step = 1;
+                int cur_zoom = mParameters.getZoom();
+                Log.d(TAG, "zoom index = "+mZoomIdxTbl[zoomValue-1]+", cur index = "+cur_zoom);
+                if (cur_zoom > mZoomIdxTbl[zoomValue-1]) {
+                    step = -1;
+                }
+
+                /* move zoom slowly */
+                while (cur_zoom != mZoomIdxTbl[zoomValue-1]) {
+                    cur_zoom += step;
+                    mParameters.setZoom(cur_zoom);
+                    try {
+                        Thread.sleep(25);
+                    } catch(InterruptedException e) {
+                    }
+                }
+                mParameters.setZoom(mZoomIdxTbl[zoomValue-1]);
+            } else {
+                Log.e(TAG, "Zoom value "+zoomValue+" is not supported!");
+            }
+        }
+    }
 
     /** This can run on a background thread, so don't do UI updates here.*/
     private boolean updateCameraParametersPreference() {
@@ -4131,6 +4188,8 @@ public class PhotoModule
             mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_WHITEN, makeupWhitenValue);
             mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_CLEAN, makeupCleanValue);
         }
+
+        setZoomMenuValue();
 
         //QCom related parameters updated here.
         qcomUpdateCameraParametersPreference();

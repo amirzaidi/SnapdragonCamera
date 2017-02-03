@@ -140,7 +140,8 @@ public class VideoMenu extends MenuController
                 CameraSettings.KEY_VIDEO_ROTATION,
                 CameraSettings.KEY_VIDEO_CDS_MODE,
                 CameraSettings.KEY_VIDEO_TNR_MODE,
-                CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE
+                CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE,
+                CameraSettings.KEY_ZOOM
         };
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);
     }
