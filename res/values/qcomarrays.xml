@@ -862,5 +862,53 @@
         <item>@string/pref_camera_instant_capture_value_fast_aec</item>
         <item>@string/pref_camera_instant_capture_value_disable</item>
     </string-array>
+
+    <string-array name="pref_camera_bokeh_mode_entries" translatable="true">
+        <item>@string/pref_camera_bokeh_mode_entry_enable</item>
+        <item>@string/pref_camera_bokeh_mode_entry_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera_bokeh_mode_entry_values" translatable="false">
+        <item>@string/pref_camera_bokeh_mode_entry_value_enable</item>
+        <item>@string/pref_camera_bokeh_mode_entry_value_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera_bokeh_mpo_entries" translatable="true">
+        <item>@string/pref_camera_bokeh_mpo_entry_enable</item>
+        <item>@string/pref_camera_bokeh_mpo_entry_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera_bokeh_mpo_entry_values" translatable="false">
+        <item>@string/pref_camera_bokeh_mpo_entry_value_enable</item>
+        <item>@string/pref_camera_bokeh_mpo_entry_value_disable</item>
+    </string-array>
+
+    <string-array name="pref_camera_bokeh_blur_degree_entries" translatable="true">
+        <item>0</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+    </string-array>
+
+    <string-array name="pref_camera_bokeh_blur_degree_entry_values" translatable="false">
+        <item>0</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+    </string-array>
 </resources>
 

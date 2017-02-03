@@ -257,7 +257,7 @@ public class BestpictureActivity extends FragmentActivity {
 
     private void initOverFlow(View v) {
         View popView = getLayoutInflater().inflate(R.layout.overflow, null);
-        PopupWindow pop = new PopupWindow(popView, CameraUtil.dip2px(BestpictureActivity.this, 150),
+        final PopupWindow pop = new PopupWindow(popView, CameraUtil.dip2px(BestpictureActivity.this, 150),
                 CameraUtil.dip2px(BestpictureActivity.this, 100), true);
         pop.setOutsideTouchable(true);
         pop.showAtLocation(v, Gravity.RIGHT | Gravity.TOP,
@@ -398,7 +398,7 @@ public class BestpictureActivity extends FragmentActivity {
         });
     }
 
-    private void initSaveDialog(int mode, int choosenCount) {
+    private void initSaveDialog(int mode, final int choosenCount) {
 
         BestPictureActionDialogLayout layout = getDialogLayout(mode);
         layout.setDialogDataControler(mDialogRoot, new BestPictureActionDialogLayout

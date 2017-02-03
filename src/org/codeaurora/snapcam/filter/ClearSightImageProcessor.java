@@ -1380,6 +1380,11 @@ public class ClearSightImageProcessor {
             finalRect.bottom = newYoffset + newHeight;
         }
 
+        if (finalRect.width() % 2 != 0 || finalRect.height() % 2 != 0) {
+            finalRect = new Rect(finalRect.left, finalRect.top,
+                    finalRect.width() % 2 == 0 ? finalRect.right : finalRect.right + 1,
+                    finalRect.height() % 2 == 0 ? finalRect.bottom : finalRect.bottom + 1);
+        }
         Log.d(TAG, "getFinalCropRect - final rect: " + finalRect.toString());
         return finalRect;
     }

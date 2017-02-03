@@ -233,6 +233,8 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_ADVANCED_FEATURES,
                 CameraSettings.KEY_AE_BRACKET_HDR,
                 CameraSettings.KEY_INSTANT_CAPTURE,
+                CameraSettings.KEY_BOKEH_MODE,
+                CameraSettings.KEY_BOKEH_MPO,
                 CameraSettings.KEY_MANUAL_EXPOSURE,
                 CameraSettings.KEY_MANUAL_WB,
                 CameraSettings.KEY_MANUAL_FOCUS,

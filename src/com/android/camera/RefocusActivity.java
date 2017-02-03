@@ -56,11 +56,14 @@ import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.FrameLayout;
 
 import com.android.camera.exif.ExifInterface;
 
+import com.android.camera.util.CameraUtil;
 import org.codeaurora.snapcam.R;
 
 public class RefocusActivity extends Activity {
@@ -75,7 +78,7 @@ public class RefocusActivity extends Activity {
     private int mWidth;
     private int mHeight;
     private Indicator mIndicator;
-
+    private boolean mSecureCamera;
     private View mAllInFocusView;
 
     private DepthMap mDepthMap;
@@ -90,8 +93,25 @@ public class RefocusActivity extends Activity {
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        Intent intent = getIntent();
+        mUri = intent.getData();
+        String action = intent.getAction();
+        if (CameraUtil.INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE.equals(action)
+                || CameraUtil.ACTION_IMAGE_CAPTURE_SECURE.equals(action)) {
+            mSecureCamera = true;
+        } else {
+            mSecureCamera = intent.getBooleanExtra(CameraUtil.SECURE_CAMERA_EXTRA, false);
+        }
+
+        if (mSecureCamera) {
+            // Change the window flags so that secure camera can show when locked
+            Window win = getWindow();
+            WindowManager.LayoutParams params = win.getAttributes();
+            params.flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+            win.setAttributes(params);
+        }
         mFilesPath = getFilesDir()+"";
-        if(getIntent().getFlags() == MAP_ROTATED) {
+        if(intent.getFlags() == MAP_ROTATED || mSecureCamera) {
             mMapRotated = true;
             mFilesPath = getFilesDir()+"/Ubifocus";
         }
@@ -102,7 +122,6 @@ public class RefocusActivity extends Activity {
             }
         }).start();
 
-        mUri = getIntent().getData();
 
         setContentView(R.layout.refocus_editor);
         mIndicator = (Indicator) findViewById(R.id.refocus_indicator);

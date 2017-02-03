@@ -231,6 +231,7 @@ public class PhotoModule
     private ProgressBar brightnessProgressBar;
     // Constant from android.hardware.Camera.Parameters
     private static final String KEY_PICTURE_FORMAT = "picture-format";
+    private SeekBar mBlurDegreeProgressBar;
     private static final String KEY_QC_RAW_PICUTRE_SIZE = "raw-size";
     public static final String PIXEL_FORMAT_JPEG = "jpeg";
 
@@ -594,6 +595,9 @@ public class PhotoModule
         mSensorManager = (SensorManager)(mActivity.getSystemService(Context.SENSOR_SERVICE));
 
         brightnessProgressBar = (ProgressBar)mRootView.findViewById(R.id.progress);
+        mBlurDegreeProgressBar = (SeekBar)mRootView.findViewById(R.id.blur_degree_bar);
+        mBlurDegreeProgressBar.setOnSeekBarChangeListener(mBlurDegreeListener);
+        mBlurDegreeProgressBar.setMax(100);
         if (brightnessProgressBar instanceof SeekBar) {
             SeekBar seeker = (SeekBar) brightnessProgressBar;
             seeker.setOnSeekBarChangeListener(mSeekListener);
@@ -1279,13 +1283,18 @@ public class PhotoModule
         }
     }
 
-    private byte[] flipJpeg(byte[] jpegData, int orientation) {
+    private byte[] flipJpeg(byte[] jpegData, int orientation, int jpegOrientation) {
         Bitmap srcBitmap = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
         Matrix m = new Matrix();
         if(orientation == 270) {
             m.preScale(-1, 1);
         } else { //if it's 90
-            m.preScale(1, -1);
+            // Judge whether the picture or phone is horizontal screen
+            if (jpegOrientation == 0 || jpegOrientation == 180) {
+                m.preScale(-1, 1);
+            } else { // the picture or phone is Vertical screen
+                m.preScale(1, -1);
+            }
         }
         Bitmap dstBitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(), srcBitmap.getHeight(), m, false);
         dstBitmap.setDensity(DisplayMetrics.DENSITY_DEFAULT);
@@ -1415,7 +1424,7 @@ public class PhotoModule
                     if (selfieMirrorPref != null && selfieMirrorPref.getValue() != null &&
                             selfieMirrorPref.getValue().equalsIgnoreCase("enable")) {
                         CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
-                        jpegData = flipJpeg(jpegData, info.orientation);
+                        jpegData = flipJpeg(jpegData, info.orientation, orientation);
                         jpegData = addExifTags(jpegData, orientation);
                     }
                 }
@@ -1554,9 +1563,27 @@ public class PhotoModule
 
     private OnSeekBarChangeListener mSeekListener = new OnSeekBarChangeListener() {
         public void onStartTrackingTouch(SeekBar bar) {
-        // no support
+            // no support
         }
         public void onProgressChanged(SeekBar bar, int progress, boolean fromtouch) {
+        }
+        public void onStopTrackingTouch(SeekBar bar) {
+        }
+    };
+
+    private OnSeekBarChangeListener mBlurDegreeListener = new OnSeekBarChangeListener() {
+        public void onStartTrackingTouch(SeekBar bar) {
+        }
+        public void onProgressChanged(SeekBar bar, int progress, boolean fromtouch) {
+            if (mPreferenceGroup != null) {
+                ListPreference blurValue =  mPreferenceGroup.findPreference(
+                        CameraSettings.KEY_BOKEH_BLUR_VALUE);
+                if (blurValue != null) {
+                    blurValue.setValue(""+progress);
+                }
+            }
+            mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, progress);
+            Log.d(TAG,"seekbar bokeh degree = "+ progress);
         }
         public void onStopTrackingTouch(SeekBar bar) {
         }
@@ -3625,7 +3652,6 @@ public class PhotoModule
                 + mInstantCaptureSnapShot);
         mParameters.set(CameraSettings.KEY_QC_INSTANT_CAPTURE, instantCapture);
 
-
         //Set Histogram
         String histogram = mPreferences.getString(
                 CameraSettings.KEY_HISTOGRAM,
@@ -3669,6 +3695,67 @@ public class PhotoModule
             !mFocusManager.isFocusCompleted()) {
             mUI.clearFocus();
         }
+
+        String bokehMode = mPreferences.getString(
+                CameraSettings.KEY_BOKEH_MODE,
+                mActivity.getString(R.string.pref_camera_bokeh_mode_default));
+        String bokehMpo = mPreferences.getString(
+                CameraSettings.KEY_BOKEH_MPO,
+                mActivity.getString(R.string.pref_camera_bokeh_mpo_default));
+        String bokehBlurDegree = mPreferences.getString(
+                CameraSettings.KEY_BOKEH_BLUR_VALUE,
+                mActivity.getString(R.string.pref_camera_bokeh_blur_degree_default));
+        CameraSettings.getSupportedDegreesOfBlur(mParameters);
+
+        if (!bokehMode.equals(mActivity.getString(
+                R.string.pref_camera_bokeh_mode_entry_value_disable))) {
+            if(!zsl.equals("on")) {
+                mParameters.setZSLMode("on");
+            }
+            if(mParameters.getSceneMode() != Parameters.SCENE_MODE_AUTO) {
+                mParameters.setSceneMode(Parameters.SCENE_MODE_AUTO);
+            }
+            if(mParameters.getFlashMode() != Parameters.FLASH_MODE_OFF) {
+                mParameters.setFlashMode(Parameters.FLASH_MODE_OFF);
+            }
+            if(mParameters.get("long-shot").equals(mActivity.getString(R.string.setting_on_value))) {
+                mParameters.set("long-shot",mActivity.getString(R.string.setting_off_value));
+            }
+            if(mManual3AEnabled != 0) {
+                mManual3AEnabled = 0;
+            }
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mUI.overrideSettings(CameraSettings.KEY_SCENE_MODE,
+                            mActivity.getString(R.string.pref_camera_scenemode_default));
+                    mUI.overrideSettings(CameraSettings.KEY_ZSL,
+                            mActivity.getString(R.string.pref_camera_zsl_value_on));
+                    mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, "off");
+                    mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
+                            mActivity.getString(R.string.pref_camera_longshot_default));
+                    mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
+                    mBlurDegreeProgressBar.setProgress(50);
+                }
+            });
+            mParameters.set(CameraSettings.KEY_QC_BOKEH_MODE, bokehMode);
+            mParameters.set(CameraSettings.KEY_QC_BOKEH_MPO_MODE, bokehMpo);
+            mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, bokehBlurDegree);
+
+        } else {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mUI.overrideSettings(CameraSettings.KEY_BOKEH_MPO,
+                            mActivity.getString(R.string.pref_camera_bokeh_mpo_default));
+                    mUI.overrideSettings(CameraSettings.KEY_BOKEH_BLUR_VALUE,
+                            mActivity.getString(R.string.pref_camera_bokeh_blur_degree_default));
+                    mBlurDegreeProgressBar.setVisibility(View.GONE);
+                }
+            });
+        }
+        Log.v(TAG, "Bokeh Mode = " + bokehMode + " bokehMpo = " + bokehMpo +
+                " bokehBlurDegree = " + bokehBlurDegree);
     }
 
     private int estimateJpegFileSize(final Size size, final String quality) {
@@ -3906,6 +3993,7 @@ public class PhotoModule
                 .pref_camera_advanced_feature_value_refocus_on);
         String optizoomOn = mActivity.getString(R.string
                 .pref_camera_advanced_feature_value_optizoom_on);
+        String scenModeStr = mSceneMode;
         if (refocusOn.equals(mSceneMode)) {
             try {
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
@@ -3929,6 +4017,9 @@ public class PhotoModule
 
         if (CameraUtil.isSupported(mSceneMode, mParameters.getSupportedSceneModes())) {
             if (!mParameters.getSceneMode().equals(mSceneMode)) {
+                if (mHandler.getLooper() == Looper.myLooper()) {
+                    mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, scenModeStr);
+                }
                 mParameters.setSceneMode(mSceneMode);
 
                 // Setting scene mode will change the settings of flash mode,
@@ -4644,6 +4735,15 @@ public class PhotoModule
         }
 
         if (CameraSettings.KEY_QC_CHROMA_FLASH.equals(pref.getKey())) {
+            mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, pref.getValue());
+        }
+
+        if (CameraSettings.KEY_ADVANCED_FEATURES.equals(pref.getKey())) {
+            mUI.setPreference(CameraSettings.KEY_QC_CHROMA_FLASH, pref.getValue());
+            mUI.setPreference(CameraSettings.KEY_SCENE_MODE, pref.getValue());
+        }
+
+        if (CameraSettings.KEY_CAMERA_HDR.equals(pref.getKey())) {
             mUI.setPreference(CameraSettings.KEY_ADVANCED_FEATURES, pref.getValue());
         }
 
