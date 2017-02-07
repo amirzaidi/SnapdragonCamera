@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -148,6 +148,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_ZOOM = "pref_camera2_zoom_key";
 
     public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
+    public static final String KEY_BSGC_DETECTION = "pref_camera2_bsgc_key";
 
     private static final String TAG = "SnapCam_SettingsManager";
 
@@ -612,6 +613,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference histogram = mPreferenceGroup.findPreference(KEY_HISTOGRAM);
         ListPreference hdr = mPreferenceGroup.findPreference(KEY_HDR);
         ListPreference zoom = mPreferenceGroup.findPreference(KEY_ZOOM);
+        ListPreference bsgc = mPreferenceGroup.findPreference(KEY_BSGC_DETECTION);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -623,6 +625,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (!isFlashAvailable(mCameraId)) {
                 removePreference(mPreferenceGroup, KEY_FLASH_MODE);
                 mFilteredKeys.add(flashMode.getKey());
+            }
+        }
+
+        if (bsgc != null) {
+            if (!isBsgcAvailable(mCameraId)) {
+                removePreference(mPreferenceGroup, KEY_BSGC_DETECTION);
+                mFilteredKeys.add(bsgc.getKey());
             }
         }
 
@@ -1045,6 +1054,17 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 return true;
         }
         return false;
+    }
+
+    public boolean isBsgcAvailable(int id) {
+        boolean ret = false;
+        try {
+            byte bsgc_available = mCharacteristics.get(id).get(CaptureModule.bsgcAvailable);
+            ret = bsgc_available == 1;
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        return ret;
     }
 
     public boolean isFacingFront(int id) {
