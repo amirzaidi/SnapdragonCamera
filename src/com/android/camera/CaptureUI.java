@@ -391,7 +391,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFaceView = (Camera2FaceView) mRootView.findViewById(R.id.face_view);
 
         mCancelButton = (ImageView) mRootView.findViewById(R.id.cancel_button);
-        int intentMode = mModule.getCurrentIntentMode();
+        final int intentMode = mModule.getCurrentIntentMode();
         if (intentMode != CaptureModule.INTENT_MODE_NORMAL) {
             mCameraControls.setIntentMode(intentMode);
             mCameraControls.setVideoMode(false);
