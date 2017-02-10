@@ -633,9 +633,15 @@ public class PhotoModule
     // Prompt the user to pick to record location for the very first run of
     // camera only
     private void locationFirstRun() {
+        boolean enableRecordingLocation = false;
+        if (mActivity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            enableRecordingLocation = true;
+        }
         /* Do not prompt if the preference is already set, this is a secure
          * camera session, or the prompt has already been triggered. */
-        if (RecordLocationPreference.isSet(mPreferences, CameraSettings.KEY_RECORD_LOCATION) ||
+        if ((RecordLocationPreference.isSet(
+                mPreferences, CameraSettings.KEY_RECORD_LOCATION) && enableRecordingLocation) ||
                 mActivity.isSecureCamera() || mLocationPromptTriggered) {
             return;
         }
@@ -651,11 +657,6 @@ public class PhotoModule
         /* Enable the location at the begining, always.
            If the user denies the permission, it will be disabled
            right away due to exception */
-        boolean enableRecordingLocation = false;
-        if (mActivity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            enableRecordingLocation = true;
-        }
         enableRecordingLocation(enableRecordingLocation);
     }
 
