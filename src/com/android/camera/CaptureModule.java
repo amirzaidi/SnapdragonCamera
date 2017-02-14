@@ -147,7 +147,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static final int INTENT_MODE_CAPTURE_SECURE = 3;
     private static final int BACK_MODE = 0;
     private static final int FRONT_MODE = 1;
-    private static final int CANCEL_TOUCH_FOCUS_DELAY = 3000;
+    private static final int CANCEL_TOUCH_FOCUS_DELAY = 5000;
     private static final int OPEN_CAMERA = 0;
     private static final int CANCEL_TOUCH_FOCUS = 1;
     private static final int MAX_NUM_CAM = 3;
