@@ -3140,7 +3140,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mCurrentSession = cameraCaptureSession;
                         mCaptureSession[cameraId] = cameraCaptureSession;
                         try {
-                            setUpVideoCaptureRequestBuilder(mVideoRequestBuilder);
+                            setUpVideoCaptureRequestBuilder(mVideoRequestBuilder, cameraId);
                             mCurrentSession.setRepeatingRequest(mVideoRequestBuilder.build(),
                                     mCaptureCallback, mCameraHandler);
                         } catch (CameraAccessException e) {
@@ -3206,7 +3206,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private void setUpVideoCaptureRequestBuilder(CaptureRequest.Builder builder) {
+    private void setUpVideoCaptureRequestBuilder(CaptureRequest.Builder builder,int cameraId) {
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest
                 .CONTROL_AF_MODE_CONTINUOUS_VIDEO);
@@ -3216,6 +3216,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyColorEffect(builder);
         applyVideoFlash(builder);
         applyFaceDetection(builder);
+        applyZoom(builder, cameraId);
     }
 
     private void updateVideoFlash() {
