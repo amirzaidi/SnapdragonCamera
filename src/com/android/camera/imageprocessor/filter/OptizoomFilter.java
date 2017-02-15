@@ -47,7 +47,6 @@ public class OptizoomFilter implements ImageFilter{
     private int mStrideY;
     private int mStrideVU;
     private static String TAG = "OptizoomFilter";
-    private static final boolean DEBUG = false;
     private int temp;
     private static boolean mIsSupported = true;
     private ByteBuffer mOutBuf;

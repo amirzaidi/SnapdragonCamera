@@ -54,7 +54,6 @@ public class TrackingFocusFrameListener implements ImageFilter {
     int mStrideY;
     int mStrideVU;
     private CaptureModule mModule;
-    private static boolean DEBUG = false;
     private static String TAG = "TrackingFocusFrameListener";
     private static boolean mIsSupported = false;
     private Rect imageRect;
