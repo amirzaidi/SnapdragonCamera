@@ -30,7 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.List;
 
 /**
@@ -52,6 +56,13 @@ public class XmpUtil {
   private static final String XMP_HEADER = "http://ns.adobe.com/xap/1.0/\0";
   private static final int MAX_XMP_BUFFER_SIZE = 65502;
 
+  private static final String EXTENDED_XMP_HEADER_SIGNATURE = "http://ns.adobe.com/xmp/extension/\0";
+  private static final String XMP_NOTE_NAMESPACE = "http://ns.adobe.com/xmp/note/";
+  private static final String NOTE_PREFIX = "xmpNote";
+
+  private static final int MAX_EXTENDED_XMP_BUFFER_SIZE = 65000;
+  private static final int EXTEND_XMP_HEADER_SIZE = 75;
+
   private static final String GOOGLE_PANO_NAMESPACE = "http://ns.google.com/photos/1.0/panorama/";
   private static final String PANO_PREFIX = "GPano";
 
@@ -71,6 +82,9 @@ public class XmpUtil {
     try {
       XMPMetaFactory.getSchemaRegistry().registerNamespace(
           GOOGLE_PANO_NAMESPACE, PANO_PREFIX);
+
+      XMPMetaFactory.getSchemaRegistry().registerNamespace(
+              XMP_NOTE_NAMESPACE, NOTE_PREFIX);
     } catch (XMPException e) {
       e.printStackTrace();
     }
@@ -399,6 +413,222 @@ public class XmpUtil {
         }
       }
     }
+  }
+
+  private static Section createStandardXMPSection(XMPMeta meta) {
+    byte[] buffer;
+    try {
+      SerializeOptions options = new SerializeOptions();
+      options.setUseCompactFormat(true);
+      // We have to omit packet wrapper here because
+      // javax.xml.parsers.DocumentBuilder
+      // fails to parse the packet end <?xpacket end="w"?> in android.
+      options.setOmitPacketWrapper(true);
+      buffer = XMPMetaFactory.serializeToBuffer(meta, options);
+    } catch (XMPException e) {
+      Log.d(TAG, "Serialize xmp failed", e);
+      return null;
+    }
+    if (buffer.length > MAX_XMP_BUFFER_SIZE) {
+      Log.e(TAG, "exceed max size");
+      return null;
+    }
+    // The XMP section starts with XMP_HEADER and then the real xmp data.
+    byte[] xmpdata = new byte[buffer.length + XMP_HEADER_SIZE];
+    System.arraycopy(XMP_HEADER.getBytes(), 0, xmpdata, 0, XMP_HEADER_SIZE);
+    System.arraycopy(buffer, 0, xmpdata, XMP_HEADER_SIZE, buffer.length);
+    Section xmpSection = new Section();
+    xmpSection.marker = M_APP1;
+    // Adds the length place (2 bytes) to the section length.
+    xmpSection.length = xmpdata.length + 2;
+    xmpSection.data = xmpdata;
+
+    return xmpSection;
+  }
+
+  private static Section createSection(byte[] portionOfExtendedMeta, byte[] headerBytes) {
+
+    if (portionOfExtendedMeta.length > MAX_EXTENDED_XMP_BUFFER_SIZE) {
+      // Do not support extended xmp now.
+      Log.e(TAG, "createSection fail exceed max size");
+      return null;
+    }
+
+    byte[] xmpdata = new byte[portionOfExtendedMeta.length + 75];
+    System.arraycopy(headerBytes, 0, xmpdata, 0, headerBytes.length);
+
+    System.arraycopy(portionOfExtendedMeta, 0, xmpdata, headerBytes.length, portionOfExtendedMeta.length);
+    Section xmpSection = new Section();
+    xmpSection.marker = M_APP1;
+    // Adds the length place (2 bytes) to the section length.
+    xmpSection.length = xmpdata.length + 2;
+    xmpSection.data = xmpdata;
+    ByteBuffer byteBuffer2 = ByteBuffer.wrap(xmpdata);
+    Log.d(TAG, "fullLength=" + byteBuffer2.getInt(67) + " offset=" + byteBuffer2.getInt(71));
+    return xmpSection;
+  }
+
+  /**
+   * Split extendXMPMeta to multiple marker segments
+   * @param extendedXMPMetaBytes serialized extended XMP
+   * @param guid Is a 128-bit MD5 digest of the full ExtendedXMP serialization,
+   *             stored as a 32-byte ASCII hex string
+   * @return  split result
+   */
+  private static List<Section> splitExtendXMPMeta(byte[] extendedXMPMetaBytes, String guid){
+    List<Section> sections = new ArrayList<Section>();
+     /*
+    The extended XMP JPEG marker segment content holds:
+    - a signature string, "http://ns.adobe.com/xmp/extension/\0"
+    - a 128 bit GUID stored as a 32 byte ASCII hex string
+    - a UInt32 full length of the entire extended XMP
+    - a UInt32 offset for this portion of the extended XMP
+    - the UTF-8 text for this portion of the extended XMP
+     */
+    int splitNum = extendedXMPMetaBytes.length/MAX_EXTENDED_XMP_BUFFER_SIZE;
+    byte[] portion = new byte[MAX_EXTENDED_XMP_BUFFER_SIZE];
+    ByteBuffer byteBuffer = ByteBuffer.wrap(extendedXMPMetaBytes);
+    Section extendedXmpSection = null;
+
+    byte[] headerBytes = new byte[EXTEND_XMP_HEADER_SIZE];
+    int index = 0;
+    System.arraycopy(EXTENDED_XMP_HEADER_SIGNATURE.getBytes(), 0, headerBytes, 0, EXTENDED_XMP_HEADER_SIGNATURE.length());
+    index += EXTENDED_XMP_HEADER_SIGNATURE.length();
+
+    System.arraycopy(guid.getBytes(), 0, headerBytes, index, guid.length());
+    index += guid.length();
+
+    Log.d(TAG, "buffer.length=" + extendedXMPMetaBytes.length);
+    byte[] fullLengthBytes = new byte[4];
+    ByteBuffer intBuffer = ByteBuffer.wrap(fullLengthBytes);
+    intBuffer.putInt(0, extendedXMPMetaBytes.length);
+    System.arraycopy(fullLengthBytes, 0, headerBytes, index, 4);
+    index += 4;
+
+    byte[] offsetBytes = new byte[4];
+    ByteBuffer offsetBuffer = ByteBuffer.wrap(offsetBytes);
+    for( int i=0; i < splitNum; ++i ) {
+      offsetBuffer.putInt(0, i*MAX_EXTENDED_XMP_BUFFER_SIZE);
+      System.arraycopy(offsetBytes, 0, headerBytes, index, 4);
+
+      byteBuffer.get(portion);
+      extendedXmpSection = createSection(portion, headerBytes);
+      sections.add(extendedXmpSection);
+    }
+
+    int remainSize = extendedXMPMetaBytes.length - splitNum*MAX_EXTENDED_XMP_BUFFER_SIZE;
+    if (  remainSize > 0 ) {
+      offsetBuffer.putInt(0, splitNum*MAX_EXTENDED_XMP_BUFFER_SIZE);
+      System.arraycopy(offsetBytes, 0, headerBytes, index, 4);
+
+      byte[] remain = new byte[remainSize];
+      byteBuffer.get(remain);
+      extendedXmpSection = createSection(remain, headerBytes);
+      sections.add(extendedXmpSection);
+    }
+
+    return sections;
+  }
+
+  /**
+   *  Updates a jpeg file from inputStream with XMPMeta to outputStream.
+   * @param inputStream Input image data stream
+   * @param outputStream Output image data stream
+   * @param standardMeta The main portion of the metadata tree must be serialized and written as
+   *                     the standard XMP packet
+   * @param extendedMeta The extended portion must be serialized without a packet wrapper,
+   *                     and written as a series of APP1 marker segments
+   */
+  public static boolean writeXMPMeta(InputStream inputStream, OutputStream outputStream,
+                                     XMPMeta standardMeta, XMPMeta extendedMeta) {
+    byte[] buffer;
+    try {
+      SerializeOptions options = new SerializeOptions();
+      options.setUseCompactFormat(true);
+      // We have to omit packet wrapper here because
+      // javax.xml.parsers.DocumentBuilder
+      // fails to parse the packet end <?xpacket end="w"?> in android.
+      options.setOmitPacketWrapper(true);
+      buffer = XMPMetaFactory.serializeToBuffer(extendedMeta, options);
+    } catch (XMPException e) {
+      Log.d(TAG, "Serialize extended xmp failed", e);
+      return false;
+    }
+
+    String guid = getGUID(buffer);
+    try {
+      standardMeta.setProperty(XMP_NOTE_NAMESPACE, "HasExtendedXMP", guid);
+    } catch (XMPException exception) {
+      Log.d(TAG, "set XMPMeta Property", exception);
+      return false;
+    }
+    List<Section> sections = parse(inputStream, false);
+    List<Section> xmpSections = new ArrayList<Section>();
+    Section standardXmpSection = createStandardXMPSection(standardMeta);
+    if (standardXmpSection == null) {
+      Log.e(TAG, "create standard meta section error");
+      return false;
+    }
+    xmpSections.add(standardXmpSection);
+
+    List<Section> extendedSections = splitExtendXMPMeta(buffer, guid);
+    xmpSections.addAll(extendedSections);
+    sections = insertXMPSection(sections, xmpSections);
+    if (sections == null) {
+      Log.d(TAG, "Insert XMP fialed");
+      return false;
+    }
+    try {
+      // Overwrite the image file with the new meta data.
+      writeJpegFile(outputStream, sections);
+    } catch (IOException e) {
+      Log.d(TAG, "Write to stream failed", e);
+      return false;
+    } finally {
+      if (outputStream != null) {
+        try {
+          outputStream.close();
+        } catch (IOException e) {
+          // Ignore.
+        }
+      }
+    }
+    return true;
+  }
+
+  private static List<Section> insertXMPSection(
+          List<Section> sections, List<Section> xmpSections) {
+    if (sections == null || sections.size() <= 1) {
+      return null;
+    }
+
+    // If the first section is Exif, insert XMP data before the second section,
+    // otherwise, make xmp data the first section.
+    List<Section> newSections = new ArrayList<Section>();
+    int position = (sections.get(0).marker == M_APP1) ? 1 : 0;
+    newSections.addAll(sections.subList(0, position));
+    newSections.addAll(xmpSections);
+    newSections.addAll(sections.subList(position, sections.size()));
+    return newSections;
+  }
+
+  private static String getGUID(byte[] src) {
+    StringBuilder builder = new StringBuilder();
+    try {
+      MessageDigest digester = MessageDigest.getInstance("MD5");
+      digester.update(src);
+      byte[] digest = digester.digest();
+
+      Formatter formatter = new Formatter(builder);
+      for (int i = 0; i < digest.length; ++i) {
+        formatter.format("%02x", ((256 + digest[i]) % 256));
+      }
+    } catch (NoSuchAlgorithmException exception) {
+      Log.d(TAG, "get md5 instance failure" + exception);
+      return null;
+    }
+
+    return builder.toString().toUpperCase();
   }
 
   private XmpUtil() {}

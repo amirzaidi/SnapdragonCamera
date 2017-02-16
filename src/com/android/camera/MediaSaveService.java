@@ -16,6 +16,8 @@
 
 package com.android.camera;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.ByteOrder;
 
@@ -23,7 +25,10 @@ import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -36,6 +41,14 @@ import com.android.camera.exif.ExifInterface;
 import com.android.camera.mpo.MpoData;
 import com.android.camera.mpo.MpoImageData;
 import com.android.camera.mpo.MpoInterface;
+import com.android.camera.util.XmpUtil;
+
+import org.codeaurora.snapcam.filter.GDepth;
+import org.codeaurora.snapcam.filter.GImage;
+
+import com.adobe.xmp.XMPException;
+import com.adobe.xmp.XMPMeta;
+
 
 /*
  * Service for saving images in the background thread.
@@ -142,6 +155,25 @@ public class MediaSaveService extends Service {
         RawImageSaveTask t = new RawImageSaveTask(data, title, pictureFormat);
 
         mMemoryUse += data.length;
+        if (isQueueFull()) {
+            onQueueFull();
+        }
+        t.execute();
+    }
+
+    public void addClearsightImage(byte[] clearsight, GImage bayer, GDepth.DepthMap depthMap,
+                                   String title, long date, Location loc, int width, int height,
+                                   int orientation, ExifInterface exif,
+                                   OnMediaSavedListener l, ContentResolver resolver, String pictureFormat) {
+        if (isQueueFull()) {
+            Log.e(TAG, "Cannot add image when the queue is full");
+            return;
+        }
+        ClearsightImageSaveTask t = new ClearsightImageSaveTask(clearsight, bayer, depthMap,
+                title, date,  (loc == null) ? null : new Location(loc),
+                width, height, orientation, exif, resolver, l, pictureFormat);
+
+        mMemoryUse += clearsight.length;
         if (isQueueFull()) {
             onQueueFull();
         }
@@ -347,6 +379,157 @@ public class MediaSaveService extends Service {
             boolean previouslyFull = isQueueFull();
             mMemoryUse -= data.length;
             if (isQueueFull() != previouslyFull) onQueueAvailable();
+        }
+    }
+
+    private class ClearsightImageSaveTask extends AsyncTask <Void, Void, Uri> {
+        private byte[] clearsight;
+        private byte[] depth;
+        private GImage bayer;
+        private GDepth.DepthMap depthMap;
+        private GDepth gDepth;
+        private byte[] data;
+        private String title;
+        private long date;
+        private Location loc;
+        private int width, height;
+        private int orientation;
+        private ExifInterface exif;
+        private ContentResolver resolver;
+        private OnMediaSavedListener listener;
+        private String pictureFormat;
+
+        public ClearsightImageSaveTask(byte[] clearsight, GImage bayer,GDepth.DepthMap depthMap,
+                                       String title, long date, Location loc,
+                                       int width, int height, int orientation,
+                                       ExifInterface exif, ContentResolver resolver,
+                                       OnMediaSavedListener listener, String pictureFormat) {
+            this.clearsight = clearsight;
+            this.bayer = bayer;
+            this.depthMap = depthMap;
+            this.title = title;
+            this.date = date;
+            this.loc = loc;
+            this.width = width;
+            this.height = height;
+            this.orientation = orientation;
+            this.exif = exif;
+            this.resolver = resolver;
+            this.listener = listener;
+            this.pictureFormat = pictureFormat;
+
+            gDepth = null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // do nothing.
+        }
+
+        @Override
+        protected Uri doInBackground(Void... v) {
+            if ( depthMap != null ) {
+                depthMap.buffer = converToJpegByte(depthMap.rawDepth, depthMap.width, depthMap.height);
+                gDepth = GDepth.createGDepth(depthMap);
+            }
+            data = embedGDepthAndBayerInClearSight(clearsight);
+            if ( data == null ) {
+                data = clearsight;
+                Log.e(TAG, "embedGDepthAndBayerInClearSight fail");
+            }
+
+            if (width == 0 || height == 0) {
+                // Decode bounds
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeByteArray(data, 0, data.length, options);
+                width = options.outWidth;
+                height = options.outHeight;
+            }
+            return Storage.addImage(
+                    resolver, title, date, loc, orientation, exif, data, width, height, pictureFormat);
+        }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            if (listener != null) listener.onMediaSaved(uri);
+            boolean previouslyFull = isQueueFull();
+            mMemoryUse -= data.length;
+            if (isQueueFull() != previouslyFull) onQueueAvailable();
+        }
+
+        private byte[] converToJpegByte(byte[] depthBuf, int width, int height) {
+            int[] colors = new int[depthBuf.length];
+            for(int i=0; i < colors.length; ++i) {
+                colors[i] =  (256+depthBuf[i])%256;
+            }
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            for( int y=0; y < height; ++y ) {
+                for( int x=0; x < width; ++x) {
+                    int c = colors[y*width+x];
+                    bitmap.setPixel(x, y, Color.rgb(c, c, c));
+                }
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            return baos.toByteArray();
+        }
+
+        private byte[] embedGDepthAndBayerInClearSight(byte[] clearSightImageBytes) {
+            Log.d(TAG, "embedGDepthInClearSight");
+            if ( clearSightImageBytes == null || (gDepth ==null && bayer==null) ) {
+                Log.d(TAG, "clearSightImageBytes is null");
+                return null;
+            }
+
+            XMPMeta xmpMeta = XmpUtil.createXMPMeta();
+            try {
+                if ( gDepth != null ) {
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_MIME, gDepth.getMime());
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_NEAR, gDepth.getNear());
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_FAR, gDepth.getFar());
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_FORMAT, gDepth.getFormat());
+                    //extend for ROI
+                    Rect roi = gDepth.getRoi();
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_ROI_X, roi.left);
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_ROI_Y, roi.top);
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_ROI_WIDTH, roi.width());
+                    xmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_ROI_HEIGHT, roi.height());
+                }
+
+                if ( bayer != null ) {
+                    xmpMeta.setProperty(GImage.NAMESPACE_URL, GImage.PROPERTY_MIME, bayer.getMime());
+                }
+
+
+            } catch(XMPException exception) {
+                Log.d(TAG, "create XMPMeta error", exception);
+                return null;
+            }
+
+            XMPMeta extendXmpMeta = XmpUtil.createXMPMeta();
+            try{
+                if ( gDepth != null) {
+                    extendXmpMeta.setProperty(GDepth.NAMESPACE_URL, GDepth.PROPERTY_DATA, gDepth.getData());
+                }
+
+                if ( bayer != null ) {
+                    extendXmpMeta.setProperty(GImage.NAMESPACE_URL, GImage.PROPERTY_DATA, bayer.getData());
+                }
+            }catch(XMPException exception) {
+                Log.d(TAG, "create extended XMPMeta error", exception);
+            }
+
+
+            ByteArrayInputStream bais = new ByteArrayInputStream(clearSightImageBytes);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            if ( XmpUtil.writeXMPMeta(bais, baos, xmpMeta, extendXmpMeta) ){
+                return baos.toByteArray();
+            }else{
+                Log.e(TAG, "embedGDepthInClearSight failure ");
+                return null;
+            }
+
         }
     }
 
