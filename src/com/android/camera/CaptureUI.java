@@ -488,6 +488,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mDecodeTaskForReview = new CaptureUI.DecodeImageForReview(jpegData, orientation, mirror);
         mDecodeTaskForReview.execute();
         if (getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
+            if (mFilterMenuStatus == FILTER_MENU_ON) {
+                removeFilterMenu(false);
+            }
             mPreviewLayout.setVisibility(View.VISIBLE);
             CameraUtil.fadeIn(mReviewDoneButton);
             CameraUtil.fadeIn(mReviewRetakeButton);
@@ -496,6 +499,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     protected void showRecordVideoForReview(Bitmap preview) {
         if (getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
+            if (mFilterMenuStatus == FILTER_MENU_ON) {
+                removeFilterMenu(false);
+            }
             mReviewImage.setImageBitmap(preview);
             mPreviewLayout.setVisibility(View.VISIBLE);
             mReviewPlayButton.setVisibility(View.VISIBLE);
