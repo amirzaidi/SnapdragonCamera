@@ -2121,6 +2121,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     @Override
     public void onPauseBeforeSuper() {
+        cancelTouchFocus();
         mPaused = true;
         mToast = null;
         mUI.onPause();
@@ -2169,6 +2170,20 @@ public class CaptureModule implements CameraModule, PhotoController,
         mLongshotActive = false;
         mZoomValue = 1.0f;
         updatePreviewSurfaceReadyState(false);
+    }
+
+    private void cancelTouchFocus() {
+        if (getCameraMode() == DUAL_MODE) {
+            if(mState[BAYER_ID] == STATE_WAITING_TOUCH_FOCUS) {
+                cancelTouchFocus(BAYER_ID);
+            } else if (mState[MONO_ID] == STATE_WAITING_TOUCH_FOCUS) {
+                cancelTouchFocus(MONO_ID);
+            }
+        } else {
+            if (mState[getMainCameraId()] == STATE_WAITING_TOUCH_FOCUS) {
+                cancelTouchFocus(getMainCameraId());
+            }
+        }
     }
 
     private ArrayList<Integer> getFrameProcFilterId() {
