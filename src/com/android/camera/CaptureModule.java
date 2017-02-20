@@ -2168,7 +2168,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[i] = STATE_PREVIEW;
         }
         mLongshotActive = false;
-        mZoomValue = 1.0f;
+        updateZoom();
         updatePreviewSurfaceReadyState(false);
     }
 
@@ -3003,6 +3003,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             // 1 minute = 60000ms
             mMaxVideoDurationInMs = 60000 * minutes;
+        }
+    }
+
+    private void updateZoom() {
+        String zoomStr = mSettingsManager.getValue(SettingsManager.KEY_ZOOM);
+        int zoom = Integer.parseInt(zoomStr);
+        if ( zoom !=0 ) {
+            mZoomValue = (float)zoom;
+        }else{
+            mZoomValue = 1.0f;
         }
     }
 
