@@ -1774,6 +1774,7 @@ public class CameraActivity extends Activity
         if(!mSecureCamera && (!isRequestShown || !hasCriticalPermissions())) {
             Log.v(TAG, "Start Request Permission");
             Intent intent = new Intent(this, PermissionsActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean(CameraSettings.KEY_REQUEST_PERMISSION, true);
