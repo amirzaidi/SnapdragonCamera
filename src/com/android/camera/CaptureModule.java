@@ -4029,7 +4029,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             request.set(SELECT_PRIORITY, null);
             request.set(ISO_EXP, null);
         } else {
-            long intValue = Integer.parseInt(value);
+            long intValue = SettingsManager.KEY_ISO_INDEX.get(value);
             request.set(SELECT_PRIORITY, 0);
             request.set(ISO_EXP, intValue);
         }

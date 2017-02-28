@@ -34,6 +34,7 @@ import android.media.Image;
 import android.util.Log;
 
 import com.android.camera.CaptureModule;
+import com.android.camera.util.PersistUtil;
 import android.os.SystemProperties;
 
 import java.util.Iterator;
@@ -49,8 +50,9 @@ public class ZSLQueue {
     private int mMetaHead;
     private Object mLock = new Object();
     private CaptureModule mModule;
-    private static final boolean DEBUG  = false;
-    private static final boolean DEBUG_QUEUE  = false;
+    private static final boolean DEBUG_QUEUE  =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
     private static final String TAG = "ZSLQueue";
 
     public ZSLQueue(CaptureModule module) {

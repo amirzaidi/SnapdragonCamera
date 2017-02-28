@@ -144,6 +144,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_HISTOGRAM = "pref_camera2_histogram_key";
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
+    public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
 
     private static final String TAG = "SnapCam_SettingsManager";
 
@@ -167,6 +168,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public Set<String> getFilteredKeys() {
         return mFilteredKeys;
+    }
+
+    static {
+        //ISO values vendor tag
+        KEY_ISO_INDEX.put("auto", 0);
+        KEY_ISO_INDEX.put("deblur", 1);
+        KEY_ISO_INDEX.put("100", 2);
+        KEY_ISO_INDEX.put("100", 2);
+        KEY_ISO_INDEX.put("200", 3);
+        KEY_ISO_INDEX.put("400", 4);
+        KEY_ISO_INDEX.put("800", 5);
+        KEY_ISO_INDEX.put("1600", 6);
     }
 
     private SettingsManager(Context context) {

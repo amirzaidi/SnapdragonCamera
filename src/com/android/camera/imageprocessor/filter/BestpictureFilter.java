@@ -38,8 +38,8 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -66,8 +66,7 @@ public class BestpictureFilter implements ImageFilter {
     private int mStrideY;
     private int mStrideVU;
     private static String TAG = "BestpictureFilter";
-    private static final boolean DEBUG = false;
-    private static boolean mIsSupported = true;
+    private static boolean mIsSupported = false;
     private CaptureModule mModule;
     private CameraActivity mActivity;
     private int mOrientation = 0;
@@ -85,6 +84,7 @@ public class BestpictureFilter implements ImageFilter {
     private boolean mIsOn = false;
     private PostProcessor mProcessor;
     private ProgressDialog mProgressDialog;
+    private ImageFilter.ResultImage mBestpictureResultImage;
 
     private static void Log(String msg) {
         if (DEBUG) {
@@ -148,13 +148,14 @@ public class BestpictureFilter implements ImageFilter {
             mBY = bY;
             mBVU = bVU;
 
+            byte[] bytes = getYUVBytes(bY, bVU, imageNum);
             long captureStartTime = System.currentTimeMillis();
             mNamedImages.nameNewImage(captureStartTime);
             PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();
             String title = (name == null) ? null : name.title;
             long date = (name == null) ? -1 : name.date;
             mActivity.getMediaSaveService().addImage(
-                    nv21ToJpeg(mBY, mBVU, new Rect(0, 0, mWidth, mHeight), mOrientation, 0), title, date, null, mWidth, mHeight,
+                    bytes, title, date, null, mWidth, mHeight,
                     mOrientation, null, new MediaSaveService.OnMediaSavedListener() {
                         @Override
                         public void onMediaSaved(final  Uri uri) {
@@ -182,8 +183,8 @@ public class BestpictureFilter implements ImageFilter {
                     }
                     , mActivity.getContentResolver(), "jpeg");
         }
-        ImageSaveTask t = new ImageSaveTask(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation, imageNum);
-        t.execute();
+        byte[] bytes = getYUVBytes(bY, bVU, imageNum);
+        saveBestPicture(bytes, imageNum);
     }
 
     @Override
@@ -198,6 +199,26 @@ public class BestpictureFilter implements ImageFilter {
                 mProgressDialog.show();
             }
         });
+    }
+
+    private byte[] getYUVBytes(final ByteBuffer yBuf, final ByteBuffer vuBuf,
+                               final int imageNum) {
+        synchronized (mClosingLock) {
+            if (!mIsOn) {
+                return null;
+            }
+            mBestpictureResultImage = new ImageFilter.ResultImage(ByteBuffer.allocateDirect(
+                    mStrideY * mHeight * 3 / 2),
+                    new Rect(0, 0, mWidth, mHeight), mWidth, mHeight, mStrideY);
+            yBuf.get(mBestpictureResultImage.outBuffer.array(), 0, yBuf.remaining());
+            vuBuf.get(mBestpictureResultImage.outBuffer.array(), mStrideY * mHeight,
+                    vuBuf.remaining());
+            yBuf.rewind();
+            vuBuf.rewind();
+
+            return nv21ToJpeg(mBestpictureResultImage, mOrientation,
+                    mProcessor.waitForMetaData(imageNum));
+        }
     }
 
     private void dismissProgressDialog() {
@@ -256,20 +277,15 @@ public class BestpictureFilter implements ImageFilter {
         return mIsSupported;
     }
 
-    private byte[] nv21ToJpeg(ByteBuffer bY, ByteBuffer bVU, Rect roi, int orientation, int imageIndex) {
-        ByteBuffer buf =  ByteBuffer.allocate(mStrideY*mHeight*3/2);
-        buf.put(bY);
-        bY.rewind();
-        if(bVU != null) {
-            buf.put(bVU);
-            bVU.rewind();
-        }
+    private byte[] nv21ToJpeg(ImageFilter.ResultImage resultImage, int orientation,
+                              TotalCaptureResult result) {
         BitmapOutputStream bos = new BitmapOutputStream(1024);
-        YuvImage im = new YuvImage(buf.array(), ImageFormat.NV21,
-                mWidth, mHeight, new int[]{mStrideY, mStrideVU});
-        im.compressToJpeg(roi, mProcessor.getJpegQualityValue(), bos);
+        YuvImage im = new YuvImage(resultImage.outBuffer.array(), ImageFormat.NV21,
+                resultImage.width, resultImage.height, new int[]{resultImage.stride,
+                resultImage.stride});
+        im.compressToJpeg(resultImage.outRoi, mProcessor.getJpegQualityValue(), bos);
         byte[] bytes = bos.getArray();
-        bytes = PostProcessor.addExifTags(bytes, orientation, mProcessor.waitForMetaData(imageIndex));
+        bytes = PostProcessor.addExifTags(bytes, orientation, result);
         return bytes;
     }
 
@@ -283,53 +299,22 @@ public class BestpictureFilter implements ImageFilter {
         }
     }
 
-    private class ImageSaveTask extends AsyncTask<Void, Void, byte[]> {
-        ByteBuffer bY;
-        ByteBuffer bVU;
-        Rect roi;
-        int orientation;
-        int imageNum;
-
-        public ImageSaveTask(ByteBuffer bY, ByteBuffer bVU, Rect roi, int orientation, int imageNum) {
-            this.bY = bY;
-            this.bVU = bVU;
-            this.roi = roi;
-            this.orientation = orientation;
-            this.imageNum = imageNum;
+    private void saveBestPicture(byte[] bytes, int imageNum) {
+        if(bytes == null)
+            return;
+        String filesPath = mActivity.getFilesDir()+"/Bestpicture";
+        File file = new File(filesPath);
+        if(!file.exists()) {
+            file.mkdir();
         }
-
-        @Override
-        protected void onPreExecute() {
+        file = new File(filesPath+"/"+NAMES[imageNum]);
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            out.write(bytes, 0, bytes.length);
+            out.close();
+        } catch (Exception e) {
         }
-
-        @Override
-        protected byte[] doInBackground(Void... v) {
-            synchronized (mClosingLock) {
-                if (!mIsOn) {
-                    return null;
-                }
-                return nv21ToJpeg(bY, bVU, roi, orientation, imageNum);
-            }
-        }
-
-        @Override
-        protected void onPostExecute(byte[] bytes) {
-            if(bytes == null)
-                return;
-            String filesPath = mActivity.getFilesDir()+"/Bestpicture";
-            File file = new File(filesPath);
-            if(!file.exists()) {
-                file.mkdir();
-            }
-            file = new File(filesPath+"/"+NAMES[imageNum]);
-            try {
-                FileOutputStream out = new FileOutputStream(file);
-                out.write(bytes, 0, bytes.length);
-                out.close();
-            } catch (Exception e) {
-            }
-            mSavedCount++;
-            Log(imageNum+" image is saved");
-        }
+        mSavedCount++;
+        Log(imageNum+" image is saved");
     }
 }
