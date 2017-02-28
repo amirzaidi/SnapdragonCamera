@@ -171,9 +171,14 @@ public class SettingsActivity extends PreferenceActivity {
             set.add(SettingsManager.KEY_MONO_ONLY);
             set.add(SettingsManager.KEY_CLEARSIGHT);
 
-            PreferenceScreen parent = getPreferenceScreen();
-            PreferenceGroup developer = (PreferenceGroup)findPreference("developer");
-            parent.removePreference(developer);
+            PreferenceGroup developer = (PreferenceGroup) findPreference("developer");
+            //Before restore settings,if current is not developer mode,the developer
+            // preferenceGroup has been removed when enter camera by default .So duplicate remove
+            // it will cause crash.
+            if (developer != null) {
+                PreferenceScreen parent = getPreferenceScreen();
+                parent.removePreference(developer);
+            }
         }
 
         CharSequence[] entries = mSettingsManager.getEntries(SettingsManager.KEY_SCENE_MODE);
