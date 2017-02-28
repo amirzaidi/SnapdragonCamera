@@ -4026,8 +4026,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         String value = mSettingsManager.getValue(SettingsManager.KEY_ISO);
         if (value == null) return;
         if (value.equals("auto")) {
-            request.set(SELECT_PRIORITY, null);
-            request.set(ISO_EXP, null);
+            request.set(SELECT_PRIORITY, 0);
+            request.set(ISO_EXP, 0L);
         } else {
             long intValue = SettingsManager.KEY_ISO_INDEX.get(value);
             request.set(SELECT_PRIORITY, 0);
