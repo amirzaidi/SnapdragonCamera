@@ -376,6 +376,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private Size mSupportedMaxPictureSize;
     private Size mSupportedRawPictureSize;
 
+    private long mIsoExposureTime;
+    private int mIsoSensitivity;
 
     private class SelfieThread extends Thread {
         public void run() {
@@ -4043,10 +4045,24 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (value.equals("auto")) {
             request.set(SELECT_PRIORITY, 0);
             request.set(ISO_EXP, 0L);
+            if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) == null) {
+                request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, mIsoExposureTime);
+            }
+            if (request.get(CaptureRequest.SENSOR_SENSITIVITY) == null) {
+                request.set(CaptureRequest.SENSOR_SENSITIVITY, mIsoSensitivity);
+            }
         } else {
             long intValue = SettingsManager.KEY_ISO_INDEX.get(value);
             request.set(SELECT_PRIORITY, 0);
             request.set(ISO_EXP, intValue);
+            if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) != null) {
+                mIsoExposureTime = request.get(CaptureRequest.SENSOR_EXPOSURE_TIME);
+            }
+            if (request.get(CaptureRequest.SENSOR_SENSITIVITY) != null) {
+                mIsoSensitivity = request.get(CaptureRequest.SENSOR_SENSITIVITY);
+            }
+            request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, null);
+            request.set(CaptureRequest.SENSOR_SENSITIVITY, null);
         }
     }
 
