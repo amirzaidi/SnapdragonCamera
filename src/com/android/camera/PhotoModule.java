@@ -1277,6 +1277,7 @@ public class PhotoModule
             if ( srcFile.renameTo(dstFile) ) {
                 Size s = mParameters.getPictureSize();
                 String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                Log.d(TAG, "capture:" + title + "." + pictureFormat);
                 mActivity.getMediaSaveService().addImage(
                        null, title, date, mLocation, s.width, s.height,
                        0, null, mOnMediaSavedListener, mContentResolver, pictureFormat);
@@ -1488,6 +1489,7 @@ public class PhotoModule
                             exif.setTag(directionTag);
                         }
                         String mPictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                         Log.d(TAG, "capture:" + title + "." + mPictureFormat);
                             mActivity.getMediaSaveService().addImage(
                                     jpegData, title, date, mLocation, width, height,
                                     orientation, exif, mOnMediaSavedListener,
