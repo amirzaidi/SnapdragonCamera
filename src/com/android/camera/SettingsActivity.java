@@ -217,6 +217,7 @@ public class SettingsActivity extends PreferenceActivity {
         updatePreference(SettingsManager.KEY_EXPOSURE);
         updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
         updatePreference(SettingsManager.KEY_VIDEO_ENCODER);
+        updatePreference(SettingsManager.KEY_ZOOM);
 
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         Set<Map.Entry<String, SettingsManager.Values>> set = map.entrySet();
