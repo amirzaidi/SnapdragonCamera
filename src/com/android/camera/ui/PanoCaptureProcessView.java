@@ -628,9 +628,10 @@ public class PanoCaptureProcessView extends View implements SensorEventListener 
                                 if(mDir == DIRECTION_UPDOWN) {
                                     orient = 0;
                                 }
-                                final Uri uri = mController.savePanorama(jpegData, mFinalPictureWidth*8, mFinalPictureHeight, orient);
                                 Bitmap bm = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
                                 final Bitmap thumbBitmap = CameraUtil.rotate(bm, orient);
+                                final Uri uri = mController.savePanorama(jpegData,
+                                        thumbBitmap.getWidth(), thumbBitmap.getHeight(), orient);
                                 if(uri != null) {
                                     mActivity.runOnUiThread(new Runnable() {
                                         public void run() {
