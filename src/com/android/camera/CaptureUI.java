@@ -896,13 +896,14 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public void showUIafterRecording() {
         mCameraControls.setVideoMode(false);
-        mSceneModeLabelRect.setVisibility(View.VISIBLE);
         mFrontBackSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
         mMakeupButton.setVisibility(View.VISIBLE);
         mIsVideoUI = false;
         mPauseButton.setVisibility(View.INVISIBLE);
+        //exit recording mode needs to refresh scene mode label.
+        showSceneModeLabel();
     }
 
     public void addFilterMode() {
