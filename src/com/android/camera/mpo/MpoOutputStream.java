@@ -32,10 +32,13 @@ import android.util.Log;
 import com.android.camera.exif.JpegHeader;
 import com.android.camera.exif.OrderedDataOutputStream;
 import com.android.camera.mpo.MpoTag.MpEntry;
+import com.android.camera.util.PersistUtil;
 
 class MpoOutputStream extends FilterOutputStream {
     private static final String TAG = "MpoOutputStream";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
     private static final int STREAMBUFFER_SIZE = 0x00010000; // 64Kb
 
     private static final int STATE_SOI = 0;

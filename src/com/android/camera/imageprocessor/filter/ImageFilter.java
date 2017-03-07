@@ -33,11 +33,16 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
 import android.os.Handler;
+import com.android.camera.util.PersistUtil;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 public interface ImageFilter {
+
+    public static final boolean DEBUG =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
 
     /* Return the number of required images to process*/
     List<CaptureRequest> setRequiredImages(CaptureRequest.Builder builder);

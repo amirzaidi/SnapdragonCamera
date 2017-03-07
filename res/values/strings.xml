@@ -772,4 +772,6 @@ CHAR LIMIT = NONE] -->
     <string name="delete_all_best_dialog_positive_bt">Delete All</string>
     <string name="overflow_best_item1">Save All</string>
     <string name="overflow_best_item2">Delete All</string>
+
+    <string name="settings_title">Settings</string>
  </resources>
