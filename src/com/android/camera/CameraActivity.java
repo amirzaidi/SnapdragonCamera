@@ -765,7 +765,7 @@ public class CameraActivity extends Activity
         if (mThumbnail == null) return;
         if (mThumbnailDrawable != null) {
             mThumbnail.setImageDrawable(mThumbnailDrawable);
-            if (!isSecureCamera()) {
+            if (!isSecureCamera() && !isCaptureIntent()) {
                 mThumbnail.setVisibility(View.VISIBLE);
             } else {
                 //under SecureCamera and UbiFocus mode, when back from RefocusActivity,if not save
@@ -1432,7 +1432,7 @@ public class CameraActivity extends Activity
         }
     }
 
-    private boolean isCaptureIntent() {
+    public boolean isCaptureIntent() {
         if (MediaStore.ACTION_VIDEO_CAPTURE.equals(getIntent().getAction())
                 || MediaStore.ACTION_IMAGE_CAPTURE.equals(getIntent().getAction())
                 || MediaStore.ACTION_IMAGE_CAPTURE_SECURE.equals(getIntent().getAction())) {
@@ -1774,6 +1774,7 @@ public class CameraActivity extends Activity
         if(!mSecureCamera && (!isRequestShown || !hasCriticalPermissions())) {
             Log.v(TAG, "Start Request Permission");
             Intent intent = new Intent(this, PermissionsActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean(CameraSettings.KEY_REQUEST_PERMISSION, true);

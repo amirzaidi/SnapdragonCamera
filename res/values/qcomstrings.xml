@@ -1147,5 +1147,20 @@
 
     <string name="pref_camera_bokeh_blur_degree_default" translatable="false">50</string>
     <string name="pref_camera_bokeh_blur_degree_title" translatable="true">Bokeh Blur Value</string>
+    <!-- Default Zoom setting. -->
+    <string name="pref_camera_zoom_default" translatable="false">0</string>
+    <string name="pref_camera_zoom_title">Zoom</string>
+    <!-- Settings menu, Zoom choices -->
+    <string name="pref_camera_zoom_entry_off">Off</string>
+    <string name="pref_camera_zoom_entry_1x">1x</string>
+    <string name="pref_camera_zoom_entry_2x">2x</string>
+    <string name="pref_camera_zoom_entry_3x">3x</string>
+    <string name="pref_camera_zoom_entry_4x">4x</string>
+    <string name="pref_camera_zoom_entry_5x">5x</string>
+    <string name="pref_camera_zoom_entry_6x">6x</string>
+    <string name="pref_camera_zoom_entry_7x">7x</string>
+    <string name="pref_camera_zoom_entry_8x">8x</string>
+    <string name="pref_camera_zoom_entry_9x">9x</string>
+    <string name="pref_camera_zoom_entry_10x">10x</string>
 </resources>
 

@@ -144,6 +144,9 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_HISTOGRAM = "pref_camera2_histogram_key";
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
+    public static final String KEY_ZOOM = "pref_camera2_zoom_key";
+
+    public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
 
     private static final String TAG = "SnapCam_SettingsManager";
 
@@ -167,6 +170,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public Set<String> getFilteredKeys() {
         return mFilteredKeys;
+    }
+
+    static {
+        //ISO values vendor tag
+        KEY_ISO_INDEX.put("auto", 0);
+        KEY_ISO_INDEX.put("deblur", 1);
+        KEY_ISO_INDEX.put("100", 2);
+        KEY_ISO_INDEX.put("100", 2);
+        KEY_ISO_INDEX.put("200", 3);
+        KEY_ISO_INDEX.put("400", 4);
+        KEY_ISO_INDEX.put("800", 5);
+        KEY_ISO_INDEX.put("1600", 6);
     }
 
     private SettingsManager(Context context) {
@@ -594,6 +609,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference antiBandingLevel = mPreferenceGroup.findPreference(KEY_ANTI_BANDING_LEVEL);
         ListPreference histogram = mPreferenceGroup.findPreference(KEY_HISTOGRAM);
         ListPreference hdr = mPreferenceGroup.findPreference(KEY_HDR);
+        ListPreference zoom = mPreferenceGroup.findPreference(KEY_ZOOM);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -730,6 +746,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (!mIsFrontCameraPresent || !isFacingFront(mCameraId)) {
             removePreference(mPreferenceGroup, KEY_SELFIE_FLASH);
             removePreference(mPreferenceGroup, KEY_SELFIEMIRROR);
+        }
+
+        if ( zoom != null ) {
+            if (filterUnsupportedOptions(zoom,
+                    getSupportedZoomLevel(cameraId))) {
+                mFilteredKeys.add(zoom.getKey());
+            }
         }
     }
 
@@ -1237,6 +1260,16 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (str != null) modes.add(str);
         }
         return modes;
+    }
+
+    private  List<String> getSupportedZoomLevel(int cameraId) {
+        float maxZoom = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                .SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+        ArrayList<String> supported = new ArrayList<String>();
+        for (int zoomLevel = 0; zoomLevel <= maxZoom; zoomLevel++) {
+            supported.add(String.valueOf(zoomLevel));
+        }
+        return supported;
     }
 
     private void resetIfInvalid(ListPreference pref) {

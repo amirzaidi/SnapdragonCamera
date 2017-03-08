@@ -50,7 +50,7 @@ public class ChromaflashFilter implements ImageFilter{
     private int mStrideY;
     private int mStrideVU;
     private static String TAG = "ChromaflashFilter";
-    private static final boolean DEBUG = false;
+
     private static boolean mIsSupported = false;
     private ByteBuffer mOutBuf;
     private CaptureModule mModule;

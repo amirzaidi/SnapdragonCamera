@@ -53,7 +53,6 @@ public class BeautificationFilter implements ImageFilter {
     int mStrideY;
     int mStrideVU;
     private CaptureModule mModule;
-    private static boolean DEBUG = false;
     private static String TAG = "BeautificationFilter";
     private static boolean mIsSupported = false;
     private static int FACE_TIMEOUT_VALUE = 60; //in frame count
