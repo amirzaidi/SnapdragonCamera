@@ -288,6 +288,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         filterPreferences(cameraId);
         initDependencyTable();
         initializeValueMap();
+        filterChromaflashPictureSizeOptions();
     }
 
     private Size parseSize(String value) {
@@ -762,6 +763,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (pref.getKey().equals(KEY_VIDEO_QUALITY)) {
             filterHFROptions();
             filterVideoEncoderOptions();
+        } else if (pref.getKey().equals(KEY_SCENE_MODE)) {
+            filterChromaflashPictureSizeOptions();
         }
     }
 
@@ -849,6 +852,31 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
     }
 
+    private void filterChromaflashPictureSizeOptions() {
+        String scene = getValue(SettingsManager.KEY_SCENE_MODE);
+        ListPreference picturePref = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
+        if (picturePref == null) return;
+        picturePref.reloadInitialEntriesAndEntryValues();
+        if (Integer.parseInt(scene) == SCENE_MODE_CHROMAFLASH_INT) {
+            if (filterUnsupportedOptions(picturePref, getSupportedChromaFlashPictureSize())) {
+                mFilteredKeys.add(picturePref.getKey());
+            }
+            // if picture size is setted the CIF/QVGA, modify smallest supportted size .
+            Size pictureSize = parseSize(getValue(KEY_PICTURE_SIZE));
+            if (pictureSize.getWidth() <= 352 && pictureSize.getHeight() <= 288) {
+                CharSequence[] entryValues = picturePref.getEntryValues();
+                int size = entryValues.length;
+                CharSequence smallerSize = entryValues[size -1];
+                setValue(KEY_PICTURE_SIZE, smallerSize.toString());
+            }
+        } else {
+            if (filterUnsupportedOptions(picturePref, getSupportedPictureSize(
+                    getCurrentCameraId()))) {
+                mFilteredKeys.add(picturePref.getKey());
+            }
+        }
+    }
+
     private void filterHFROptions() {
         ListPreference hfrPref = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
         if (hfrPref != null) {
@@ -858,6 +886,31 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 mFilteredKeys.add(hfrPref.getKey());
             }
         }
+    }
+
+    private List<String> getSupportedChromaFlashPictureSize() {
+        StreamConfigurationMap map = mCharacteristics.get(getCurrentCameraId()).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size[] sizes = map.getOutputSizes(ImageFormat.JPEG);
+        List<String> res = new ArrayList<>();
+        if (sizes != null) {
+            for (int i = 0; i < sizes.length; i++) {
+                if (sizes[i].getWidth() > 352 && sizes[i].getHeight() > 288) {
+                    res.add(sizes[i].toString());
+                }
+            }
+        }
+
+        Size[] highResSizes = map.getHighResolutionOutputSizes(ImageFormat.JPEG);
+        if (highResSizes != null) {
+            for (int i = 0; i < highResSizes.length; i++) {
+                if (sizes[i].getWidth() > 352 && sizes[i].getHeight() > 288) {
+                    res.add(highResSizes[i].toString());
+                }
+            }
+        }
+
+        return res;
     }
 
     private List<String> getSupportedHighFrameRate() {
