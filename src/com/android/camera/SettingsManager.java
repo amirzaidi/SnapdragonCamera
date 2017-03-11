@@ -1162,7 +1162,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
             bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(key);
         } else {
             Log.i(TAG, "No pre-defined bitrate for "+key);
-            bitRate = profile.videoBitRate * (targetRate / profile.videoFrameRate);
+            bitRate = (profile.videoBitRate * targetRate) / profile.videoFrameRate;
         }
         return bitRate;
     }
