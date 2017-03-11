@@ -39,6 +39,7 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -234,6 +235,8 @@ public class RefocusActivity extends Activity {
     private class LoadImageTask extends AsyncTask<String, Void, Bitmap> {
         protected Bitmap doInBackground(String... path) {
             final BitmapFactory.Options o = new BitmapFactory.Options();
+            int height;
+            int width;
             o.inJustDecodeBounds = true;
             BitmapFactory.decodeFile(path[0], o);
             ExifInterface exif = new ExifInterface();
@@ -245,13 +248,24 @@ public class RefocusActivity extends Activity {
             }
             int h = o.outHeight;
             int w = o.outWidth;
+            int screenOrientation = RefocusActivity.this.getResources().getConfiguration()
+                    .orientation;
+            if (screenOrientation == Configuration.ORIENTATION_PORTRAIT) {
+                height = mWidth;
+                width = mHeight;
+            } else {
+                height = mHeight;
+                width = mWidth;
+            }
             int sample = 1;
-            if (h > mHeight || w > mWidth) {
-                while (h / sample / 2 > mHeight && w / sample / 2 > mWidth) {
+            if (h > height || w > width) {
+                while (h / sample / 2 > height && w / sample / 2 > width) {
                     sample *= 2;
                 }
             }
-
+            Log.d(TAG, "sample =  " + sample);
+            Log.d(TAG, "h = " + h + "  height = " + height);
+            Log.d(TAG, "w = " + w + "  width = " + width);
             o.inJustDecodeBounds = false;
             o.inSampleSize = sample;
             Bitmap bitmap = BitmapFactory.decodeFile(path[0], o);
