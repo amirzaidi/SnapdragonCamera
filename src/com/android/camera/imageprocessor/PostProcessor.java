@@ -977,6 +977,9 @@ public class PostProcessor{
                                         mOrientation, null, mController.getMediaSavedListener(),
                                         mActivity.getContentResolver(), "jpeg");
                             }
+                            if (mFilterIndex == FILTER_UBIFOCUS && numImage > 0) {
+                                mController.checkAndPlayShutterSound(mController.getMainCameraId());
+                            }
                             mFilter.addImage(yBuf, vuBuf, numImage, null);
                             mImages[numImage] = image;
                         }
