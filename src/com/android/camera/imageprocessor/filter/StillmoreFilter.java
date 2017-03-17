@@ -50,7 +50,6 @@ public class StillmoreFilter implements ImageFilter{
     private int mStrideY;
     private int mStrideVU;
     private static String TAG = "StillmoreFilter";
-    private static final boolean DEBUG = false;
     private static boolean mIsSupported = false;
     private ByteBuffer mOutBuf;
     private CaptureModule mModule;

@@ -29,6 +29,7 @@
 
 package com.android.camera;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -108,6 +109,14 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        int flag = WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        Window window = getWindow();
+        window.setFlags(flag, flag);
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(getResources().getString(R.string.settings_title));
+        }
         final boolean isSecureCamera = getIntent().getBooleanExtra(
                 CameraUtil.KEY_IS_SECURE_CAMERA, false);
         if (isSecureCamera) {
@@ -171,9 +180,14 @@ public class SettingsActivity extends PreferenceActivity {
             set.add(SettingsManager.KEY_MONO_ONLY);
             set.add(SettingsManager.KEY_CLEARSIGHT);
 
-            PreferenceScreen parent = getPreferenceScreen();
-            PreferenceGroup developer = (PreferenceGroup)findPreference("developer");
-            parent.removePreference(developer);
+            PreferenceGroup developer = (PreferenceGroup) findPreference("developer");
+            //Before restore settings,if current is not developer mode,the developer
+            // preferenceGroup has been removed when enter camera by default .So duplicate remove
+            // it will cause crash.
+            if (developer != null) {
+                PreferenceScreen parent = getPreferenceScreen();
+                parent.removePreference(developer);
+            }
         }
 
         CharSequence[] entries = mSettingsManager.getEntries(SettingsManager.KEY_SCENE_MODE);
@@ -203,6 +217,7 @@ public class SettingsActivity extends PreferenceActivity {
         updatePreference(SettingsManager.KEY_EXPOSURE);
         updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
         updatePreference(SettingsManager.KEY_VIDEO_ENCODER);
+        updatePreference(SettingsManager.KEY_ZOOM);
 
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         Set<Map.Entry<String, SettingsManager.Values>> set = map.entrySet();

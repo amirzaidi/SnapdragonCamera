@@ -51,7 +51,6 @@ public class SharpshooterFilter implements ImageFilter{
     private int mStrideY;
     private int mStrideVU;
     private static String TAG = "SharpshooterFilter";
-    private static final boolean DEBUG = false;
     private int temp;
     private static boolean mIsSupported = true;
     private ByteBuffer mOutBuf;

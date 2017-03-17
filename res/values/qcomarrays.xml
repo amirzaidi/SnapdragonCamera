@@ -910,5 +910,34 @@
         <item>90</item>
         <item>100</item>
     </string-array>
+    <!-- Camera Preferences zoom dialog box entries -->
+    <string-array name="pref_camera_zoom_entries" translatable="false">
+        <item>@string/pref_camera_zoom_entry_off</item>
+        <item>@string/pref_camera_zoom_entry_1x</item>
+        <item>@string/pref_camera_zoom_entry_2x</item>
+        <item>@string/pref_camera_zoom_entry_3x</item>
+        <item>@string/pref_camera_zoom_entry_4x</item>
+        <item>@string/pref_camera_zoom_entry_5x</item>
+        <item>@string/pref_camera_zoom_entry_6x</item>
+        <item>@string/pref_camera_zoom_entry_7x</item>
+        <item>@string/pref_camera_zoom_entry_8x</item>
+        <item>@string/pref_camera_zoom_entry_9x</item>
+        <item>@string/pref_camera_zoom_entry_10x</item>
+    </string-array>
+
+    <string-array name="pref_camera_zoom_entryvalues" translatable="false">
+        <item>@string/pref_camera_zoom_default</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+    </string-array>
+
 </resources>
 

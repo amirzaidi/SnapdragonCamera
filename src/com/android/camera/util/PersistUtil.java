@@ -44,6 +44,12 @@ public class PersistUtil {
             SystemProperties.getBoolean("persist.camera.camera2", false);
     private static final boolean PERSIST_CAMERA_ZSL =
             SystemProperties.getBoolean("persist.camera.zsl.disabled", false);
+    private static final int PERSIST_CAMERA2_DEBUG =
+            SystemProperties.getInt("persist.camera2.debug", 0);
+
+    public static final int CAMERA2_DEBUG_DUMP_IMAGE = 1;
+    public static final int CAMERA2_DEBUG_DUMP_LOG = 2;
+    public static final int CAMERA2_DEBUG_DUMP_ALL = 100;
 
     public static int getMemoryLimit() {
         return PERSIST_MEMORY_LIMIT;
@@ -67,5 +73,9 @@ public class PersistUtil {
 
     public static boolean getCameraZSLDisabled() {
         return PERSIST_CAMERA_ZSL;
+    }
+
+    public static int getCamera2Debug() {
+        return PERSIST_CAMERA2_DEBUG;
     }
 }
