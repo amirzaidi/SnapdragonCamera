@@ -559,7 +559,7 @@ public class PhotoUI implements PieListener,
     }
 
     public void initializeControlByIntent() {
-        if (!mActivity.isSecureCamera()) {
+        if (!mActivity.isSecureCamera() && !mActivity.isCaptureIntent()) {
             mThumbnail = (ImageView) mRootView.findViewById(R.id.preview_thumb);
             mThumbnail.setOnClickListener(new OnClickListener() {
                 @Override
@@ -1229,6 +1229,7 @@ public class PhotoUI implements PieListener,
             mLocationDialog.dismiss();
         }
         mLocationDialog = null;
+        mMenu.animateSlideOutPreviewMenu();
     }
 
     public void initDisplayChangeListener() {

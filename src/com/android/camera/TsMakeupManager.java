@@ -74,7 +74,7 @@ public class TsMakeupManager implements OnSeekBarChangeListener {
 
     private static final int CLICK_THRESHOLD = 200;
 
-    public static final boolean HAS_TS_MAKEUP = android.os.SystemProperties.getBoolean("persist.ts.rtmakeup", true);
+    public static final boolean HAS_TS_MAKEUP = android.os.SystemProperties.getBoolean("persist.ts.rtmakeup", false);
 
     private MakeupLevelListener mMakeupLevelListener;
     interface MakeupLevelListener {

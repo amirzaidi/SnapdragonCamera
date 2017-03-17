@@ -120,9 +120,12 @@ public class PostProcessor{
     private int mOrientation = 0;
     private ImageWriter mImageWriter;
 
-    private static boolean DEBUG_FILTER = false;
-    private static boolean DEBUG_ZSL = false;
-    private ImageFilter.ResultImage mDebugResultImage;
+    private static boolean DEBUG_DUMP_FILTER_IMG =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_IMAGE) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
+    private static boolean DEBUG_ZSL =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
 
     private ZSLQueue mZSLQueue;
     private CameraDevice mCameraDevice;
@@ -670,6 +673,8 @@ public class PostProcessor{
         mSaveRaw = isSaveRaw;
         if(setFilter(postFilterId) || isFlashModeOn || isTrackingFocusOn || isMakeupOn || isSelfieMirrorOn
                 || PersistUtil.getCameraZSLDisabled()
+                || "enable".equals(
+                         SettingsManager.getInstance().getValue(SettingsManager.KEY_AUTO_HDR))
                 || SettingsManager.getInstance().isCamera2HDRSupport()
                 || "18".equals(SettingsManager.getInstance().getValue(
                                   SettingsManager.KEY_SCENE_MODE))
@@ -945,14 +950,7 @@ public class PostProcessor{
                         }
                         ByteBuffer yBuf = image.getPlanes()[0].getBuffer();
                         ByteBuffer vuBuf = image.getPlanes()[2].getBuffer();
-                        if(mFilter != null && DEBUG_FILTER && numImage == 0) {
-                            mDebugResultImage = new ImageFilter.ResultImage(ByteBuffer.allocateDirect(mStride * mHeight*3/2),
-                                    new Rect(0, 0, mWidth, mHeight), mWidth, mHeight, mStride);
-                            yBuf.get(mDebugResultImage.outBuffer.array(), 0, yBuf.remaining());
-                            vuBuf.get(mDebugResultImage.outBuffer.array(), mStride * mHeight, vuBuf.remaining());
-                            yBuf.rewind();
-                            vuBuf.rewind();
-                        }
+
                         if(mFilter == null) {
                             mDefaultResultImage = new ImageFilter.ResultImage(ByteBuffer.allocateDirect(mStride * mHeight*3/2),
                                                                     new Rect(0, 0, mWidth, mHeight), mWidth, mHeight, mStride);
@@ -960,8 +958,26 @@ public class PostProcessor{
                             vuBuf.get(mDefaultResultImage.outBuffer.array(), mStride*mHeight, vuBuf.remaining());
                             image.close();
                         } else {
-                            mFilter.addImage(image.getPlanes()[0].getBuffer(),
-                                    image.getPlanes()[2].getBuffer(), numImage, null);
+                            if (DEBUG_DUMP_FILTER_IMG) {
+                                ImageFilter.ResultImage debugResultImage = new
+                                        ImageFilter.ResultImage(ByteBuffer.allocateDirect(
+                                        mStride * mHeight * 3 / 2), new Rect(0, 0, mWidth,
+                                        mHeight), mWidth, mHeight, mStride);
+                                yBuf.get(debugResultImage.outBuffer.array(), 0, yBuf.remaining());
+                                vuBuf.get(debugResultImage.outBuffer.array(), mStride * mHeight,
+                                        vuBuf.remaining());
+                                yBuf.rewind();
+                                vuBuf.rewind();
+
+                                byte[] bytes = nv21ToJpeg(debugResultImage, mOrientation, null);
+                                mActivity.getMediaSaveService().addImage(
+                                        bytes, "Debug_beforeApplyingFilter" + numImage, 0L, null,
+                                        debugResultImage.outRoi.width(),
+                                        debugResultImage.outRoi.height(),
+                                        mOrientation, null, mController.getMediaSavedListener(),
+                                        mActivity.getContentResolver(), "jpeg");
+                            }
+                            mFilter.addImage(yBuf, vuBuf, numImage, null);
                             mImages[numImage] = image;
                         }
                     }
@@ -1065,12 +1081,6 @@ public class PostProcessor{
                             ) {
                         Log.d(TAG, "Result image is not valid.");
                     } else {
-                        if(mFilter != null && DEBUG_FILTER) {
-                            bytes = nv21ToJpeg(mDebugResultImage, mOrientation, null);
-                            mActivity.getMediaSaveService().addImage(
-                                    bytes, title + "_beforeApplyingFilter", date, null, mDebugResultImage.outRoi.width(), mDebugResultImage.outRoi.height(),
-                                    mOrientation, null, mediaSavedListener, contentResolver, "jpeg");
-                        }
                         bytes = nv21ToJpeg(resultImage, mOrientation, waitForMetaData(0));
                         if (mController.getCurrentIntentMode() ==
                                 CaptureModule.INTENT_MODE_CAPTURE) {

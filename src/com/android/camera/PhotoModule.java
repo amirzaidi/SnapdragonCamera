@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -51,6 +52,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -222,6 +224,7 @@ public class PhotoModule
     private static final String PERSIST_CAPTURE_ANIMATION = "persist.camera.capture.animate";
     private static final boolean PERSIST_SKIP_MEM_CHECK =
             android.os.SystemProperties.getBoolean("persist.camera.perf.skip_memck", false);
+    private static final String PERSIST_ZZHDR_ENABLE="persist.camera.zzhdr.enable";
 
     private static final int MINIMUM_BRIGHTNESS = 0;
     private static final int MAXIMUM_BRIGHTNESS = 6;
@@ -360,6 +363,8 @@ public class PhotoModule
     private float[] mR = new float[16];
     private int mHeading = -1;
 
+    private static final int MAX_ZOOM = 10;
+    private int[] mZoomIdxTbl = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     // True if all the parameters needed to start preview is ready.
     private boolean mCameraPreviewParamsReady = false;
 
@@ -633,9 +638,15 @@ public class PhotoModule
     // Prompt the user to pick to record location for the very first run of
     // camera only
     private void locationFirstRun() {
+        boolean enableRecordingLocation = false;
+        if (mActivity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            enableRecordingLocation = true;
+        }
         /* Do not prompt if the preference is already set, this is a secure
          * camera session, or the prompt has already been triggered. */
-        if (RecordLocationPreference.isSet(mPreferences, CameraSettings.KEY_RECORD_LOCATION) ||
+        if ((RecordLocationPreference.isSet(
+                mPreferences, CameraSettings.KEY_RECORD_LOCATION) && enableRecordingLocation) ||
                 mActivity.isSecureCamera() || mLocationPromptTriggered) {
             return;
         }
@@ -651,11 +662,6 @@ public class PhotoModule
         /* Enable the location at the begining, always.
            If the user denies the permission, it will be disabled
            right away due to exception */
-        boolean enableRecordingLocation = false;
-        if (mActivity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            enableRecordingLocation = true;
-        }
         enableRecordingLocation(enableRecordingLocation);
     }
 
@@ -1274,6 +1280,7 @@ public class PhotoModule
             if ( srcFile.renameTo(dstFile) ) {
                 Size s = mParameters.getPictureSize();
                 String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                Log.d(TAG, "capture:" + title + "." + pictureFormat);
                 mActivity.getMediaSaveService().addImage(
                        null, title, date, mLocation, s.width, s.height,
                        0, null, mOnMediaSavedListener, mContentResolver, pictureFormat);
@@ -1286,9 +1293,7 @@ public class PhotoModule
     private byte[] flipJpeg(byte[] jpegData, int orientation, int jpegOrientation) {
         Bitmap srcBitmap = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
         Matrix m = new Matrix();
-        if(orientation == 270) {
-            m.preScale(-1, 1);
-        } else { //if it's 90
+        if(orientation == 270 || orientation == 90) {
             // Judge whether the picture or phone is horizontal screen
             if (jpegOrientation == 0 || jpegOrientation == 180) {
                 m.preScale(-1, 1);
@@ -1485,6 +1490,7 @@ public class PhotoModule
                             exif.setTag(directionTag);
                         }
                         String mPictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                         Log.d(TAG, "capture:" + title + "." + mPictureFormat);
                             mActivity.getMediaSaveService().addImage(
                                     jpegData, title, date, mLocation, width, height,
                                     orientation, exif, mOnMediaSavedListener,
@@ -1575,17 +1581,16 @@ public class PhotoModule
         public void onStartTrackingTouch(SeekBar bar) {
         }
         public void onProgressChanged(SeekBar bar, int progress, boolean fromtouch) {
-            if (mPreferenceGroup != null) {
-                ListPreference blurValue =  mPreferenceGroup.findPreference(
-                        CameraSettings.KEY_BOKEH_BLUR_VALUE);
-                if (blurValue != null) {
-                    blurValue.setValue(""+progress);
-                }
+            if (mParameters != null) {
+                mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, progress);
             }
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, progress);
             Log.d(TAG,"seekbar bokeh degree = "+ progress);
         }
         public void onStopTrackingTouch(SeekBar bar) {
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt(CameraSettings.KEY_BOKEH_BLUR_VALUE, bar.getProgress());
+            editor.apply();
         }
     };
 
@@ -1992,7 +1997,9 @@ public class PhotoModule
             colorEffect = mParameters.getColorEffect();
             String defaultEffect = mActivity.getString(R.string.pref_camera_coloreffect_default);
             if (CameraUtil.SCENE_MODE_HDR.equals(mSceneMode)) {
-                disableLongShot = true;
+                if(SystemProperties.getInt(PERSIST_ZZHDR_ENABLE, 0) != 1) {
+                    disableLongShot = true;
+                }
                 if (colorEffect != null & !colorEffect.equals(defaultEffect)) {
                     // Change the colorEffect to default(None effect) when HDR ON.
                     colorEffect = defaultEffect;
@@ -3724,6 +3731,9 @@ public class PhotoModule
             if(mManual3AEnabled != 0) {
                 mManual3AEnabled = 0;
             }
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            final  int degree = prefs.getInt(CameraSettings.KEY_BOKEH_BLUR_VALUE,50);
+            bokehBlurDegree = String.valueOf(degree);
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -3735,14 +3745,11 @@ public class PhotoModule
                     mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
                             mActivity.getString(R.string.pref_camera_longshot_default));
                     mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
-                    mBlurDegreeProgressBar.setProgress(50);
+                    mBlurDegreeProgressBar.setProgress(degree);
                 }
             });
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_MODE, bokehMode);
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_MPO_MODE, bokehMpo);
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, bokehBlurDegree);
-
         } else {
+            bokehBlurDegree = "0";
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -3754,6 +3761,9 @@ public class PhotoModule
                 }
             });
         }
+        mParameters.set(CameraSettings.KEY_QC_BOKEH_MODE, bokehMode);
+        mParameters.set(CameraSettings.KEY_QC_BOKEH_MPO_MODE, bokehMpo);
+        mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, bokehBlurDegree);
         Log.v(TAG, "Bokeh Mode = " + bokehMode + " bokehMpo = " + bokehMpo +
                 " bokehBlurDegree = " + bokehBlurDegree);
     }
@@ -3843,6 +3853,61 @@ public class PhotoModule
     private void setMeteringAreasIfSupported() {
         if (mMeteringAreaSupported) {
             mParameters.setMeteringAreas(mFocusManager.getMeteringAreas());
+        }
+    }
+    private void setZoomMenuValue() {
+        String zoomMenuValue = mPreferences.getString(CameraSettings.KEY_ZOOM,
+                                mActivity.getString(R.string.pref_camera_zoom_default));
+        if (!zoomMenuValue.equals("0")) {
+            int zoomValue = Integer.parseInt(zoomMenuValue);
+            if (mZoomIdxTbl[0] == -1) {
+                /* update the index table once */
+                Log.d(TAG, "Update the zoom index table.");
+                List<Integer> zoomRatios = mParameters.getZoomRatios();
+                int lastZoomIdx = 0;
+                for (int zoom = 1; zoom <= MAX_ZOOM; zoom++) {
+                    int zoomIdx = zoomRatios.indexOf(zoom*100);
+                    if (zoomIdx == -1) {
+                       Log.d(TAG, "Can't find matching zoom value "+zoom);
+                       int nextZoom = 0;
+                       while ((++lastZoomIdx < zoomRatios.size()) &&
+                              (nextZoom < (zoom*100))){
+                           nextZoom = zoomRatios.get(lastZoomIdx);
+                           zoomIdx = lastZoomIdx;
+                       }
+                       if (lastZoomIdx < zoomRatios.size()) {
+                           zoomIdx = lastZoomIdx - 1;
+                       } else {
+                           break;
+                       }
+                    }
+                    mZoomIdxTbl[zoom-1] = zoomIdx;
+                    lastZoomIdx = zoomIdx;
+                }
+            }
+
+            if ((zoomValue <= mZoomIdxTbl.length) &&
+                (mZoomIdxTbl[zoomValue-1] != -1)) {
+                int step = 1;
+                int cur_zoom = mParameters.getZoom();
+                Log.d(TAG, "zoom index = "+mZoomIdxTbl[zoomValue-1]+", cur index = "+cur_zoom);
+                if (cur_zoom > mZoomIdxTbl[zoomValue-1]) {
+                    step = -1;
+                }
+
+                /* move zoom slowly */
+                while (cur_zoom != mZoomIdxTbl[zoomValue-1]) {
+                    cur_zoom += step;
+                    mParameters.setZoom(cur_zoom);
+                    try {
+                        Thread.sleep(25);
+                    } catch(InterruptedException e) {
+                    }
+                }
+                mParameters.setZoom(mZoomIdxTbl[zoomValue-1]);
+            } else {
+                Log.e(TAG, "Zoom value "+zoomValue+" is not supported!");
+            }
         }
     }
 
@@ -4130,6 +4195,8 @@ public class PhotoModule
             mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_WHITEN, makeupWhitenValue);
             mParameters.set(CameraSettings.KEY_TS_MAKEUP_PARAM_CLEAN, makeupCleanValue);
         }
+
+        setZoomMenuValue();
 
         //QCom related parameters updated here.
         qcomUpdateCameraParametersPreference();

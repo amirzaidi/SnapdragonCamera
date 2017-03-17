@@ -44,11 +44,6 @@ public class PermissionsActivity extends Activity {
         super.onCreate(savedInstanceState);
         mIntent = getIntent();
         mIsReturnResult = false;
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
         if (!mCriticalPermissionDenied && !mIsReturnResult) {
             mNumPermissionsToRequest = 0;
             checkPermissions();
@@ -56,7 +51,7 @@ public class PermissionsActivity extends Activity {
             mCriticalPermissionDenied = false;
         }
     }
-
+    
     private void checkPermissions() {
         if (checkSelfPermission(Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {

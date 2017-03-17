@@ -416,7 +416,7 @@ public class ClearSightImageProcessor {
 
     private ImageReader createEncodeImageReader(final int cam, int width, int height) {
         ImageReader reader = ImageReader.newInstance(width, height,
-                ImageFormat.JPEG, mNumFrameCount);
+                ImageFormat.JPEG, mNumFrameCount + 1);
         reader.setOnImageAvailableListener(new OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {

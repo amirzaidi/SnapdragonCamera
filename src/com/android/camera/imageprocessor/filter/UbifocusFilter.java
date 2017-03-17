@@ -39,6 +39,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Range;
@@ -63,7 +64,6 @@ public class UbifocusFilter implements ImageFilter {
     private int mStrideY;
     private int mStrideVU;
     private static String TAG = "UbifocusFilter";
-    private static final boolean DEBUG = false;
     private static final int FOCUS_ADJUST_TIME_OUT = 400;
     private static final int META_BYTES_SIZE = 25;
     private int temp;
@@ -75,6 +75,7 @@ public class UbifocusFilter implements ImageFilter {
     private float mMinFocusDistance = -1f;
     private Object mClosingLock = new Object();
     private PostProcessor mPostProcessor;
+    private ImageFilter.ResultImage mUbifocusResultImage;
     final String[] NAMES = {"00.jpg", "01.jpg", "02.jpg", "03.jpg",
             "04.jpg", "DepthMapImage.y", "AllFocusImage.jpg"};
 
@@ -147,7 +148,8 @@ public class UbifocusFilter implements ImageFilter {
                     if(mOutBuf == null) {
                         return;
                     }
-                    saveToPrivateFile(imageNum, nv21ToJpeg(bY, bVU, new Rect(0, 0, mWidth, mHeight), mOrientation, imageNum));
+                    byte[] bytes = getYUVBytes(bY, bVU, imageNum);
+                    saveToPrivateFile(imageNum, bytes);
                     mSavedCount++;
                 }
             }
@@ -272,6 +274,38 @@ public class UbifocusFilter implements ImageFilter {
             out.close();
         } catch (Exception e) {
         }
+    }
+
+    private byte[] getYUVBytes(final ByteBuffer yBuf, final ByteBuffer vuBuf,
+                               final int imageNum) {
+        synchronized (mClosingLock) {
+            if (mOutBuf == null) {
+                return null;
+            }
+            mUbifocusResultImage = new ImageFilter.ResultImage(ByteBuffer.allocateDirect(
+                    mStrideY * mHeight * 3 / 2),
+                    new Rect(0, 0, mWidth, mHeight), mWidth, mHeight, mStrideY);
+            yBuf.get(mUbifocusResultImage.outBuffer.array(), 0, yBuf.remaining());
+            vuBuf.get(mUbifocusResultImage.outBuffer.array(), mStrideY * mHeight,
+                    vuBuf.remaining());
+            yBuf.rewind();
+            vuBuf.rewind();
+
+            return nv21ToJpeg(mUbifocusResultImage, mOrientation,
+                    mPostProcessor.waitForMetaData(imageNum));
+        }
+    }
+
+    private byte[] nv21ToJpeg(ImageFilter.ResultImage resultImage, int orientation,
+                              TotalCaptureResult result) {
+        BitmapOutputStream bos = new BitmapOutputStream(1024);
+        YuvImage im = new YuvImage(resultImage.outBuffer.array(), ImageFormat.NV21,
+                resultImage.width, resultImage.height, new int[]{resultImage.stride,
+                resultImage.stride});
+        im.compressToJpeg(resultImage.outRoi, mPostProcessor.getJpegQualityValue(), bos);
+        byte[] bytes = bos.getArray();
+        bytes = PostProcessor.addExifTags(bytes, orientation, result);
+        return bytes;
     }
 
     private native int nativeInit(int width, int height, int yStride, int vuStride, int numImages);

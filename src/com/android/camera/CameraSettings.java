@@ -127,6 +127,7 @@ public class CameraSettings {
 
     public static final String KEY_LONGSHOT = "pref_camera_longshot_key";
     public static final String KEY_INSTANT_CAPTURE = "pref_camera_instant_capture_key";
+    public static final String KEY_ZOOM = "pref_camera_zoom_key";
 
     public static final String KEY_BOKEH_MODE = "pref_camera_bokeh_mode_key";
     public static final String KEY_BOKEH_MPO = "pref_camera_bokeh_mpo_key";
@@ -662,6 +663,18 @@ public class CameraSettings {
 
     }
 
+    private static List<String> getSupportedZoomLevel(Parameters params) {
+        ArrayList<String> supported = new ArrayList<String>();
+        int zoomMaxIdx = params.getMaxZoom();
+        List <Integer>  zoomRatios = params.getZoomRatios();
+        int zoomMax = zoomRatios.get(zoomMaxIdx)/100;
+
+        for (int zoomLevel = 0; zoomLevel <= zoomMax; zoomLevel++) {
+            supported.add(String.valueOf(zoomLevel));
+        }
+        return supported;
+    }
+
     private void qcomInitPreferences(PreferenceGroup group){
         //Qcom Preference add here
         ListPreference powerMode = group.findPreference(KEY_POWER_MODE);
@@ -702,6 +715,8 @@ public class CameraSettings {
         ListPreference bokehMode = group.findPreference(KEY_BOKEH_MODE);
         ListPreference bokehMpo = group.findPreference(KEY_BOKEH_MPO);
         ListPreference bokehBlurDegree = group.findPreference(KEY_BOKEH_BLUR_VALUE);
+        ListPreference zoomLevel = group.findPreference(KEY_ZOOM);
+
 
         if (instantCapture != null) {
             if (!isInstantCaptureSupported(mParameters)) {
@@ -854,6 +869,11 @@ public class CameraSettings {
         if (manualExposure != null) {
             filterUnsupportedOptions(group,
                     manualExposure, getSupportedManualExposureModes(mParameters));
+        }
+
+        if (zoomLevel != null) {
+            filterUnsupportedOptions(group,
+                    zoomLevel, getSupportedZoomLevel(mParameters));
         }
     }
 

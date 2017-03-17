@@ -239,7 +239,8 @@ public class PhotoMenu extends MenuController
                 CameraSettings.KEY_MANUAL_WB,
                 CameraSettings.KEY_MANUAL_FOCUS,
                 CameraSettings.KEY_SELFIE_MIRROR,
-                CameraSettings.KEY_SHUTTER_SOUND
+                CameraSettings.KEY_SHUTTER_SOUND,
+                CameraSettings.KEY_ZOOM
         };
 
         initSwitchItem(CameraSettings.KEY_CAMERA_ID, mFrontBackSwitcher);
@@ -703,12 +704,7 @@ public class PhotoMenu extends MenuController
         if ((autohdr != null) && autohdr.equals("enable")) {
             popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE, false);
         }
-        if ((zsl != null) && Parameters.ZSL_ON.equals(zsl)) {
-            popup1.setPreferenceEnabled(CameraSettings.KEY_FOCUS_MODE, false);
-            popup1.setPreferenceEnabled(CameraSettings.KEY_MANUAL_EXPOSURE, false);
-            popup1.setPreferenceEnabled(CameraSettings.KEY_MANUAL_WB, false);
-            popup1.setPreferenceEnabled(CameraSettings.KEY_MANUAL_FOCUS, false);
-        }
+
         if ((faceDetection != null) && !Parameters.FACE_DETECTION_ON.equals(faceDetection)) {
             popup1.setPreferenceEnabled(CameraSettings.KEY_FACE_RECOGNITION, false);
         }
