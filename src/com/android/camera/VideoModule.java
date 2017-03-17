@@ -70,8 +70,12 @@ import com.android.camera.util.AccessibilityUtils;
 import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.UsageStatistics;
-import org.codeaurora.snapcam.R;
 import com.android.camera.PhotoModule;
+
+import org.codeaurora.snapcam.R;
+import org.codeaurora.snapcam.wrapper.ParametersWrapper;
+import org.codeaurora.snapcam.wrapper.CamcorderProfileWrapper;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -854,24 +858,23 @@ public class VideoModule implements CameraModule,
             // 1 minute = 60000ms
             mMaxVideoDurationInMs = 60000 * minutes;
         }
-
-        if(mParameters.isPowerModeSupported()) {
+        if(ParametersWrapper.isPowerModeSupported(mParameters)) {
             String powermode = mPreferences.getString(
                     CameraSettings.KEY_POWER_MODE,
                     mActivity.getString(R.string.pref_camera_powermode_default));
             Log.v(TAG, "read videopreferences power mode =" +powermode);
-            String old_mode = mParameters.getPowerMode();
+            String old_mode = ParametersWrapper.getPowerMode(mParameters);
             if(!old_mode.equals(powermode) && mPreviewing)
                 mRestartPreview = true;
 
-            mParameters.setPowerMode(powermode);
+            ParametersWrapper.setPowerMode(mParameters, powermode);
         }
 
         // Set wavelet denoise mode
-        if (mParameters.getSupportedDenoiseModes() != null) {
+        if (ParametersWrapper.getSupportedDenoiseModes(mParameters) != null) {
             String denoise = mPreferences.getString(CameraSettings.KEY_DENOISE,
                     mActivity.getString(R.string.pref_camera_denoise_default));
-            mParameters.setDenoise(denoise);
+            ParametersWrapper.setDenoise(mParameters, denoise);
         }
    }
 
@@ -962,7 +965,7 @@ public class VideoModule implements CameraModule,
     public boolean is4KEnabled() {
        if (mProfile.quality == CamcorderProfile.QUALITY_2160P ||
            mProfile.quality == CamcorderProfile.QUALITY_TIME_LAPSE_2160P ||
-           mProfile.quality == CamcorderProfile.QUALITY_4KDCI ) {
+           mProfile.quality == CamcorderProfileWrapper.QUALITY_4KDCI ) {
            return true;
        } else {
            return false;
@@ -1023,10 +1026,12 @@ public class VideoModule implements CameraModule,
         if(!("off".equals(HighFrameRate))) {
             Size size = null;
             try {
-                if (isSupported(HighFrameRate.substring(3), mParameters.getSupportedVideoHighFrameRateModes())) {
-                    int index = mParameters.getSupportedVideoHighFrameRateModes().indexOf(
+                if (isSupported(HighFrameRate.substring(3),
+                        ParametersWrapper.getSupportedVideoHighFrameRateModes(mParameters))) {
+                    int index = ParametersWrapper.
+                            getSupportedVideoHighFrameRateModes(mParameters).indexOf(
                             HighFrameRate.substring(3));
-                    size = mParameters.getSupportedHfrSizes().get(index);
+                    size = ParametersWrapper.getSupportedHfrSizes(mParameters).get(index);
                 } else {
                     return false;
                 }
@@ -1541,7 +1546,7 @@ public class VideoModule implements CameraModule,
         mCameraDevice.unlock();
         mMediaRecorder.setCamera(mCameraDevice.getCamera());
 
-        String hfr = mParameters.getVideoHighFrameRate();
+        String hfr = ParametersWrapper.getVideoHighFrameRate(mParameters);
         String hsr =  mParameters.get(CameraSettings.KEY_VIDEO_HSR);
         Log.i(TAG,"NOTE: hfr = " + hfr + " : hsr = " + hsr);
 
@@ -2413,10 +2418,11 @@ public class VideoModule implements CameraModule,
             Log.v(TAG, "current set resolution is : "+hfrsize+ " : Rate is : " + hfrRate );
             try {
                 Size size = null;
-                if (isSupported(hfrRate, mParameters.getSupportedVideoHighFrameRateModes())) {
-                    int index = mParameters.getSupportedVideoHighFrameRateModes().indexOf(
-                            hfrRate);
-                    size = mParameters.getSupportedHfrSizes().get(index);
+                if (isSupported(hfrRate,
+                        ParametersWrapper.getSupportedVideoHighFrameRateModes(mParameters))) {
+                    int index = ParametersWrapper.
+                            getSupportedVideoHighFrameRateModes(mParameters).indexOf(hfrRate);
+                    size = ParametersWrapper.getSupportedHfrSizes(mParameters).get(index);
                 }
                 if (size != null) {
                     if (videoWidth <= size.width && videoHeight <= size.height) {
@@ -2444,13 +2450,13 @@ public class VideoModule implements CameraModule,
             if (isHFR) {
                 mParameters.set(CameraSettings.KEY_VIDEO_HSR, "off");
                 if (mUnsupportedHFRVideoSize) {
-                    mParameters.setVideoHighFrameRate("off");
+                    ParametersWrapper.setVideoHighFrameRate(mParameters, "off");
                     Log.v(TAG,"Unsupported hfr resolution");
                 } else {
-                    mParameters.setVideoHighFrameRate(hfrRate);
+                    ParametersWrapper.setVideoHighFrameRate(mParameters, hfrRate);
                 }
             } else {
-                mParameters.setVideoHighFrameRate("off");
+                ParametersWrapper.setVideoHighFrameRate(mParameters, "off");
                 if (mUnsupportedHSRVideoSize) {
                     Log.v(TAG,"Unsupported hsr resolution");
                     mParameters.set(CameraSettings.KEY_VIDEO_HSR, "off");
@@ -2459,7 +2465,7 @@ public class VideoModule implements CameraModule,
                 }
             }
         } else {
-            mParameters.setVideoHighFrameRate("off");
+            ParametersWrapper.setVideoHighFrameRate(mParameters, "off");
             mParameters.set(CameraSettings.KEY_VIDEO_HSR, "off");
         }
         setFlipValue();
@@ -2606,15 +2612,16 @@ public class VideoModule implements CameraModule,
                 CameraSettings.KEY_VIDEO_HDR,
                 mActivity.getString(R.string.pref_camera_video_hdr_default));
         Log.v(TAG, "Video HDR Setting =" + videoHDR);
-        if (isSupported(videoHDR, mParameters.getSupportedVideoHDRModes())) {
-             mParameters.setVideoHDRMode(videoHDR);
+        if (isSupported(videoHDR,
+                ParametersWrapper.getSupportedVideoHDRModes(mParameters))) {
+            ParametersWrapper.setVideoHDRMode(mParameters, videoHDR);
         } else
-             mParameters.setVideoHDRMode("off");
+            ParametersWrapper.setVideoHDRMode(mParameters, "off");
 
         //HFR/HSR recording not supported with DIS,TimeLapse,HDR option
-        String hfr = mParameters.getVideoHighFrameRate();
+        String hfr = ParametersWrapper.getVideoHighFrameRate(mParameters);
         String hsr = mParameters.get(CameraSettings.KEY_VIDEO_HSR);
-        String hdr = mParameters.getVideoHDRMode();
+        String hdr = ParametersWrapper.getVideoHDRMode(mParameters);
          if ( !"off".equals(highFrameRate) ) {
              // Read time lapse recording interval.
              String frameIntervalStr = mPreferences.getString(
@@ -2630,7 +2637,7 @@ public class VideoModule implements CameraModule,
                   (disMode.equals("enable") && (rate > PERSIST_EIS_MAX_FPS)) ||
                   ((hdr != null) && (!hdr.equals("off"))) ) {
                 Log.v(TAG,"HDR/DIS/Time Lapse ON for HFR/HSR selection, turning HFR/HSR off");
-                mParameters.setVideoHighFrameRate("off");
+                ParametersWrapper.setVideoHighFrameRate(mParameters, "off");
                 mParameters.set(CameraSettings.KEY_VIDEO_HSR, "off");
                 mUI.overrideSettings(CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE, "off");
              }
@@ -2653,8 +2660,9 @@ public class VideoModule implements CameraModule,
         String videoRotation = mPreferences.getString(
             CameraSettings.KEY_VIDEO_ROTATION,
             mActivity.getString(R.string.pref_camera_video_rotation_default));
-        if (isSupported(videoRotation, mParameters.getSupportedVideoRotationValues())) {
-            mParameters.setVideoRotation(videoRotation);
+        if (isSupported(videoRotation,
+                ParametersWrapper.getSupportedVideoRotationValues(mParameters))) {
+            ParametersWrapper.setVideoRotation(mParameters, videoRotation);
         }
 
         //set power mode settings
@@ -2665,9 +2673,10 @@ public class VideoModule implements CameraModule,
             CameraSettings.KEY_FACE_DETECTION,
             mActivity.getString(R.string.pref_camera_facedetection_default));
 
-        if (CameraUtil.isSupported(faceDetection, mParameters.getSupportedFaceDetectionModes())) {
+        if (CameraUtil.isSupported(faceDetection,
+                ParametersWrapper.getSupportedFaceDetectionModes(mParameters))) {
             Log.d(TAG, "setFaceDetectionMode "+faceDetection);
-            mParameters.setFaceDetectionMode(faceDetection);
+            ParametersWrapper.setFaceDetectionMode(mParameters, faceDetection);
             if(faceDetection.equals("on") && mFaceDetectionEnabled == false) {
                 mFaceDetectionEnabled = true;
                 startFaceDetection();
@@ -2838,7 +2847,7 @@ public class VideoModule implements CameraModule,
             if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(videoQuality)) {
                 int quality = CameraSettings.VIDEO_QUALITY_TABLE.get(videoQuality);
                 if ((quality == CamcorderProfile.QUALITY_2160P
-                        || quality == CamcorderProfile.QUALITY_4KDCI)
+                        || quality == CamcorderProfileWrapper.QUALITY_4KDCI)
                         && mPreferences != null) {
                     String disDisable = mActivity.getString(R.string.pref_camera_dis_value_disable);
                     if (!disDisable.equals(
@@ -3000,7 +3009,7 @@ public class VideoModule implements CameraModule,
             return;
         }
         forceFlashOffIfSupported(forceOff);
-        mCameraDevice.setParameters(mParameters);
+        mCameraDevice.setParameters(mCameraDevice.getParameters());
         mUI.updateOnScreenIndicators(mParameters, mPreferences);
     }
 

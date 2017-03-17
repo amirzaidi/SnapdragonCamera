@@ -59,13 +59,15 @@ import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateTextToast;
-import org.codeaurora.snapcam.R;
 import android.widget.HorizontalScrollView;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.Display;
 import com.android.camera.util.CameraUtil;
 import java.util.Locale;
+
+import org.codeaurora.snapcam.R;
+import org.codeaurora.snapcam.wrapper.ParametersWrapper;
 
 public class PhotoMenu extends MenuController
         implements ListMenu.Listener,
@@ -705,7 +707,7 @@ public class PhotoMenu extends MenuController
             popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE, false);
         }
 
-        if ((faceDetection != null) && !Parameters.FACE_DETECTION_ON.equals(faceDetection)) {
+        if ((faceDetection != null) && !ParametersWrapper.FACE_DETECTION_ON.equals(faceDetection)) {
             popup1.setPreferenceEnabled(CameraSettings.KEY_FACE_RECOGNITION, false);
         }
         popup1.setPreferenceEnabled(CameraSettings.KEY_ZSL, !mUI.isCountingDown());
@@ -728,7 +730,7 @@ public class PhotoMenu extends MenuController
         String multiTouchFocusOn = mActivity.getString(R.string.
                 pref_camera_advanced_feature_value_multi_touch_focus_on);
 
-        if ((zsl != null) && Parameters.ZSL_OFF.equals(zsl)) {
+        if ((zsl != null) && ParametersWrapper.ZSL_OFF.equals(zsl)) {
             popup1.overrideSettings(CameraSettings.KEY_ADVANCED_FEATURES,
                     mActivity.getString(R.string.pref_camera_advanced_feature_default));
 
@@ -880,7 +882,7 @@ public class PhotoMenu extends MenuController
                 ListPreference faceDetectPref = mPreferenceGroup.findPreference(CameraSettings.KEY_FACE_DETECTION);
                 String faceDetection = (faceDetectPref != null) ? faceDetectPref.getValue() : null;
                 Log.d(TAG, "initMakeupModeButton().onClick(): faceDetection is " + faceDetection);
-                if ((faceDetection != null) && Parameters.FACE_DETECTION_OFF.equals(faceDetection)) {
+                if ((faceDetection != null) && ParametersWrapper.FACE_DETECTION_OFF.equals(faceDetection)) {
                     showAlertDialog(faceDetectPref);
                 } else {
                     toggleMakeupSettings();
@@ -912,7 +914,7 @@ public class PhotoMenu extends MenuController
                 public void onClick(DialogInterface dialog, int which) {
                     toggleMakeupSettings();
 
-                    faceDetectPref.setValue(Parameters.FACE_DETECTION_ON);
+                    faceDetectPref.setValue(ParametersWrapper.FACE_DETECTION_ON);
                     onSettingChanged(faceDetectPref);
                 }
             })
