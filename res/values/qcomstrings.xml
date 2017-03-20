@@ -1162,5 +1162,11 @@
     <string name="pref_camera_zoom_entry_8x">8x</string>
     <string name="pref_camera_zoom_entry_9x">9x</string>
     <string name="pref_camera_zoom_entry_10x">10x</string>
+    <string name="pref_camera2_bsgc_title" translatable="true">Smile/blink/gaze Detection</string>
+    <string name="pref_camera2_bsgc_default" translatable="false">disable</string>
+    <string name="pref_camera2_bsgc_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_bsgc_entry_disable" translatable="true">Disable</string>
+    <string name="pref_camera2_bsgc_entry_value_enable" translatable="false">enable</string>
+    <string name="pref_camera2_bsgc_entry_value_disable" translatable="false">disable</string>
 </resources>
 

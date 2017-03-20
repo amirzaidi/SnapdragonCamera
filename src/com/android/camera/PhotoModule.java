@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -51,6 +52,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -222,6 +224,7 @@ public class PhotoModule
     private static final String PERSIST_CAPTURE_ANIMATION = "persist.camera.capture.animate";
     private static final boolean PERSIST_SKIP_MEM_CHECK =
             android.os.SystemProperties.getBoolean("persist.camera.perf.skip_memck", false);
+    private static final String PERSIST_ZZHDR_ENABLE="persist.camera.zzhdr.enable";
 
     private static final int MINIMUM_BRIGHTNESS = 0;
     private static final int MAXIMUM_BRIGHTNESS = 6;
@@ -1277,6 +1280,7 @@ public class PhotoModule
             if ( srcFile.renameTo(dstFile) ) {
                 Size s = mParameters.getPictureSize();
                 String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                Log.d(TAG, "capture:" + title + "." + pictureFormat);
                 mActivity.getMediaSaveService().addImage(
                        null, title, date, mLocation, s.width, s.height,
                        0, null, mOnMediaSavedListener, mContentResolver, pictureFormat);
@@ -1486,6 +1490,7 @@ public class PhotoModule
                             exif.setTag(directionTag);
                         }
                         String mPictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+                         Log.d(TAG, "capture:" + title + "." + mPictureFormat);
                             mActivity.getMediaSaveService().addImage(
                                     jpegData, title, date, mLocation, width, height,
                                     orientation, exif, mOnMediaSavedListener,
@@ -1576,17 +1581,16 @@ public class PhotoModule
         public void onStartTrackingTouch(SeekBar bar) {
         }
         public void onProgressChanged(SeekBar bar, int progress, boolean fromtouch) {
-            if (mPreferenceGroup != null) {
-                ListPreference blurValue =  mPreferenceGroup.findPreference(
-                        CameraSettings.KEY_BOKEH_BLUR_VALUE);
-                if (blurValue != null) {
-                    blurValue.setValue(""+progress);
-                }
+            if (mParameters != null) {
+                mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, progress);
             }
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, progress);
             Log.d(TAG,"seekbar bokeh degree = "+ progress);
         }
         public void onStopTrackingTouch(SeekBar bar) {
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt(CameraSettings.KEY_BOKEH_BLUR_VALUE, bar.getProgress());
+            editor.apply();
         }
     };
 
@@ -1993,7 +1997,9 @@ public class PhotoModule
             colorEffect = mParameters.getColorEffect();
             String defaultEffect = mActivity.getString(R.string.pref_camera_coloreffect_default);
             if (CameraUtil.SCENE_MODE_HDR.equals(mSceneMode)) {
-                disableLongShot = true;
+                if(SystemProperties.getInt(PERSIST_ZZHDR_ENABLE, 0) != 1) {
+                    disableLongShot = true;
+                }
                 if (colorEffect != null & !colorEffect.equals(defaultEffect)) {
                     // Change the colorEffect to default(None effect) when HDR ON.
                     colorEffect = defaultEffect;
@@ -3725,6 +3731,9 @@ public class PhotoModule
             if(mManual3AEnabled != 0) {
                 mManual3AEnabled = 0;
             }
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            final  int degree = prefs.getInt(CameraSettings.KEY_BOKEH_BLUR_VALUE,50);
+            bokehBlurDegree = String.valueOf(degree);
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -3736,14 +3745,11 @@ public class PhotoModule
                     mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
                             mActivity.getString(R.string.pref_camera_longshot_default));
                     mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
-                    mBlurDegreeProgressBar.setProgress(50);
+                    mBlurDegreeProgressBar.setProgress(degree);
                 }
             });
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_MODE, bokehMode);
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_MPO_MODE, bokehMpo);
-            mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, bokehBlurDegree);
-
         } else {
+            bokehBlurDegree = "0";
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -3755,6 +3761,9 @@ public class PhotoModule
                 }
             });
         }
+        mParameters.set(CameraSettings.KEY_QC_BOKEH_MODE, bokehMode);
+        mParameters.set(CameraSettings.KEY_QC_BOKEH_MPO_MODE, bokehMpo);
+        mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, bokehBlurDegree);
         Log.v(TAG, "Bokeh Mode = " + bokehMode + " bokehMpo = " + bokehMpo +
                 " bokehBlurDegree = " + bokehBlurDegree);
     }
