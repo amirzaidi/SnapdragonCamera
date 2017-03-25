@@ -3013,17 +3013,15 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updatePictureSize() {
         String pictureSize = mSettingsManager.getValue(SettingsManager.KEY_PICTURE_SIZE);
         mPictureSize = parsePictureSize(pictureSize);
-        Point screenSize = new Point();
-        mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
         Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                 SurfaceHolder.class);
         mSupportedMaxPictureSize = prevSizes[0];
         Size[] rawSize = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                     ImageFormat.RAW10);
         mSupportedRawPictureSize = rawSize[0];
-        mPreviewSize = getOptimalPreviewSize(mPictureSize, prevSizes, screenSize.x, screenSize.y);
+        mPreviewSize = getOptimalPreviewSize(mPictureSize, prevSizes);
         Size[] thumbSizes = mSettingsManager.getSupportedThumbnailSizes(getMainCameraId());
-        mPictureThumbSize = getOptimalPreviewSize(mPictureSize, thumbSizes, 0, 0); // get largest thumb size
+        mPictureThumbSize = getOptimalPreviewSize(mPictureSize, thumbSizes); // get largest thumb size
     }
 
     public Size getThumbSize() {
@@ -3049,20 +3047,18 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updateVideoSize() {
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         mVideoSize = parsePictureSize(videoSize);
-        Point screenSize = new Point();
-        mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
         Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                 MediaRecorder.class);
-        mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes, screenSize.x, screenSize.y);
+        mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes);
     }
 
     private void updateVideoSnapshotSize() {
-        mVideoSnapshotSize = mPictureSize;
+        mVideoSnapshotSize = mVideoSize;
         if (is4kSize(mVideoSize) && is4kSize(mVideoSnapshotSize)) {
             mVideoSnapshotSize = getMaxPictureSizeLessThan4k();
         }
         Size[] thumbSizes = mSettingsManager.getSupportedThumbnailSizes(getMainCameraId());
-        mVideoSnapshotThumbSize = getOptimalPreviewSize(mVideoSnapshotSize, thumbSizes, 0, 0); // get largest thumb size
+        mVideoSnapshotThumbSize = getOptimalPreviewSize(mVideoSnapshotSize, thumbSizes); // get largest thumb size
     }
 
     private boolean is4kSize(Size size) {
@@ -4537,51 +4533,44 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.enableShutter(true);
     }
 
+    private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes) {
+        Point[] points = new Point[prevSizes.length];
 
-    private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes, int screenW, int
-            screenH) {
-        if (pictureSize.getWidth() <= screenH && pictureSize.getHeight() <= screenW) {
-            return pictureSize;
+        double targetRatio = (double) pictureSize.getWidth() / pictureSize.getHeight();
+        int index = 0;
+        for (Size s : prevSizes) {
+            points[index++] = new Point(s.getWidth(), s.getHeight());
         }
-        Size optimal = prevSizes[0];
-        float ratio = (float) pictureSize.getWidth() / pictureSize.getHeight();
-        for (Size prevSize: prevSizes) {
-            float prevRatio = (float) prevSize.getWidth() / prevSize.getHeight();
-            if (Math.abs(prevRatio - ratio) < 0.01) {
-                // flip w and h
-                if (prevSize.getWidth() <= screenH && prevSize.getHeight() <= screenW &&
-                        prevSize.getWidth() <= pictureSize.getWidth() && prevSize.getHeight() <= pictureSize.getHeight()) {
-                    return prevSize;
-                } else {
-                    optimal = prevSize;
-                }
-            }
-        }
-        return optimal;
+
+        int optimalPickIndex = CameraUtil.getOptimalPreviewSize(mActivity, points, targetRatio);
+        return (optimalPickIndex == -1) ? null : prevSizes[optimalPickIndex];
     }
 
     private Size getMaxPictureSizeLessThan4k() {
         Size[] sizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(), ImageFormat.JPEG);
         float ratio = (float) mVideoSize.getWidth() / mVideoSize.getHeight();
+        Size optimalSize = null;
         for (Size size : sizes) {
-            if (!is4kSize(size)) {
-                float pictureRatio = (float) size.getWidth() / size.getHeight();
-                if (Math.abs(pictureRatio - ratio) < 0.01) {
-                    return size;
+            if (is4kSize(size)) continue;
+            float pictureRatio = (float) size.getWidth() / size.getHeight();
+            if (Math.abs(pictureRatio - ratio) > 0.01) continue;
+            if (optimalSize == null || size.getWidth() > optimalSize.getWidth()) {
+                optimalSize = size;
+            }
+        }
+
+        // Cannot find one that matches the aspect ratio. This should not happen.
+        // Ignore the requirement.
+        if (optimalSize == null) {
+            Log.w(TAG, "No picture size match the aspect ratio");
+            for (Size size : sizes) {
+                if (is4kSize(size)) continue;
+                if (optimalSize == null || size.getWidth() > optimalSize.getWidth()) {
+                    optimalSize = size;
                 }
             }
         }
-        return sizes[sizes.length - 1];
-    }
-    private Size getMaxSizeWithRatio(Size[] sizes, Size reference) {
-        float ratio = (float) reference.getWidth() / reference.getHeight();
-        for (Size size : sizes) {
-            float prevRatio = (float) size.getWidth() / size.getHeight();
-            if (Math.abs(prevRatio - ratio) < 0.01) {
-                return size;
-            }
-        }
-        return sizes[0];
+        return optimalSize;
     }
 
     public TrackingFocusRenderer getTrackingForcusRenderer() {
