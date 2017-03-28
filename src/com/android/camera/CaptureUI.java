@@ -1432,11 +1432,13 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFaceView.setDisplayOrientation(orientation);
         mFaceView.setMirror(mirror);
         mFaceView.setCameraBound(cameraBound);
+        mFaceView.setZoom(mModule.getZoomValue());
         mFaceView.resume();
     }
 
     public void updateFaceViewCameraBound(Rect cameraBound) {
         mFaceView.setCameraBound(cameraBound);
+        mFaceView.setZoom(mModule.getZoomValue());
     }
 
     public void onStopFaceDetection() {
@@ -1450,8 +1452,9 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void onFaceDetection(Face[] faces, CameraManager.CameraProxy camera) {
     }
 
-    public void onFaceDetection(android.hardware.camera2.params.Face[] faces) {
-        mFaceView.setFaces(faces);
+    public void onFaceDetection(android.hardware.camera2.params.Face[] faces,
+                                ExtendedFace[] extendedFaces) {
+        mFaceView.setFaces(faces,extendedFaces);
     }
 
     public Point getSurfaceViewSize() {

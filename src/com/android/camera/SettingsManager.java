@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -142,11 +142,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_SATURATION_LEVEL = "pref_camera2_saturation_level_key";
     public static final String KEY_ANTI_BANDING_LEVEL = "pref_camera2_anti_banding_level_key";
     public static final String KEY_HISTOGRAM = "pref_camera2_histogram_key";
+    public static final String KEY_AUTO_HDR = "pref_camera2_auto_hdr_key";
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
     public static final String KEY_ZOOM = "pref_camera2_zoom_key";
 
     public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
+    public static final String KEY_BSGC_DETECTION = "pref_camera2_bsgc_key";
 
     private static final String TAG = "SnapCam_SettingsManager";
 
@@ -287,6 +289,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         filterPreferences(cameraId);
         initDependencyTable();
         initializeValueMap();
+        filterChromaflashPictureSizeOptions();
     }
 
     private Size parseSize(String value) {
@@ -610,6 +613,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference histogram = mPreferenceGroup.findPreference(KEY_HISTOGRAM);
         ListPreference hdr = mPreferenceGroup.findPreference(KEY_HDR);
         ListPreference zoom = mPreferenceGroup.findPreference(KEY_ZOOM);
+        ListPreference bsgc = mPreferenceGroup.findPreference(KEY_BSGC_DETECTION);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -621,6 +625,13 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (!isFlashAvailable(mCameraId)) {
                 removePreference(mPreferenceGroup, KEY_FLASH_MODE);
                 mFilteredKeys.add(flashMode.getKey());
+            }
+        }
+
+        if (bsgc != null) {
+            if (!isBsgcAvailable(mCameraId)) {
+                removePreference(mPreferenceGroup, KEY_BSGC_DETECTION);
+                mFilteredKeys.add(bsgc.getKey());
             }
         }
 
@@ -761,6 +772,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (pref.getKey().equals(KEY_VIDEO_QUALITY)) {
             filterHFROptions();
             filterVideoEncoderOptions();
+        } else if (pref.getKey().equals(KEY_SCENE_MODE)) {
+            filterChromaflashPictureSizeOptions();
         }
     }
 
@@ -848,6 +861,31 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
     }
 
+    private void filterChromaflashPictureSizeOptions() {
+        String scene = getValue(SettingsManager.KEY_SCENE_MODE);
+        ListPreference picturePref = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
+        if (picturePref == null) return;
+        picturePref.reloadInitialEntriesAndEntryValues();
+        if (Integer.parseInt(scene) == SCENE_MODE_CHROMAFLASH_INT) {
+            if (filterUnsupportedOptions(picturePref, getSupportedChromaFlashPictureSize())) {
+                mFilteredKeys.add(picturePref.getKey());
+            }
+            // if picture size is setted the CIF/QVGA, modify smallest supportted size .
+            Size pictureSize = parseSize(getValue(KEY_PICTURE_SIZE));
+            if (pictureSize.getWidth() <= 352 && pictureSize.getHeight() <= 288) {
+                CharSequence[] entryValues = picturePref.getEntryValues();
+                int size = entryValues.length;
+                CharSequence smallerSize = entryValues[size -1];
+                setValue(KEY_PICTURE_SIZE, smallerSize.toString());
+            }
+        } else {
+            if (filterUnsupportedOptions(picturePref, getSupportedPictureSize(
+                    getCurrentCameraId()))) {
+                mFilteredKeys.add(picturePref.getKey());
+            }
+        }
+    }
+
     private void filterHFROptions() {
         ListPreference hfrPref = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
         if (hfrPref != null) {
@@ -857,6 +895,31 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 mFilteredKeys.add(hfrPref.getKey());
             }
         }
+    }
+
+    private List<String> getSupportedChromaFlashPictureSize() {
+        StreamConfigurationMap map = mCharacteristics.get(getCurrentCameraId()).get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size[] sizes = map.getOutputSizes(ImageFormat.JPEG);
+        List<String> res = new ArrayList<>();
+        if (sizes != null) {
+            for (int i = 0; i < sizes.length; i++) {
+                if (sizes[i].getWidth() > 352 && sizes[i].getHeight() > 288) {
+                    res.add(sizes[i].toString());
+                }
+            }
+        }
+
+        Size[] highResSizes = map.getHighResolutionOutputSizes(ImageFormat.JPEG);
+        if (highResSizes != null) {
+            for (int i = 0; i < highResSizes.length; i++) {
+                if (sizes[i].getWidth() > 352 && sizes[i].getHeight() > 288) {
+                    res.add(highResSizes[i].toString());
+                }
+            }
+        }
+
+        return res;
     }
 
     private List<String> getSupportedHighFrameRate() {
@@ -967,6 +1030,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return maxAfRegions != null && maxAfRegions > 0;
     }
 
+    public boolean isHdrScene(int id) {
+        Integer hdrScene = mCharacteristics.get(id).get(
+                CaptureModule.isHdrScene);
+        return hdrScene != null && hdrScene == 1;
+    }
+
     public boolean isFixedFocus(int id) {
         Float focusDistance = mCharacteristics.get(id).get(CameraCharacteristics
                 .LENS_INFO_MINIMUM_FOCUS_DISTANCE);
@@ -985,6 +1054,17 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 return true;
         }
         return false;
+    }
+
+    public boolean isBsgcAvailable(int id) {
+        boolean ret = false;
+        try {
+            byte bsgc_available = mCharacteristics.get(id).get(CaptureModule.bsgcAvailable);
+            ret = bsgc_available == 1;
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        return ret;
     }
 
     public boolean isFacingFront(int id) {
@@ -1102,7 +1182,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
             bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(key);
         } else {
             Log.i(TAG, "No pre-defined bitrate for "+key);
-            bitRate = profile.videoBitRate * (targetRate / profile.videoFrameRate);
+            bitRate = (profile.videoBitRate * targetRate) / profile.videoFrameRate;
         }
         return bitRate;
     }
