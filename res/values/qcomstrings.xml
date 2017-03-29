@@ -1168,5 +1168,9 @@
     <string name="pref_camera2_bsgc_entry_disable" translatable="true">Disable</string>
     <string name="pref_camera2_bsgc_entry_value_enable" translatable="false">enable</string>
     <string name="pref_camera2_bsgc_entry_value_disable" translatable="false">disable</string>
+    <string name="pref_camera2_zsl_title" translatable="true">ZSL</string>
+    <string name="pref_camera2_zsl_default" translatable="false">enable</string>
+    <string name="pref_camera2_zsl_entry_enable" translatable="true">Enable</string>
+    <string name="pref_camera2_zsl_entry_disable" translatable="true">Disable</string>
 </resources>
 
