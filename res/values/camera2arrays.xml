@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2016, The Linux Foundation. All rights reserved.
+<!-- Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
 
      Redistribution and use in source and binary forms, with or without
      modification, are permitted provided that the following conditions are
@@ -1041,4 +1041,13 @@ for time lapse recording -->
         <item>@string/pref_camera2_saveraw_value_enable</item>
     </string-array>
 
+    <string-array name="pref_camera2_bsgc_entryvalues" translatable="false">
+        <item>@string/pref_camera2_bsgc_entry_value_disable</item>
+        <item>@string/pref_camera2_bsgc_entry_value_enable</item>
+    </string-array>
+
+    <string-array name="pref_camera2_bsgc_entries" translatable="false">
+        <item>@string/pref_camera2_bsgc_entry_disable</item>
+        <item>@string/pref_camera2_bsgc_entry_enable</item>
+    </string-array>
 </resources>

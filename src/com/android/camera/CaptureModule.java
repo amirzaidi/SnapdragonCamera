@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2012 The Android Open Source Project
@@ -245,6 +245,26 @@ public class CaptureModule implements CameraModule, PhotoController,
             new CaptureResult.Key<>("org.codeaurora.qcamera3.histogram.stats", int[].class);
     public static CameraCharacteristics.Key<Integer> isHdrScene =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.stats.is_hdr_scene", Integer.class);
+
+    public static CameraCharacteristics.Key<Byte> bsgcAvailable =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.stats.bsgc_available", Byte.class);
+    public static CaptureResult.Key<byte[]> blinkDetected =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.blink_detected", byte[].class);
+    public static CaptureResult.Key<byte[]> blinkDegree =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.blink_degree", byte[].class);
+    public static CaptureResult.Key<byte[]> smileDegree =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.smile_degree", byte[].class);
+    public static CaptureResult.Key<byte[]> smileConfidence =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.smile_confidence", byte[].class);
+    public static CaptureResult.Key<byte[]> gazeAngle =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.gaze_angle", byte[].class);
+    public static CaptureResult.Key<int[]> gazeDirection =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.gaze_direction",
+                    int[].class);
+    public static CaptureResult.Key<byte[]> gazeDegree =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.gaze_degree",
+                    byte[].class);
+
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
     private int mLastResultAFState = -1;
@@ -322,6 +342,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CaptureResult mPreviewCaptureResult;
     private Face[] mPreviewFaces = null;
     private Face[] mStickyFaces = null;
+    private ExtendedFace[] mExFaces = null;
+    private ExtendedFace[] mStickyExFaces = null;
     private Rect mBayerCameraRegion;
     private Handler mCameraHandler;
     private Handler mImageAvailableHandler;
@@ -551,7 +573,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (id == getMainCameraId()) {
                 updateFocusStateChange(partialResult);
                 Face[] faces = partialResult.get(CaptureResult.STATISTICS_FACES);
-                updateFaceView(faces);
+                if (faces != null && isBsgcDetecionOn()) {
+                    updateFaceView(faces, getBsgcInfo(partialResult, faces.length));
+                } else {
+                    updateFaceView(faces, null);
+                }
             }
         }
 
@@ -563,7 +589,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (id == getMainCameraId()) {
                 updateFocusStateChange(result);
                 Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
-                updateFaceView(faces);
+                if (faces != null && isBsgcDetecionOn()) {
+                    updateFaceView(faces, getBsgcInfo(result, faces.length));
+                } else {
+                    updateFaceView(faces, null);
+                }
             }
             if (SettingsManager.getInstance().isHistogramSupport()) {
                 int[] histogramStats = result.get(CaptureModule.histogramStats);
@@ -801,6 +831,12 @@ public class CaptureModule implements CameraModule, PhotoController,
         String value = mSettingsManager.getValue(SettingsManager.KEY_CLEARSIGHT);
         if (value == null) return false;
         return isBackCamera() && getCameraMode() == DUAL_MODE && value.equals("on");
+    }
+
+    private boolean isBsgcDetecionOn() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_BSGC_DETECTION);
+        if (value == null) return false;
+        return  value.equals("enable");
     }
 
     private boolean isRawCaptureOn() {
@@ -2743,16 +2779,39 @@ public class CaptureModule implements CameraModule, PhotoController,
         return false;
     }
 
-    private void updateFaceView(final Face[] faces) {
+    private ExtendedFace[] getBsgcInfo(CaptureResult captureResult, int size) {
+        ExtendedFace []extendedFaces = new ExtendedFace[size];
+        byte[] blinkDetectedArray = captureResult.get(blinkDetected);
+        byte[] blinkDegreesArray = captureResult.get(blinkDegree);
+        int[] gazeDirectionArray = captureResult.get(gazeDirection);
+        byte[] gazeAngleArray = captureResult.get(gazeAngle);
+        byte[] smileDegreeArray = captureResult.get(smileDegree);
+        byte[] smileConfidenceArray = captureResult.get(smileConfidence);
+        for(int i=0;i<size;i++) {
+            ExtendedFace tmp = new ExtendedFace(i);
+            tmp.setBlinkDetected(blinkDetectedArray[i]);
+            tmp.setBlinkDegree(blinkDegreesArray[2*i], blinkDegreesArray[2*i+1]);
+            tmp.setGazeDirection(gazeDirectionArray[3*i], gazeDirectionArray[3*i+1], gazeDirectionArray[3*i+2]);
+            tmp.setGazeAngle(gazeAngleArray[i]);
+            tmp.setSmileDegree(smileDegreeArray[i]);
+            tmp.setSmileConfidence(smileConfidenceArray[i]);
+            extendedFaces[i] = tmp;
+        }
+        return extendedFaces;
+    }
+
+    private void updateFaceView(final Face[] faces, final ExtendedFace[] extendedFaces) {
         mPreviewFaces = faces;
+        mExFaces = extendedFaces;
         if (faces != null) {
             if (faces.length != 0) {
                 mStickyFaces = faces;
+                mStickyExFaces = extendedFaces;
             }
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    mUI.onFaceDetection(faces);
+                    mUI.onFaceDetection(faces, extendedFaces);
                 }
             });
         }
@@ -2954,17 +3013,15 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updatePictureSize() {
         String pictureSize = mSettingsManager.getValue(SettingsManager.KEY_PICTURE_SIZE);
         mPictureSize = parsePictureSize(pictureSize);
-        Point screenSize = new Point();
-        mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
         Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                 SurfaceHolder.class);
         mSupportedMaxPictureSize = prevSizes[0];
         Size[] rawSize = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                     ImageFormat.RAW10);
         mSupportedRawPictureSize = rawSize[0];
-        mPreviewSize = getOptimalPreviewSize(mPictureSize, prevSizes, screenSize.x, screenSize.y);
+        mPreviewSize = getOptimalPreviewSize(mPictureSize, prevSizes);
         Size[] thumbSizes = mSettingsManager.getSupportedThumbnailSizes(getMainCameraId());
-        mPictureThumbSize = getOptimalPreviewSize(mPictureSize, thumbSizes, 0, 0); // get largest thumb size
+        mPictureThumbSize = getOptimalPreviewSize(mPictureSize, thumbSizes); // get largest thumb size
     }
 
     public Size getThumbSize() {
@@ -2990,20 +3047,18 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void updateVideoSize() {
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         mVideoSize = parsePictureSize(videoSize);
-        Point screenSize = new Point();
-        mActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
         Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                 MediaRecorder.class);
-        mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes, screenSize.x, screenSize.y);
+        mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes);
     }
 
     private void updateVideoSnapshotSize() {
-        mVideoSnapshotSize = mPictureSize;
+        mVideoSnapshotSize = mVideoSize;
         if (is4kSize(mVideoSize) && is4kSize(mVideoSnapshotSize)) {
             mVideoSnapshotSize = getMaxPictureSizeLessThan4k();
         }
         Size[] thumbSizes = mSettingsManager.getSupportedThumbnailSizes(getMainCameraId());
-        mVideoSnapshotThumbSize = getOptimalPreviewSize(mVideoSnapshotSize, thumbSizes, 0, 0); // get largest thumb size
+        mVideoSnapshotThumbSize = getOptimalPreviewSize(mVideoSnapshotSize, thumbSizes); // get largest thumb size
     }
 
     private boolean is4kSize(Size size) {
@@ -4478,51 +4533,44 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.enableShutter(true);
     }
 
+    private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes) {
+        Point[] points = new Point[prevSizes.length];
 
-    private Size getOptimalPreviewSize(Size pictureSize, Size[] prevSizes, int screenW, int
-            screenH) {
-        if (pictureSize.getWidth() <= screenH && pictureSize.getHeight() <= screenW) {
-            return pictureSize;
+        double targetRatio = (double) pictureSize.getWidth() / pictureSize.getHeight();
+        int index = 0;
+        for (Size s : prevSizes) {
+            points[index++] = new Point(s.getWidth(), s.getHeight());
         }
-        Size optimal = prevSizes[0];
-        float ratio = (float) pictureSize.getWidth() / pictureSize.getHeight();
-        for (Size prevSize: prevSizes) {
-            float prevRatio = (float) prevSize.getWidth() / prevSize.getHeight();
-            if (Math.abs(prevRatio - ratio) < 0.01) {
-                // flip w and h
-                if (prevSize.getWidth() <= screenH && prevSize.getHeight() <= screenW &&
-                        prevSize.getWidth() <= pictureSize.getWidth() && prevSize.getHeight() <= pictureSize.getHeight()) {
-                    return prevSize;
-                } else {
-                    optimal = prevSize;
-                }
-            }
-        }
-        return optimal;
+
+        int optimalPickIndex = CameraUtil.getOptimalPreviewSize(mActivity, points, targetRatio);
+        return (optimalPickIndex == -1) ? null : prevSizes[optimalPickIndex];
     }
 
     private Size getMaxPictureSizeLessThan4k() {
         Size[] sizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(), ImageFormat.JPEG);
         float ratio = (float) mVideoSize.getWidth() / mVideoSize.getHeight();
+        Size optimalSize = null;
         for (Size size : sizes) {
-            if (!is4kSize(size)) {
-                float pictureRatio = (float) size.getWidth() / size.getHeight();
-                if (Math.abs(pictureRatio - ratio) < 0.01) {
-                    return size;
+            if (is4kSize(size)) continue;
+            float pictureRatio = (float) size.getWidth() / size.getHeight();
+            if (Math.abs(pictureRatio - ratio) > 0.01) continue;
+            if (optimalSize == null || size.getWidth() > optimalSize.getWidth()) {
+                optimalSize = size;
+            }
+        }
+
+        // Cannot find one that matches the aspect ratio. This should not happen.
+        // Ignore the requirement.
+        if (optimalSize == null) {
+            Log.w(TAG, "No picture size match the aspect ratio");
+            for (Size size : sizes) {
+                if (is4kSize(size)) continue;
+                if (optimalSize == null || size.getWidth() > optimalSize.getWidth()) {
+                    optimalSize = size;
                 }
             }
         }
-        return sizes[sizes.length - 1];
-    }
-    private Size getMaxSizeWithRatio(Size[] sizes, Size reference) {
-        float ratio = (float) reference.getWidth() / reference.getHeight();
-        for (Size size : sizes) {
-            float prevRatio = (float) size.getWidth() / size.getHeight();
-            if (Math.abs(prevRatio - ratio) < 0.01) {
-                return size;
-            }
-        }
-        return sizes[0];
+        return optimalSize;
     }
 
     public TrackingFocusRenderer getTrackingForcusRenderer() {
