@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2016, The Linux Foundation. All rights reserved.
+<!-- Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
 
      Redistribution and use in source and binary forms, with or without
      modification, are permitted provided that the following conditions are
@@ -330,6 +330,13 @@
         camera:title="@string/pref_camera2_histogram_title" />
 
     <ListPreference
+        camera:defaultValue="@string/pref_camera2_auto_hdr_default"
+        camera:entries="@array/pref_camera2_auto_hdr_entries"
+        camera:entryValues="@array/pref_camera2_auto_hdr_entryvalues"
+        camera:key="pref_camera2_auto_hdr_key"
+        camera:title="@string/pref_camera2_auto_hdr_title" />
+
+    <ListPreference
         camera:defaultValue="@string/pref_camera2_hdr_default"
         camera:entries="@array/pref_camera2_hdr_entries"
         camera:entryValues="@array/pref_camera2_hdr_entryvalues"
@@ -349,4 +356,11 @@
         camera:title="@string/pref_camera_zoom_title"
         camera:entries="@array/pref_camera_zoom_entries"
         camera:entryValues="@array/pref_camera_zoom_entryvalues" />
+
+    <ListPreference
+        camera:key="pref_camera2_bsgc_key"
+        camera:defaultValue="@string/pref_camera2_bsgc_default"
+        camera:title="@string/pref_camera2_bsgc_title"
+        camera:entries="@array/pref_camera2_bsgc_entries"
+        camera:entryValues="@array/pref_camera2_bsgc_entryvalues" />
 </PreferenceGroup>

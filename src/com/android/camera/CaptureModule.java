@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2012 The Android Open Source Project
@@ -194,6 +194,10 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
+    public static final boolean DEBUG =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
+
     MeteringRectangle[][] mAFRegions = new MeteringRectangle[MAX_NUM_CAM][];
     MeteringRectangle[][] mAERegions = new MeteringRectangle[MAX_NUM_CAM][];
     CaptureRequest.Key<Byte> BayerMonoLinkEnableKey =
@@ -239,6 +243,28 @@ public class CaptureModule implements CameraModule, PhotoController,
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.histogram.max_count", Integer.class);
     public static CaptureResult.Key<int[]> histogramStats =
             new CaptureResult.Key<>("org.codeaurora.qcamera3.histogram.stats", int[].class);
+    public static CameraCharacteristics.Key<Integer> isHdrScene =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.stats.is_hdr_scene", Integer.class);
+
+    public static CameraCharacteristics.Key<Byte> bsgcAvailable =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.stats.bsgc_available", Byte.class);
+    public static CaptureResult.Key<byte[]> blinkDetected =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.blink_detected", byte[].class);
+    public static CaptureResult.Key<byte[]> blinkDegree =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.blink_degree", byte[].class);
+    public static CaptureResult.Key<byte[]> smileDegree =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.smile_degree", byte[].class);
+    public static CaptureResult.Key<byte[]> smileConfidence =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.smile_confidence", byte[].class);
+    public static CaptureResult.Key<byte[]> gazeAngle =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.gaze_angle", byte[].class);
+    public static CaptureResult.Key<int[]> gazeDirection =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.gaze_direction",
+                    int[].class);
+    public static CaptureResult.Key<byte[]> gazeDegree =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.stats.gaze_degree",
+                    byte[].class);
+
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
     private int mLastResultAFState = -1;
@@ -316,6 +342,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private CaptureResult mPreviewCaptureResult;
     private Face[] mPreviewFaces = null;
     private Face[] mStickyFaces = null;
+    private ExtendedFace[] mExFaces = null;
+    private ExtendedFace[] mStickyExFaces = null;
     private Rect mBayerCameraRegion;
     private Handler mCameraHandler;
     private Handler mImageAvailableHandler;
@@ -376,6 +404,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private Size mSupportedMaxPictureSize;
     private Size mSupportedRawPictureSize;
 
+    private long mIsoExposureTime;
+    private int mIsoSensitivity;
 
     private class SelfieThread extends Thread {
         public void run() {
@@ -543,7 +573,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (id == getMainCameraId()) {
                 updateFocusStateChange(partialResult);
                 Face[] faces = partialResult.get(CaptureResult.STATISTICS_FACES);
-                updateFaceView(faces);
+                if (faces != null && isBsgcDetecionOn()) {
+                    updateFaceView(faces, getBsgcInfo(partialResult, faces.length));
+                } else {
+                    updateFaceView(faces, null);
+                }
             }
         }
 
@@ -555,7 +589,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (id == getMainCameraId()) {
                 updateFocusStateChange(result);
                 Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
-                updateFaceView(faces);
+                if (faces != null && isBsgcDetecionOn()) {
+                    updateFaceView(faces, getBsgcInfo(result, faces.length));
+                } else {
+                    updateFaceView(faces, null);
+                }
             }
             if (SettingsManager.getInstance().isHistogramSupport()) {
                 int[] histogramStats = result.get(CaptureModule.histogramStats);
@@ -793,6 +831,12 @@ public class CaptureModule implements CameraModule, PhotoController,
         String value = mSettingsManager.getValue(SettingsManager.KEY_CLEARSIGHT);
         if (value == null) return false;
         return isBackCamera() && getCameraMode() == DUAL_MODE && value.equals("on");
+    }
+
+    private boolean isBsgcDetecionOn() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_BSGC_DETECTION);
+        if (value == null) return false;
+        return  value.equals("enable");
     }
 
     private boolean isRawCaptureOn() {
@@ -1109,7 +1153,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
             return;
         }
-        Log.d(TAG, "setAFModeToPreview " + afMode);
+        if (DEBUG) {
+            Log.d(TAG, "setAFModeToPreview " + afMode);
+        }
         mPreviewRequestBuilder[id].set(CaptureRequest.CONTROL_AF_MODE, afMode);
         applyAFRegions(mPreviewRequestBuilder[id], id);
         applyAERegions(mPreviewRequestBuilder[id], id);
@@ -1123,7 +1169,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void setFlashModeToPreview(int id, boolean isFlashOn) {
-        Log.d(TAG, "setFlashModeToPreview " + isFlashOn);
+        if (DEBUG) {
+            Log.d(TAG, "setFlashModeToPreview " + isFlashOn);
+        }
         if (!checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
             return;
         }
@@ -1352,7 +1400,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void autoFocusTrigger(int id) {
-        Log.d(TAG, "autoFocusTrigger " + id);
+        if (DEBUG) {
+            Log.d(TAG, "autoFocusTrigger " + id);
+        }
         if (null == mActivity || null == mCameraDevice[id]
                 || !checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
             warningToast("Camera is not ready yet to take a picture.");
@@ -1368,8 +1418,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[id] = STATE_WAITING_TOUCH_FOCUS;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             setAFModeToPreview(id, mControlAFMode);
-            Message message = mCameraHandler.obtainMessage(
-                    CANCEL_TOUCH_FOCUS, Integer.valueOf(mCameraId[id]), 0);
+            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, mCameraId[id]);
             mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
         } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
@@ -1569,7 +1618,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void captureVideoSnapshot(final int id) {
-        Log.d(TAG, "captureStillPicture " + id);
+        Log.d(TAG, "captureVideoSnapshot " + id);
         try {
             if (null == mActivity || null == mCameraDevice[id] || mCurrentSession == null) {
                 warningToast("Camera is not ready yet to take a video snapshot.");
@@ -2665,7 +2714,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 || !mAutoExposureRegionSupported || !isTouchToFocusAllowed()) {
             return;
         }
-        Log.d(TAG, "onSingleTapUp " + x + " " + y);
+        if (DEBUG) {
+            Log.d(TAG, "onSingleTapUp " + x + " " + y);
+        }
         int[] newXY = {x, y};
         if (mUI.isOverControlRegion(newXY)) return;
         if (!mUI.isOverSurfaceView(newXY)) return;
@@ -2728,16 +2779,39 @@ public class CaptureModule implements CameraModule, PhotoController,
         return false;
     }
 
-    private void updateFaceView(final Face[] faces) {
+    private ExtendedFace[] getBsgcInfo(CaptureResult captureResult, int size) {
+        ExtendedFace []extendedFaces = new ExtendedFace[size];
+        byte[] blinkDetectedArray = captureResult.get(blinkDetected);
+        byte[] blinkDegreesArray = captureResult.get(blinkDegree);
+        int[] gazeDirectionArray = captureResult.get(gazeDirection);
+        byte[] gazeAngleArray = captureResult.get(gazeAngle);
+        byte[] smileDegreeArray = captureResult.get(smileDegree);
+        byte[] smileConfidenceArray = captureResult.get(smileConfidence);
+        for(int i=0;i<size;i++) {
+            ExtendedFace tmp = new ExtendedFace(i);
+            tmp.setBlinkDetected(blinkDetectedArray[i]);
+            tmp.setBlinkDegree(blinkDegreesArray[2*i], blinkDegreesArray[2*i+1]);
+            tmp.setGazeDirection(gazeDirectionArray[3*i], gazeDirectionArray[3*i+1], gazeDirectionArray[3*i+2]);
+            tmp.setGazeAngle(gazeAngleArray[i]);
+            tmp.setSmileDegree(smileDegreeArray[i]);
+            tmp.setSmileConfidence(smileConfidenceArray[i]);
+            extendedFaces[i] = tmp;
+        }
+        return extendedFaces;
+    }
+
+    private void updateFaceView(final Face[] faces, final ExtendedFace[] extendedFaces) {
         mPreviewFaces = faces;
+        mExFaces = extendedFaces;
         if (faces != null) {
             if (faces.length != 0) {
                 mStickyFaces = faces;
+                mStickyExFaces = extendedFaces;
             }
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    mUI.onFaceDetection(faces);
+                    mUI.onFaceDetection(faces, extendedFaces);
                 }
             });
         }
@@ -3852,7 +3926,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public Rect cropRegionForZoom(int id) {
-        Log.d(TAG, "cropRegionForZoom " + id);
+        if (DEBUG) {
+            Log.d(TAG, "cropRegionForZoom " + id);
+        }
         Rect activeRegion = mSettingsManager.getSensorActiveArraySize(id);
         Rect cropRegion = new Rect();
 
@@ -4026,8 +4102,16 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applySceneMode(CaptureRequest.Builder request) {
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        String autoHdr = mSettingsManager.getValue(SettingsManager.KEY_AUTO_HDR);
         if (value == null) return;
         int mode = Integer.parseInt(value);
+        if (autoHdr != null && "enable".equals(autoHdr) && "0".equals(value)) {
+            if (mSettingsManager.isHdrScene(getMainCameraId())) {
+                request.set(CaptureRequest.CONTROL_SCENE_MODE, CaptureRequest.CONTROL_SCENE_MODE_HDR);
+                request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_USE_SCENE_MODE);
+            }
+            return;
+        }
         if(getPostProcFilterId(mode) != PostProcessor.FILTER_NONE || mCaptureHDRTestEnable) {
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
             return;
@@ -4055,10 +4139,24 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (value.equals("auto")) {
             request.set(SELECT_PRIORITY, 0);
             request.set(ISO_EXP, 0L);
+            if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) == null) {
+                request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, mIsoExposureTime);
+            }
+            if (request.get(CaptureRequest.SENSOR_SENSITIVITY) == null) {
+                request.set(CaptureRequest.SENSOR_SENSITIVITY, mIsoSensitivity);
+            }
         } else {
             long intValue = SettingsManager.KEY_ISO_INDEX.get(value);
             request.set(SELECT_PRIORITY, 0);
             request.set(ISO_EXP, intValue);
+            if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) != null) {
+                mIsoExposureTime = request.get(CaptureRequest.SENSOR_EXPOSURE_TIME);
+            }
+            if (request.get(CaptureRequest.SENSOR_SENSITIVITY) != null) {
+                mIsoSensitivity = request.get(CaptureRequest.SENSOR_SENSITIVITY);
+            }
+            request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, null);
+            request.set(CaptureRequest.SENSOR_SENSITIVITY, null);
         }
     }
 
@@ -4178,7 +4276,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public void triggerFocusAtPoint(float x, float y, int id) {
-        Log.d(TAG, "triggerFocusAtPoint " + x + " " + y + " " + id);
+        if (DEBUG) {
+            Log.d(TAG, "triggerFocusAtPoint " + x + " " + y + " " + id);
+        }
         Point p = mUI.getSurfaceViewSize();
         int width = p.x;
         int height = p.y;
@@ -4192,6 +4292,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(mPaused)
             return;
 
+        if (DEBUG) {
+            Log.v(TAG, "cancelTouchFocus " + id);
+        }
         mState[id] = STATE_PREVIEW;
         mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         setAFModeToPreview(id, mControlAFMode);
@@ -4301,6 +4404,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     updateVideoFlash();
                     return;
                 case SettingsManager.KEY_FLASH_MODE:
+                case SettingsManager.KEY_AUTO_HDR:
                 case SettingsManager.KEY_SAVERAW:
                 case SettingsManager.KEY_HDR:
                     if (count == 0) restartSession(false);

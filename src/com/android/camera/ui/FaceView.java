@@ -72,7 +72,7 @@ public class FaceView extends View
 
     protected static final int MSG_SWITCH_FACES = 1;
     protected static final int SWITCH_DELAY = 70;
-    private int mDisplayRotation = 0;
+    protected int mDisplayRotation = 0;
     protected boolean mStateSwitchPending = false;
     private Handler mHandler = new Handler() {
         @Override
