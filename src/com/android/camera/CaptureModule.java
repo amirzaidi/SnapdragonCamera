@@ -4249,7 +4249,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private Surface getPreviewSurfaceForSession(int id) {
+    public Surface getPreviewSurfaceForSession(int id) {
         if (isBackCamera()) {
             if (getCameraMode() == DUAL_MODE && id == MONO_ID) {
                 return mUI.getMonoDummySurface();

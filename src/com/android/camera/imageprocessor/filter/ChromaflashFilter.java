@@ -32,8 +32,10 @@ import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.os.Handler;
 import android.util.Log;
 
@@ -155,20 +157,33 @@ public class ChromaflashFilter implements ImageFilter{
                     for (int i = 0; i < NUM_REQUIRED_IMAGE; i++) {
                         if (i == 0) {
                             captureSession.capture(builder.build(), callback, handler);
+                            waitForImage(i);
                         } else if (i == 1) { //To change the setting
                             builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.FALSE);
+                            builder.set(CaptureRequest.FLASH_MODE,
+                                    CaptureRequest.FLASH_MODE_SINGLE);
                             captureSession.capture(builder.build(), callback, handler);
                             waitForImage(i);
                         } else if (i == 2) { //To change the setting
-                            builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
-                            builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.TRUE);
-                            captureSession.capture(builder.build(), callback, handler);
-                            waitForImage(i);
+                            builder.set(CaptureRequest.CONTROL_AE_MODE,
+                                    CaptureRequest.CONTROL_AE_MODE_ON);
+                            CaptureRequest.Builder AeTunningBuilder = captureSession.getDevice().
+                                    createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                            CaptureRequest request = builder.build();
+                            for (CaptureRequest.Key key : request.getKeys()) {
+                                AeTunningBuilder.set(key, request.get(key));
+                            }
+                            AeTunningBuilder.addTarget(mModule.getPreviewSurfaceForSession(
+                                    mModule.getMainCameraId()));
+
+                            waitForAeBlock(AeTunningBuilder,builder,callback,
+                                    captureSession,handler,5);
                         } else if (i == 3) {
                             captureSession.capture(builder.build(), callback, handler);
+                            waitForImage(i);
                         } else if (i == 4) { //To change the setting
                             builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+                            builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.FALSE);
                             captureSession.capture(builder.build(), callback, handler);
                             waitForImage(i);
                         } else if (i == 5) {
@@ -187,6 +202,41 @@ public class ChromaflashFilter implements ImageFilter{
                 Thread.sleep(50);
             }
         } catch (InterruptedException e) {
+        }
+    }
+
+    private void waitForAeBlock(final CaptureRequest.Builder tuningBuilder,
+                                   final CaptureRequest.Builder captureBuilder,
+                                   final CameraCaptureSession.CaptureCallback callback,
+                                final CameraCaptureSession captureSession,
+                                final Handler handler, final int AeTunningTime) {
+        try{
+            captureSession.capture(tuningBuilder.build(),
+                    new CameraCaptureSession.CaptureCallback() {
+                private boolean mAeStateConverged = false;
+
+                @Override
+                public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
+                                               TotalCaptureResult result) {
+                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                    Log.d(TAG,"AE tunning onCaptureCompleted aeState = " + aeState);
+                    if (aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
+                        mAeStateConverged = true;
+                    }
+                    Log.d(TAG,"AE tunning completed mAeStateConverged = " + mAeStateConverged);
+                    if(!mAeStateConverged && AeTunningTime >= 2) {
+                        int resetTime = AeTunningTime - 1;
+                        waitForAeBlock(tuningBuilder,captureBuilder,callback,
+                                captureSession,handler,resetTime);
+                    } else {
+                        try{
+                            captureSession.capture(captureBuilder.build(),callback,handler);
+                        } catch (CameraAccessException e){}
+                    }
+                }
+            }, handler);
+        }catch (CameraAccessException e){
+
         }
     }
 
