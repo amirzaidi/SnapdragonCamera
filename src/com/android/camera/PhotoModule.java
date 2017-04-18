@@ -795,6 +795,16 @@ public class PhotoModule
         // Start switch camera animation. Post a message because
         // onFrameAvailable from the old camera may already exist.
         mHandler.sendEmptyMessage(SWITCH_CAMERA_START_ANIMATION);
+         mActivity.runOnUiThread(new Runnable() {
+                 public void run() {
+                         Size size = mParameters.getPreviewSize();
+                         SurfaceHolder sh = mUI.getSurfaceHolder();
+                         if ( sh != null ){
+                                 sh.setFixedSize(size.width-2, size.height-2);
+                             }
+                     }
+             });
+
     }
 
     protected void setCameraId(int cameraId) {
@@ -3011,6 +3021,11 @@ public class PhotoModule
                     @Override
                     public void onPreviewFrame(byte[] data, CameraProxy camera) {
                         mUI.hidePreviewCover();
+                        Size size = mParameters.getPreviewSize();
+                        SurfaceHolder sh = mUI.getSurfaceHolder();
+                        if ( sh != null ) {
+                            sh.setFixedSize(size.width + 2, size.height + 2);
+                        }
                     }
                 });
         mCameraDevice.startPreview();
