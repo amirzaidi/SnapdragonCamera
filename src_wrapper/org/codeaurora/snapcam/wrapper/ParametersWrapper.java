@@ -285,6 +285,7 @@ public class ParametersWrapper extends Wrapper{
                 method_setTouchAfAec = Parameters.class.getDeclaredMethod("setTouchAfAec",
                         String.class);
             }
+            method_setTouchAfAec.invoke(parameters, value);
         }catch(Exception exception){
             exception.printStackTrace();
         }
