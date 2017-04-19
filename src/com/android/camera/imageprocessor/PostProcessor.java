@@ -673,6 +673,7 @@ public class PostProcessor{
         mSaveRaw = isSaveRaw;
         if(setFilter(postFilterId) || isFlashModeOn || isTrackingFocusOn || isMakeupOn || isSelfieMirrorOn
                 || PersistUtil.getCameraZSLDisabled()
+                || "disable".equals(SettingsManager.getInstance().getValue(SettingsManager.KEY_ZSL))
                 || "enable".equals(
                          SettingsManager.getInstance().getValue(SettingsManager.KEY_AUTO_HDR))
                 || SettingsManager.getInstance().isCamera2HDRSupport()
@@ -976,6 +977,9 @@ public class PostProcessor{
                                         debugResultImage.outRoi.height(),
                                         mOrientation, null, mController.getMediaSavedListener(),
                                         mActivity.getContentResolver(), "jpeg");
+                            }
+                            if (mFilterIndex == FILTER_UBIFOCUS && numImage > 0) {
+                                mController.checkAndPlayShutterSound(mController.getMainCameraId());
                             }
                             mFilter.addImage(yBuf, vuBuf, numImage, null);
                             mImages[numImage] = image;
