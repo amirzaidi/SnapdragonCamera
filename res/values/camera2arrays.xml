@@ -431,7 +431,7 @@
         <item>@string/pref_camera_picturesize_entry_16mp_wide</item>
         <item>@string/pref_camera_picturesize_entry_13mp</item>
         <item>@string/pref_camera_picturesize_entry_12mp</item>
-        <item>@string/pref_camera_picturesize_entry_8mp</item>
+        <item>@string/pref_camera_picturesize_entry_8mp_wide</item>
         <item>@string/pref_camera_picturesize_entry_8mp</item>
         <item>@string/pref_camera_picturesize_entry_square</item>
         <item>@string/pref_camera_picturesize_entry_5mp</item>
