@@ -33,19 +33,19 @@ import android.os.SystemProperties;
 public class PersistUtil {
 
     private static final int PERSIST_MEMORY_LIMIT =
-            SystemProperties.getInt("persist.camera.perf.memlimit", 60);
+            SystemProperties.getInt("persist.sys.camera.perf.memlimit", 60);
     private static final boolean PERSIST_SKIP_MEMORY_CHECK =
-            SystemProperties.getBoolean("persist.camera.perf.skip_memck", false);
+            SystemProperties.getBoolean("persist.sys.camera.perf.skip_memck", false);
     private static final int PERSIST_LONGSHOT_SHOT_LIMIT =
-            SystemProperties.getInt("persist.camera.longshot.shotnum", 50);
+            SystemProperties.getInt("persist.sys.camera.longshot.shotnum", 50);
     private static final int PERSIST_CAMERA_PREVIEW_SIZE =
-            SystemProperties.getInt("persist.camera.preview.size", 0);
+            SystemProperties.getInt("persist.sys.camera.preview.size", 0);
     private static final boolean PERSIST_CAMERA_CAMERA2 =
-            SystemProperties.getBoolean("persist.camera.camera2", false);
+            SystemProperties.getBoolean("persist.sys.camera.camera2", false);
     private static final boolean PERSIST_CAMERA_ZSL =
-            SystemProperties.getBoolean("persist.camera.zsl.disabled", false);
+            SystemProperties.getBoolean("persist.sys.camera.zsl.disabled", false);
     private static final int PERSIST_CAMERA2_DEBUG =
-            SystemProperties.getInt("persist.camera2.debug", 0);
+            SystemProperties.getInt("persist.sys.camera2.debug", 0);
 
     public static final int CAMERA2_DEBUG_DUMP_IMAGE = 1;
     public static final int CAMERA2_DEBUG_DUMP_LOG = 2;

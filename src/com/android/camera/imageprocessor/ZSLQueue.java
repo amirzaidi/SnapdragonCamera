@@ -42,7 +42,7 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 public class ZSLQueue {
-    private static final String CIRCULAR_BUFFER_SIZE_PERSIST = "persist.camera.zsl.buffer.size";
+    private static final String CIRCULAR_BUFFER_SIZE_PERSIST = "persist.sys.camera.zsl.buffer.size";
     private static final int CIRCULAR_BUFFER_SIZE_DEFAULT = 5;
     private int mCircularBufferSize = CIRCULAR_BUFFER_SIZE_DEFAULT;
     private ImageItem[] mBuffer;
