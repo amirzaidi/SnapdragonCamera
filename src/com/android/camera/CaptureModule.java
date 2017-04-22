@@ -150,7 +150,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final int CANCEL_TOUCH_FOCUS_DELAY = PersistUtil.getCancelTouchFocusDelay();
     private static final int OPEN_CAMERA = 0;
     private static final int CANCEL_TOUCH_FOCUS = 1;
-    private static final int MAX_NUM_CAM = 3;
+    private static final int MAX_NUM_CAM = 4;
     private static final MeteringRectangle[] ZERO_WEIGHT_3A_REGION = new MeteringRectangle[]{
             new MeteringRectangle(0, 0, 0, 0, 0)};
     private static final String EXTRA_QUICK_CAPTURE =
