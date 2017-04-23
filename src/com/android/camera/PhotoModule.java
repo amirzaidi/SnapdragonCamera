@@ -221,12 +221,12 @@ public class PhotoModule
 
     private boolean mFaceDetectionStarted = false;
 
-    private static final String PERSIST_LONG_SAVE = "persist.camera.longshot.save";
-    private static final String PERSIST_PREVIEW_RESTART = "persist.camera.feature.restart";
-    private static final String PERSIST_CAPTURE_ANIMATION = "persist.camera.capture.animate";
+    private static final String PERSIST_LONG_SAVE = "persist.sys.camera.longshot.save";
+    private static final String PERSIST_PREVIEW_RESTART = "persist.sys.camera.feature.restart";
+    private static final String PERSIST_CAPTURE_ANIMATION = "persist.sys.camera.capture.animate";
     private static final boolean PERSIST_SKIP_MEM_CHECK =
-            android.os.SystemProperties.getBoolean("persist.camera.perf.skip_memck", false);
-    private static final String PERSIST_ZZHDR_ENABLE="persist.camera.zzhdr.enable";
+            android.os.SystemProperties.getBoolean("persist.sys.camera.perf.skip_memck", false);
+    private static final String PERSIST_ZZHDR_ENABLE="persist.sys.camera.zzhdr.enable";
 
     private static final int MINIMUM_BRIGHTNESS = 0;
     private static final int MAXIMUM_BRIGHTNESS = 6;
@@ -1797,7 +1797,7 @@ public class PhotoModule
 
         if (mCameraState == LONGSHOT) {
             mLongShotCaptureCountLimit = SystemProperties.getInt(
-                                    "persist.camera.longshot.shotnum", 0);
+                                    "persist.sys.camera.longshot.shotnum", 0);
             mLongShotCaptureCount = 1;
             if(mLongshotSave) {
                 mCameraDevice.takePicture(mHandler,
@@ -3985,7 +3985,7 @@ public class PhotoModule
         //value: 2 - 720x480
         //value: 3 - 1280x720
         //value: 4 - 1920x1080
-        int preview_resolution = SystemProperties.getInt("persist.camera.preview.size", 0);
+        int preview_resolution = SystemProperties.getInt("persist.sys.camera.preview.size", 0);
         switch (preview_resolution) {
             case 1: {
                 optimalSize.width = 640;

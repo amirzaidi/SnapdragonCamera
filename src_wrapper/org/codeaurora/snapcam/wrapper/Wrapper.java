@@ -39,7 +39,7 @@ import android.util.Log;
 
 public class Wrapper{
     protected final static boolean DEBUG =
-            SystemProperties.getBoolean("persist.camera.wrapper.debug", false);
+            SystemProperties.getBoolean("persist.sys.camera.wrapper.debug", false);
     protected final static String TAG = "Wrapper";
 
     protected static int getFieldValue(Field field, int def){
