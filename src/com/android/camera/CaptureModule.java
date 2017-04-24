@@ -76,6 +76,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -4684,6 +4685,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onClearSightSuccess(byte[] thumbnailBytes) {
         Log.d(TAG, "onClearSightSuccess");
+        onReleaseShutterLock();
         if(thumbnailBytes != null) mActivity.updateThumbnail(thumbnailBytes);
         mActivity.runOnUiThread(new Runnable() {
             @Override
@@ -4706,8 +4708,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         });
 
-        unlockFocus(BAYER_ID);
-        unlockFocus(MONO_ID);
+        onReleaseShutterLock();
     }
 
     /**
@@ -4861,6 +4862,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void showToast(String tips) {
         if (mToast == null) {
             mToast = Toast.makeText(mActivity, tips, Toast.LENGTH_LONG);
+            mToast.setGravity(Gravity.CENTER, 0, 0);
         }
         mToast.setText(tips);
         mToast.show();
