@@ -1136,7 +1136,6 @@ public class VideoModule implements CameraModule,
         if(mWasMute != mIsMute) {
             setMute(mIsMute, false);
         }
-        initializeVideoControl();
         showVideoSnapshotUI(false);
         installIntentFilter();
 
@@ -1153,6 +1152,7 @@ public class VideoModule implements CameraModule,
             mUI.enableShutter(true);
         }
 
+        initializeVideoControl();
         mUI.applySurfaceChange(VideoUI.SURFACE_STATUS.SURFACE_VIEW);
 
         mUI.initDisplayChangeListener();
