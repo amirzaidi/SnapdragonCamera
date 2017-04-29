@@ -46,8 +46,16 @@ public class PersistUtil {
             SystemProperties.getBoolean("persist.camera.zsl.disabled", false);
     private static final int PERSIST_CAMERA_CANCEL_TOUCHFOCUS_DELAY =
             SystemProperties.getInt("persist.camera.focus_delay", 5000);
-    private static final int PERSIST_CAMERA2_DEBUG =
-            SystemProperties.getInt("persist.camera2.debug", 0);
+    private static final int PERSIST_CAMERA_DEBUG =
+            SystemProperties.getInt("persist.camera.debug", 0);
+    private static final String PERSIST_CAMERA_STILLMORE_BRCOLR =
+            SystemProperties.get("persist.camera.stm_brcolor", "0.5");
+    private static final String PERSIST_CAMERA_STILLMORE_BRINTENSITY =
+            SystemProperties.get("persist.camera.stm_brintensity", "0.6");
+    private static final String PERSIST_CAMERA_STILLMORE_SMOOTHINGINTENSITY =
+            SystemProperties.get("persist.camera.stm_smooth", "0");
+    private static final int PERSIST_CAMERA_STILLMORE_NUM_REQUIRED_IMAGE =
+            SystemProperties.getInt("persist.camera.stm_img_nums", 5);
 
     public static final int CAMERA2_DEBUG_DUMP_IMAGE = 1;
     public static final int CAMERA2_DEBUG_DUMP_LOG = 2;
@@ -78,7 +86,29 @@ public class PersistUtil {
     }
 
     public static int getCamera2Debug() {
-        return PERSIST_CAMERA2_DEBUG;
+        return PERSIST_CAMERA_DEBUG;
+    }
+
+    public static float getStillmoreBrColor(){
+        float brColor = Float.parseFloat(PERSIST_CAMERA_STILLMORE_BRCOLR);
+        return brColor = (brColor < 0 || brColor > 1) ? 0.5f : brColor;
+    }
+
+    public static float getStillmoreBrIntensity(){
+        float brIntensity = Float.parseFloat(PERSIST_CAMERA_STILLMORE_BRINTENSITY);
+        return brIntensity = (brIntensity < 0 || brIntensity > 1) ? 0.6f : brIntensity;
+    }
+
+    public static float getStillmoreSmoothingIntensity(){
+        float smoothingIntensity = Float.parseFloat(PERSIST_CAMERA_STILLMORE_SMOOTHINGINTENSITY);
+        return smoothingIntensity = (smoothingIntensity < 0 || smoothingIntensity > 1) ?
+                0f : smoothingIntensity;
+    }
+
+    public static int getStillmoreNumRequiredImages() {
+        return (PERSIST_CAMERA_STILLMORE_NUM_REQUIRED_IMAGE < 3 ||
+                PERSIST_CAMERA_STILLMORE_NUM_REQUIRED_IMAGE > 5) ?
+                5 : PERSIST_CAMERA_STILLMORE_NUM_REQUIRED_IMAGE;
     }
 
     public static int getCancelTouchFocusDelay() {
