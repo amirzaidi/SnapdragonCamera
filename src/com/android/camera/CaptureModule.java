@@ -3131,8 +3131,13 @@ public class CaptureModule implements CameraModule, PhotoController,
             mControlAFMode = CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
             closePreviewSession();
             mFrameProcessor.onClose();
-            boolean changed = mUI.setPreviewSize(mVideoPreviewSize.getWidth(),
-                    mVideoPreviewSize.getHeight());
+
+            Size preview = mVideoPreviewSize;
+            if (mHighSpeedCapture) {
+                preview = mVideoSize;
+            }
+            boolean changed = mUI.setPreviewSize(preview.getWidth(),
+                    preview.getHeight());
             if (changed) {
                 mUI.hideSurfaceView();
                 mUI.showSurfaceView();
