@@ -230,6 +230,9 @@ public class DDMNativeEngine {
         int stream_id;
         Rect crop;
         Rect roi_map;
+        int user_zoom;
+        int stream_zoom;
+        float scale_ratio;
 
        private CamStreamCropInfo(){}
 
@@ -255,6 +258,10 @@ public class DDMNativeEngine {
            roi_map.right = roi_map.left + buffer.getInt();
            roi_map.bottom = roi_map.top + buffer.getInt();
            camStreamCropInfo.roi_map = roi_map;
+
+           camStreamCropInfo.user_zoom = buffer.getInt();
+           camStreamCropInfo.stream_zoom = buffer.getInt();
+           camStreamCropInfo.scale_ratio = buffer.getFloat();
 
            return camStreamCropInfo;
        }
