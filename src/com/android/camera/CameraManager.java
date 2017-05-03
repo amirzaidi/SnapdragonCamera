@@ -25,8 +25,10 @@ import android.hardware.Camera.Parameters;
 import android.os.Build;
 import android.os.Handler;
 import android.view.SurfaceHolder;
-import android.hardware.Camera$CameraDataCallback;
-import android.hardware.Camera$CameraMetaDataCallback;
+/* Disable_temporary
+import android.hardware.Camera.CameraDataCallback;
+import android.hardware.Camera.CameraMetaDataCallback;
+*/
 /**
  * An interface which provides possible camera device operations.
  *
@@ -178,8 +180,9 @@ public interface CameraManager {
          * Sets the metadata cb
          * @cb Metadata callback object
         */
-        public void setMetadataCb (Camera$CameraMetaDataCallback cb);
-
+        /*
+        public void setMetadataCb (Camera.CameraMetaDataCallback cb);
+        */
         /**
          * Reconnects to the camera device.
          * @see android.hardware.Camera#reconnect()
@@ -371,7 +374,9 @@ public interface CameraManager {
          *
          * @param cb   cameraDataCallback to use
          */
-        public void setHistogramMode(Camera$CameraDataCallback cb);
+        /* Disable_temporary
+        public void setHistogramMode(Camera.CameraDataCallback cb);
+        */
         /**
          * Send the Histogram Data.
          *
