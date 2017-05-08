@@ -133,12 +133,12 @@
         android:layout_width="match_parent"
         android:background="@android:color/black"
         android:visibility="gone">
-        <ImageView
+        <com.android.camera.ui.RotateImageView
             android:id="@+id/preview_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:scaleType="fitXY"/>
+            android:background="@android:color/black"
+            android:scaleType="fitCenter"/>
 
         <ImageView
             android:id="@+id/preview_play"

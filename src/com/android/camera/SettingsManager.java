@@ -149,6 +149,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
     public static final String KEY_BSGC_DETECTION = "pref_camera2_bsgc_key";
+    public static final String KEY_ZSL = "pref_camera2_zsl_key";
 
     private static final String TAG = "SnapCam_SettingsManager";
 
