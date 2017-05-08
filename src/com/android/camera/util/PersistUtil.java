@@ -47,17 +47,17 @@ public class PersistUtil {
     private static final int PERSIST_CAMERA2_DEBUG =
             SystemProperties.getInt("persist.sys.camera2.debug", 0);
     private static final int PERSIST_CAMERA_CANCEL_TOUCHFOCUS_DELAY =
-            SystemProperties.getInt("persist.camera.focus_delay", 5000);
+            SystemProperties.getInt("persist.sys.camera.focus_delay", 5000);
     private static final int PERSIST_CAMERA_DEBUG =
-            SystemProperties.getInt("persist.camera.debug", 0);
+            SystemProperties.getInt("persist.sys.camera.debug", 0);
     private static final String PERSIST_CAMERA_STILLMORE_BRCOLR =
-            SystemProperties.get("persist.camera.stm_brcolor", "0.5");
+            SystemProperties.get("persist.sys.camera.stm_brcolor", "0.5");
     private static final String PERSIST_CAMERA_STILLMORE_BRINTENSITY =
-            SystemProperties.get("persist.camera.stm_brintensity", "0.6");
+            SystemProperties.get("persist.sys.camera.stm_brintensity", "0.6");
     private static final String PERSIST_CAMERA_STILLMORE_SMOOTHINGINTENSITY =
-            SystemProperties.get("persist.camera.stm_smooth", "0");
+            SystemProperties.get("persist.sys.camera.stm_smooth", "0");
     private static final int PERSIST_CAMERA_STILLMORE_NUM_REQUIRED_IMAGE =
-            SystemProperties.getInt("persist.camera.stm_img_nums", 5);
+            SystemProperties.getInt("persist.sys.camera.stm_img_nums", 5);
 
     public static final int CAMERA2_DEBUG_DUMP_IMAGE = 1;
     public static final int CAMERA2_DEBUG_DUMP_LOG = 2;

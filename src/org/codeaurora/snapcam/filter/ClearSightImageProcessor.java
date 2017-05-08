@@ -95,6 +95,7 @@ public class ClearSightImageProcessor {
     private static final String PERSIST_DUMP_FRAMES_KEY = "persist.sys.camera.cs.dumpframes";
     private static final String PERSIST_DUMP_YUV_KEY = "persist.sys.camera.cs.dumpyuv";
     private static final String PERSIST_CS_TIMEOUT_KEY = "persist.sys.camera.cs.timeout";
+    private static final String PERSIST_DUMP_DEPTH_KEY = "persist.camera.cs.dumpdepth";
 
     private static final long DEFAULT_TIMESTAMP_THRESHOLD_MS = 10;
     private static final int DEFAULT_IMAGES_TO_BURST = 4;
