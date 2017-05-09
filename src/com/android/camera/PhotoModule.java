@@ -5009,6 +5009,10 @@ public class PhotoModule
         if (mPaused) return index;
         mZoomValue = index;
         if (mParameters == null || mCameraDevice == null) return index;
+        if ( mFocusManager != null
+                && mFocusManager.getCurrentFocusState() == FocusOverlayManager.STATE_FOCUSING ) {
+            mFocusManager.cancelAutoFocus();
+        }
         // Set zoom parameters asynchronously
         synchronized (mCameraDevice) {
             mParameters.setZoom(mZoomValue);
@@ -5021,7 +5025,10 @@ public class PhotoModule
 
     @Override
     public void onZoomChanged(float requestedZoom) {
-
+        if ( mFocusManager != null
+                && mFocusManager.getCurrentFocusState() == FocusOverlayManager.STATE_FOCUSING ) {
+            mFocusManager.cancelAutoFocus();
+        }
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -412,7 +412,7 @@ public class ClearSightNativeEngine {
 
     public static class CamSystemCalibrationData {
         private static final String[] CALIB_FMT_STRINGS = {
-            "Calibration OTP format version = %x\n",
+            "Calibration OTP format version = %d\n",
             "Main Native Sensor Resolution width = %dpx\n",
             "Main Native Sensor Resolution height = %dpx\n",
             "Main Calibration Resolution width = %dpx\n",

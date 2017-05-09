@@ -434,7 +434,7 @@ public class FocusOverlayManager {
         mHandler.removeMessages(RESET_TOUCH_FOCUS);
     }
 
-    private void cancelAutoFocus() {
+    public void cancelAutoFocus() {
         Log.v(TAG, "Cancel autofocus.");
 
         // Reset the tap area before calling mListener.cancelAutofocus.
