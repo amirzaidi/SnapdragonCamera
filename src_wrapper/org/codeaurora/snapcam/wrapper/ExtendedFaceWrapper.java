@@ -36,7 +36,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 public class ExtendedFaceWrapper extends Wrapper{
-    private final static String CLASS_NAME = "org.codeaurora.camera.ExtendedFace";
+    private final static String CLASS_NAME = "com.qualcomm.qti.camera.ExtendedFace";
     private static Class<?> mExtendFaceClass;
 
     public static boolean isExtendedFaceInstance(Object object) {
