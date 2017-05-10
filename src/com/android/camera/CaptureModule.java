@@ -76,6 +76,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -150,7 +151,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final int CANCEL_TOUCH_FOCUS_DELAY = PersistUtil.getCancelTouchFocusDelay();
     private static final int OPEN_CAMERA = 0;
     private static final int CANCEL_TOUCH_FOCUS = 1;
-    private static final int MAX_NUM_CAM = 3;
+    private static final int MAX_NUM_CAM = 4;
     private static final MeteringRectangle[] ZERO_WEIGHT_3A_REGION = new MeteringRectangle[]{
             new MeteringRectangle(0, 0, 0, 0, 0)};
     private static final String EXTRA_QUICK_CAPTURE =
@@ -4684,6 +4685,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     @Override
     public void onClearSightSuccess(byte[] thumbnailBytes) {
         Log.d(TAG, "onClearSightSuccess");
+        onReleaseShutterLock();
         if(thumbnailBytes != null) mActivity.updateThumbnail(thumbnailBytes);
         mActivity.runOnUiThread(new Runnable() {
             @Override
@@ -4706,8 +4708,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         });
 
-        unlockFocus(BAYER_ID);
-        unlockFocus(MONO_ID);
+        onReleaseShutterLock();
     }
 
     /**
@@ -4861,6 +4862,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void showToast(String tips) {
         if (mToast == null) {
             mToast = Toast.makeText(mActivity, tips, Toast.LENGTH_LONG);
+            mToast.setGravity(Gravity.CENTER, 0, 0);
         }
         mToast.setText(tips);
         mToast.show();
