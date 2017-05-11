@@ -218,6 +218,7 @@ public class SettingsActivity extends PreferenceActivity {
         updatePreference(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
         updatePreference(SettingsManager.KEY_VIDEO_ENCODER);
         updatePreference(SettingsManager.KEY_ZOOM);
+        updatePictureSizePreferenceButton();
 
         Map<String, SettingsManager.Values> map = mSettingsManager.getValuesMap();
         Set<Map.Entry<String, SettingsManager.Values>> set = map.entrySet();
@@ -265,6 +266,15 @@ public class SettingsActivity extends PreferenceActivity {
             }else {
                 pref.setEnabled(false);
             }
+        }
+    }
+
+    private void updatePictureSizePreferenceButton() {
+        Preference picturePref =  findPreference(SettingsManager.KEY_PICTURE_SIZE);
+        String sceneMode = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        if ( sceneMode != null && picturePref != null ){
+            int sceneModeInt = Integer.parseInt(sceneMode);
+            picturePref.setEnabled(sceneModeInt != SettingsManager.SCENE_MODE_DUAL_INT);
         }
     }
 
