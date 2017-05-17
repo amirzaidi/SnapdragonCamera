@@ -328,10 +328,8 @@ public class PhotoModule
                     : null;
 
     private final CameraErrorCallback mErrorCallback = new CameraErrorCallback();
-    /* Disable_temporary
     private final StatsCallback mStatsCallback = new StatsCallback();
     private final MetaDataCallback mMetaDataCallback = new MetaDataCallback();
-    */
     private long mFocusStartTime;
     private long mShutterCallbackTime;
     private long mPostViewPictureCallbackTime;
@@ -1170,7 +1168,6 @@ public class PhotoModule
         }
     }
 
-    /* Disable_temporary
     private final class StatsCallback
            implements android.hardware.Camera.CameraDataCallback {
             @Override
@@ -1233,7 +1230,7 @@ public class PhotoModule
             }
             return value;
         }
-    } */
+    }
 
     private final class PostViewPictureCallback
             implements CameraPictureCallback {
@@ -1733,9 +1730,7 @@ public class PhotoModule
         if(mHiston) {
             if (mSnapshotMode != CameraInfoWrapper.CAMERA_SUPPORT_MODE_ZSL) {
                 mHiston = false;
-                /* Disable_temporary
                 mCameraDevice.setHistogramMode(null);
-                */
             }
             mActivity.runOnUiThread(new Runnable() {
                 public void run() {
@@ -3615,9 +3610,7 @@ public class PhotoModule
                     }
                 });
                 mParameters.setSceneMode("asd");
-                /* Disable_temporary
                 mCameraDevice.setMetadataCb(mMetaDataCallback);
-                */
             }
             else {
                 mAutoHdrEnable = false;
@@ -3719,9 +3712,7 @@ public class PhotoModule
                         }
                     }
                 });
-                /* Disable_temporary
                 mCameraDevice.setHistogramMode(mStatsCallback);
-                */
                 mHiston = true;
             } else {
                 mHiston = false;
@@ -3731,9 +3722,7 @@ public class PhotoModule
                              mGraphView.setVisibility(View.INVISIBLE);
                          }
                     });
-                /* Disable_temporary
                 mCameraDevice.setHistogramMode(null);
-                */
             }
         }
 

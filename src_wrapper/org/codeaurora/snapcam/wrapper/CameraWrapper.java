@@ -46,16 +46,13 @@ import android.hardware.Camera.ShutterCallback;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-/* Disable_temporary
 import android.hardware.Camera.CameraMetaDataCallback;
 import android.hardware.Camera.CameraDataCallback;
-*/
 
 public class CameraWrapper extends Wrapper{
 
-	/* Disable_temporary
     private static Method method_setMetadataCb = null;
-    public static final void setMetadataCb(Camera camera, Camera.CameraMetaDataCallback cb){
+    public static final void setMetadataCb(Camera camera, CameraMetaDataCallback cb){
         if ( DEBUG ){
             Log.e(TAG, "" + Camera.class + " no setMetadataCb");
             return;
@@ -63,7 +60,7 @@ public class CameraWrapper extends Wrapper{
         try{
             if ( method_setMetadataCb == null ){
                 method_setMetadataCb = Camera.class.getMethod("setMetadataCb",
-                        android.hardware.Camera.CameraMetaDataCallback.class);
+                        CameraMetaDataCallback.class);
             }
             method_setMetadataCb.invoke(camera, cb);
         }catch (Exception exception){
@@ -102,7 +99,7 @@ public class CameraWrapper extends Wrapper{
         }catch (Exception exception){
             exception.printStackTrace();
         }
-    }*/
+    }
 
     private static Method method_setLongshot = null;
     public static final void setLongshot(Camera camera, boolean enable){
