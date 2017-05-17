@@ -107,7 +107,7 @@ public class VideoModule implements CameraModule,
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
-    private static final int SDCARD_SIZE_LIMIT = 4000 * 1024 * 1024;
+    private static final long SDCARD_SIZE_LIMIT = 4000 * 1024 * 1024;
 
     private static final long SHUTTER_BUTTON_TIMEOUT = 0L; // 0ms
 
