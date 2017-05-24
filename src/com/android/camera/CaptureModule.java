@@ -1739,8 +1739,10 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                 if (isClearSightOn()) {
                     if(i == getMainCameraId()) {
-                        ClearSightImageProcessor.getInstance().init(map, mPictureSize.getWidth(),
-                                mPictureSize.getHeight(), mActivity, mOnMediaSavedListener);
+//                        ClearSightImageProcessor.getInstance().init(map, mPictureSize.getWidth(),
+//                                mPictureSize.getHeight(), mActivity, mOnMediaSavedListener);
+                        ClearSightImageProcessor.getInstance().init(map, mActivity,
+                                mOnMediaSavedListener);
                         ClearSightImageProcessor.getInstance().setCallback(this);
                     }
                 } else {
