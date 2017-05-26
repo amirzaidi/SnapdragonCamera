@@ -84,6 +84,7 @@ import com.android.camera.MediaSaveService;
 import com.android.camera.MediaSaveService.OnMediaSavedListener;
 import com.android.camera.PhotoModule.NamedImages;
 import com.android.camera.PhotoModule.NamedImages.NamedEntity;
+import com.android.camera.SettingsManager;
 import com.android.camera.Storage;
 import com.android.camera.util.CameraUtil;
 
@@ -207,6 +208,17 @@ public class ClearSightImageProcessor {
             createInstance();
         }
         return mInstance;
+    }
+
+    public void init(StreamConfigurationMap map,
+                     Context context, OnMediaSavedListener mediaListener) {
+        Size maxSize = findMaxOutputSize(map);
+        int maxWidth = maxSize.getWidth();
+        int maxHeight = maxSize.getHeight();
+        SettingsManager settingsManager = SettingsManager.getInstance();
+        settingsManager.setValue(SettingsManager.KEY_PICTURE_SIZE,
+                String.valueOf(maxWidth) + "x" + String.valueOf(maxHeight));
+        init(map, maxWidth, maxHeight, context, mediaListener);
     }
 
     public void init(StreamConfigurationMap map, int width, int height,
@@ -991,7 +1003,6 @@ public class ClearSightImageProcessor {
         }
 
         private void processClearSight(NamedEntity namedEntity) {
-            mImageEncodeHandler.obtainMessage(MSG_START_CAPTURE).sendToTarget();
 
             short encodeRequest = 0;
             /* In same case, timeout will reset ClearSightNativeEngine object, so fields
@@ -1382,6 +1393,7 @@ public class ClearSightImageProcessor {
         }
 
         private void generateDepthmap() {
+            mImageEncodeHandler.obtainMessage(MSG_START_CAPTURE).sendToTarget();
             GDepth.DepthMap depthMap = null;
             int[] size = new int[2];
             if ( mDDMNativeEngine.getDepthMapSize(size) ) {
