@@ -484,8 +484,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         showFirstTimeHelp();
     }
 
-    protected void showCapturedImageForReview(byte[] jpegData, int orientation, boolean mirror) {
-        mDecodeTaskForReview = new CaptureUI.DecodeImageForReview(jpegData, orientation, mirror);
+    protected void showCapturedImageForReview(byte[] jpegData, int orientation) {
+        mDecodeTaskForReview = new CaptureUI.DecodeImageForReview(jpegData, orientation);
         mDecodeTaskForReview.execute();
         if (getCurrentIntentMode() != CaptureModule.INTENT_MODE_NORMAL) {
             if (mFilterMenuStatus == FILTER_MENU_ON) {
@@ -1737,24 +1737,18 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private class DecodeTask extends AsyncTask<Void, Void, Bitmap> {
         private final byte [] mData;
         private int mOrientation;
-        private boolean mMirror;
 
-        public DecodeTask(byte[] data, int orientation, boolean mirror) {
+        public DecodeTask(byte[] data, int orientation) {
             mData = data;
             mOrientation = orientation;
-            mMirror = mirror;
         }
 
         @Override
         protected Bitmap doInBackground(Void... params) {
             Bitmap bitmap = CameraUtil.downSample(mData, mDownSampleFactor);
             // Decode image in background.
-            if ((mOrientation != 0 || mMirror) && (bitmap != null)) {
+            if ((mOrientation != 0) && (bitmap != null)) {
                 Matrix m = new Matrix();
-                if (mMirror) {
-                    // Flip horizontally
-                    m.setScale(-1f, 1f);
-                }
                 m.preRotate(mOrientation);
                 return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m,
                         false);
@@ -1768,8 +1762,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     }
 
     private class DecodeImageForReview extends CaptureUI.DecodeTask {
-        public DecodeImageForReview(byte[] data, int orientation, boolean mirror) {
-            super(data, orientation, mirror);
+        public DecodeImageForReview(byte[] data, int orientation) {
+            super(data, orientation);
         }
 
         @Override

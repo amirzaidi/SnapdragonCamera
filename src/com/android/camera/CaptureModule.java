@@ -1295,12 +1295,11 @@ public class CaptureModule implements CameraModule, PhotoController,
         mJpegImageData = data;
     }
 
-    public void showCapturedReview(final byte[] jpegData, final int orientation,
-                                   final boolean mirror) {
+    public void showCapturedReview(final byte[] jpegData, final int orientation) {
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mUI.showCapturedImageForReview(jpegData, orientation, mirror);
+                mUI.showCapturedImageForReview(jpegData, orientation);
             }
         });
     }
@@ -1794,8 +1793,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         if (mIntentMode != CaptureModule.INTENT_MODE_NORMAL) {
                                             mJpegImageData = bytes;
                                             if (!mQuickCapture) {
-                                                showCapturedReview(bytes, orientation,
-                                                        mPostProcessor.isSelfieMirrorOn());
+                                                showCapturedReview(bytes, orientation);
                                             } else {
                                                 onCaptureDone();
                                             }
