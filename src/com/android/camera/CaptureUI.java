@@ -306,7 +306,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mMakeupSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progresValue, boolean fromUser) {
-                int value = progresValue/10*10;
+                int value = 10 + 9*progresValue/10;
                 mSettingsManager.setValue(SettingsManager.KEY_MAKEUP, value+"");
             }
             @Override
