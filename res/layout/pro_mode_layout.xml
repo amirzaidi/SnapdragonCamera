@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2016, The Linux Foundation. All rights reserved.
+<!-- Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
 
      Redistribution and use in source and binary forms, with or without
      modification, are permitted provided that the following conditions are
@@ -35,114 +35,74 @@
 
     <com.android.camera.ui.RotateLayout
         android:id="@+id/exposure_rotate_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:id="@+id/exposure_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/exposure_value"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:focusable="true"
+            android:drawableTop="@drawable/promode_exposure"
             android:gravity="center"
-            android:orientation="vertical">
+            android:layout_gravity="center"
+            android:layout_weight="1"/>
 
-            <ImageView
-                android:id="@+id/exposure"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:src="@drawable/icon_exposure" />
-
-            <TextView
-                android:id="@+id/exposure_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center" />
-        </LinearLayout>
     </com.android.camera.ui.RotateLayout>
 
     <com.android.camera.ui.RotateLayout
         android:id="@+id/manual_rotate_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:id="@+id/manual_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/manual_value"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:focusable="true"
+            android:drawableTop="@drawable/promode_manual"
             android:gravity="center"
-            android:orientation="vertical">
+            android:layout_gravity="center"
+            android:layout_weight="1" />
 
-            <ImageView
-                android:id="@+id/manual"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:src="@drawable/icon_manual" />
-
-            <TextView
-                android:id="@+id/manual_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center" />
-        </LinearLayout>
     </com.android.camera.ui.RotateLayout>
 
     <com.android.camera.ui.RotateLayout
         android:id="@+id/white_balance_rotate_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:id="@+id/white_balance_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/white_balance_value"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:focusable="true"
+            android:drawableTop="@drawable/promode_white_balance"
             android:gravity="center"
-            android:orientation="vertical">
+            android:layout_gravity="center"
+            android:layout_weight="1"/>
 
-            <ImageView
-                android:id="@+id/white_balance"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:src="@drawable/icon_white_balance" />
-
-            <TextView
-                android:id="@+id/white_balance_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center" />
-        </LinearLayout>
     </com.android.camera.ui.RotateLayout>
 
     <com.android.camera.ui.RotateLayout
         android:id="@+id/iso_rotate_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:id="@+id/iso_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/iso_value"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:drawableTop="@drawable/promode_iso"
+            android:focusable="true"
             android:gravity="center"
-            android:orientation="vertical">
+            android:layout_gravity="center"
+            android:layout_weight="1"/>
 
-            <ImageView
-                android:id="@+id/iso"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:src="@drawable/icon_iso" />
-
-            <TextView
-                android:id="@+id/iso_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center" />
-        </LinearLayout>
     </com.android.camera.ui.RotateLayout>
 
 </LinearLayout>
