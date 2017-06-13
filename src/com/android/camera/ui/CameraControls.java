@@ -1067,6 +1067,12 @@ public class CameraControls extends RotatableLayout {
         mRemainingPhotosText.setVisibility(View.GONE);
     }
 
+    public void showRemainingPhotoCnt() {
+        mHideRemainingPhoto = false;
+        mRemainingPhotos.setVisibility(View.VISIBLE);
+        mRemainingPhotosText.setVisibility(View.VISIBLE);
+    }
+
     private class ArrowTextView extends TextView {
         private static final int TEXT_SIZE = 14;
         private static final int PADDING_SIZE = 18;
