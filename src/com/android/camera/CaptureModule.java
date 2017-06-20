@@ -2306,7 +2306,6 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void updatePreviewSize() {
-        int preview_resolution = PersistUtil.getCameraPreviewSize();
         int width = mPreviewSize.getWidth();
         int height = mPreviewSize.getHeight();
 
@@ -2316,36 +2315,15 @@ public class CaptureModule implements CameraModule, PhotoController,
             width = mVideoSize.getWidth();
             height = mVideoSize.getHeight();
         }
-        switch (preview_resolution) {
-            case 1: {
-                width = 640;
-                height = 480;
-                Log.v(TAG, "Preview resolution hardcoded to 640x480");
-                break;
-            }
-            case 2: {
-                width = 720;
-                height = 480;
-                Log.v(TAG, "Preview resolution hardcoded to 720x480");
-                break;
-            }
-            case 3: {
-                width = 1280;
-                height = 720;
-                Log.v(TAG, "Preview resolution hardcoded to 1280x720");
-                break;
-            }
-            case 4: {
-                width = 1920;
-                height = 1080;
-                Log.v(TAG, "Preview resolution hardcoded to 1920x1080");
-                break;
-            }
-            default: {
-                Log.v(TAG, "Preview resolution as per Snapshot aspect ratio");
-                break;
-            }
+
+        Point previewSize = PersistUtil.getCameraPreviewSize();
+        if (previewSize != null) {
+            width = previewSize.x;
+            height = previewSize.y;
         }
+
+        Log.e(TAG, "updatePreviewSize final preview size = " + width + ", " + height);
+
         mPreviewSize = new Size(width, height);
         mUI.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
     }
