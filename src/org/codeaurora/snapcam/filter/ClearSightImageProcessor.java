@@ -1279,9 +1279,11 @@ public class ClearSightImageProcessor {
                     if(mCallback != null) mCallback.onClearSightFailure(null);
                 }
 
-                mMediaSaveService.addClearsightImage(
+                GDepth gDepth = GDepth.createGDepth(mDepthMap);
+
+                mMediaSaveService.addXmpImage(
                         clearSightBytes != null ? clearSightBytes : bayerBytes,
-                        mGImage, mDepthMap,title, date, null,
+                        mGImage, gDepth,title, date, null,
                         width, height, orientation, exif,
                         mMediaSavedListener,
                         mMediaSaveService.getContentResolver(), "jpeg");
@@ -1413,7 +1415,7 @@ public class ClearSightImageProcessor {
                     }
                     depthMap = new GDepth.DepthMap(width, height);
                     depthMap.roi = roiRect;
-                    depthMap.rawDepth = depthBuffer;
+                    depthMap.buffer = depthBuffer;
                 }else{
                     Log.e(TAG, "dualCameraGenerateDDM failure");
                 }
