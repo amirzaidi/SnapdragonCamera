@@ -85,8 +85,8 @@
     <string name="unknown" msgid="564184550182858146">"未知"</string>
     <string name="try_to_set_local_album_available_offline" msgid="3363125545009254117">"该内容已存储到本地，可以离线查看。"</string>
     <string name="please_wait" msgid="1416313324505140068">"请稍候"</string>
-    <string name="rendering_photo_sphere" msgid="3032858512989313215">"正在渲染 Photo Sphere 全景照片"</string>
-    <string name="camera_error_title" msgid="6200558085072670067">"相机发生错误"</string>
+    <string name="rendering_photo_sphere">"正在渲染全景照片"</string>
+    <string name="camera_error_title">"相机故障"</string>
     <string name="cannot_connect_camera" msgid="4311259792784598381">"无法连接到相机。"</string>
     <string name="camera_disabled" msgid="6963443549010040595">"由于安全政策的限制，相机已被禁用。"</string>
     <string name="wait" msgid="765601745709933047">"请稍候…"</string>
@@ -98,7 +98,7 @@
     <string name="pref_camera_id_title" msgid="4680648115225411185">"选择摄像头"</string>
     <string name="pref_camera_id_entry_back" msgid="6386943973628160510">"后置"</string>
     <string name="pref_camera_id_entry_front" msgid="6233067010315787044">"前置"</string>
-    <string name="pref_camera_recordlocation_title" msgid="3354956161456185749">"保存地理位置"</string>
+    <string name="pref_camera_recordlocation_title">"存储位置信息"</string>
     <string name="pref_camera_location_label" msgid="8695441802378057719">"位置信息"</string>
     <string name="pref_camera_timer_title" msgid="4728838281741571323">"倒计时器"</string>
   <plurals name="pref_camera_timer_entry">
@@ -108,6 +108,7 @@
     <!-- no translation found for pref_camera_timer_sound_default (6225207881203007747) -->
     <skip />
     <string name="pref_camera_timer_sound_title" msgid="9036987234878551217">"倒计时过程中发出提示音"</string>
+    <string name="pref_camera_savepath_default">0</string>
     <string name="setting_off" msgid="6782191065550276632">"关"</string>
     <string name="setting_on" msgid="9086728135773197891">"开"</string>
     <string name="pref_video_quality_title" msgid="5887153490982738588">"视频画质"</string>
@@ -117,10 +118,15 @@
     <string name="pref_camera_settings_category" msgid="4274141528139077830">"相机设置"</string>
     <string name="pref_camcorder_settings_category" msgid="3553148484755353397">"摄像机设置"</string>
     <string name="pref_camera_picturesize_title" msgid="686045304547541815">"照片尺寸"</string>
-    <string name="pref_camera_picturesize_entry_square">方形 (1:1)</string>
-    <string name="pref_camera_picturesize_entry_13mp" msgid="6728485576074234195">"1300万像素"</string>
-    <string name="pref_camera_picturesize_entry_8mp" msgid="7088352012301633667">"800万像素"</string>
-    <string name="pref_camera_picturesize_entry_5mp" msgid="1501745661448065284">"500万像素"</string>
+    <string name="pref_camera_picturesize_entry_24mp">"24M 像素"</string>
+    <string name="pref_camera_picturesize_entry_21mp">"2100 万像素"</string>
+    <string name="pref_camera_picturesize_entry_16mp">"1600 万像素"</string>
+    <string name="pref_camera_picturesize_entry_16mp_wide">"1600 万像素 (16:9)"</string>
+    <string name="pref_camera_picturesize_entry_13mp">"1300万像素"</string>
+    <string name="pref_camera_picturesize_entry_12mp">"1200 万像素"</string>
+    <string name="pref_camera_picturesize_entry_8mp">"800万像素"</string>
+    <string name="pref_camera_picturesize_entry_square">"方形 (1:1)"</string>
+    <string name="pref_camera_picturesize_entry_5mp">"500万像素"</string>
     <string name="pref_camera_picturesize_entry_4mp_wide" msgid="3338812763544573634">"400万像素 (16:9)"</string>
     <string name="pref_camera_picturesize_entry_3mp" msgid="140799231761236311">"300万像素"</string>
     <string name="pref_camera_picturesize_entry_2mp" msgid="450006451326859328">"200万像素"</string>
@@ -148,14 +154,14 @@
     <string name="pref_camera_whitebalance_title" msgid="7962809566612868179">"白平衡"</string>
     <string name="pref_camera_whitebalance_label" msgid="7370366644738746700">"白平衡"</string>
     <string name="pref_camera_whitebalance_entry_auto" msgid="1390631794449502796">"自动"</string>
-    <string name="pref_camera_whitebalance_entry_incandescent" msgid="1140391575294372706">"白炽灯"</string>
-    <string name="pref_camera_whitebalance_entry_daylight" msgid="757833578153467254">"晴天"</string>
-    <string name="pref_camera_whitebalance_entry_fluorescent" msgid="5157027611220790970">"日光灯"</string>
+    <string name="pref_camera_whitebalance_entry_incandescent">"白炽光"</string>
+    <string name="pref_camera_whitebalance_entry_daylight">"日光"</string>
+    <string name="pref_camera_whitebalance_entry_fluorescent">"荧光"</string>
     <string name="pref_camera_whitebalance_entry_cloudy" msgid="3569589102226796875">"阴天"</string>
     <string name="pref_camera_whitebalance_label_auto" msgid="4305837287360485369">"自动"</string>
-    <string name="pref_camera_whitebalance_label_incandescent" msgid="2860805668879945185">"白炽灯"</string>
-    <string name="pref_camera_whitebalance_label_daylight" msgid="4562002095198912409">"晴天"</string>
-    <string name="pref_camera_whitebalance_label_fluorescent" msgid="10552295745391742">"日光灯"</string>
+    <string name="pref_camera_whitebalance_label_incandescent">"白炽光"</string>
+    <string name="pref_camera_whitebalance_label_daylight">"日光"</string>
+    <string name="pref_camera_whitebalance_label_fluorescent">"荧光"</string>
     <string name="pref_camera_whitebalance_label_cloudy" msgid="4880793739075193336">"阴天"</string>
     <string name="pref_camera_scenemode_title" msgid="5709932164781367066">"取景模式"</string>
     <string name="pref_camera_scenemode_entry_auto" msgid="9205644316260850379">"自动"</string>
@@ -165,12 +171,14 @@
     <string name="pref_camera_scenemode_entry_turn_hdr_plus_off" msgid="2668770361856397834">"关闭 HDR+"</string>
     <string name="pref_camera_scenemode_entry_turn_hdr_on" msgid="5232394324298489502">"开启 HDR"</string>
     <string name="pref_camera_scenemode_entry_turn_hdr_off" msgid="7694606461440250206">"关闭 HDR"</string>
-    <string name="pref_camera_scenemode_entry_action" msgid="5753183620959062015">"动作"</string>
-    <string name="pref_camera_scenemode_entry_night" msgid="3468037364159759991">"夜间"</string>
+    <string name="pref_camera_scenemode_entry_action">"运动"</string>
+    <string name="pref_camera_scenemode_entry_night">"夜景"</string>
     <string name="pref_camera_scenemode_entry_sunset" msgid="5884302914893488509">"日落"</string>
     <string name="pref_camera_scenemode_entry_party" msgid="401232668169066415">"派对"</string>
+    <string name="pref_camera_scenemode_entry_refocus">"UbiFocus"</string>
+    <string name="pref_camera_scenemode_entry_optizoom">"光学变焦"</string>
     <string name="pref_camera_scenemode_label_auto" msgid="2874586883608401615">"无"</string>
-    <string name="pref_camera_scenemode_label_action" msgid="1822814017595414923">"动作"</string>
+    <string name="pref_camera_scenemode_label_action">"运动"</string>
     <string name="pref_camera_scenemode_label_night" msgid="7764371228088101131">"夜景"</string>
     <string name="pref_camera_scenemode_label_sunset" msgid="3443610538453611123">"日落"</string>
     <string name="pref_camera_scenemode_label_party" msgid="917499272505930322">"派对"</string>
@@ -180,6 +188,13 @@
     <string name="pref_camera_countdown_label_ten" msgid="4372650985906500604">"10秒"</string>
     <string name="pref_camera_countdown_label_fifteen" msgid="8469955900530268867">"15秒"</string>
     <string name="not_selectable_in_scene_mode" msgid="3260801086980522611">"无法在取景模式下选择。"</string>
+    <string name="advanced_capture_disable_continuous_shot">"启用高级拍摄将禁用连拍功能。"</string>
+    <string name="video_quality_4k_disable_SeeMore">"在 4K 视频期间无法启用查看详情。"</string>
+    <string name="disable_CDS_during_HighQualityNoiseReduction">"高品质降噪将禁用 CDS。"</string>
+    <string name="disable_TNR_during_HighQualityNoiseReduction">"高品质降噪将禁用 TNR。"</string>
+    <string name="disable_CDS_during_SeeMore">"查看详情将禁用 CDS。"</string>
+    <string name="disable_TNR_during_SeeMore">"查看详情将禁用 TNR。"</string>
+    <string name="disable_NR_during_SeeMore">"查看详情将禁用降噪。"</string>
     <string name="pref_exposure_title" msgid="7525751789152582800">"曝光"</string>
     <string name="pref_exposure_label" msgid="2604738602400261218">"曝光"</string>
     <!-- no translation found for pref_camera_hdr_default (5054955236904902318) -->
@@ -190,7 +205,7 @@
     <string name="pref_camera_id_label_back" msgid="1645608049757733858">"前置摄像头"</string>
     <string name="pref_camera_id_label_front" msgid="349308803062874842">"后置摄像头"</string>
     <string name="dialog_ok" msgid="774141340500181131">"确定"</string>
-    <string name="spaceIsLow_content" product="default" msgid="4522771065344332702">"SD 卡空间不足。请更改画质设置，或删除部分图片或其他文件。"</string>
+    <string name="spaceIsLow_content" product="default">"SD 卡空间不足。请更改画质设置，或者删除部分图片或其他文件。"</string>
     <string name="video_reach_size_limit" msgid="9196836111505731836">"已达文件大小上限。"</string>
     <string name="pano_too_fast_prompt" msgid="2503148095578052177">"速度太快"</string>
     <string name="pano_dialog_prepare_preview" msgid="4445235163599534263">"正在生成全景图"</string>
@@ -200,16 +215,16 @@
     <string name="pano_dialog_waiting_previous" msgid="2646847402743245320">"正在等待上一幅全景图处理完毕"</string>
     <string name="pano_review_saving_indication_str" msgid="4691771283450663293">"正在保存…"</string>
     <string name="pano_review_rendering" msgid="2743087719999377155">"正在渲染全景图"</string>
-    <string name="tap_to_focus" msgid="3519718196270593468">"触摸即可对焦。"</string>
+    <string name="tap_to_focus">"触摸对焦。"</string>
     <string name="pref_video_effect_title" msgid="594570613431209010">"效果"</string>
     <string name="effect_none" msgid="3102797925086872636">"无"</string>
-    <string name="effect_goofy_face_squeeze" msgid="1362021544829311452">"哈哈镜"</string>
+    <string name="effect_goofy_face_squeeze">"面部哈哈镜"</string>
     <string name="effect_goofy_face_big_eyes" msgid="9220121522816762649">"大眼睛"</string>
     <string name="effect_goofy_face_big_mouth" msgid="2064008284599552683">"大嘴巴"</string>
     <string name="effect_goofy_face_small_mouth" msgid="3105849596912069261">"小嘴巴"</string>
     <string name="effect_goofy_face_big_nose" msgid="6936976307035428164">"大鼻子"</string>
     <string name="effect_goofy_face_small_eyes" msgid="558042211252573238">"小眼睛"</string>
-    <string name="effect_backdropper_space" msgid="9133825395915767627">"太空"</string>
+    <string name="effect_backdropper_space">"太空背景"</string>
     <string name="effect_backdropper_sunset" msgid="7354053769863638757">"日落"</string>
     <string name="effect_backdropper_gallery" msgid="2333888391153564920">"您的视频"</string>
     <string name="video_snapshot_hint" msgid="2707403607250082339">"在录制视频过程中，触摸一下即可拍一张照片。"</string>
@@ -225,7 +240,7 @@
     <string name="accessibility_switch_to_camera" msgid="4518394037216725274">"切换到拍照模式"</string>
     <string name="accessibility_switch_to_video" msgid="8174781871592793967">"切换到视频模式"</string>
     <string name="accessibility_switch_to_panorama" msgid="8322228859117808037">"切换到全景模式"</string>
-    <string name="accessibility_switch_to_photo_sphere" msgid="5803217570370854725">"切换到 Photo Sphere 模式"</string>
+    <string name="accessibility_switch_to_photo_sphere">"切换到全景照片"</string>
     <string name="accessibility_switch_to_gcam" msgid="7562625440767034695">"切换到高画质模式"</string>
     <string name="accessibility_review_cancel" msgid="5462850829869569629">"取消"</string>
     <string name="accessibility_review_ok" msgid="3486465319880320270">"完成"</string>
@@ -301,11 +316,11 @@
     <string name="pref_camera_focusmode_entry_continuous">连续对焦</string>
     <string name="pref_camera_scenemode_entry_portrait">"肖像"</string>
     <string name="pref_camera_scenemode_entry_landscape">"风景"</string>
-    <string name="pref_camera_scenemode_entry_night_portrait">"夜景肖像"</string>
+    <string name="pref_camera_scenemode_entry_night_portrait">"夜间人像"</string>
     <string name="pref_camera_scenemode_entry_theatre">"剧院"</string>
     <string name="pref_camera_scenemode_entry_beach">"海滩"</string>
     <string name="pref_camera_scenemode_entry_snow">"雪景"</string>
-    <string name="pref_camera_scenemode_entry_steadyphoto">"稳定"</string>
+    <string name="pref_camera_scenemode_entry_steadyphoto">"防抖"</string>
     <string name="pref_camera_scenemode_entry_fireworks">"焰火"</string>
     <string name="pref_camera_scenemode_entry_sports">"运动"</string>
     <string name="pref_camera_scenemode_entry_candlelight">"烛光"</string>
@@ -409,11 +424,15 @@
    <!-- Settings screen, Anti Banding title -->
     <string name="pref_camera_antibanding_title">"反带效应"</string>
    <!-- Settings screen, Anti Banding entries -->
-    <string name="pref_camera_antibanding_entry_0">"关"</string>
-    <string name="pref_camera_antibanding_entry_3">"自动"</string>
+    <string name="pref_camera_antibanding_entry_0">"关闭"</string>
+     <string name="pref_camera_antibanding_entry_1">"50 Hz"</string>
+     <string name="pref_camera_antibanding_entry_2">"60 Hz"</string>
+     <string name="pref_camera_antibanding_entry_3">"自动"</string>
+    <string name="pref_camera_filter_mode_entry_on">"开启"</string>
+    <string name="pref_camera_filter_mode_entry_off">"关闭"</string>
 
    <!-- Settings screen, Select Iso title -->
-    <string name="pref_camera_iso_title">"选择 ISO"</string>
+    <string name="pref_camera_iso_title">"ISO"</string>
    <!-- Settings screen, ISO dialog radio button choices -->
     <string name="pref_camera_iso_entry_auto">"自动"</string>
     <string name="pref_camera_iso_entry_isodeblur">"ISO 自动(HJR)"</string>
@@ -483,13 +502,13 @@
    <!-- error message -->
     <string name="error_app_unsupported_hfr">"当前分辨率下不支持高帧率视频，如需高帧率请更改视频画质"</string>
     <string name="error_app_unsupported_hfr_codec">"高帧率下仅支持H264视频编码格式，如需高帧率请更改视频编码"</string>
-    <string name="error_app_unsupported">"此编码格式不支持当前的分辨率设置，请切换至H264"</string>
+    <string name="error_app_unsupported">"当前分辨率不支持录像"</string>
     <string name="error_app_unsupported_raw">"RAW图片格式下不支持零秒快拍，已为您切换至JPEG格式"</string>
     <string name="error_app_unsupported_hsr">当前格式下不支持HSR</string>
     <!-- The message is shown in toast when the app encounters an unsupported selection for HFR/HSR mode -->
     <string name="error_app_unsupported_hfr_selection">HFR/HSR不支持DIS/延时拍摄/HDR模式</string>
     <!-- The message is shown in toast when the app encounters an unsupported resolution for DIS mode -->
-    <string name="error_app_unsupported_dis">DIS不支持当前的分辨率设置</string>
+    <string name="error_app_unsupported_dis">"图像防抖不支持的视频分辨率"</string>
 
     <string name="pref_camera_longshot_title">连拍</string>
     <string name="msg_cancel_longshot_for_limited_memory">内存不足, 取消连拍</string>
@@ -502,7 +521,7 @@
     <string name="HDR_disable_continuous_shot">"开启HDR将禁用连拍功能"</string>
 
     <!-- Toast showing non-supported functionality for flash in AE bracket -->
-    <string name="flash_aebracket_message">闪光灯不支持自动包围曝光模式</string>
+    <string name="flash_aebracket_message">自动曝光模式下不支持闪光灯</string>
 
     <string name="pref_camera_ae_bracket_hdr_title">自动包围曝光</string>
 
@@ -545,8 +564,8 @@
     <string name="text_tsmakeup_alert_continue">继续</string>
     <string name="text_tsmakeup_alert_quit">退出</string>
 
-    <string name="all_in_focus">全焦</string>
-    <string name="refocus_toast">点击此处可重新对焦照片</string>
+    <string name="all_in_focus">"全景对焦"</string>
+    <string name="refocus_toast">"要对上一张照片重新对焦，点按此处"</string>
     <string name="refocus_prompt_title">UbiFocus</string>
     <string name="refocus_prompt_message">开启UbiFocus模式后，相机会连续拍摄5张照片并将其合成一张全焦照片。您还可以事后重新对焦。</string>
 
@@ -631,12 +650,146 @@
     <string name="pref_camera_tnr_entry_enable">启用</string>
 
     <!-- Settings screen, Picture quality dialog radio button choices -->
-    <string name="pref_camera_jpegquality_entry_0">低</string>
-    <string name="pref_camera_jpegquality_entry_1">标准</string>
-    <string name="pref_camera_jpegquality_entry_2">高</string>
-
+    <string name="pref_camera_jpegquality_entry_0">"低画质"</string>
+    <string name="pref_camera_jpegquality_entry_1">"中画质"</string>
+    <string name="pref_camera_jpegquality_entry_2">"高画质"</string>
     <!-- Setting screen, shutter sound choices -->
     <string name="pref_camera_shuttersound_title">快门声音</string>
     <string name="pref_camera_shuttersound_entry_enable">开</string>
     <string name="pref_camera_shuttersound_entry_disable">关</string>
+
+    <!-- Settings screen, Power Mode title -->
+    <string name="pref_camera_powermode_title">"电源模式"</string>
+
+    <!-- Settings screen, Video encoder dialog title -->
+    <string name="pref_camera_videoencoder_dialogtitle">"视频编码器"</string>
+
+    <!-- Settings screen, Skin Tone Enhancement radio button choices -->
+    <string name="pref_camera_skinToneEnhancement_entry_enable">"启用"</string>
+    <string name="pref_camera_skinToneEnhancement_entry_disable">"停用"</string>
+
+    <!-- Settings screen, Selectable Zone Af dialog radio button choices -->
+    <string name="pref_camera_advanced_feature_entry_ubifocus">"Ubi 对焦"</string>
+    <string name="pref_camera_advanced_feature_entry_refocus">"重新聚焦"</string>
+    <string name="pref_camera_advanced_feature_entry_chromaflash">"Chroma Flash"</string>
+    <string name="pref_camera_advanced_feature_entry_optizoom">"光学变焦"</string>
+    <string name="pref_camera_advanced_feature_entry_FSSR">"FSSR"</string>
+    <string name="pref_camera_advanced_feature_entry_trueportrait">"真实肖像"</string>
+    <string name="pref_camera_advanced_feature_entry_multi_touch_focus">"多点触控对焦"</string>
+    <string name="pref_camera_advanced_feature_entry_stillmore">"还有更多"</string>
+
+    <!-- Instant Capture entry -->
+    <string name="pref_camera_instant_capture_title" translatable="true">"即时捕获"</string>
+    <string name="pref_camera_instant_capture_entry_enable" translatable="true">"启用"</string>
+    <string name="pref_camera_instant_capture_entry_disable" translatable="true">"停用"</string>
+
+    <!-- Settings screen, Selfie Flash Detection -->
+    <string name="pref_selfie_flash_title">"自拍闪光灯"</string>
+    <!-- Settings menu, Selfie Flash choices -->
+    <string name="pref_selfie_flash_entry_off">"关闭"</string>
+    <string name="pref_selfie_flash_entry_on">"开启"</string>
+
+    <!-- The message is shown in dialog when the app encounters an unsupported video profile-->
+    <string name="error_app_unsupported_profile">"不支持的视频配置文件"</string>
+
+    <string name="err_app_unsupport_ae_bracket_code">"当前应用程序不支持自动曝光"</string>
+    <!-- The messsage shown if user selects a snapshot resolution lower than the current video size. -->
+    <string name="snapshot_lower_than_video">"视频快照大小小于视频大小。最大为视频大小。请选择高于或等于当前视频大小的分辨率。 "</string>
+    <!-- The messsage shown if user selects a snapshot resolution in low power mode. -->
+    <string name="snapshotsize_low_powermode">"我们不支持低电耗模式下的照片分辨率。将拍摄视频大小快照。请针对照片大小选择高电耗模式。 "</string>
+    <!-- The messsage shown if user tries to take snapshot during D1/QCIF resolution. -->
+    <string name="snapshot_qcif_and_d1">"此分辨率仅支持视频大小快照。 "</string>
+
+    <!-- Settings screen, Select See More title -->
+    <string name="pref_camera_noise_reduction_title">"降噪"</string>
+    <!-- Settings screen, see more radio button choices -->
+    <string name="pref_camera_noise_reduction_entry_off">"关闭"</string>
+    <string name="pref_camera_noise_reduction_entry_fast">"快"</string>
+    <string name="pref_camera_noise_reduction_entry_high_quality">"高品质"</string>
+
+    <string name="pref_camera_filter_mode_title">"色效应模式"</string>
+    <!-- Settings screen, Color effect dialog radio button choices -->
+
+    <!-- Select IS title -->
+    <string name="pref_camera_dis_title">"图像防抖"</string>
+
+    <!-- Select Face Recognition title -->
+    <string name="pref_camera_facerc_title">"人脸识别"</string>
+
+    <!-- Face Recognition choices -->
+    <string name="pref_camera_facerc_entry_off">"关闭"</string>
+    <string name="pref_camera_facerc_entry_on">"开启"</string>
+
+    <!-- Settings screen, picture format dialog radio button choices -->
+    <string name="pref_camera_picture_format_entry_jpeg">Jpeg</string>
+    <string name="pref_camera_picture_format_entry_raw">"原始"</string>
+
+    <!-- Settings screen, Select Auto Scene Detection -->
+    <string name="pref_camera_scenedetect_title">"自动取景检测"</string>
+    <!-- Settings menu, auto scene detection choices -->
+    <string name="pref_camera_scenedetect_entry_off">"关闭"</string>
+    <!-- Scene detection set to on - supports backlight and snow cloudy detection. -->
+    <string name="pref_camera_scenedetect_entry_on">"开启"</string>
+    <!-- Toast showing error if invalid size selected for  time lapse  [CHAR LIMIT=65] -->
+    <string name="time_lapse_error">"延时录制的视频大小无效。"</string>
+
+    <!-- Settings screen, Selectable HDR mode title -->
+    <string name="pref_camera_hdr_mode_title">"HDR 模式"</string>
+    <!-- Settings screen, Selectable HDR mode radio button choices -->
+    <string name="pref_camera_hdr_mode_entry_sensor">"传感器 HDR"</string>
+    <string name="pref_camera_hdr_mode_entry_multi_frame">"多帧 HDR"</string>
+
+    <!-- Settings screen, Selectable HDR need 1x frame default value -->
+    <string name="pref_camera_hdr_need_1x_default">@string/pref_hdr_need_1x_value_true</string>
+
+    <!-- Settings screen, Selectable HDR need 1x frame radio button choices -->
+    <string name="pref_camera_hdr_need_1x_entry_false">@string/setting_off</string>
+    <string name="pref_camera_hdr_need_1x_entry_true">@string/setting_on</string>
+
+    <!--Menu, video rotation label-->
+    <string name="pref_camera_video_rotation_label">"视频旋转"</string>
+
+    <!-- Continous shot enable message -->
+    <string name="longshot_enable_message">"连拍模式下不支持高级功能"</string>
+    <!-- Advance features enable message -->
+    <string name="advance_feature_enable_msg">"启用高级功能时不支持连拍"</string>
+
+    <string name="text_tsmakeup_beautify_toast" translatable="true">"美化"</string>
+
+    <string name="mute_button_desc">"静音按钮"</string>
+    <!-- Help menu strings -->
+    <string name="help_menu_ok" translatable="true">"确定"</string>
+    <string name="help_menu_scene_mode_1" translatable="true">"选择"</string>
+    <string name="help_menu_scene_mode_2" translatable="true">"取景模式"</string>
+    <string name="help_menu_scene_mode_3" translatable="true">"以提升图片质量"</string>
+    <string name="help_menu_color_filter_1" translatable="true">"应用彩色"</string>
+    <string name="help_menu_color_filter_2" translatable="true">"滤镜"</string>
+    <string name="help_menu_color_filter_3" translatable="true">"以"</string>
+    <string name="help_menu_color_filter_4" translatable="true">"增强图片效果"</string>
+    <string name="help_menu_beautify_1" translatable="true">"增强肖像"</string>
+    <string name="help_menu_beautify_2" translatable="true">"(通过"</string>
+    <string name="help_menu_beautify_3" translatable="true">"美化功能)"</string>
+    <string name="help_menu_switcher_1" translatable="true">"切换"</string>
+    <string name="help_menu_switcher_2" translatable="true">"相机模式、视频模式"</string>
+    <string name="help_menu_switcher_3" translatable="true">"和全景模式"</string>
+
+    <string-array name="pref_camera2_timer_entries">
+      <item>"关闭"</item>
+      <item>"2秒"</item>
+      <item>"5秒"</item>
+      <item>"10秒"</item>
+    </string-array>
+    <string name="settings_title">"设置"</string>
+    <string name="perf_camera2_version_info" translatable="true">"版本信息"</string>
+    <string name="perf_camera2_preferences_category_general" translatable="true">"通用"</string>
+    <string name="perf_camera2_preferences_category_photo" translatable="true">"拍照"</string>
+    <string name="perf_camera2_preferences_category_video" translatable="true">"录像"</string>
+    <string name="perf_camera2_preferences_category_system" translatable="true">System</string>
+    <string name="pref_camera2_category_system">其他</string>
+    <string name="pref_camera2_restore_default">"恢复"</string>
+    <string name="pref_camera2_restore_default_hint">"相机将恢复到出厂设置"</string>
+
+    <string name="makeup_ui_ok_button" translatable="true">确定</string>
+    <string name="makeup_seekbar_low" translatable="true">低</string>
+    <string name="makeup_seekbar_high" translatable="true">高</string>
 </resources>
