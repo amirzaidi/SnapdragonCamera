@@ -3238,7 +3238,19 @@ public class PhotoModule
         else{
             if("100".equals(jpegQuality) && (pic_size.width >= 3200)){
                 //mUnsupportedJpegQuality = true;
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUI.hideRemainingPhotoCnt();
+                    }
+                });
             }else {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUI.showRemainingPhotoCnt();
+                    }
+                });
                 mParameters.setJpegQuality(JpegEncodingQualityMappings.getQualityNumber(jpegQuality));
                 int jpegFileSize = estimateJpegFileSize(pic_size, jpegQuality);
                 if (jpegFileSize != mJpegFileSizeEstimation) {
