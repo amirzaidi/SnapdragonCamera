@@ -21,6 +21,9 @@ import android.animation.Animator.AnimatorListener;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -28,13 +31,21 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.util.FloatMath;
+import android.util.Log;
+import android.util.Size;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
 
 import com.android.camera.CameraActivity;
 import com.android.camera.drawable.TextDrawable;
@@ -82,6 +93,7 @@ public class PieRenderer extends OverlayRenderer
     private static final int MSG_OPEN = 0;
     private static final int MSG_CLOSE = 1;
     private static final int MSG_OPENSUBMENU = 2;
+    private static final int MSG_MOVED = 3;
 
     protected static float CENTER = (float) Math.PI / 2;
     protected static float RAD24 = (float)(24 * Math.PI / 180);
@@ -147,25 +159,35 @@ public class PieRenderer extends OverlayRenderer
     private int mDeadZone;
     private int mAngleZone;
     private float mCenterAngle;
+    private boolean mIsBokehMode = false;
+    private TypedArray mBokehFocusResId;
+    private Bitmap mBokehFocusCircle;
+    private int mBokehFocusIndex = 0;
+    
 
     private ProgressRenderer mProgressRenderer;
 
     private Handler mHandler = new Handler() {
         public void handleMessage(Message msg) {
             switch(msg.what) {
-            case MSG_OPEN:
-                if (mListener != null) {
-                    mListener.onPieOpened(mPieCenterX, mPieCenterY);
-                }
-                break;
-            case MSG_CLOSE:
-                if (mListener != null) {
-                    mListener.onPieClosed();
-                }
-                break;
-            case MSG_OPENSUBMENU:
-                onEnterOpen();
-                break;
+                case MSG_OPEN:
+                    if (mListener != null) {
+                        mListener.onPieOpened(mPieCenterX, mPieCenterY);
+                    }
+                    break;
+                case MSG_CLOSE:
+                    if (mListener != null) {
+                        mListener.onPieClosed();
+                    }
+                    break;
+                case MSG_OPENSUBMENU:
+                    onEnterOpen();
+                    break;
+                case MSG_MOVED:
+                    if (mListener != null) {
+                        mListener.onPieMoved(mFocusX, mFocusY);
+                    }
+                    break;
             }
 
         }
@@ -176,6 +198,7 @@ public class PieRenderer extends OverlayRenderer
     static public interface PieListener {
         public void onPieOpened(int centerX, int centerY);
         public void onPieClosed();
+        public void onPieMoved(int centerX,int centerY);
     }
 
     public void setPieListener(PieListener pl) {
@@ -248,6 +271,55 @@ public class PieRenderer extends OverlayRenderer
         getRoot().addItem(item);
     }
 
+    public void setBokehMode(boolean enable) {
+        mIsBokehMode = enable;
+        if (mIsBokehMode){
+            mBokehFocusResId = getContext().getResources().obtainTypedArray(
+                    R.array.bokeh_shutter_icons);
+            int resid = mBokehFocusResId.getResourceId(mBokehFocusIndex,0);
+            mBokehFocusCircle = BitmapFactory.decodeResource(getContext().getResources(),resid);
+        } else {
+            if (mBokehFocusCircle != null)
+                mBokehFocusCircle.recycle();
+        }
+        mOverlay.update();
+    }
+
+    public void setBokehDegree(int degree) {
+        if (degree >=0 && degree <= 100) {
+            int index = (int)degree/15;
+            Log.d("ZJJ","index="+index);
+            if (mBokehFocusIndex == index)
+                return;
+            mBokehFocusIndex = index;
+            int resid = mBokehFocusResId.getResourceId(mBokehFocusIndex,0);
+            Log.d("ZJJ","resid  = "+resid );
+            if (mBokehFocusCircle != null) {
+                mBokehFocusCircle.recycle();
+            }
+            mBokehFocusCircle = BitmapFactory.decodeResource(getContext().getResources(),resid);
+            mOverlay.update();
+        }
+    }
+
+    public Size getBokehFocusSize() {
+        if (mIsBokehMode && mBokehFocusCircle != null) {
+            return new Size(mBokehFocusCircle.getWidth(),mBokehFocusCircle.getHeight());
+        }
+        return new Size(0,0);
+    }
+
+    private void drawBokehFocus(Canvas canvas) {
+        if (mBokehFocusCircle != null) {
+            float x = mFocusX-mBokehFocusCircle.getWidth()/2;
+            float y = mFocusY-mBokehFocusCircle.getHeight()/2;
+            canvas.drawBitmap(
+                    mBokehFocusCircle,x,y,new Paint());
+        }
+        mHandler.sendEmptyMessage(MSG_MOVED);
+        return;
+    }
+
     public void clearItems() {
         getRoot().clearItems();
     }
@@ -307,7 +379,12 @@ public class PieRenderer extends OverlayRenderer
                 mLabel.setText("");
             }
         }
-        setVisible(show);
+        if (mIsBokehMode) {
+            setVisible(true);
+        } else {
+            setVisible(show);
+        }
+
         mHandler.sendEmptyMessage(show ? MSG_OPEN : MSG_CLOSE);
     }
 
@@ -535,7 +612,6 @@ public class PieRenderer extends OverlayRenderer
     @Override
     public void onDraw(Canvas canvas) {
         mProgressRenderer.onDraw(canvas, mFocusX, mFocusY);
-
         float alpha = 1;
         if (mXFade != null) {
             alpha = (Float) mXFade.getAnimatedValue();
@@ -549,8 +625,12 @@ public class PieRenderer extends OverlayRenderer
             float sf = 0.9f + alpha * 0.1f;
             canvas.scale(sf, sf, mPieCenterX, mPieCenterY);
         }
-        if (mState != STATE_PIE) {
-            drawFocus(canvas);
+        if (mIsBokehMode) {
+            drawBokehFocus(canvas);
+        } else {
+            if (mState != STATE_PIE) {
+                drawFocus(canvas);
+            }
         }
         if (mState == STATE_FINISHING) {
             canvas.restoreToCount(state);
@@ -1109,7 +1189,7 @@ public class PieRenderer extends OverlayRenderer
     private class Disappear implements Runnable {
         @Override
         public void run() {
-            if (mState == STATE_PIE) return;
+            if (mState == STATE_PIE || mIsBokehMode) return;
             setVisible(false);
             mFocusX = mCenterX;
             mFocusY = mCenterY;

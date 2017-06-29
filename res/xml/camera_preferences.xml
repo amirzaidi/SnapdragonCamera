@@ -380,11 +380,13 @@
             camera:entries="@array/pref_camera_instant_capture_entries"
             camera:entryValues="@array/pref_camera_instant_capture_entry_values" />
 
-    <ListPreference
+    <IconListPreference
         camera:key="pref_camera_bokeh_mode_key"
         camera:defaultValue="@string/pref_camera_bokeh_mode_default"
         camera:title="@string/pref_camera_bokeh_mode_title"
         camera:entries="@array/pref_camera_bokeh_mode_entries"
+        camera:icons="@array/pref_camera_bokeh_icons"
+        camera:largeIcons="@array/pref_camera_bokeh_icons"
         camera:entryValues="@array/pref_camera_bokeh_mode_entry_values" />
 
     <ListPreference
