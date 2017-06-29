@@ -32,6 +32,13 @@ import android.os.SystemProperties;
 
 public class PersistUtil {
 
+    public static final int CAMERA2_DEBUG_DUMP_IMAGE = 1;
+    public static final int CAMERA2_DEBUG_DUMP_LOG = 2;
+    public static final int CAMERA2_DEBUG_DUMP_ALL = 100;
+
+    private static final int CAMERA_SENSOR_HORIZONTAL_ALIGNED = 0;
+    private static final int CAMERA_SENSOR_VERTICAL_ALIGNED = 1;
+
     private static final int PERSIST_MEMORY_LIMIT =
             SystemProperties.getInt("persist.camera.perf.memlimit", 60);
     private static final boolean PERSIST_SKIP_MEMORY_CHECK =
@@ -56,10 +63,13 @@ public class PersistUtil {
             SystemProperties.get("persist.camera.stm_smooth", "0");
     private static final int PERSIST_CAMERA_STILLMORE_NUM_REQUIRED_IMAGE =
             SystemProperties.getInt("persist.camera.stm_img_nums", 5);
-
-    public static final int CAMERA2_DEBUG_DUMP_IMAGE = 1;
-    public static final int CAMERA2_DEBUG_DUMP_LOG = 2;
-    public static final int CAMERA2_DEBUG_DUMP_ALL = 100;
+    private static final String PERSIST_CAMERA_CS_BRINTENSITY_KEY =
+            SystemProperties.get("persist.camera.sensor.brinten", "0.0");
+    private static final String PERSIST_CAMERA_CS_SMOOTH_KEY =
+            SystemProperties.get("persist.camera.sensor.smooth", "0.5");
+    private static final int PERSIST_CAMERA_SENSOR_ALIGN_KEY =
+            SystemProperties.getInt("persist.camera.sensor.align",
+                    CAMERA_SENSOR_HORIZONTAL_ALIGNED);
 
     public static int getMemoryLimit() {
         return PERSIST_MEMORY_LIMIT;
@@ -113,5 +123,17 @@ public class PersistUtil {
 
     public static int getCancelTouchFocusDelay() {
         return PERSIST_CAMERA_CANCEL_TOUCHFOCUS_DELAY;
+    }
+
+    public static float getDualCameraBrIntensity() {
+        return Float.parseFloat(PERSIST_CAMERA_CS_BRINTENSITY_KEY);
+    }
+
+    public static float getDualCameraSmoothingIntensity() {
+        return Float.parseFloat(PERSIST_CAMERA_CS_SMOOTH_KEY);
+    }
+
+    public static boolean getDualCameraSensorAlign() {
+        return PERSIST_CAMERA_SENSOR_ALIGN_KEY == CAMERA_SENSOR_VERTICAL_ALIGNED;
     }
 }

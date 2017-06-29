@@ -41,8 +41,12 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.util.Log;
 
+import com.android.camera.util.PersistUtil;
+
 public class ClearSightNativeEngine {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
     private static final String TAG = "ClearSightNativeEngine";
     static {
         try {
@@ -75,8 +79,14 @@ public class ClearSightNativeEngine {
     private ArrayList<SourceImage> mCache = new ArrayList<SourceImage>();
     private ArrayList<SourceImage> mSrcColor = new ArrayList<SourceImage>();
     private ArrayList<SourceImage> mSrcMono = new ArrayList<SourceImage>();
+    private final float mBrIntensity;
+    private final float mSmoothingIntensity;
+    private final boolean mIsVerticallyAlignedSensor;
 
     private ClearSightNativeEngine() {
+        mBrIntensity = PersistUtil.getDualCameraBrIntensity();
+        mSmoothingIntensity = PersistUtil.getDualCameraSmoothingIntensity();
+        mIsVerticallyAlignedSensor = PersistUtil.getDualCameraSensorAlign();
     }
 
     public static void createInstance() {
@@ -296,10 +306,16 @@ public class ClearSightNativeEngine {
         exposure /= 100000;
 
         Log.d(TAG, "processImage - iso: " + iso + " exposure ms: " + exposure);
-        return nativeClearSightProcessInit(numImages,
+        if (DEBUG) {
+            Log.d(TAG,"processImage - mBrIntensity :" + mBrIntensity +
+                    ", mSmoothingIntensity :" + mSmoothingIntensity +
+                    ", mIsVerticallyAlignedSensor :" + mIsVerticallyAlignedSensor);
+        }
+        return nativeClearSightProcessInit2(numImages,
                 srcColorY, srcColorVU, metadataColor, mImageWidth, mImageHeight,
                 mYStride, mVUStride, srcMonoY, metadataMono, mImageWidth, mImageHeight,
-                mYStride, mOtpCalibData, (int)exposure, iso);
+                mYStride, mOtpCalibData, (int)exposure, iso,
+                mBrIntensity, mSmoothingIntensity, mIsVerticallyAlignedSensor);
     }
 
     public boolean processImage(ClearsightImage csImage) {
@@ -326,12 +342,13 @@ public class ClearSightNativeEngine {
             int strideY, int strideVU, ByteBuffer dstY, ByteBuffer dstVU,
             float[] metadata);
 
-    private native final boolean nativeClearSightProcessInit(int numImagePairs,
+    private native final boolean nativeClearSightProcessInit2(int numImagePairs,
             ByteBuffer[] srcColorY, ByteBuffer[] srcColorVU,
             float[][] metadataColor, int srcColorWidth, int srcColorHeight,
             int srcColorStrideY, int srcColorStrideVU, ByteBuffer[] srcMonoY,
             float[][] metadataMono, int srcMonoWidth, int srcMonoHeight,
-            int srcMonoStrideY, byte[] otp, int exposureMs, int iso);
+            int srcMonoStrideY, byte[] otp, int exposureMs, int iso,
+            float brIntensity, float smoothingIntensity, boolean isVerticallyAlignedSensor);
 
     private native final boolean nativeClearSightProcess(ByteBuffer dstY,
             ByteBuffer dstVU, int dstStrideY, int dstStrideVU, int[] roiRect);

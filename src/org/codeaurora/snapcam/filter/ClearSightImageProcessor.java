@@ -1542,11 +1542,14 @@ public class ClearSightImageProcessor {
         ByteBuffer vuBuffer = planes[2].getBuffer();
         int sizeY = yBuffer.capacity();
         int sizeVU = vuBuffer.capacity();
-        byte[] data = new byte[sizeY + sizeVU];
+        int stride = image.getPlanes()[0].getRowStride();
+        int height = image.getHeight();
+        byte[] data = new byte[stride * height*3/2];
         yBuffer.rewind();
         yBuffer.get(data, 0, sizeY);
         vuBuffer.rewind();
         vuBuffer.get(data, sizeY, sizeVU);
+
         int[] strides = new int[] { planes[0].getRowStride(),
                 planes[2].getRowStride() };
 
