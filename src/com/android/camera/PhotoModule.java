@@ -86,6 +86,8 @@ import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
 import com.android.camera.util.UsageStatistics;
 import org.codeaurora.snapcam.R;
+import org.codeaurora.snapcam.filter.GDepth;
+import org.codeaurora.snapcam.filter.GImage;
 
 import android.widget.EditText;
 import android.app.AlertDialog;
@@ -266,6 +268,8 @@ public class PhotoModule
 
     private byte[] mLastJpegData;
     private int mLastJpegOrientation = 0;
+
+    private boolean mIsBokehMode = false;
 
     private Runnable mDoSnapRunnable = new Runnable() {
         @Override
@@ -1324,7 +1328,12 @@ public class PhotoModule
 
     private final class JpegPictureCallback
             implements CameraPictureCallback {
+        public static final int GDEPTH_SIZE = 1280 * 960;
         Location mLocation;
+        byte[] mBokeh;
+        byte[] mOrigin;
+        byte[] mDepth;
+        int mCallTime = 0;
 
         public JpegPictureCallback(Location loc) {
             mLocation = loc;
@@ -1332,6 +1341,19 @@ public class PhotoModule
 
         @Override
         public void onPictureTaken(byte [] jpegData, CameraProxy camera) {
+            mCallTime ++;
+            if (mIsBokehMode) {
+                if (jpegData != null && mCallTime == 1) {
+                    mBokeh = jpegData;
+                }
+                if (jpegData != null && mCallTime == 2 && mOrigin == null) {
+                    mOrigin = jpegData;
+                }
+                if (jpegData != null && mCallTime == 3) {
+                    mDepth = jpegData;
+                    jpegData = mBokeh;
+                }
+            }
             mUI.stopSelfieFlash();
             mUI.enableShutter(true);
             if (mUI.isPreviewCoverVisible()) {
@@ -1491,10 +1513,26 @@ public class PhotoModule
                         }
                         String mPictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
                          Log.d(TAG, "capture:" + title + "." + mPictureFormat);
-                            mActivity.getMediaSaveService().addImage(
-                                    jpegData, title, date, mLocation, width, height,
-                                    orientation, exif, mOnMediaSavedListener,
-                                    mContentResolver, mPictureFormat);
+                         if (mIsBokehMode) {
+                             if (jpegData != null && mCallTime == 3) {
+                                 if (mOrigin != null && mBokeh != null) {
+                                     GImage gImage = new GImage(mOrigin, "image/jpeg");
+                                     GDepth.DepthMap map= new GDepth.DepthMap(1280,960);
+                                     map.buffer = mDepth;
+                                     map.roi = new Rect(0,0,width,height);
+                                     GDepth gDepth = GDepth.createGDepth(map);
+                                     mActivity.getMediaSaveService().addXmpImage(mBokeh,gImage,
+                                             gDepth,"bokeh_"+title,date,mLocation,width,height,
+                                             orientation,exif,mOnMediaSavedListener,
+                                             mContentResolver,mPictureFormat);
+                                 }
+                             }
+                         } else {
+                             mActivity.getMediaSaveService().addImage(
+                                     jpegData, title, date, mLocation, width, height,
+                                     orientation, exif, mOnMediaSavedListener,
+                                     mContentResolver, mPictureFormat);
+                         }
                             if (mRefocus && mReceivedSnapNum == 7) {
                                  mUI.showRefocusToast(mRefocus);
                             }
@@ -1583,8 +1621,9 @@ public class PhotoModule
         public void onProgressChanged(SeekBar bar, int progress, boolean fromtouch) {
             if (mParameters != null) {
                 mParameters.set(CameraSettings.KEY_QC_BOKEH_BLUR_VALUE, progress);
+                mCameraDevice.setParameters(mParameters);
+                Log.d(TAG,"seekbar bokeh degree = "+ progress);
             }
-            Log.d(TAG,"seekbar bokeh degree = "+ progress);
         }
         public void onStopTrackingTouch(SeekBar bar) {
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -3716,6 +3755,7 @@ public class PhotoModule
 
         if (!bokehMode.equals(mActivity.getString(
                 R.string.pref_camera_bokeh_mode_entry_value_disable))) {
+            mIsBokehMode = true;
             if(!zsl.equals("on")) {
                 mParameters.setZSLMode("on");
             }
@@ -3749,6 +3789,7 @@ public class PhotoModule
                 }
             });
         } else {
+            mIsBokehMode = false;
             bokehBlurDegree = "0";
             mActivity.runOnUiThread(new Runnable() {
                 @Override
