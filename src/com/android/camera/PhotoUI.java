@@ -38,6 +38,7 @@ import android.hardware.Camera.Face;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -55,6 +56,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.android.camera.CameraPreference.OnPreferenceChangedListener;
@@ -116,6 +118,7 @@ public class PhotoUI implements PieListener,
     private CameraControls mCameraControls;
     private MenuHelp mMenuHelp;
     private AlertDialog mLocationDialog;
+    private SeekBar mBlurDegreeProgressBar;
 
     // Small indicators which show the camera settings in the viewfinder.
     private OnScreenIndicators mOnScreenIndicators;
@@ -288,6 +291,9 @@ public class PhotoUI implements PieListener,
         RotateImageView muteButton = (RotateImageView)mRootView.findViewById(R.id.mute_button);
         muteButton.setVisibility(View.GONE);
 
+        mBlurDegreeProgressBar = (SeekBar)mRootView.findViewById(R.id.blur_degree_bar);
+        mBlurDegreeProgressBar.setMax(100);
+
         mCameraControls = (CameraControls) mRootView.findViewById(R.id.camera_controls);
         ViewStub faceViewStub = (ViewStub) mRootView
                 .findViewById(R.id.face_view_stub);
@@ -307,6 +313,10 @@ public class PhotoUI implements PieListener,
         calculateMargins(size);
         mCameraControls.setMargins(mTopMargin, mBottomMargin);
         showFirstTimeHelp();
+    }
+
+    public SeekBar getBokehDegreeBar() {
+        return mBlurDegreeProgressBar;
     }
 
     private void calculateMargins(Point size) {
@@ -1119,6 +1129,28 @@ public class PhotoUI implements PieListener,
         setSwipingEnabled(true);
         if (mFaceView != null) {
             mFaceView.setBlockDraw(false);
+        }
+    }
+
+    @Override
+    public void onPieMoved(int centerX, int centerY) {
+        Size bokehCircle = mPieRenderer.getBokehFocusSize();
+        mBlurDegreeProgressBar.setX(centerX - bokehCircle.getWidth()/2);
+        mBlurDegreeProgressBar.setY(centerY + bokehCircle.getHeight()/2);
+        if (mBlurDegreeProgressBar.getVisibility() != View.VISIBLE) {
+            mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void enableBokehRender(boolean enable) {
+        if (mPieRenderer != null) {
+            mPieRenderer.setBokehMode(enable);
+        }
+    }
+
+    public void setBokehRenderDegree(int degree) {
+        if (mPieRenderer != null) {
+            mPieRenderer.setBokehDegree(degree);
         }
     }
 

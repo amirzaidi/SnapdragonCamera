@@ -59,6 +59,7 @@ public class CameraControls extends RotatableLayout {
     private View mFrontBackSwitcher;
     private View mHdrSwitcher;
     private View mTsMakeupSwitcher;
+    private View mBokehSwitcher;
     private View mIndicators;
     private View mPreview;
     private View mSceneModeSwitcher;
@@ -69,7 +70,7 @@ public class CameraControls extends RotatableLayout {
     private ArrowTextView mRefocusToast;
 
     private int mSize;
-    private static final int WIDTH_GRID = 5;
+    private static int WIDTH_GRID = 5;
     private static final int HEIGHT_GRID = 7;
     private static boolean isAnimating = false;
     private ArrayList<View> mViewList;
@@ -86,7 +87,8 @@ public class CameraControls extends RotatableLayout {
     private static final int MUTE_INDEX = 9;
     private static final int VIDEO_SHUTTER_INDEX = 10;
     private static final int EXIT_PANORAMA_INDEX = 11;
-    private static final int MAX_INDEX= 12;
+    private static final int BOKEH_INDEX = 12;
+    private static final int MAX_INDEX= 13;
     private static final int ANIME_DURATION = 300;
     private float[][] mLocX = new float[4][MAX_INDEX];
     private float[][] mLocY = new float[4][MAX_INDEX];
@@ -105,6 +107,8 @@ public class CameraControls extends RotatableLayout {
 
     private static final int LOW_REMAINING_PHOTOS = 20;
     private static final int HIGH_REMAINING_PHOTOS = 1000000;
+
+    private boolean mIsBokehMode = false;
 
     AnimatorListener outlistener = new AnimatorListener() {
         @Override
@@ -126,9 +130,11 @@ public class CameraControls extends RotatableLayout {
             } else {
                 mHdrSwitcher.setVisibility(View.INVISIBLE);
             }
+            if (mIsBokehMode) {
+                mBokehSwitcher.setVisibility(View.INVISIBLE);
+            }
             mSceneModeSwitcher.setVisibility(View.INVISIBLE);
             mFilterModeSwitcher.setVisibility(View.INVISIBLE);
-
             mSwitcher.setVisibility(View.INVISIBLE);
             mShutter.setVisibility(View.INVISIBLE);
             mVideoShutter.setVisibility(View.INVISIBLE);
@@ -151,9 +157,11 @@ public class CameraControls extends RotatableLayout {
             } else {
                 mHdrSwitcher.setVisibility(View.INVISIBLE);
             }
+            if (mIsBokehMode) {
+                mBokehSwitcher.setVisibility(View.INVISIBLE);
+            }
             mSceneModeSwitcher.setVisibility(View.INVISIBLE);
             mFilterModeSwitcher.setVisibility(View.INVISIBLE);
-
             mSwitcher.setVisibility(View.INVISIBLE);
             mShutter.setVisibility(View.INVISIBLE);
             mVideoShutter.setVisibility(View.INVISIBLE);
@@ -231,6 +239,9 @@ public class CameraControls extends RotatableLayout {
             } else {
                 mHdrSwitcher.setPressed(false);
             }
+            if (mIsBokehMode) {
+                mBokehSwitcher.setPressed(false);
+            }
             mSceneModeSwitcher.setPressed(false);
         }
 
@@ -247,6 +258,9 @@ public class CameraControls extends RotatableLayout {
         } else {
             mHdrSwitcher.setEnabled(enable);
         }
+        if (mIsBokehMode) {
+            mBokehSwitcher.setEnabled(enable);
+        }
         mPreview.setEnabled(enable);
 
     }
@@ -261,6 +275,11 @@ public class CameraControls extends RotatableLayout {
         } else {
             if (mHdrSwitcher.getVisibility() == View.VISIBLE)
                 mViewList.add(mHdrSwitcher);
+        }
+        if (mIsBokehMode) {
+            if (mBokehSwitcher.getVisibility() == View.VISIBLE) {
+                mViewList.add(mBokehSwitcher);
+            }
         }
         if (mSceneModeSwitcher.getVisibility() == View.VISIBLE)
             mViewList.add(mSceneModeSwitcher);
@@ -299,6 +318,7 @@ public class CameraControls extends RotatableLayout {
         } else {
             mHdrSwitcher = findViewById(R.id.hdr_switcher);
         }
+        mBokehSwitcher = findViewById(R.id.bokeh_switcher);
         mMenu = findViewById(R.id.menu);
         mMute = findViewById(R.id.mute_button);
         mExitPanorama = findViewById(R.id.exit_panorama);
@@ -379,7 +399,12 @@ public class CameraControls extends RotatableLayout {
 
     private void setLocation(int w, int h) {
         int rotation = getUnifiedRotation();
-        toIndex(mSwitcher, w, h, rotation, 4, 6, SWITCHER_INDEX);
+        if (mIsBokehMode) {
+            toIndex(mSwitcher, w, h, rotation, 5, 6, SWITCHER_INDEX);
+            toIndex(mBokehSwitcher,w,h,rotation,5,0,BOKEH_INDEX);
+        } else {
+            toIndex(mSwitcher, w, h, rotation, 4, 6, SWITCHER_INDEX);
+        }
         toIndex(mVideoShutter, w, h, rotation, 3, 6, VIDEO_SHUTTER_INDEX);
         toIndex(mMenu, w, h, rotation, 4, 0, MENU_INDEX);
         toIndex(mMute, w, h, rotation, 3, 0, MUTE_INDEX);
@@ -490,6 +515,9 @@ public class CameraControls extends RotatableLayout {
         } else {
             mHdrSwitcher.setX(mLocX[idx1][HDR_INDEX] + x);
         }
+        if (mIsBokehMode) {
+            mBokehSwitcher.setX(mLocX[idx1][BOKEH_INDEX] + x);
+        }
         mSceneModeSwitcher.setX(mLocX[idx1][SCENE_MODE_INDEX] + x);
         mFilterModeSwitcher.setX(mLocX[idx1][FILTER_MODE_INDEX] + x);
         mMenu.setX(mLocX[idx1][MENU_INDEX] + x);
@@ -506,6 +534,9 @@ public class CameraControls extends RotatableLayout {
             mTsMakeupSwitcher.setY(mLocY[idx1][TS_MAKEUP_INDEX] + y);
         } else {
             mHdrSwitcher.setY(mLocY[idx1][HDR_INDEX] + y);
+        }
+        if (mIsBokehMode){
+            mBokehSwitcher.setY(mLocY[idx1][BOKEH_INDEX] + y);
         }
         mSceneModeSwitcher.setY(mLocY[idx1][SCENE_MODE_INDEX] + y);
         mFilterModeSwitcher.setY(mLocY[idx1][FILTER_MODE_INDEX] + y);
@@ -529,6 +560,20 @@ public class CameraControls extends RotatableLayout {
         } else {
             mHdrSwitcher.setVisibility(status);
         }
+        if (mIsBokehMode) {
+            mBokehSwitcher.setVisibility(status);
+        }
+    }
+
+    public void setBokehMode(boolean enable) {
+        mIsBokehMode = enable;
+        if (mIsBokehMode) {
+            WIDTH_GRID = 6;
+        } else {
+            WIDTH_GRID = 5;
+            mBokehSwitcher.setVisibility(GONE);
+        }
+        requestLayout();
     }
 
     public void hideUI() {
@@ -541,6 +586,9 @@ public class CameraControls extends RotatableLayout {
             mTsMakeupSwitcher.animate().cancel();
         } else {
             mHdrSwitcher.animate().cancel();
+        }
+        if (mIsBokehMode) {
+            mBokehSwitcher.animate().cancel();
         }
         mSceneModeSwitcher.animate().cancel();
         mFilterModeSwitcher.animate().cancel();
@@ -564,6 +612,9 @@ public class CameraControls extends RotatableLayout {
                 } else {
                     mHdrSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
+                }
                 mSceneModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mMenu.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
@@ -582,6 +633,9 @@ public class CameraControls extends RotatableLayout {
                     mTsMakeupSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 } else {
                     mHdrSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
+                }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 }
                 mSceneModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
@@ -602,6 +656,9 @@ public class CameraControls extends RotatableLayout {
                 } else {
                     mHdrSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
+                }
                 mSceneModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mMenu.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
@@ -620,6 +677,9 @@ public class CameraControls extends RotatableLayout {
                     mTsMakeupSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 } else {
                     mHdrSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
+                }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 }
                 mSceneModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
@@ -648,6 +708,9 @@ public class CameraControls extends RotatableLayout {
             mTsMakeupSwitcher.animate().cancel();
         } else {
             mHdrSwitcher.animate().cancel();
+        }
+        if (mIsBokehMode) {
+            mBokehSwitcher.animate().cancel();
         }
         mSceneModeSwitcher.animate().cancel();
         mFilterModeSwitcher.animate().cancel();
@@ -683,6 +746,9 @@ public class CameraControls extends RotatableLayout {
                 } else {
                     mHdrSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
+                }
                 mSceneModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
                 mMenu.animate().translationYBy(mSize).setDuration(ANIME_DURATION);
@@ -703,6 +769,9 @@ public class CameraControls extends RotatableLayout {
                     mTsMakeupSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 } else {
                     mHdrSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
+                }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 }
                 mSceneModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(mSize).setDuration(ANIME_DURATION);
@@ -725,6 +794,9 @@ public class CameraControls extends RotatableLayout {
                 } else {
                     mHdrSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
+                }
                 mSceneModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
                 mMenu.animate().translationYBy(-mSize).setDuration(ANIME_DURATION);
@@ -745,6 +817,9 @@ public class CameraControls extends RotatableLayout {
                     mTsMakeupSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 } else {
                     mHdrSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
+                }
+                if (mIsBokehMode) {
+                    mBokehSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 }
                 mSceneModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
                 mFilterModeSwitcher.animate().translationXBy(-mSize).setDuration(ANIME_DURATION);
@@ -1024,7 +1099,7 @@ public class CameraControls extends RotatableLayout {
         mOrientation = orientation;
         View[] views = {
             mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
-            TsMakeupManager.HAS_TS_MAKEUP ? mTsMakeupSwitcher : mHdrSwitcher,
+            TsMakeupManager.HAS_TS_MAKEUP ? mTsMakeupSwitcher : mHdrSwitcher,mBokehSwitcher,
             mMenu, mShutter, mPreview, mSwitcher, mMute, mReviewRetakeButton,
             mReviewCancelButton, mReviewDoneButton, mExitPanorama
         };
@@ -1044,6 +1119,9 @@ public class CameraControls extends RotatableLayout {
         } else {
             mHdrSwitcher.setVisibility(View.INVISIBLE);
         }
+        if (mIsBokehMode) {
+            mBokehSwitcher.setVisibility(View.INVISIBLE);
+        }
         mSceneModeSwitcher.setVisibility(View.INVISIBLE);
         mFilterModeSwitcher.setVisibility(View.INVISIBLE);
         mMenu.setVisibility(View.INVISIBLE);
@@ -1055,6 +1133,9 @@ public class CameraControls extends RotatableLayout {
             mTsMakeupSwitcher.setVisibility(View.VISIBLE);
         } else {
             mHdrSwitcher.setVisibility(View.VISIBLE);
+        }
+        if (mIsBokehMode) {
+            mBokehSwitcher.setVisibility(View.VISIBLE);
         }
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
