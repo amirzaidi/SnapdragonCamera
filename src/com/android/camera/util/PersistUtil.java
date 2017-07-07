@@ -28,7 +28,10 @@
  */
 package com.android.camera.util;
 
+import android.graphics.Point;
 import android.os.SystemProperties;
+import android.text.TextUtils;
+import android.util.Log;
 
 public class PersistUtil {
 
@@ -45,8 +48,8 @@ public class PersistUtil {
             SystemProperties.getBoolean("persist.camera.perf.skip_memck", false);
     private static final int PERSIST_LONGSHOT_SHOT_LIMIT =
             SystemProperties.getInt("persist.camera.longshot.shotnum", 50);
-    private static final int PERSIST_CAMERA_PREVIEW_SIZE =
-            SystemProperties.getInt("persist.camera.preview.size", 0);
+    private static final String PERSIST_CAMERA_PREVIEW_SIZE =
+            SystemProperties.get("persist.camera.preview.size", "");
     private static final boolean PERSIST_CAMERA_CAMERA2 =
             SystemProperties.getBoolean("persist.camera.camera2", false);
     private static final boolean PERSIST_CAMERA_ZSL =
@@ -83,8 +86,17 @@ public class PersistUtil {
         return PERSIST_LONGSHOT_SHOT_LIMIT;
     }
 
-    public static int getCameraPreviewSize() {
-        return PERSIST_CAMERA_PREVIEW_SIZE;
+    public static Point getCameraPreviewSize() {
+        Point result = null;
+        if (PERSIST_CAMERA_PREVIEW_SIZE != null) {
+            String[] sourceStrArray = PERSIST_CAMERA_PREVIEW_SIZE.split("x");
+            if (sourceStrArray != null && sourceStrArray.length >= 2) {
+                result = new Point();
+                result.x = Integer.parseInt(sourceStrArray[0]);
+                result.y = Integer.parseInt(sourceStrArray[1]);
+            }
+        }
+        return result;
     }
 
     public static boolean getCamera2Mode() {

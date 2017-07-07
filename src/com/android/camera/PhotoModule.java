@@ -29,6 +29,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera.CameraInfo;
@@ -84,6 +85,7 @@ import com.android.camera.ui.RotateTextToast;
 import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
+import com.android.camera.util.PersistUtil;
 import com.android.camera.util.UsageStatistics;
 import org.codeaurora.snapcam.R;
 import org.codeaurora.snapcam.filter.GDepth;
@@ -3993,43 +3995,14 @@ public class PhotoModule
         Size optimalSize = CameraUtil.getOptimalPreviewSize(mActivity, sizes,
                 (double) size.width / size.height);
 
-        //Read Preview Resolution from adb command
-        //value: 0(default) - Default value as per snapshot aspect ratio
-        //value: 1 - 640x480
-        //value: 2 - 720x480
-        //value: 3 - 1280x720
-        //value: 4 - 1920x1080
-        int preview_resolution = SystemProperties.getInt("persist.camera.preview.size", 0);
-        switch (preview_resolution) {
-            case 1: {
-                optimalSize.width = 640;
-                optimalSize.height = 480;
-                Log.v(TAG, "Preview resolution hardcoded to 640x480");
-                break;
-            }
-            case 2: {
-                optimalSize.width = 720;
-                optimalSize.height = 480;
-                Log.v(TAG, "Preview resolution hardcoded to 720x480");
-                break;
-            }
-            case 3: {
-                optimalSize.width = 1280;
-                optimalSize.height = 720;
-                Log.v(TAG, "Preview resolution hardcoded to 1280x720");
-                break;
-            }
-            case 4: {
-                optimalSize.width = 1920;
-                optimalSize.height = 1080;
-                Log.v(TAG, "Preview resolution hardcoded to 1920x1080");
-                break;
-            }
-            default: {
-                Log.v(TAG, "Preview resolution as per Snapshot aspect ratio");
-                break;
-            }
+        Point previewSize = PersistUtil.getCameraPreviewSize();
+        if (previewSize != null) {
+            optimalSize.width = previewSize.x;
+            optimalSize.height = previewSize.y;
         }
+
+        Log.e(TAG, "updateCameraParametersPreference final preview size = "
+                + optimalSize.width + ", " + optimalSize.height);
 
         Size original = mParameters.getPreviewSize();
         if (!original.equals(optimalSize)) {
