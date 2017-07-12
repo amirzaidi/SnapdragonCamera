@@ -1453,165 +1453,163 @@ public class CaptureModule implements CameraModule, PhotoController,
         Log.d(TAG, "captureStillPicture " + id);
         mJpegImageData = null;
         mIsRefocus = false;
-        CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
-
-            @Override
-            public void onCaptureCompleted(CameraCaptureSession session,
-                                           CaptureRequest request,
-                                           TotalCaptureResult result) {
-                Log.d(TAG, "captureStillPicture onCaptureCompleted: " + id);
-            }
-
-            @Override
-            public void onCaptureFailed(CameraCaptureSession session,
-                                        CaptureRequest request,
-                                        CaptureFailure result) {
-                Log.d(TAG, "captureStillPicture onCaptureFailed: " + id);
-            }
-
-            @Override
-            public void onCaptureSequenceCompleted(CameraCaptureSession session, int
-                    sequenceId, long frameNumber) {
-                Log.d(TAG, "captureStillPicture onCaptureSequenceCompleted: " + id);
-                unlockFocus(id);
-            }
-        };
         try {
             if (null == mActivity || null == mCameraDevice[id]) {
                 warningToast("Camera is not ready yet to take a picture.");
                 return;
             }
 
-            final boolean csEnabled = isClearSightOn();
-            CaptureRequest.Builder captureBuilder;
+            CaptureRequest.Builder captureBuilder =
+                    mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
 
-            if(csEnabled) {
-                captureBuilder = ClearSightImageProcessor.getInstance().createCaptureRequest(mCameraDevice[id]);
-            } else {
-                captureBuilder = mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            }
-
-            Location location = mLocationManager.getCurrentLocation();
-            if(location != null) {
-                // make copy so that we don't alter the saved location since we may re-use it
-                location = new Location(location);
-                // workaround for Google bug. Need to convert timestamp from ms -> sec
-                location.setTime(location.getTime()/1000);
-                captureBuilder.set(CaptureRequest.JPEG_GPS_LOCATION, location);
-                Log.d(TAG, "captureStillPicture gps: " + location.toString());
-            } else {
-                Log.d(TAG, "captureStillPicture no location - getRecordLocation: " + getRecordLocation());
-            }
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, mOrientation));
-            captureBuilder.set(CaptureRequest.JPEG_THUMBNAIL_SIZE, mPictureThumbSize);
-            captureBuilder.set(CaptureRequest.JPEG_THUMBNAIL_QUALITY, (byte)80);
-            captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+            applySettingsForJpegInformation(captureBuilder, id);
             addPreviewSurface(captureBuilder, null, id);
-            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
-            captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
             VendorTagUtil.setCdsMode(captureBuilder, 2);// CDS 0-OFF, 1-ON, 2-AUTO
             applySettingsForCapture(captureBuilder, id);
 
-            if(csEnabled) {
-                applySettingsForLockExposure(captureBuilder, id);
-                checkAndPlayShutterSound(id);
-                ClearSightImageProcessor.getInstance().capture(
-                        id==BAYER_ID, mCaptureSession[id], captureBuilder, mCaptureCallbackHandler);
+            if(isClearSightOn()) {
+                captureStillPictureForClearSight(id);
             } else if(id == getMainCameraId() && mPostProcessor.isFilterOn()) { // Case of post filtering
-                applySettingsForLockExposure(captureBuilder, id);
-                checkAndPlayShutterSound(id);
-                mCaptureSession[id].stopRepeating();
-                captureBuilder.addTarget(mImageReader[id].getSurface());
-                if (mSaveRaw) {
-                    captureBuilder.addTarget(mRawImageReader[id].getSurface());
-                }
-                mPostProcessor.onStartCapturing();
-                if(mPostProcessor.isManualMode()) {
-                    mPostProcessor.manualCapture(captureBuilder, mCaptureSession[id], mCaptureCallbackHandler);
-                } else {
-                    List<CaptureRequest> captureList = mPostProcessor.setRequiredImages(captureBuilder);
-                    mCaptureSession[id].captureBurst(captureList, mPostProcessor.getCaptureCallback(), mCaptureCallbackHandler);
-                }
+                captureStillPictureForFilter(captureBuilder, id);
             } else {
                 captureBuilder.addTarget(mImageReader[id].getSurface());
                 if (mSaveRaw) {
                     captureBuilder.addTarget(mRawImageReader[id].getSurface());
                 }
                 mCaptureSession[id].stopRepeating();
-
                 if (mLongshotActive) {
-                    Log.d(TAG, "captureStillPicture capture longshot " + id);
-                    List<CaptureRequest> burstList = new ArrayList<>();
-                    for (int i = 0; i < PersistUtil.getLongshotShotLimit(); i++) {
-                        burstList.add(captureBuilder.build());
-                    }
-                    mCaptureSession[id].captureBurst(burstList, new
-                            CameraCaptureSession.CaptureCallback() {
-
-                                @Override
-                                public void onCaptureCompleted(CameraCaptureSession session,
-                                                               CaptureRequest request,
-                                                               TotalCaptureResult result) {
-                                    Log.d(TAG, "captureStillPicture Longshot onCaptureCompleted: " + id);
-                                    if (mLongshotActive) {
-                                        checkAndPlayShutterSound(id);
-                                        mActivity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                mUI.doShutterAnimation();
-                                            }
-                                        });
-                                    }
-                                }
-
-                                @Override
-                                public void onCaptureFailed(CameraCaptureSession session,
-                                                            CaptureRequest request,
-                                                            CaptureFailure result) {
-                                    Log.d(TAG, "captureStillPicture Longshot onCaptureFailed: " + id);
-                                    if (mLongshotActive) {
-                                        mActivity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                mUI.doShutterAnimation();
-                                            }
-                                        });
-                                    }
-                                }
-
-                                @Override
-                                public void onCaptureSequenceCompleted(CameraCaptureSession session, int
-                                        sequenceId, long frameNumber) {
-                                    Log.d(TAG, "captureStillPicture Longshot onCaptureSequenceCompleted: " + id);
-                                    mLongshotActive = false;
-                                    unlockFocus(id);
-                                }
-                            }, mCaptureCallbackHandler);
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mUI.enableVideo(false);
-                        }
-                    });
-
+                    captureStillPictureForLongshot(captureBuilder, id);
                 } else {
-                    checkAndPlayShutterSound(id);
-                    if(isMpoOn()) {
-                        mCaptureStartTime = System.currentTimeMillis();
-                        mMpoSaveHandler.obtainMessage(MpoSaveHandler.MSG_CONFIGURE,
-                                Long.valueOf(mCaptureStartTime)).sendToTarget();
-                    }
-                    if(mChosenImageFormat == ImageFormat.YUV_420_888 || mChosenImageFormat == ImageFormat.PRIVATE) { // Case of ZSL, FrameFilter, SelfieMirror
-                        mPostProcessor.onStartCapturing();
-                        mCaptureSession[id].capture(captureBuilder.build(), mPostProcessor.getCaptureCallback(), mCaptureCallbackHandler);
-                    } else {
-                        mCaptureSession[id].capture(captureBuilder.build(), captureCallback, mCaptureCallbackHandler);
-                    }
+                    captureStillPictureForCommon(captureBuilder, id);
                 }
             }
         } catch (CameraAccessException e) {
             Log.d(TAG, "Capture still picture has failed");
             e.printStackTrace();
+        }
+    }
+
+    private void captureStillPictureForClearSight(int id) throws CameraAccessException{
+        CaptureRequest.Builder captureBuilder =
+                ClearSightImageProcessor.getInstance().createCaptureRequest(mCameraDevice[id]);
+
+        applySettingsForJpegInformation(captureBuilder, id);
+        addPreviewSurface(captureBuilder, null, id);
+        VendorTagUtil.setCdsMode(captureBuilder, 2); // CDS 0-OFF, 1-ON, 2-AUTO
+        applySettingsForCapture(captureBuilder, id);
+        applySettingsForLockExposure(captureBuilder, id);
+        checkAndPlayShutterSound(id);
+        ClearSightImageProcessor.getInstance().capture(
+                id==BAYER_ID, mCaptureSession[id], captureBuilder, mCaptureCallbackHandler);
+    }
+
+    private void captureStillPictureForFilter(CaptureRequest.Builder captureBuilder, int id) throws CameraAccessException{
+        applySettingsForLockExposure(captureBuilder, id);
+        checkAndPlayShutterSound(id);
+        mCaptureSession[id].stopRepeating();
+        captureBuilder.addTarget(mImageReader[id].getSurface());
+        if (mSaveRaw) {
+            captureBuilder.addTarget(mRawImageReader[id].getSurface());
+        }
+        mPostProcessor.onStartCapturing();
+        if(mPostProcessor.isManualMode()) {
+            mPostProcessor.manualCapture(captureBuilder, mCaptureSession[id], mCaptureCallbackHandler);
+        } else {
+            List<CaptureRequest> captureList = mPostProcessor.setRequiredImages(captureBuilder);
+            mCaptureSession[id].captureBurst(captureList, mPostProcessor.getCaptureCallback(), mCaptureCallbackHandler);
+        }
+    }
+
+    private void captureStillPictureForLongshot(CaptureRequest.Builder captureBuilder, int id) throws CameraAccessException{
+        Log.d(TAG, "captureStillPictureForLongshot " + id);
+        List<CaptureRequest> burstList = new ArrayList<>();
+        for (int i = 0; i < PersistUtil.getLongshotShotLimit(); i++) {
+            burstList.add(captureBuilder.build());
+        }
+        mCaptureSession[id].captureBurst(burstList, new
+                CameraCaptureSession.CaptureCallback() {
+
+                    @Override
+                    public void onCaptureCompleted(CameraCaptureSession session,
+                                                   CaptureRequest request,
+                                                   TotalCaptureResult result) {
+                        Log.d(TAG, "captureStillPictureForLongshot onCaptureCompleted: " + id);
+                        if (mLongshotActive) {
+                            checkAndPlayShutterSound(id);
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mUI.doShutterAnimation();
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onCaptureFailed(CameraCaptureSession session,
+                                                CaptureRequest request,
+                                                CaptureFailure result) {
+                        Log.d(TAG, "captureStillPictureForLongshot onCaptureFailed: " + id);
+                        if (mLongshotActive) {
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mUI.doShutterAnimation();
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                            sequenceId, long frameNumber) {
+                        Log.d(TAG, "captureStillPictureForLongshot onCaptureSequenceCompleted: " + id);
+                        mLongshotActive = false;
+                        unlockFocus(id);
+                    }
+                }, mCaptureCallbackHandler);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mUI.enableVideo(false);
+            }
+        });
+    }
+
+    private void captureStillPictureForCommon(CaptureRequest.Builder captureBuilder, int id) throws CameraAccessException{
+        checkAndPlayShutterSound(id);
+        if(isMpoOn()) {
+            mCaptureStartTime = System.currentTimeMillis();
+            mMpoSaveHandler.obtainMessage(MpoSaveHandler.MSG_CONFIGURE,
+                    Long.valueOf(mCaptureStartTime)).sendToTarget();
+        }
+        if(mChosenImageFormat == ImageFormat.YUV_420_888 || mChosenImageFormat == ImageFormat.PRIVATE) { // Case of ZSL, FrameFilter, SelfieMirror
+            mPostProcessor.onStartCapturing();
+            mCaptureSession[id].capture(captureBuilder.build(), mPostProcessor.getCaptureCallback(), mCaptureCallbackHandler);
+        } else {
+            mCaptureSession[id].capture(captureBuilder.build(), new CameraCaptureSession.CaptureCallback() {
+
+                @Override
+                public void onCaptureCompleted(CameraCaptureSession session,
+                                               CaptureRequest request,
+                                               TotalCaptureResult result) {
+                    Log.d(TAG, "captureStillPictureForCommon onCaptureCompleted: " + id);
+                }
+
+                @Override
+                public void onCaptureFailed(CameraCaptureSession session,
+                                            CaptureRequest request,
+                                            CaptureFailure result) {
+                    Log.d(TAG, "captureStillPictureForCommon onCaptureFailed: " + id);
+                }
+
+                @Override
+                public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                        sequenceId, long frameNumber) {
+                    Log.d(TAG, "captureStillPictureForCommon onCaptureSequenceCompleted: " + id);
+                    unlockFocus(id);
+                }
+            }, mCaptureCallbackHandler);
         }
     }
 
@@ -2060,6 +2058,23 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyAFRegions(builder, id);
         applyAERegions(builder, id);
         applyCommonSettings(builder, id);
+    }
+
+    private void applySettingsForJpegInformation(CaptureRequest.Builder builder, int id) {
+        Location location = mLocationManager.getCurrentLocation();
+        if(location != null) {
+            // make copy so that we don't alter the saved location since we may re-use it
+            location = new Location(location);
+            // workaround for Google bug. Need to convert timestamp from ms -> sec
+            location.setTime(location.getTime()/1000);
+            builder.set(CaptureRequest.JPEG_GPS_LOCATION, location);
+            Log.d(TAG, "gps: " + location.toString());
+        } else {
+            Log.d(TAG, "no location - getRecordLocation: " + getRecordLocation());
+        }
+        builder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, mOrientation));
+        builder.set(CaptureRequest.JPEG_THUMBNAIL_SIZE, mPictureThumbSize);
+        builder.set(CaptureRequest.JPEG_THUMBNAIL_QUALITY, (byte)80);
     }
 
     private void applyVideoSnapshot(CaptureRequest.Builder builder, int id) {
