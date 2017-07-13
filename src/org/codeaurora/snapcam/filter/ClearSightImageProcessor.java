@@ -87,7 +87,7 @@ import com.android.camera.PhotoModule.NamedImages.NamedEntity;
 import com.android.camera.SettingsManager;
 import com.android.camera.Storage;
 import com.android.camera.util.CameraUtil;
-
+import com.android.camera.util.VendorTagUtil;
 
 public class ClearSightImageProcessor {
     private static final String TAG = "ClearSightImageProcessor";
@@ -1082,7 +1082,7 @@ public class ClearSightImageProcessor {
         private void sendReprocessRequest(CaptureRequest.Builder reprocRequest, Image image, final int camType) {
 
             try {
-                reprocRequest.set(CaptureModule.JpegCropEnableKey, (byte)1);
+                VendorTagUtil.setJpegCropEnable(reprocRequest, (byte)1);
 
                 Rect cropRect = image.getCropRect();
                 if(cropRect == null ||
@@ -1093,14 +1093,14 @@ public class ClearSightImageProcessor {
 
                 cropRect = getFinalCropRect(cropRect);
                 // has crop rect. apply to jpeg request
-                reprocRequest.set(CaptureModule.JpegCropRectKey,
+                VendorTagUtil.setJpegCropRect(reprocRequest,
                        new int[] {cropRect.left, cropRect.top, cropRect.width(), cropRect.height()});
 
                 if(camType == CAM_TYPE_MONO) {
-                    reprocRequest.set(CaptureModule.JpegRoiRectKey,
+                    VendorTagUtil.setJpegRoiRect(reprocRequest,
                            new int[] {0, 0, mFinalMonoSize.getWidth(), mFinalMonoSize.getHeight()});
                 } else {
-                    reprocRequest.set(CaptureModule.JpegRoiRectKey,
+                    VendorTagUtil.setJpegRoiRect(reprocRequest,
                             new int[] {0, 0, mFinalPictureSize.getWidth(), mFinalPictureSize.getHeight()});
                 }
 
