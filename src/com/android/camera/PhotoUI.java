@@ -162,6 +162,7 @@ public class PhotoUI implements PieListener,
 
     private int mOrientation;
     private float mScreenBrightness = 0.0f;
+    private boolean mIsBokehMode = false;
 
     public enum SURFACE_STATUS {
         HIDE,
@@ -1122,6 +1123,9 @@ public class PhotoUI implements PieListener,
         }
         // Close module selection menu when pie menu is opened.
         mSwitcher.closePopup();
+        if (mIsBokehMode && mBlurDegreeProgressBar != null) {
+            mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -1130,14 +1134,23 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setBlockDraw(false);
         }
+        if (mIsBokehMode && mBlurDegreeProgressBar != null) {
+            mBlurDegreeProgressBar.setVisibility(View.GONE);
+        }
     }
 
     @Override
     public void onPieMoved(int centerX, int centerY) {
         Size bokehCircle = mPieRenderer.getBokehFocusSize();
-        mBlurDegreeProgressBar.setX(centerX - bokehCircle.getWidth()/2);
-        mBlurDegreeProgressBar.setY(centerY + bokehCircle.getHeight()/2);
-        if (mBlurDegreeProgressBar.getVisibility() != View.VISIBLE) {
+        int y;
+        if (centerY > mPieRenderer.getHeight()/2) {
+            y = centerY - bokehCircle.getHeight()/2 - mBlurDegreeProgressBar.getHeight();
+        } else {
+            y = centerY + bokehCircle.getHeight()/2;
+        }
+        mBlurDegreeProgressBar.setX(centerX - mBlurDegreeProgressBar.getWidth() /2);
+        mBlurDegreeProgressBar.setY(y);
+        if (mBlurDegreeProgressBar.getVisibility() != View.VISIBLE && mPieRenderer.isVisible()) {
             mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
         }
     }
@@ -1145,6 +1158,7 @@ public class PhotoUI implements PieListener,
     public void enableBokehRender(boolean enable) {
         if (mPieRenderer != null) {
             mPieRenderer.setBokehMode(enable);
+            mIsBokehMode = enable;
         }
     }
 

@@ -1567,18 +1567,37 @@ public class PhotoModule
                         }
                         String mPictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
                          Log.d(TAG, "capture:" + title + "." + mPictureFormat);
-                         if (mIsBokehMode && !PERSIST_BOKEH_DEBUG_CHECK && mSaveBokehXmp) {
-                             if (jpegData != null && mCallTime == 3) {
-                                 if (mOrigin != null && mBokeh != null) {
-                                     GImage gImage = new GImage(mOrigin, "image/jpeg");
-                                     GDepth.DepthMap map= new GDepth.DepthMap(1280,960);
-                                     map.buffer = mDepth;
-                                     map.roi = new Rect(0,0,width,height);
+                         if (mIsBokehMode) {
+                             if (!PERSIST_BOKEH_DEBUG_CHECK && mSaveBokehXmp) {
+                                 if (jpegData != null && mCallTime == 3) {
+                                     if (mOrigin != null && mBokeh != null) {
+                                         GImage gImage = new GImage(mOrigin, "image/jpeg");
+                                         GDepth.DepthMap map= new GDepth.DepthMap(1280,960);
+                                         map.buffer = mDepth;
+                                         map.roi = new Rect(0,0,width,height);
+                                         GDepth gDepth = GDepth.createGDepth(map);
+                                         mActivity.getMediaSaveService().addXmpImage(mBokeh,gImage,
+                                                 gDepth,"bokeh_"+title,date,mLocation,width,height,
+                                                 orientation,exif,mOnMediaSavedListener,
+                                                 mContentResolver,mPictureFormat);
+                                     }
+                                 }
+                             } else {
+                                 if (mCallTime == 3) {
+                                     GDepth.DepthMap map = new GDepth.DepthMap(1280, 960);
+                                     map.buffer = jpegData;
+                                     map.roi = new Rect(0, 0, width, height);
                                      GDepth gDepth = GDepth.createGDepth(map);
-                                     mActivity.getMediaSaveService().addXmpImage(mBokeh,gImage,
-                                             gDepth,"bokeh_"+title,date,mLocation,width,height,
-                                             orientation,exif,mOnMediaSavedListener,
-                                             mContentResolver,mPictureFormat);
+                                     byte[] depth = gDepth.getDepthJpeg();
+                                     mActivity.getMediaSaveService().addImage(depth,
+                                             title, date, mLocation, width, height,
+                                             orientation, exif, mOnMediaSavedListener,
+                                             mContentResolver, mPictureFormat);
+                                 } else {
+                                     mActivity.getMediaSaveService().addImage(
+                                             jpegData, title, date, mLocation, width, height,
+                                             orientation, exif, mOnMediaSavedListener,
+                                             mContentResolver, mPictureFormat);
                                  }
                              }
                          } else {
