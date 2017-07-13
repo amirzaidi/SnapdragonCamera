@@ -841,7 +841,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         //TODO: Modify this after bayer/mono/front/back determination is done
         entryValues[0] = "" + CaptureModule.BAYER_ID;
         entries[0] = "BACK";
-        if (mIsFrontCameraPresent) {
+        if (mIsFrontCameraPresent && (numOfCameras > 1)) {
             entryValues[1] = "" + CaptureModule.FRONT_ID;
             entries[1] = "FRONT";
         }
@@ -1050,9 +1050,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public boolean isFaceDetectionSupported(int id) {
         int[] faceDetection = mCharacteristics.get(id).get
                 (CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES);
-        for (int value: faceDetection) {
-            if (value == CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE)
-                return true;
+        if (faceDetection != null) {
+            for (int value: faceDetection) {
+                if (value == CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE)
+                    return true;
+            }
         }
         return false;
     }
@@ -1270,15 +1272,20 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private List<String> getSupportedIso(int cameraId) {
         Range<Integer> range = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .SENSOR_INFO_SENSITIVITY_RANGE);
-        int max = range.getUpper();
-        int value = 50;
         List<String> supportedIso = new ArrayList<>();
         supportedIso.add("auto");
-        while (value <= max) {
-            if (range.contains(value)) {
-                supportedIso.add("" + value);
+
+        if (range != null) {
+            int max = range.getUpper();
+            int value = 50;
+            while (value <= max) {
+                if (range.contains(value)) {
+                    supportedIso.add("" + value);
+                }
+                value += 50;
             }
-            value += 50;
+        } else {
+            Log.w(TAG, "Supported ISO range is null.");
         }
         return supportedIso;
     }
@@ -1336,9 +1343,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         int[] noiseReduction = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES);
         List<String> modes = new ArrayList<>();
-        for (int mode : noiseReduction) {
-            String str = SettingTranslation.getNoiseReduction(mode);
-            if (str != null) modes.add(str);
+        if (noiseReduction != null) {
+            for (int mode : noiseReduction) {
+                String str = SettingTranslation.getNoiseReduction(mode);
+                if (str != null) modes.add(str);
+            }
         }
         return modes;
     }
@@ -1373,15 +1382,23 @@ public class SettingsManager implements ListMenu.SettingsListener {
     }
 
     public List<String> getSupportedInstantAecAvailableModes(int cameraId) {
-        int[] instantAecAvailableModes = mCharacteristics.get(cameraId).get(
-                                           CaptureModule.InstantAecAvailableModes);
-        if (instantAecAvailableModes == null) {
-            return null;
-        }
         List<String> modes = new ArrayList<>();
-        for (int i : instantAecAvailableModes) {
-            modes.add(""+i);
+
+        try {
+            int[] instantAecAvailableModes = mCharacteristics.get(cameraId).get(
+                    CaptureModule.InstantAecAvailableModes);
+            if (instantAecAvailableModes == null) {
+                return null;
+            }
+            for (int i : instantAecAvailableModes) {
+                modes.add("" + i);
+            }
+        } catch(NullPointerException e) {
+            Log.w(TAG, "Supported instant aec modes is null.");
+        } catch(IllegalArgumentException e) {
+            Log.w(TAG, "Supported instant aec modes is null.");
         }
+
         return  modes;
     }
 
