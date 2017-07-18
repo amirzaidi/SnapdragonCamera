@@ -33,14 +33,17 @@ import android.view.View;
 
 import com.android.camera.PhotoUI;
 import com.android.camera.util.CameraUtil;
+import com.android.camera.util.PersistUtil;
 import org.codeaurora.snapcam.R;
 import org.codeaurora.snapcam.wrapper.ExtendedFaceWrapper;
 
 public class FaceView extends View
     implements FocusIndicator, Rotatable,
     PhotoUI.SurfaceTextureSizeChangedListener {
-    protected static final String TAG = "CAM FaceView";
-    protected final boolean LOGV = false;
+    protected static final String TAG = "CAM_FaceView";
+    protected final boolean LOGV =
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
+            (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_ALL);
     // The value for android.hardware.Camera.setDisplayOrientation.
     protected int mDisplayOrientation;
     // The orientation compensation for the face indicator to make it look
