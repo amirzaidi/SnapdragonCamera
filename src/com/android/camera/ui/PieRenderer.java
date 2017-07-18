@@ -1075,11 +1075,25 @@ public class PieRenderer extends OverlayRenderer
 
     @Override
     public void showSuccess(boolean timeout) {
-        if (mState == STATE_FOCUSING) {
-            startAnimation(SCALING_DOWN_TIME,
-                    timeout, mStartAnimationAngle);
-            mState = STATE_FINISHING;
-            mFocused = true;
+        if (mIsBokehMode) {
+            mOverlay.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (mState == STATE_FOCUSING) {
+                        startAnimation(SCALING_DOWN_TIME,
+                                timeout, mStartAnimationAngle);
+                        mState = STATE_FINISHING;
+                        mFocused = true;
+                    }
+                }
+            },3000);
+        } else {
+            if (mState == STATE_FOCUSING) {
+                startAnimation(SCALING_DOWN_TIME,
+                        timeout, mStartAnimationAngle);
+                mState = STATE_FINISHING;
+                mFocused = true;
+            }
         }
     }
 

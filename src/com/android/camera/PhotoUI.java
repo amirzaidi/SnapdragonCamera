@@ -1363,6 +1363,10 @@ public class PhotoUI implements PieListener,
 
     @Override
     public void onFaceDetection(Face[] faces, CameraManager.CameraProxy camera) {
+        if (mIsBokehMode) {
+            mFaceView.clear();
+            return;
+        }
         mFaceView.setFaces(faces);
     }
 
