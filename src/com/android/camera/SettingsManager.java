@@ -1449,6 +1449,26 @@ public class SettingsManager implements ListMenu.SettingsListener {
         return value != null && value.equals("enable");
     }
 
+    public boolean isZSLInHALEnabled(){
+        String value = getValue(KEY_ZSL);
+        String halZSLValue = mContext.getString(R.string.pref_camera2_zsl_entryvalue_hal_zsl);
+        if ( value != null && value.equals(halZSLValue) ){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean isZSLInAppEnabled(){
+        String value = getValue(KEY_ZSL);
+        String appZSLValue = mContext.getString(R.string.pref_camera2_zsl_entryvalue_app_zsl);
+        if ( value != null && value.equals(appZSLValue) ){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     private boolean filterUnsupportedOptions(ListPreference pref, List<String> supported) {
         // Remove the preference if the parameter is not supported
         if (supported == null) {
