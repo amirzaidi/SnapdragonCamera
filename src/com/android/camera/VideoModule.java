@@ -1486,7 +1486,10 @@ public class VideoModule implements CameraModule,
     private int getHighSpeedVideoEncoderBitRate(CamcorderProfile profile, int targetRate) {
         int bitRate;
         String key = profile.videoFrameWidth+"x"+profile.videoFrameHeight+":"+targetRate;
-        if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(key)) {
+        String resolutionFpsEncoder = key + ":" + profile.videoCodec;
+        if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(resolutionFpsEncoder)) {
+            bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(resolutionFpsEncoder);
+        }else if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(key)) {
             bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(key);
         } else {
             Log.i(TAG, "No pre-defined bitrate for "+key);
