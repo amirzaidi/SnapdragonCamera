@@ -105,11 +105,12 @@ import com.android.camera.ui.CountDownView;
 import com.android.camera.ui.ModuleSwitcher;
 import com.android.camera.ui.RotateTextToast;
 import com.android.camera.ui.TrackingFocusRenderer;
+import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.PersistUtil;
 import com.android.camera.util.SettingTranslation;
-import com.android.camera.util.ApiHelper;
 import com.android.camera.util.AccessibilityUtils;
+import com.android.camera.util.VendorTagUtil;
 import com.android.internal.util.MemInfoReader;
 
 import org.codeaurora.snapcam.R;
@@ -210,26 +211,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     CaptureRequest.Key<Integer> BayerMonoLinkSessionIdKey =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.dualcam_link_meta_data" +
                     ".related_camera_id", Integer.class);
-    public static CaptureRequest.Key<Integer> CdsModeKey =
-            new CaptureRequest.Key<>("org.codeaurora.qcamera3.CDS.cds_mode", Integer.class);
-    public static CaptureRequest.Key<Byte> JpegCropEnableKey =
-            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.enable",
-                    Byte.class);
-    public static CaptureRequest.Key<int[]> JpegCropRectKey =
-            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.rect",
-                    int[].class);
-    public static CaptureRequest.Key<int[]> JpegRoiRectKey =
-            new CaptureRequest.Key<>("org.codeaurora.qcamera3.jpeg_encode_crop.roi",
-                    int[].class);
     public static CameraCharacteristics.Key<Byte> MetaDataMonoOnlyKey =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.sensor_meta_data.is_mono_only",
                     Byte.class);
-    public static CaptureRequest.Key<Integer> SELECT_PRIORITY =
-            new CaptureRequest.Key<>("org.codeaurora.qcamera3.iso_exp_priority.select_priority",
-                    Integer.class);
-    public static CaptureRequest.Key<Long> ISO_EXP =
-            new CaptureRequest.Key<>("org.codeaurora.qcamera3.iso_exp_priority.use_iso_exp_priority",
-                    Long.class);
     public static CameraCharacteristics.Key<int[]> InstantAecAvailableModes =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.instant_aec.instant_aec_available_modes", int[].class);
     public static final CaptureRequest.Key<Integer> INSTANT_AEC_MODE =
@@ -1525,7 +1509,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             addPreviewSurface(captureBuilder, null, id);
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
             captureBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
-            captureBuilder.set(CdsModeKey, 2); // CDS 0-OFF, 1-ON, 2-AUTO
+            VendorTagUtil.setCdsMode(captureBuilder, 2);// CDS 0-OFF, 1-ON, 2-AUTO
             applySettingsForCapture(captureBuilder, id);
 
             if(csEnabled) {
@@ -2314,42 +2298,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         updateMaxVideoDuration();
     }
 
-    private Size checkOverridePreviewSize(int cur_width, int cur_height) {
-        int preview_resolution = PersistUtil.getCameraPreviewSize();
-        switch (preview_resolution) {
-            case 1: {
-                cur_width = 640;
-                cur_height = 480;
-                Log.v(TAG, "Preview resolution hardcoded to 640x480");
-                break;
-            }
-            case 2: {
-                cur_width = 720;
-                cur_height = 480;
-                Log.v(TAG, "Preview resolution hardcoded to 720x480");
-                break;
-            }
-            case 3: {
-                cur_width = 1280;
-                cur_height = 720;
-                Log.v(TAG, "Preview resolution hardcoded to 1280x720");
-                break;
-            }
-            case 4: {
-                cur_width = 1920;
-                cur_height = 1080;
-                Log.v(TAG, "Preview resolution hardcoded to 1920x1080");
-                break;
-            }
-            default: {
-                Log.v(TAG, "Preview resolution as per Snapshot aspect ratio");
-                break;
-            }
-        }
-        return new Size(cur_width, cur_height);
-    }
     private void updatePreviewSize() {
-        int preview_resolution = PersistUtil.getCameraPreviewSize();
         int width = mPreviewSize.getWidth();
         int height = mPreviewSize.getHeight();
 
@@ -2359,7 +2308,16 @@ public class CaptureModule implements CameraModule, PhotoController,
             width = mVideoSize.getWidth();
             height = mVideoSize.getHeight();
         }
-        mPreviewSize = checkOverridePreviewSize(width, height);
+
+        Point previewSize = PersistUtil.getCameraPreviewSize();
+        if (previewSize != null) {
+            width = previewSize.x;
+            height = previewSize.y;
+        }
+
+        Log.d(TAG, "updatePreviewSize final preview size = " + width + ", " + height);
+
+        mPreviewSize = new Size(width, height);
         mUI.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
     }
 
@@ -3069,8 +3027,13 @@ public class CaptureModule implements CameraModule, PhotoController,
         Size[] prevSizes = mSettingsManager.getSupportedOutputSize(getMainCameraId(),
                 MediaRecorder.class);
         mVideoPreviewSize = getOptimalPreviewSize(mVideoSize, prevSizes);
-        mVideoPreviewSize = checkOverridePreviewSize(mVideoPreviewSize.getWidth(),
-                mVideoPreviewSize.getHeight());
+
+        Point previewSize = PersistUtil.getCameraPreviewSize();
+        if (previewSize != null) {
+            mVideoPreviewSize = new Size(previewSize.x, previewSize.y);
+        }
+        Log.d(TAG, "updatePreviewSize final preview size = " + mVideoPreviewSize.getWidth()
+                + ", " + mVideoPreviewSize.getHeight());
     }
 
     private void updateVideoSnapshotSize() {
@@ -4157,8 +4120,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         String value = mSettingsManager.getValue(SettingsManager.KEY_ISO);
         if (value == null) return;
         if (value.equals("auto")) {
-            request.set(SELECT_PRIORITY, 0);
-            request.set(ISO_EXP, 0L);
+            VendorTagUtil.setIsoExpPrioritySelectPriority(request, 0);
+            VendorTagUtil.setIsoExpPriority(request, 0L);
             if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) == null) {
                 request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, mIsoExposureTime);
             }
@@ -4167,8 +4130,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         } else {
             long intValue = SettingsManager.KEY_ISO_INDEX.get(value);
-            request.set(SELECT_PRIORITY, 0);
-            request.set(ISO_EXP, intValue);
+            VendorTagUtil.setIsoExpPrioritySelectPriority(request, 0);
+            VendorTagUtil.setIsoExpPriority(request, intValue);
             if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) != null) {
                 mIsoExposureTime = request.get(CaptureRequest.SENSOR_EXPOSURE_TIME);
             }
