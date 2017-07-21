@@ -1651,7 +1651,8 @@ public class CameraActivity extends Activity
         SETTING_LIST_WIDTH_1 = lower / 2 + offset;
         SETTING_LIST_WIDTH_2 = lower / 2 - offset;
         registerSDcardMountedReceiver();
-        mAutoTestEnabled = SystemProperties.getBoolean("persist.vendor.camera.ui.auto_test", false);
+
+        mAutoTestEnabled = PersistUtil.isAutoTestEnabled();
 
         if (mAutoTestEnabled) {
             registerAutoTestReceiver();

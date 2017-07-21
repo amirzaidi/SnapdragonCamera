@@ -75,6 +75,39 @@ public class PersistUtil {
     private static final int PERSIST_CAMERA_SENSOR_ALIGN_KEY =
             SystemProperties.getInt("persist.vendor.camera.sensor.align",
                     CAMERA_SENSOR_HORIZONTAL_ALIGNED);
+    private static final int CIRCULAR_BUFFER_SIZE_PERSIST =
+            SystemProperties.getInt("persist.vendor.camera.zsl.buffer.size", 5);
+    private static final int SAVE_TASK_MEMORY_LIMIT_IN_MB =
+            SystemProperties.getInt("persist.vendor.camera.perf.memlimit", 60);
+    private static final boolean PERSIST_CAMERA_UI_AUTO_TEST_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.ui.auto_test", false);
+    private static final boolean PERSIST_CAMERA_SAVE_IN_SD_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.env.camera.saveinsd", false);
+    private static final boolean PERSIST_LONG_SAVE_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.longshot.save", false);
+    private static final boolean PERSIST_CAMERA_PREVIEW_RESTART_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.feature.restart", false);
+    private static final boolean PERSIST_CAPTURE_ANIMATION_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.capture.animate", true);
+    private static final boolean PERSIST_SKIP_MEM_CHECK_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.perf.skip_memck", false);
+    private static final boolean PERSIST_ZZHDR_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.zzhdr.enable", false);
+    private static final int PERSIST_PREVIEW_SIZE =
+            SystemProperties.getInt("persist.vendor.camera.preview.size", 0);
+    private static final long PERSIST_TIMESTAMP_LIMIT =
+            SystemProperties.getLong("persist.vendor.camera.cs.threshold", 10);
+    private static final int PERSIST_BURST_COUNT =
+            SystemProperties.getInt("persist.vendor.camera.cs.burstcount", 4);
+    private static final boolean PERSIST_DUMP_FRAMES_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.cs.dumpframes", false);
+    private static final boolean PERSIST_DUMP_YUV_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.cs.dumpyuv", false);
+    private static final int PERSIST_CS_TIMEOUT =
+            SystemProperties.getInt("persist.vendor.camera.cs.timeout", 300);
+    private static final boolean PERSIST_DUMP_DEPTH_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.cs.dumpdepth", false);
+
 
     public static int getMemoryLimit() {
         return PERSIST_MEMORY_LIMIT;
@@ -86,6 +119,9 @@ public class PersistUtil {
 
     public static int getLongshotShotLimit() {
         return PERSIST_LONGSHOT_SHOT_LIMIT;
+    }
+    public static int getLongshotShotLimit(int defaultValue) {
+        return SystemProperties.getInt("persist.vendor.camera.longshot.shotnum", defaultValue);
     }
 
     public static Point getCameraPreviewSize() {
@@ -149,5 +185,75 @@ public class PersistUtil {
 
     public static boolean getDualCameraSensorAlign() {
         return PERSIST_CAMERA_SENSOR_ALIGN_KEY == CAMERA_SENSOR_VERTICAL_ALIGNED;
+    }
+
+    public static int getCircularBufferSize(){
+        return CIRCULAR_BUFFER_SIZE_PERSIST;
+    }
+
+    public static int getSaveTaskMemoryLimitInMb(){
+        return SAVE_TASK_MEMORY_LIMIT_IN_MB;
+    }
+
+    public static boolean isAutoTestEnabled(){
+        return PERSIST_CAMERA_UI_AUTO_TEST_ENABLED;
+    }
+
+    public static boolean isSaveInSdEnabled(){
+        return PERSIST_CAMERA_SAVE_IN_SD_ENABLED;
+    }
+
+    public static boolean isLongSaveEnabled(){
+        return PERSIST_LONG_SAVE_ENABLED;
+    }
+
+    public static boolean isPreviewRestartEnabled(){
+        return PERSIST_CAMERA_PREVIEW_RESTART_ENABLED;
+    }
+
+    public static boolean isCaptureAnimationEnabled(){
+        return PERSIST_CAPTURE_ANIMATION_ENABLED;
+    }
+
+    public static boolean isSkipMemoryCheckEnabled(){
+        return PERSIST_SKIP_MEM_CHECK_ENABLED;
+    }
+
+    public static boolean isZzhdrEnabled(){
+        return PERSIST_ZZHDR_ENABLED;
+    }
+
+    public static int getPreviewSize(){
+        //Read Preview Resolution from adb command
+        //value: 0(default) - Default value as per snapshot aspect ratio
+        //value: 1 - 640x480
+        //value: 2 - 720x480
+        //value: 3 - 1280x720
+        //value: 4 - 1920x1080
+        return PERSIST_PREVIEW_SIZE;
+    }
+
+    public static long getTimestampLimit(){
+        return PERSIST_TIMESTAMP_LIMIT;
+    }
+
+    public static int getImageToBurst(){
+        return PERSIST_BURST_COUNT;
+    }
+
+    public static boolean isDumpFramesEnabled(){
+        return PERSIST_DUMP_FRAMES_ENABLED;
+    }
+
+    public static boolean isDumpYUVEnabled(){
+        return PERSIST_DUMP_YUV_ENABLED;
+    }
+
+    public static int getClearSightTimeout(){
+        return PERSIST_CS_TIMEOUT;
+    }
+
+    public static boolean isDumpDepthEnabled() {
+        return PERSIST_DUMP_DEPTH_ENABLED;
     }
 }

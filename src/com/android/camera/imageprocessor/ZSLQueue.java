@@ -42,9 +42,7 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 public class ZSLQueue {
-    private static final String CIRCULAR_BUFFER_SIZE_PERSIST = "persist.sys.camera.zsl.buffer.size";
-    private static final int CIRCULAR_BUFFER_SIZE_DEFAULT = 5;
-    private int mCircularBufferSize = CIRCULAR_BUFFER_SIZE_DEFAULT;
+    private int mCircularBufferSize;
     private ImageItem[] mBuffer;
     private int mImageHead;
     private int mMetaHead;
@@ -56,7 +54,7 @@ public class ZSLQueue {
     private static final String TAG = "ZSLQueue";
 
     public ZSLQueue(CaptureModule module) {
-        mCircularBufferSize = SystemProperties.getInt(CIRCULAR_BUFFER_SIZE_PERSIST, CIRCULAR_BUFFER_SIZE_DEFAULT);
+        mCircularBufferSize = PersistUtil.getCircularBufferSize();
         synchronized (mLock) {
             mBuffer = new ImageItem[mCircularBufferSize];
             mImageHead = 0;

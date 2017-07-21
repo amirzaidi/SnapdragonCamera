@@ -226,12 +226,7 @@ public class PhotoModule
 
     private boolean mFaceDetectionStarted = false;
 
-    private static final String PERSIST_LONG_SAVE = "persist.sys.camera.longshot.save";
-    private static final String PERSIST_PREVIEW_RESTART = "persist.sys.camera.feature.restart";
-    private static final String PERSIST_CAPTURE_ANIMATION = "persist.sys.camera.capture.animate";
-    private static final boolean PERSIST_SKIP_MEM_CHECK =
-            android.os.SystemProperties.getBoolean("persist.sys.camera.perf.skip_memck", false);
-    private static final String PERSIST_ZZHDR_ENABLE="persist.sys.camera.zzhdr.enable";
+    private static final boolean PERSIST_SKIP_MEM_CHECK = PersistUtil.isSkipMemoryCheckEnabled();
 
     private static final int MINIMUM_BRIGHTNESS = 0;
     private static final int MAXIMUM_BRIGHTNESS = 6;
@@ -1825,8 +1820,7 @@ public class PhotoModule
             mBurstSnapNum = 1;
         }
         mReceivedSnapNum = 0;
-        mPreviewRestartSupport = SystemProperties.getBoolean(
-                PERSIST_PREVIEW_RESTART, false);
+        mPreviewRestartSupport = PersistUtil.isPreviewRestartEnabled();
         mPreviewRestartSupport &= CameraSettings.isInternalPreviewSupported(
                 mParameters);
         mPreviewRestartSupport &= (mBurstSnapNum == 1);
@@ -2064,7 +2058,7 @@ public class PhotoModule
             colorEffect = mParameters.getColorEffect();
             String defaultEffect = mActivity.getString(R.string.pref_camera_coloreffect_default);
             if (CameraUtil.SCENE_MODE_HDR.equals(mSceneMode)) {
-                if(SystemProperties.getInt(PERSIST_ZZHDR_ENABLE, 0) != 1) {
+                if ( !PersistUtil.isZzhdrEnabled() ){
                     disableLongShot = true;
                 }
                 if (colorEffect != null & !colorEffect.equals(defaultEffect)) {
@@ -2523,7 +2517,7 @@ public class PhotoModule
 
             Log.d(TAG, "longshot_enable = " + longshot_enable);
             if (longshot_enable.equals("on")) {
-                boolean enable = SystemProperties.getBoolean(PERSIST_LONG_SAVE, false);
+                boolean enable = PersistUtil.isLongSaveEnabled();
                 mLongshotSave = enable;
 
                 //Cancel the previous countdown when long press shutter button for longshot.
@@ -2682,8 +2676,7 @@ public class PhotoModule
         mOnResumeTime = SystemClock.uptimeMillis();
         checkDisplayRotation();
 
-        mAnimateCapture = SystemProperties.getBoolean(
-                PERSIST_CAPTURE_ANIMATION, true);
+        mAnimateCapture = PersistUtil.isCaptureAnimationEnabled();
     }
 
     @Override
