@@ -38,6 +38,7 @@ import android.util.Log;
 import com.android.camera.util.ApiHelper;
 import com.android.camera.util.CameraUtil;
 import com.android.camera.util.GcamHelper;
+import com.android.camera.util.PersistUtil;
 import org.codeaurora.snapcam.R;
 import org.codeaurora.snapcam.wrapper.CamcorderProfileWrapper;
 import org.codeaurora.snapcam.wrapper.ParametersWrapper;
@@ -1038,7 +1039,7 @@ public class CameraSettings {
             removePreference(group, cameraHdrPlus.getKey());
         }
 
-        if (SystemProperties.getBoolean("persist.env.camera.saveinsd", false)) {
+        if (PersistUtil.isSaveInSdEnabled()) {
             final String CAMERA_SAVEPATH_SDCARD = "1";
             final int CAMERA_SAVEPATH_SDCARD_IDX = 1;
             final int CAMERA_SAVEPATH_PHONE_IDX = 0;
