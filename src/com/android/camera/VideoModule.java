@@ -285,15 +285,6 @@ public class VideoModule implements CameraModule,
         }
         mParameters = mCameraDevice.getParameters();
         mPreviewFocused = arePreviewControlsVisible();
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                Size size = mParameters.getPreviewSize();
-                SurfaceHolder sh = mUI.getSurfaceHolder();
-                if ( sh != null ){
-                    sh.setFixedSize(size.width-2, size.height-2);
-                }
-            }
-        });
     }
 
     //QCOM data Members Starts here
@@ -1258,15 +1249,6 @@ public class VideoModule implements CameraModule,
                     @Override
                     public void onPreviewFrame(byte[] data, CameraProxy camera) {
                         mUI.hidePreviewCover();
-                        mActivity.runOnUiThread(new Runnable() {
-                            public void run() {
-                                Size size = mParameters.getPreviewSize();
-                                SurfaceHolder sh = mUI.getSurfaceHolder();
-                                if ( sh != null ){
-                                    sh.setFixedSize(size.width+2, size.height+2);
-                                }
-                            }
-                        });
                     }
                 });
             mCameraDevice.startPreview();
@@ -2957,15 +2939,6 @@ public class VideoModule implements CameraModule,
         //Display timelapse msg depending upon selection in front/back camera.
         mUI.showTimeLapseUI(mCaptureTimeLapse);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                Size size = mParameters.getPreviewSize();
-                SurfaceHolder sh = mUI.getSurfaceHolder();
-                if ( sh != null ){
-                    sh.setFixedSize(size.width-2, size.height-2);
-                }
-            }
-        });
     }
 
     // Preview texture has been copied. Now camera can be released and the

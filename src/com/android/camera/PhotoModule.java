@@ -742,15 +742,6 @@ public class PhotoModule
         openCameraCommon();
         resizeForPreviewAspectRatio();
         updateFocusManager(mUI);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                Size size = mParameters.getPreviewSize();
-                SurfaceHolder sh = mUI.getSurfaceHolder();
-                if ( sh != null ){
-                    sh.setFixedSize(size.width-2, size.height-2);
-                }
-            }
-        });
     }
 
     private void switchCamera() {
@@ -806,15 +797,15 @@ public class PhotoModule
         // Start switch camera animation. Post a message because
         // onFrameAvailable from the old camera may already exist.
         mHandler.sendEmptyMessage(SWITCH_CAMERA_START_ANIMATION);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                Size size = mParameters.getPreviewSize();
-                SurfaceHolder sh = mUI.getSurfaceHolder();
-                if ( sh != null ){
-                    sh.setFixedSize(size.width-2, size.height-2);
-                }
-            }
-        });
+         mActivity.runOnUiThread(new Runnable() {
+                 public void run() {
+                         Size size = mParameters.getPreviewSize();
+                         SurfaceHolder sh = mUI.getSurfaceHolder();
+                         if ( sh != null ){
+                                 sh.setFixedSize(size.width-2, size.height-2);
+                             }
+                     }
+             });
 
     }
 
