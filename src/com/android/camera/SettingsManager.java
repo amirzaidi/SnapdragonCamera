@@ -1181,7 +1181,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public int getHighSpeedVideoEncoderBitRate(CamcorderProfile profile, int targetRate) {
         int bitRate;
         String key = profile.videoFrameWidth+"x"+profile.videoFrameHeight+":"+targetRate;
-        if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(key)) {
+        String resolutionFpsEncoder = key + ":" + profile.videoCodec;
+        if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(resolutionFpsEncoder)) {
+            bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(resolutionFpsEncoder);
+        } else if (CameraSettings.VIDEO_ENCODER_BITRATE.containsKey(key) ) {
             bitRate = CameraSettings.VIDEO_ENCODER_BITRATE.get(key);
         } else {
             Log.i(TAG, "No pre-defined bitrate for "+key);
@@ -1447,6 +1450,26 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public boolean isCamera2HDRSupport(){
         String value = getValue(KEY_HDR);
         return value != null && value.equals("enable");
+    }
+
+    public boolean isZSLInHALEnabled(){
+        String value = getValue(KEY_ZSL);
+        String halZSLValue = mContext.getString(R.string.pref_camera2_zsl_entryvalue_hal_zsl);
+        if ( value != null && value.equals(halZSLValue) ){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean isZSLInAppEnabled(){
+        String value = getValue(KEY_ZSL);
+        String appZSLValue = mContext.getString(R.string.pref_camera2_zsl_entryvalue_app_zsl);
+        if ( value != null && value.equals(appZSLValue) ){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     private boolean filterUnsupportedOptions(ListPreference pref, List<String> supported) {

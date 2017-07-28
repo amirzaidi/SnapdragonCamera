@@ -1303,27 +1303,31 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void takePicture() {
         Log.d(TAG, "takePicture");
         mUI.enableShutter(false);
-        if (isBackCamera()) {
-            switch (getCameraMode()) {
-                case DUAL_MODE:
-                    lockFocus(BAYER_ID);
-                    lockFocus(MONO_ID);
-                    break;
-                case BAYER_MODE:
-                    if(takeZSLPicture(BAYER_ID)) {
-                        return;
-                    }
-                    lockFocus(BAYER_ID);
-                    break;
-                case MONO_MODE:
-                    lockFocus(MONO_ID);
-                    break;
-            }
-        } else {
-            if(takeZSLPicture(FRONT_ID)) {
+        if (mSettingsManager.isZSLInHALEnabled()) {
+            takeZSLPictureInHAL();
+        }else {
+            if (isBackCamera()) {
+                switch (getCameraMode()) {
+                    case DUAL_MODE:
+                        lockFocus(BAYER_ID);
+                        lockFocus(MONO_ID);
+                        break;
+                    case BAYER_MODE:
+                        if (takeZSLPicture(BAYER_ID)) {
+                            return;
+                        }
+                        lockFocus(BAYER_ID);
+                        break;
+                    case MONO_MODE:
+                        lockFocus(MONO_ID);
+                        break;
+                }
+            } else {
+                if (takeZSLPicture(FRONT_ID)) {
                     return;
+                }
+                lockFocus(FRONT_ID);
             }
-            lockFocus(FRONT_ID);
         }
     }
 
@@ -1334,6 +1338,28 @@ public class CaptureModule implements CameraModule, PhotoController,
             return true;
         }
         return false;
+    }
+
+    private void takeZSLPictureInHAL() {
+        Log.d(TAG, "takeHALZSLPicture");
+        int cameraId = BAYER_ID;
+        if (isBackCamera()) {
+            switch (getCameraMode()) {
+                case DUAL_MODE:
+                    captureStillPicture(BAYER_ID);
+                    captureStillPicture(MONO_ID);
+                    return;
+                case BAYER_MODE:
+                    cameraId = BAYER_ID;
+                    break;
+                case MONO_MODE:
+                    cameraId = MONO_ID;
+                    break;
+            }
+        } else {
+            cameraId = FRONT_ID;
+        }
+        captureStillPicture(cameraId);
     }
 
     public boolean isLongShotActive() {
@@ -1462,6 +1488,12 @@ public class CaptureModule implements CameraModule, PhotoController,
             CaptureRequest.Builder captureBuilder =
                     mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
 
+            if(mSettingsManager.isZSLInHALEnabled()) {
+                captureBuilder.set(CaptureRequest.CONTROL_ENABLE_ZSL, true);
+            }else{
+                captureBuilder.set(CaptureRequest.CONTROL_ENABLE_ZSL, false);
+            }
+
             applySettingsForJpegInformation(captureBuilder, id);
             addPreviewSurface(captureBuilder, null, id);
             VendorTagUtil.setCdsMode(captureBuilder, 2);// CDS 0-OFF, 1-ON, 2-AUTO
@@ -1493,6 +1525,12 @@ public class CaptureModule implements CameraModule, PhotoController,
         CaptureRequest.Builder captureBuilder =
                 ClearSightImageProcessor.getInstance().createCaptureRequest(mCameraDevice[id]);
 
+        if(mSettingsManager.isZSLInHALEnabled()) {
+            captureBuilder.set(CaptureRequest.CONTROL_ENABLE_ZSL, true);
+        }else{
+            captureBuilder.set(CaptureRequest.CONTROL_ENABLE_ZSL, false);
+        }
+        
         applySettingsForJpegInformation(captureBuilder, id);
         addPreviewSurface(captureBuilder, null, id);
         VendorTagUtil.setCdsMode(captureBuilder, 2); // CDS 0-OFF, 1-ON, 2-AUTO
