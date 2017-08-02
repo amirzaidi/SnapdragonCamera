@@ -113,20 +113,27 @@
         android:layout_width="match_parent"
         android:layout_gravity="bottom">
         <SeekBar
-            style="?android:attr/seekBarStyle"
             android:id="@+id/blur_degree_bar"
             android:orientation="horizontal"
-            android:layout_width="200dp"
+            android:layout_width="180dp"
             android:layout_height="wrap_content"
+            android:maxHeight="2dp"
+            android:minHeight="1dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:progressDrawable="@drawable/beautify_progressbar_style"
+            android:thumb="@drawable/ic_beautify_oval"
             android:visibility="gone"/>
         <TextView
             android:id="@+id/bokeh_tip_text"
-            android:background="@android:color/darker_gray"
+            android:background="#3F000000"
             android:textColor="@android:color/white"
             android:textSize="20sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="130dip"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:layout_gravity="bottom|center_horizontal"
             android:visibility="gone"/>
     </FrameLayout>

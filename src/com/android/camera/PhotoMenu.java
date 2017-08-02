@@ -31,6 +31,7 @@ import android.hardware.Camera.Parameters;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -558,9 +559,7 @@ public class PhotoMenu extends MenuController
             View v2 = ((ViewGroup) v).getChildAt(0);
             if (v2 != null)
                 v2.setEnabled(enable);
-
         }
-
     }
 
     public boolean isOverMenu(MotionEvent ev) {
@@ -782,6 +781,38 @@ public class PhotoMenu extends MenuController
             mHdrSwitcher.setVisibility(View.VISIBLE);
         }
 
+        pref = mPreferenceGroup.findPreference(CameraSettings.KEY_BOKEH_MODE);
+        String bokeh = (pref != null) ? pref.getValue() : null;
+        if ("1".equals(bokeh)) {
+            buttonSetEnabled(mHdrSwitcher,false);
+            buttonSetEnabled(mSceneModeSwitcher,false);
+            buttonSetEnabled(mFilterModeSwitcher,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_SCENE_MODE,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_CAMERA_HDR,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_ZSL,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_FLASH_MODE,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_LONGSHOT,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_COLOR_EFFECT,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_QC_CHROMA_FLASH,false);
+            popup1.setPreferenceEnabled(CameraSettings.KEY_PICTURE_SIZE,false);
+
+            setPreference(CameraSettings.KEY_SCENE_MODE,
+                    mActivity.getString(R.string.pref_camera_scenemode_default));
+            setPreference(CameraSettings.KEY_CAMERA_HDR,"off");
+            setPreference(CameraSettings.KEY_ZSL,
+                    mActivity.getString(R.string.pref_camera_zsl_value_on));
+            setPreference(CameraSettings.KEY_FLASH_MODE, "off");
+            setPreference(CameraSettings.KEY_LONGSHOT, "off");
+            setPreference(CameraSettings.KEY_COLOR_EFFECT,"none");
+            setPreference(CameraSettings.KEY_QC_CHROMA_FLASH,"off");
+            ListPreference picSize =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_PICTURE_SIZE);
+            CharSequence maxSize = picSize.getEntryValues()[0];
+            if (maxSize != null) {
+                setPreference(CameraSettings.KEY_PICTURE_SIZE,maxSize.toString());
+            }
+        }
+
         if (mListener != null) {
             mListener.onSharedPreferenceChanged();
         }
@@ -884,6 +915,7 @@ public class PhotoMenu extends MenuController
                     ((ImageView) v).setImageResource(
                             ((IconListPreference) pref).getLargeIconIds()[index]);
                     reloadPreference(pref);
+                    initializePopup();
                     onSettingChanged(bokehPref);
                 } else {
 
@@ -1545,6 +1577,15 @@ public class PhotoMenu extends MenuController
             mActivity.requestLocationPermission();
         }
 
+        if (same(pref, CameraSettings.KEY_BOKEH_MODE, "1")) {
+            ListPreference scene =
+                    mPreferenceGroup.findPreference(CameraSettings.KEY_SCENE_MODE);
+            updateSceneModeIcon((IconListPreference)scene);
+            changeFilterModeControlIcon("none");
+            buttonSetEnabled(mHdrSwitcher,false);
+            buttonSetEnabled(mSceneModeSwitcher,false);
+            buttonSetEnabled(mFilterModeSwitcher,false);
+        }
         super.onSettingChanged(pref);
     }
 
