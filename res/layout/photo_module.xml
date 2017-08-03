@@ -116,12 +116,18 @@
             style="?android:attr/seekBarStyle"
             android:id="@+id/blur_degree_bar"
             android:orientation="horizontal"
-            android:layout_gravity="bottom"
-            android:layout_width="match_parent"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="160dip"
-            android:layout_marginLeft="30dip"
-            android:layout_marginRight="30dip"
+            android:visibility="gone"/>
+        <TextView
+            android:id="@+id/bokeh_tip_text"
+            android:background="@android:color/darker_gray"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="130dip"
+            android:layout_gravity="bottom|center_horizontal"
             android:visibility="gone"/>
     </FrameLayout>
 </merge>
