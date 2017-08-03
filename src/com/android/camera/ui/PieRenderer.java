@@ -288,12 +288,10 @@ public class PieRenderer extends OverlayRenderer
     public void setBokehDegree(int degree) {
         if (degree >=0 && degree <= 100) {
             int index = (int)degree/15;
-            Log.d("ZJJ","index="+index);
             if (mBokehFocusIndex == index)
                 return;
             mBokehFocusIndex = index;
             int resid = mBokehFocusResId.getResourceId(mBokehFocusIndex,0);
-            Log.d("ZJJ","resid  = "+resid );
             if (mBokehFocusCircle != null) {
                 mBokehFocusCircle.recycle();
             }
@@ -379,11 +377,7 @@ public class PieRenderer extends OverlayRenderer
                 mLabel.setText("");
             }
         }
-        if (mIsBokehMode) {
-            setVisible(true);
-        } else {
-            setVisible(show);
-        }
+        setVisible(show);
 
         mHandler.sendEmptyMessage(show ? MSG_OPEN : MSG_CLOSE);
     }
@@ -625,10 +619,10 @@ public class PieRenderer extends OverlayRenderer
             float sf = 0.9f + alpha * 0.1f;
             canvas.scale(sf, sf, mPieCenterX, mPieCenterY);
         }
-        if (mIsBokehMode) {
-            drawBokehFocus(canvas);
-        } else {
-            if (mState != STATE_PIE) {
+        if (mState != STATE_PIE) {
+            if (mIsBokehMode) {
+                drawBokehFocus(canvas);
+            } else {
                 drawFocus(canvas);
             }
         }
@@ -1189,12 +1183,15 @@ public class PieRenderer extends OverlayRenderer
     private class Disappear implements Runnable {
         @Override
         public void run() {
-            if (mState == STATE_PIE || mIsBokehMode) return;
+            if (mState == STATE_PIE) return;
             setVisible(false);
             mFocusX = mCenterX;
             mFocusY = mCenterY;
             mState = STATE_IDLE;
             setCircle(mFocusX, mFocusY);
+            if (mIsBokehMode) {
+                mHandler.sendEmptyMessage(MSG_CLOSE);
+            }
             mFocused = false;
         }
     }

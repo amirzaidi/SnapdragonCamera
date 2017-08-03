@@ -77,6 +77,7 @@ public class GDepth{
     private String mData;
     private final String mFormat = FORMAT_8_BIT;
     private int[] mMap;
+    private byte[] mGdepthJpeg;
 
     static {
         try {
@@ -139,6 +140,7 @@ public class GDepth{
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
         byte[] jpegBytes = outputStream.toByteArray();
+        mGdepthJpeg = jpegBytes;
         if (jpegBytes != null ) {
             String base64String = serializeAsBase64Str(jpegBytes);
             result = true;
@@ -177,6 +179,10 @@ public class GDepth{
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
         return outputStream.toByteArray();
+    }
+
+    public byte[] getDepthJpeg() {
+        return mGdepthJpeg;
     }
 
     private  String serializeAsBase64Str(byte[] image) {
