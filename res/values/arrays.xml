@@ -635,6 +635,11 @@
         <item>@drawable/ic_hdr</item>
     </string-array>
 
+    <string-array name="pref_camera_bokeh_icons" translatable="false">
+        <item>@drawable/ic_bokeh_on</item>
+        <item>@drawable/ic_bokeh_off</item>
+    </string-array>
+
     <string-array name="pref_camera_hdr_entryvalues" translatable="false">
         <item>@string/setting_off_value</item>
         <item>@string/setting_on_value</item>
@@ -664,6 +669,16 @@
         <item>@drawable/ic_exposure_p1</item>
         <item>@drawable/ic_exposure_p2</item>
         <item>@drawable/ic_exposure_p3</item>
+    </array>
+
+    <array name="bokeh_shutter_icons" translatable="false">
+        <item>@drawable/bokeh_shutter_01</item>
+        <item>@drawable/bokeh_shutter_02</item>
+        <item>@drawable/bokeh_shutter_03</item>
+        <item>@drawable/bokeh_shutter_04</item>
+        <item>@drawable/bokeh_shutter_05</item>
+        <item>@drawable/bokeh_shutter_06</item>
+        <item>@drawable/bokeh_shutter_07</item>
     </array>
 
     <!--  Labels for Countdown timer -->

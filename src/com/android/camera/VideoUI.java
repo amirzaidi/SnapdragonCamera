@@ -964,6 +964,11 @@ public class VideoUI implements PieRenderer.PieListener,
         setSwipingEnabled(true);
     }
 
+    @Override
+    public void onPieMoved(int centerX, int centerY) {
+
+    }
+
     public void setSwipingEnabled(boolean enable) {
         mActivity.setSwipingEnabled(enable);
     }
