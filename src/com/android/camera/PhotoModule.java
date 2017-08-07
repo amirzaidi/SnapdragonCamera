@@ -2160,7 +2160,7 @@ public class PhotoModule
             flashMode = Parameters.FLASH_MODE_OFF;
             mParameters.setFlashMode(flashMode);
         }
-        if (disableLongShot) {
+        if (disableLongShot || mIsBokehMode) {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
                     mActivity.getString(R.string.setting_off_value));
         } else {
@@ -2205,6 +2205,11 @@ public class PhotoModule
                     && prefSelfieMirror.getValue().equalsIgnoreCase("enable")) {
                 mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, "off");
             }
+        }
+
+        if (mIsBokehMode) {
+            mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, Parameters.FLASH_MODE_OFF);
+            mUI.overrideSettings(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
         }
     }
 
@@ -3882,13 +3887,6 @@ public class PhotoModule
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mUI.overrideSettings(CameraSettings.KEY_SCENE_MODE,
-                            mActivity.getString(R.string.pref_camera_scenemode_default));
-                    mUI.overrideSettings(CameraSettings.KEY_ZSL,
-                            mActivity.getString(R.string.pref_camera_zsl_value_on));
-                    mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, "off");
-                    mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
-                            mActivity.getString(R.string.pref_camera_longshot_default));
                     mUI.getBokehDegreeBar().setProgress(degree);
                     mUI.getBokehDegreeBar().setOnSeekBarChangeListener(mBlurDegreeListener);
                     mUI.enableBokehRender(true);
