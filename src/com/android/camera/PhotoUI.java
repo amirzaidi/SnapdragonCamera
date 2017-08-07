@@ -1142,7 +1142,7 @@ public class PhotoUI implements PieListener,
         if (mFaceView != null) {
             mFaceView.setBlockDraw(false);
         }
-        if (mIsBokehMode && mBlurDegreeProgressBar != null) {
+        if (mBlurDegreeProgressBar != null) {
             mBlurDegreeProgressBar.setVisibility(View.GONE);
         }
     }
@@ -1158,7 +1158,8 @@ public class PhotoUI implements PieListener,
         }
         mBlurDegreeProgressBar.setX(centerX - mBlurDegreeProgressBar.getWidth() /2);
         mBlurDegreeProgressBar.setY(y);
-        if (mBlurDegreeProgressBar.getVisibility() != View.VISIBLE && mPieRenderer.isVisible()) {
+        if (mIsBokehMode && mBlurDegreeProgressBar.getVisibility() != View.VISIBLE
+                && mPieRenderer.isVisible()) {
             mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
         }
     }
@@ -1167,6 +1168,22 @@ public class PhotoUI implements PieListener,
         if (mPieRenderer != null) {
             mPieRenderer.setBokehMode(enable);
             mIsBokehMode = enable;
+        }
+        if (mGestures != null) {
+            mGestures.setZoomEnabled(!mIsBokehMode);
+        }
+    }
+
+    public void enableBokehFocus(boolean enable) {
+        if (mPieRenderer != null && mIsBokehMode) {
+            mPieRenderer.setBokehMode(enable);
+            if (mBlurDegreeProgressBar != null) {
+                if (enable && mPieRenderer.isVisible()) {
+                    mBlurDegreeProgressBar.setVisibility(View.VISIBLE);
+                } else {
+                    mBlurDegreeProgressBar.setVisibility(View.GONE);
+                }
+            }
         }
     }
 

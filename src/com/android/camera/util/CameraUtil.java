@@ -526,8 +526,8 @@ public class CameraUtil {
         //For < 720p, there is no need to do any capping.
         //By capping the panel size, we are indirectly controlling the preview size being
         //chosen in getOptimalPreviewSize().
-        String uMax = SystemProperties.get("camera.display.umax", "");
-        String lMax = SystemProperties.get("camera.display.lmax", "");
+        String uMax = PersistUtil.getDisplayUMax();
+        String lMax = PersistUtil.getDisplayLMax();
         if ((uMax.length() > 0) && (lMax.length() > 0)) {
             Log.v(TAG,"display uMax "+ uMax + " lMax " + lMax);
             String uMaxArr[] = uMax.split("x", 2);

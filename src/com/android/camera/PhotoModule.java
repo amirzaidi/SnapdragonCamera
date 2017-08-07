@@ -886,8 +886,7 @@ public class PhotoModule
     }
 
     private void resetMiscSettings() {
-        boolean disableQcomMiscSetting =
-                SystemProperties.getBoolean("camera.qcom.misc.disable", false);
+        boolean disableQcomMiscSetting = PersistUtil.isDisableQcomMiscSetting();
         if (disableQcomMiscSetting) {
             mUI.setPreference(CameraSettings.KEY_ZSL, ParametersWrapper.ZSL_OFF);
             mUI.setPreference(CameraSettings.KEY_FACE_DETECTION,
@@ -1244,14 +1243,21 @@ public class PhotoModule
                             break;
                         default:
                             tip = "Message type =" + metadata[2];
+                            break;
                     }
                     mDepthSuccess = metadata[2] == DEPTH_EFFECT_SUCCESS;
                     mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             if (mBokehTipText != null) {
-                                mBokehTipText.setText(tip);
+                                if (!mDepthSuccess) {
+                                    mBokehTipText.setVisibility(View.VISIBLE);
+                                    mBokehTipText.setText(tip);
+                                } else {
+                                    mBokehTipText.setVisibility(View.GONE);
+                                }
                             }
+                            mUI.enableBokehFocus(mDepthSuccess);
                         }
                     });
                 }
@@ -2160,7 +2166,7 @@ public class PhotoModule
             flashMode = Parameters.FLASH_MODE_OFF;
             mParameters.setFlashMode(flashMode);
         }
-        if (disableLongShot) {
+        if (disableLongShot || mIsBokehMode) {
             mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
                     mActivity.getString(R.string.setting_off_value));
         } else {
@@ -2205,6 +2211,39 @@ public class PhotoModule
                     && prefSelfieMirror.getValue().equalsIgnoreCase("enable")) {
                 mUI.overrideSettings(CameraSettings.KEY_LONGSHOT, "off");
             }
+        }
+
+        String bokehMode = mPreferences.getString(
+                CameraSettings.KEY_BOKEH_MODE,
+                mActivity.getString(R.string.pref_camera_bokeh_mode_default));
+        if (!bokehMode.equals(mActivity.getString(
+                R.string.pref_camera_bokeh_mode_entry_value_disable))) {
+            mIsBokehMode = true;
+            if (mCameraDevice != null) {
+                mCameraDevice.setMetadataCb(mMetaDataCallback);
+            }
+            mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, Parameters.FLASH_MODE_OFF);
+            mUI.overrideSettings(CameraSettings.KEY_SCENE_MODE, Parameters.SCENE_MODE_AUTO);
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            final int degree = prefs.getInt(CameraSettings.KEY_BOKEH_BLUR_VALUE,50);
+            mUI.getBokehDegreeBar().setProgress(degree);
+            mUI.getBokehDegreeBar().setOnSeekBarChangeListener(mBlurDegreeListener);
+            mUI.enableBokehRender(true);
+            mUI.setBokehRenderDegree(degree);
+            mBokehTipText.setVisibility(View.VISIBLE);
+        } else {
+            mIsBokehMode = false;
+            if (mCameraDevice != null) {
+                mCameraDevice.setMetadataCb(null);
+            }
+            mUI.overrideSettings(CameraSettings.KEY_BOKEH_MPO,
+                    mActivity.getString(R.string.pref_camera_bokeh_mpo_default));
+            mUI.overrideSettings(CameraSettings.KEY_BOKEH_BLUR_VALUE,
+                    mActivity.getString(R.string.pref_camera_bokeh_blur_degree_default));
+            mUI.getBokehDegreeBar().setOnSeekBarChangeListener(null);
+            mUI.getBokehDegreeBar().setVisibility(View.GONE);
+            mUI.enableBokehRender(false);
+            mBokehTipText.setVisibility(View.GONE);
         }
     }
 
@@ -3847,7 +3886,7 @@ public class PhotoModule
         String bokehBlurDegree = mPreferences.getString(
                 CameraSettings.KEY_BOKEH_BLUR_VALUE,
                 mActivity.getString(R.string.pref_camera_bokeh_blur_degree_default));
-        final boolean supportBokeh = CameraSettings.isBokehModeSupported(mParameters);;
+        final boolean supportBokeh = CameraSettings.isBokehModeSupported(mParameters);
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -3873,48 +3912,8 @@ public class PhotoModule
             if(mManual3AEnabled != 0) {
                 mManual3AEnabled = 0;
             }
-            if (mCameraDevice != null) {
-                mCameraDevice.setMetadataCb(mMetaDataCallback);
-            }
-            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
-            final  int degree = prefs.getInt(CameraSettings.KEY_BOKEH_BLUR_VALUE,50);
-            bokehBlurDegree = String.valueOf(degree);
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mUI.overrideSettings(CameraSettings.KEY_SCENE_MODE,
-                            mActivity.getString(R.string.pref_camera_scenemode_default));
-                    mUI.overrideSettings(CameraSettings.KEY_ZSL,
-                            mActivity.getString(R.string.pref_camera_zsl_value_on));
-                    mUI.overrideSettings(CameraSettings.KEY_FLASH_MODE, "off");
-                    mUI.overrideSettings(CameraSettings.KEY_LONGSHOT,
-                            mActivity.getString(R.string.pref_camera_longshot_default));
-                    mUI.getBokehDegreeBar().setProgress(degree);
-                    mUI.getBokehDegreeBar().setOnSeekBarChangeListener(mBlurDegreeListener);
-                    mUI.enableBokehRender(true);
-                    mUI.setBokehRenderDegree(degree);
-                    mBokehTipText.setVisibility(View.VISIBLE);
-                }
-            });
         } else {
             mIsBokehMode = false;
-            bokehBlurDegree = "0";
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mUI.overrideSettings(CameraSettings.KEY_BOKEH_MPO,
-                            mActivity.getString(R.string.pref_camera_bokeh_mpo_default));
-                    mUI.overrideSettings(CameraSettings.KEY_BOKEH_BLUR_VALUE,
-                            mActivity.getString(R.string.pref_camera_bokeh_blur_degree_default));
-                    mUI.getBokehDegreeBar().setOnSeekBarChangeListener(null);
-                    mUI.getBokehDegreeBar().setVisibility(View.GONE);
-                    mUI.enableBokehRender(false);
-                    mBokehTipText.setVisibility(View.GONE);
-                }
-            });
-            if (mCameraDevice != null) {
-                mCameraDevice.setMetadataCb(null);
-            }
         }
         mParameters.set(CameraSettings.KEY_QC_BOKEH_MODE, bokehMode);
         mParameters.set(CameraSettings.KEY_QC_BOKEH_MPO_MODE, bokehMpo);
@@ -3948,9 +3947,9 @@ public class PhotoModule
         //value: 1 - FLIP_MODE_H
         //value: 2 - FLIP_MODE_V
         //value: 3 - FLIP_MODE_VH
-        int preview_flip_value = SystemProperties.getInt("debug.camera.preview.flip", 0);
-        int video_flip_value = SystemProperties.getInt("debug.camera.video.flip", 0);
-        int picture_flip_value = SystemProperties.getInt("debug.camera.picture.flip", 0);
+        int preview_flip_value = PersistUtil.getPreviewFlip();
+        int video_flip_value = PersistUtil.getVideoFlip();
+        int picture_flip_value = PersistUtil.getPictureFlip();
         int rotation = CameraUtil.getJpegRotation(mCameraId, mOrientation);
         mParameters.setRotation(rotation);
         if (rotation == 90 || rotation == 270) {
