@@ -107,7 +107,20 @@ public class PersistUtil {
             SystemProperties.getInt("persist.vendor.camera.cs.timeout", 300);
     private static final boolean PERSIST_DUMP_DEPTH_ENABLED =
             SystemProperties.getBoolean("persist.vendor.camera.cs.dumpdepth", false);
-
+    private static final boolean PERSIST_DISABLE_QCOM_MISC_SETTING =
+            SystemProperties.getBoolean("persist.vendor.camera.qcom.misc.disable", false);
+    private static final int PREVIEW_FLIP_VALUE =
+            SystemProperties.getInt("persist.vendor.debug.camera.preview.flip", 0);
+    private static final int PERSIST_VIDEO_FLIP_VALUE =
+            SystemProperties.getInt("persist.vendor.debug.camera.video.flip", 0);
+    private static final int PERSIST_PICTURE_FLIP_VALUE =
+            SystemProperties.getInt("persist.vendor.debug.camera.picture.flip", 0);
+    private static final boolean PERSIST_YV_12_FORMAT_ENABLED =
+            SystemProperties.getBoolean("persist.vendor.camera.debug.camera.yv12", false);
+    private static final String PERSIST_DISPLAY_UMAX =
+            SystemProperties.get("persist.vendor.camera.display.umax", "");
+    private static final String PERSIST_DISPLAY_LMAX =
+            SystemProperties.get("persist.vendor.camera.display.lmax", "");
 
     public static int getMemoryLimit() {
         return PERSIST_MEMORY_LIMIT;
@@ -256,4 +269,33 @@ public class PersistUtil {
     public static boolean isDumpDepthEnabled() {
         return PERSIST_DUMP_DEPTH_ENABLED;
     }
+
+    public static boolean isDisableQcomMiscSetting(){
+        return PERSIST_DISABLE_QCOM_MISC_SETTING;
+    }
+
+    public static int getPreviewFlip() {
+        return PREVIEW_FLIP_VALUE;
+    }
+
+    public static int getVideoFlip() {
+        return PERSIST_VIDEO_FLIP_VALUE;
+    }
+
+    public static int getPictureFlip() {
+        return PERSIST_PICTURE_FLIP_VALUE;
+    }
+
+    public static boolean isYv12FormatEnable() {
+        return PERSIST_YV_12_FORMAT_ENABLED;
+    }
+
+    public static String getDisplayUMax() {
+        return PERSIST_DISPLAY_UMAX;
+    }
+
+    public static String getDisplayLMax() {
+        return PERSIST_DISPLAY_LMAX;
+    }
+
 }
