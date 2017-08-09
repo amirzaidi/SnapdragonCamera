@@ -256,7 +256,7 @@ public class CameraControls extends RotatableLayout {
         if(TsMakeupManager.HAS_TS_MAKEUP) {
             mTsMakeupSwitcher.setEnabled(enable);
         } else {
-            mHdrSwitcher.setEnabled(enable);
+            mHdrSwitcher.setEnabled(enable && !mIsBokehMode);
         }
         if (mIsBokehMode) {
             mBokehSwitcher.setEnabled(enable);
