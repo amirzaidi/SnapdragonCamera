@@ -164,6 +164,7 @@ public class PhotoModule
     private static final int SET_PHOTO_UI_PARAMS = 11;
     private static final int SWITCH_TO_GCAM_MODULE = 12;
     private static final int ON_PREVIEW_STARTED = 13;
+    private static final int INSTANT_CAPTURE = 14;
 
     private static final int NO_DEPTH_EFFECT = 0;
     private static final int DEPTH_EFFECT_SUCCESS = 1;
@@ -285,13 +286,6 @@ public class PhotoModule
     private TextView mBokehTipText;
     private boolean mDepthSuccess = false;
     private boolean mSaveBokehXmp = false;
-
-    private Runnable mDoSnapRunnable = new Runnable() {
-        @Override
-        public void run() {
-            onShutterButtonClick();
-        }
-    };
 
     private class OpenCameraThread extends Thread {
         @Override
@@ -570,6 +564,11 @@ public class PhotoModule
 
                 case ON_PREVIEW_STARTED: {
                     onPreviewStarted();
+                    break;
+                }
+
+                case INSTANT_CAPTURE: {
+                    onShutterButtonClick();
                     break;
                 }
             }
@@ -3177,7 +3176,7 @@ public class PhotoModule
             }
         } else {
             Log.v(TAG, "Trigger snapshot from start preview.");
-            mHandler.post(mDoSnapRunnable);
+            mHandler.sendEmptyMessageDelayed(INSTANT_CAPTURE, 1500);
         }
     }
 
