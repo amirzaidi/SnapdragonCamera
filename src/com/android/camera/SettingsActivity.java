@@ -103,6 +103,10 @@ public class SettingsActivity extends PreferenceActivity {
                 if (pref != null) {
                     pref.setEnabled(enabled);
                 }
+                if ( pref.getKey().equals(SettingsManager.KEY_QCFA) ) {
+                    mSettingsManager.updateQcfaPictureSize();
+                    updatePreference(SettingsManager.KEY_PICTURE_SIZE);
+                }
             }
         }
     };
