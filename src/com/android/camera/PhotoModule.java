@@ -2713,6 +2713,8 @@ public class PhotoModule
             public void run() {
                 mActivity.updateStorageSpaceAndHint();
                 updateRemainingPhotos();
+                mUI.hideUI();
+                mUI.showUI();
             }
         });
     }
