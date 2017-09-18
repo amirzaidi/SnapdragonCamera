@@ -365,6 +365,13 @@
         camera:entryValues="@array/pref_camera_zoom_entryvalues" />
 
     <ListPreference
+        camera:key="pref_camera2_qcfa_key"
+        camera:defaultValue="@string/pref_camera2_qcfa_default"
+        camera:title="@string/pref_camera2_qcfa_title"
+        camera:entries="@array/pref_camera2_qcfa_entries"
+        camera:entryValues="@array/pref_camera2_qcfa_entryvalues" />
+
+    <ListPreference
         camera:key="pref_camera2_bsgc_key"
         camera:defaultValue="@string/pref_camera2_bsgc_default"
         camera:title="@string/pref_camera2_bsgc_title"

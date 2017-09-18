@@ -674,7 +674,9 @@ public class PostProcessor{
         return false;
     }
 
-    public void onOpen(int postFilterId, boolean isFlashModeOn, boolean isTrackingFocusOn, boolean isMakeupOn, boolean isSelfieMirrorOn, boolean isSaveRaw) {
+    public void onOpen(int postFilterId, boolean isFlashModeOn, boolean isTrackingFocusOn,
+                       boolean isMakeupOn, boolean isSelfieMirrorOn, boolean isSaveRaw,
+                       boolean isSupportedQcfa) {
         mImageHandlerTask = new ImageHandlerTask();
         mSaveRaw = isSaveRaw;
         if(setFilter(postFilterId) || isFlashModeOn || isTrackingFocusOn || isMakeupOn || isSelfieMirrorOn
@@ -685,7 +687,8 @@ public class PostProcessor{
                 || SettingsManager.getInstance().isCamera2HDRSupport()
                 || "18".equals(SettingsManager.getInstance().getValue(
                                   SettingsManager.KEY_SCENE_MODE))
-                || mController.getCameraMode() == CaptureModule.DUAL_MODE) {
+                || mController.getCameraMode() == CaptureModule.DUAL_MODE
+                || isSupportedQcfa) {
             mUseZSL = false;
         } else {
             mUseZSL = true;

@@ -77,6 +77,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.lang.StringBuilder;
 
 public class SettingsManager implements ListMenu.SettingsListener {
     public static final int RESOURCE_TYPE_THUMBNAIL = 0;
@@ -146,6 +147,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
     public static final String KEY_ZOOM = "pref_camera2_zoom_key";
+    public static final String KEY_QCFA = "pref_camera2_qcfa_key";
 
     public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
     public static final String KEY_BSGC_DETECTION = "pref_camera2_bsgc_key";
@@ -263,6 +265,18 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (changed == null) return;
         runTimeUpdateDependencyOptions(pref);
         notifyListeners(changed);
+    }
+
+    public void updateQcfaPictureSize() {
+        ListPreference picturePref = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
+        if (picturePref != null) {
+            picturePref.setEntries(mContext.getResources().getStringArray(
+                    R.array.pref_camera2_picturesize_entries));
+            picturePref.setEntryValues(mContext.getResources().getStringArray(
+                    R.array.pref_camera2_picturesize_entryvalues));
+            filterUnsupportedOptions(picturePref, getSupportedPictureSize(
+                    getCurrentCameraId()));
+        }
     }
 
     public void init() {
@@ -614,6 +628,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference histogram = mPreferenceGroup.findPreference(KEY_HISTOGRAM);
         ListPreference hdr = mPreferenceGroup.findPreference(KEY_HDR);
         ListPreference zoom = mPreferenceGroup.findPreference(KEY_ZOOM);
+        ListPreference qcfa = mPreferenceGroup.findPreference(KEY_QCFA);
         ListPreference bsgc = mPreferenceGroup.findPreference(KEY_BSGC_DETECTION);
 
         if (whiteBalance != null) {
@@ -1085,6 +1100,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = map.getOutputSizes(ImageFormat.JPEG);
         List<String> res = new ArrayList<>();
+
+        if (getQcfaPrefEnabled() && getIsSupportedQcfa(cameraId)) {
+            res.add(getSupportedQcfaDimension(cameraId));
+        }
+
         if (sizes != null) {
             for (int i = 0; i < sizes.length; i++) {
                 res.add(sizes[i].toString());
@@ -1404,6 +1424,41 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
         return  modes;
     }
+
+    public boolean getQcfaPrefEnabled() {
+        String qcfa = getValue(KEY_QCFA);
+        if(qcfa != null && qcfa.equals("enable")) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean getIsSupportedQcfa (int cameraId) {
+        byte isSupportQcfa = 0;
+        try {
+            isSupportQcfa = mCharacteristics.get(cameraId).get(
+                    CaptureModule.IS_SUPPORT_QCFA_SENSOR);
+        }catch(Exception e) {
+        }
+        return isSupportQcfa == 1 ? true : false;
+    }
+
+    public String getSupportedQcfaDimension(int cameraId) {
+        int[] qcfaDimension = mCharacteristics.get(cameraId).get(
+                CaptureModule.QCFA_SUPPORT_DIMENSION);
+        if (qcfaDimension == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < qcfaDimension.length; i ++) {
+            sb.append(qcfaDimension[i]);
+            if (i == 0) {
+                sb.append("x");
+            }
+        }
+        return  sb.toString();
+    }
+
 
     public List<String> getSupportedSaturationLevelAvailableModes(int cameraId) {
         int[] saturationLevelAvailableModes = {0,1,2,3,4,5,6,7,8,9,10};
