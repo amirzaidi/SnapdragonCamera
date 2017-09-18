@@ -1177,5 +1177,12 @@
     <string name="pref_camera2_zsl_entryvalue_disable" translatable="false">disable</string>
     <string name="pref_camera2_zsl_entryvalue_app_zsl" translatable="false">app-zsl</string>
     <string name="pref_camera2_zsl_entryvalue_hal_zsl" translatable="false">hal-zsl</string>
+
+    <!-- QCFA Title -->
+    <string name="pref_camera2_qcfa_title" translatable="true">QCFA</string>
+    <string name="pref_camera2_qcfa_default" translatable="false">disable</string>
+    <!-- QCFA choices -->
+    <string name="pref_camera_qcfa_value_disable">disable</string>
+    <string name="pref_camera_qcfa_value_enable">enable</string>
 </resources>
 

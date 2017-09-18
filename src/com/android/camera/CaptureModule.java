@@ -230,7 +230,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             new CaptureResult.Key<>("org.codeaurora.qcamera3.histogram.stats", int[].class);
     public static CameraCharacteristics.Key<Integer> isHdrScene =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.stats.is_hdr_scene", Integer.class);
-
+    public static CameraCharacteristics.Key<Byte> IS_SUPPORT_QCFA_SENSOR =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.quadra_cfa.is_qcfa_sensor", Byte.class);
+    public static CameraCharacteristics.Key<int[]> QCFA_SUPPORT_DIMENSION =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.quadra_cfa.qcfa_dimension", int[].class);
     public static CameraCharacteristics.Key<Byte> bsgcAvailable =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.stats.bsgc_available", Byte.class);
     public static CaptureResult.Key<byte[]> blinkDetected =
@@ -268,6 +271,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mIsLinked = false;
     private long mCaptureStartTime;
     private boolean mPaused = true;
+    private boolean mIsSupportedQcfa = false;
     private Semaphore mSurfaceReadyLock = new Semaphore(1);
     private boolean mSurfaceReady = true;
     private boolean[] mCameraOpened = new boolean[MAX_NUM_CAM];
@@ -1486,7 +1490,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
 
             applySettingsForJpegInformation(captureBuilder, id);
-            addPreviewSurface(captureBuilder, null, id);
+            if (!mIsSupportedQcfa) {
+                addPreviewSurface(captureBuilder, null, id);
+            }
             VendorTagUtil.setCdsMode(captureBuilder, 2);// CDS 0-OFF, 1-ON, 2-AUTO
             applySettingsForCapture(captureBuilder, id);
 
@@ -1499,7 +1505,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 if (mSaveRaw) {
                     captureBuilder.addTarget(mRawImageReader[id].getSurface());
                 }
-                mCaptureSession[id].stopRepeating();
+                if (!mIsSupportedQcfa) {
+                    mCaptureSession[id].stopRepeating();
+                }
                 if (mLongshotActive) {
                     captureStillPictureForLongshot(captureBuilder, id);
                 } else {
@@ -1772,13 +1780,21 @@ public class CaptureModule implements CameraModule, PhotoController,
                         }
                         mImageReader[i].setOnImageAvailableListener(mPostProcessor.getImageHandler(), mImageAvailableHandler);
                         mPostProcessor.onImageReaderReady(mImageReader[i], mSupportedMaxPictureSize, mPictureSize);
-                    } else {
+                    } else if (i == getMainCameraId()) {
                         mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
                                 mPictureSize.getHeight(), imageFormat, PersistUtil.getLongshotShotLimit());
 
                         ImageAvailableListener listener = new ImageAvailableListener(i) {
                             @Override
                             public void onImageAvailable(ImageReader reader) {
+                                if (mIsSupportedQcfa) {
+                                    mHandler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mUI.enableShutter(true);
+                                        }
+                                    });
+                                }
                                 Log.d(TAG, "image available for cam: " + mCamId);
                                 Image image = reader.acquireNextImage();
 
@@ -1911,7 +1927,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                     @Override
                     public void run() {
                         mUI.stopSelfieFlash();
-                        mUI.enableShutter(true);
+                        if (!mIsSupportedQcfa) {
+                            mUI.enableShutter(true);
+                        }
                         mUI.enableVideo(true);
                     }
                 });
@@ -2367,6 +2385,10 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void openProcessors() {
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        mIsSupportedQcfa = mSettingsManager.getQcfaPrefEnabled() &&
+            mSettingsManager.getIsSupportedQcfa(getMainCameraId()) &&
+            mPictureSize.toString().equals(mSettingsManager.getSupportedQcfaDimension(
+                getMainCameraId()));
         boolean isFlashOn = false;
         boolean isMakeupOn = false;
         boolean isSelfieMirrorOn = false;
@@ -2388,9 +2410,13 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (scene != null) {
                 int mode = Integer.parseInt(scene);
                 Log.d(TAG, "Chosen postproc filter id : " + getPostProcFilterId(mode));
-                mPostProcessor.onOpen(getPostProcFilterId(mode), isFlashOn, isTrackingFocusSettingOn(), isMakeupOn, isSelfieMirrorOn, mSaveRaw);
+                mPostProcessor.onOpen(getPostProcFilterId(mode), isFlashOn,
+                        isTrackingFocusSettingOn(), isMakeupOn, isSelfieMirrorOn,
+                        mSaveRaw, mIsSupportedQcfa);
             } else {
-                mPostProcessor.onOpen(PostProcessor.FILTER_NONE, isFlashOn, isTrackingFocusSettingOn(), isMakeupOn, isSelfieMirrorOn, mSaveRaw);
+                mPostProcessor.onOpen(PostProcessor.FILTER_NONE, isFlashOn,
+                        isTrackingFocusSettingOn(), isMakeupOn, isSelfieMirrorOn,
+                        mSaveRaw, mIsSupportedQcfa);
             }
         }
         if(mFrameProcessor != null) {

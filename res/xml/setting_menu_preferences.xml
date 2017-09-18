@@ -357,6 +357,15 @@
             android:entryValues="@array/pref_camera_zoom_entryvalues" />
 
         <ListPreference
+            android:key="pref_camera2_qcfa_key"
+            android:defaultValue="@string/pref_camera2_qcfa_default"
+            android:title="@string/pref_camera2_qcfa_title"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:entries="@array/pref_camera2_qcfa_entries"
+            android:entryValues="@array/pref_camera2_qcfa_entryvalues" />
+
+        <ListPreference
             android:defaultValue="@string/pref_camera2_bsgc_default"
             android:entries="@array/pref_camera2_bsgc_entries"
             android:entryValues="@array/pref_camera2_bsgc_entryvalues"
