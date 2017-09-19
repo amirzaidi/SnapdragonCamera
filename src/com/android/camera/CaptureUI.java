@@ -663,6 +663,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void initSwitchCamera() {
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         String value = mSettingsManager.getValue(SettingsManager.KEY_CAMERA_ID);
+        Log.d(TAG,"value of KEY_CAMERA_ID is null? " + (value==null));
         if (value == null)
             return;
 
