@@ -168,6 +168,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private JSONObject mDependency;
     private int mCameraId;
     private Set<String> mFilteredKeys;
+    private int[] mExtendedHFRSize;//An array of pairs (fps, maxW, maxH)
 
     public Map<String, Values> getValuesMap() {
         return mValuesMap;
@@ -301,6 +302,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         mValuesMap = new HashMap<>();
         mDependendsOnMap = new HashMap<>();
         mFilteredKeys = new HashSet<>();
+        try {
+            mExtendedHFRSize = mCharacteristics.get(cameraId).get(CaptureModule.hfrSizeList);
+        }catch(IllegalArgumentException exception) {
+            exception.printStackTrace();
+        }
+
         filterPreferences(cameraId);
         initDependencyTable();
         initializeValueMap();
@@ -941,7 +948,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private List<String> getSupportedHighFrameRate() {
         ArrayList<String> supported = new ArrayList<String>();
         supported.add("off");
-
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
         String videoSizeStr = videoQuality.getValue();
         if (videoSizeStr != null) {
@@ -959,11 +965,17 @@ public class SettingsManager implements ListMenu.SettingsListener {
             } catch (IllegalArgumentException ex) {
                 Log.w(TAG, "HFR is not supported for this resolution " + ex);
             }
-
-            // 60 fps goes through normal sesssion if it is supported by device
-            int maxFpsForNormalSession = getSupportedMaximumVideoFPSForNormalSession(mCameraId, videoSize);
-            supported.add("hfr" + maxFpsForNormalSession);
-            supported.add("hsr" + maxFpsForNormalSession);
+            if ( mExtendedHFRSize != null && mExtendedHFRSize.length >= 3 ) {
+                for( int i=0; i < mExtendedHFRSize.length; i+=3 ) {
+                    String item = "hfr" + mExtendedHFRSize[i];
+                    if ( !supported.contains(item)
+                            && videoSize.getWidth() <= mExtendedHFRSize[i+1]
+                            && videoSize.getHeight() <= mExtendedHFRSize[i+2] ) {
+                        supported.add(item);
+                        supported.add("hsr"+mExtendedHFRSize[i]);
+                    }
+                }
+            }
         }
 
         return supported;
@@ -1120,37 +1132,6 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
         return res;
     }
-
-    private boolean checkAeAvailableTargetFpsRanges(int cameraId, int fps) {
-        boolean supported = false;
-        Range[] aeFpsRanges = mCharacteristics.get(cameraId).get(CameraCharacteristics
-                .CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-
-        for (Range r : aeFpsRanges) {
-            Log.d(TAG, "["+r.getLower()+", "+r.getUpper()+"]");
-            if ((fps <= (int)r.getUpper()) &&
-                (fps >= (int)r.getLower())) {
-                supported = true;
-                break;
-            }
-        }
-        return supported;
-    }
-
-    private int getSupportedMaximumVideoFPSForNormalSession(int cameraId, Size videoSize) {
-        StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        long duration = map.getOutputMinFrameDuration(MediaRecorder.class, videoSize);
-        int fps =  (int)(1000000000.0/duration);
-        if (!checkAeAvailableTargetFpsRanges(cameraId, fps)) {
-            Log.d(TAG, "FPS="+fps+" is not in available target FPS range");
-            fps = 0;
-        }
-        Log.d(TAG, "Size="+videoSize.getWidth()+"x"+videoSize.getHeight()+
-                ", Min Duration ="+duration+", Max fps=" + fps);
-        return fps;
-    }
-
 
     public Size[] getSupportedThumbnailSizes(int cameraId) {
         return mCharacteristics.get(cameraId).get(
