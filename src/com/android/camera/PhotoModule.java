@@ -3884,9 +3884,8 @@ public class PhotoModule
         String bokehMpo = mPreferences.getString(
                 CameraSettings.KEY_BOKEH_MPO,
                 mActivity.getString(R.string.pref_camera_bokeh_mpo_default));
-        String bokehBlurDegree = mPreferences.getString(
-                CameraSettings.KEY_BOKEH_BLUR_VALUE,
-                mActivity.getString(R.string.pref_camera_bokeh_blur_degree_default));
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+        final int bokehBlurDegree = prefs.getInt(CameraSettings.KEY_BOKEH_BLUR_VALUE,50);
         final boolean supportBokeh = CameraSettings.isBokehModeSupported(mParameters);
         mActivity.runOnUiThread(new Runnable() {
             @Override
