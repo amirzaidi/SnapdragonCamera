@@ -78,6 +78,8 @@ public class GDepth{
     private final String mFormat = FORMAT_8_BIT;
     private int[] mMap;
     private byte[] mGdepthJpeg;
+    private Rect mRoi;
+
 
     static {
         try {
@@ -90,6 +92,7 @@ public class GDepth{
 
     private GDepth(DepthMap depthMap){
         mDepthMap = depthMap;
+        mRoi = depthMap.roi;
         if (depthMap != null && depthMap.buffer != null) {
             mMap = new int[depthMap.buffer.length];
 
@@ -100,6 +103,12 @@ public class GDepth{
             }
         }
     }
+
+    private GDepth(byte[] gdepthJpeg) {
+        mGdepthJpeg = gdepthJpeg;
+    }
+
+
 
     public String getFormat(){
         return mFormat;
@@ -122,11 +131,23 @@ public class GDepth{
     }
 
     public Rect getRoi() {
-        return mDepthMap.roi;
+        return mRoi;
+    }
+
+    public void setRoi(Rect roi) {
+        mRoi = roi;
     }
     public static GDepth createGDepth(DepthMap depthMap){
         GDepth gDepth = new GDepth(depthMap);
         if ( gDepth.encoding() ) {
+            return gDepth;
+        }
+        return null;
+    }
+
+    public static GDepth createGDepth(byte[] gdepthJpeg) {
+        GDepth gDepth = new GDepth(gdepthJpeg);
+        if (gDepth.encodeDepthmapJpeg()) {
             return gDepth;
         }
         return null;
@@ -143,6 +164,20 @@ public class GDepth{
         mGdepthJpeg = jpegBytes;
         if (jpegBytes != null ) {
             String base64String = serializeAsBase64Str(jpegBytes);
+            result = true;
+            mData = base64String;
+        }else{
+            Log.e(TAG, "compressToJPEG failure");
+        }
+
+        return result;
+    }
+
+    private boolean encodeDepthmapJpeg() {
+        Log.d(TAG, "encodeDepthmapJpeg");
+        boolean result = false;
+        if (mGdepthJpeg != null ) {
+            String base64String = serializeAsBase64Str(mGdepthJpeg);
             result = true;
             mData = base64String;
         }else{
