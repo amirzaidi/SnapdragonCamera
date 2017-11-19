@@ -1577,10 +1577,8 @@ public class PhotoModule
                                  if (jpegData != null && mCallTime == 3) {
                                      if (mOrigin != null && mBokeh != null) {
                                          GImage gImage = new GImage(mOrigin, "image/jpeg");
-                                         GDepth.DepthMap map= new GDepth.DepthMap(1280,960);
-                                         map.buffer = mDepth;
-                                         map.roi = new Rect(0,0,width,height);
-                                         GDepth gDepth = GDepth.createGDepth(map);
+                                         GDepth gDepth = GDepth.createGDepth(mDepth);
+                                         gDepth.setRoi(new Rect(0,0,width,height));
                                          mActivity.getMediaSaveService().addXmpImage(mBokeh,gImage,
                                                  gDepth,"bokeh_"+title,date,mLocation,width,height,
                                                  orientation,exif,mOnMediaSavedListener,
@@ -1589,12 +1587,7 @@ public class PhotoModule
                                  }
                              } else {
                                  if (mCallTime == 3) {
-                                     GDepth.DepthMap map = new GDepth.DepthMap(1280, 960);
-                                     map.buffer = jpegData;
-                                     map.roi = new Rect(0, 0, width, height);
-                                     GDepth gDepth = GDepth.createGDepth(map);
-                                     byte[] depth = gDepth.getDepthJpeg();
-                                     mActivity.getMediaSaveService().addImage(depth,
+                                     mActivity.getMediaSaveService().addImage(mDepth,
                                              title, date, mLocation, width, height,
                                              orientation, exif, mOnMediaSavedListener,
                                              mContentResolver, mPictureFormat);
@@ -3884,9 +3877,8 @@ public class PhotoModule
         String bokehMpo = mPreferences.getString(
                 CameraSettings.KEY_BOKEH_MPO,
                 mActivity.getString(R.string.pref_camera_bokeh_mpo_default));
-        String bokehBlurDegree = mPreferences.getString(
-                CameraSettings.KEY_BOKEH_BLUR_VALUE,
-                mActivity.getString(R.string.pref_camera_bokeh_blur_degree_default));
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+        final int bokehBlurDegree = prefs.getInt(CameraSettings.KEY_BOKEH_BLUR_VALUE,50);
         final boolean supportBokeh = CameraSettings.isBokehModeSupported(mParameters);
         mActivity.runOnUiThread(new Runnable() {
             @Override
