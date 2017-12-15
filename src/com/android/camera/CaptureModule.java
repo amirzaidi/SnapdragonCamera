@@ -140,10 +140,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static final int DUAL_MODE = 0;
     public static final int BAYER_MODE = 1;
     public static final int MONO_MODE = 2;
+    public static final int SWITCH_MODE = 3;
     public static final int BAYER_ID = 0;
     public static int MONO_ID = -1;
     public static int FRONT_ID = -1;
-    public static int LOGICAL_ID = -1;
+    public static int SWITCH_ID = -1;
     public static final int INTENT_MODE_NORMAL = 0;
     public static final int INTENT_MODE_CAPTURE = 1;
     public static final int INTENT_MODE_VIDEO = 2;
@@ -646,8 +647,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         public void onError(CameraDevice cameraDevice, int error) {
             int id = Integer.parseInt(cameraDevice.getId());
             Log.e(TAG, "onError " + id + " " + error);
-            cameraDevice.close();
-            mCameraDevice[id] = null;
+            if (mCamerasOpened) {
+                mCameraDevice[id].close();
+                mCameraDevice[id] = null;
+            }
             mCameraOpenCloseLock.release();
             mCamerasOpened = false;
 
@@ -814,7 +817,13 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     public boolean isBackCamera() {
         String switchValue = mSettingsManager.getValue(SettingsManager.KEY_SWITCH_CAMERA);
-        if (switchValue != null && !switchValue.equals("-1") ) return false;
+        if (switchValue != null && !switchValue.equals("-1") ) {
+            CharSequence[] value = mSettingsManager.getEntryValues(SettingsManager.KEY_SWITCH_CAMERA);
+            if (value.toString().contains("front"))
+                return false;
+            else
+                return true;
+        }
         String value = mSettingsManager.getValue(SettingsManager.KEY_CAMERA_ID);
         if (value == null) return true;
         if (Integer.parseInt(value) == BAYER_ID) return true;
@@ -822,6 +831,10 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     public int getCameraMode() {
+        String switchValue = mSettingsManager.getValue(SettingsManager.KEY_SWITCH_CAMERA);
+        if (switchValue != null && !switchValue.equals("-1") ) {
+            return SWITCH_MODE;
+        }
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (value != null && value.equals(SettingsManager.SCENE_MODE_DUAL_STRING)) return DUAL_MODE;
         value = mSettingsManager.getValue(SettingsManager.KEY_MONO_ONLY);
@@ -972,9 +985,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case MONO_MODE:
                     createSession(MONO_ID);
                     break;
+                case SWITCH_MODE:
+                    createSession(SWITCH_ID);
+                    break;
             }
         } else {
-            int cameraId = LOGICAL_ID == -1? FRONT_ID : LOGICAL_ID;
+            int cameraId = SWITCH_ID == -1? FRONT_ID : SWITCH_ID;
             createSession(cameraId);
         }
     }
@@ -1328,9 +1344,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                     case MONO_MODE:
                         lockFocus(MONO_ID);
                         break;
+                    case SWITCH_MODE:
+                        lockFocus(SWITCH_ID);
+                        break;
                 }
             } else {
-                int cameraId = LOGICAL_ID == -1? FRONT_ID : LOGICAL_ID;
+                int cameraId = SWITCH_ID == -1? FRONT_ID : SWITCH_ID;
                 if(takeZSLPicture(cameraId)) {
                     return;
                 }
@@ -1363,9 +1382,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case MONO_MODE:
                     cameraId = MONO_ID;
                     break;
+                case SWITCH_MODE:
+                    cameraId = SWITCH_ID;
+                    break;
             }
         } else {
-            cameraId = LOGICAL_ID == -1? FRONT_ID : LOGICAL_ID;
+            cameraId = SWITCH_ID == -1? FRONT_ID : SWITCH_ID;
         }
         captureStillPicture(cameraId);
     }
@@ -2476,9 +2498,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                     msg.arg1 = MONO_ID;
                     mCameraHandler.sendMessage(msg);
                     break;
+                case SWITCH_MODE:
+                    msg.arg1 = SWITCH_ID;
+                    mCameraHandler.sendMessage(msg);
+                    break;
             }
         } else {
-            int cameraId = LOGICAL_ID == -1? FRONT_ID : LOGICAL_ID;
+            int cameraId = SWITCH_ID == -1? FRONT_ID : SWITCH_ID;
             msg.arg1 = cameraId;
             mCameraHandler.sendMessage(msg);
         }
@@ -2615,9 +2641,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case MONO_MODE:
                     applyZoomAndUpdate(MONO_ID);
                     break;
+                case SWITCH_MODE:
+                    applyZoomAndUpdate(SWITCH_ID);
+                    break;
             }
         } else {
-            int cameraId = LOGICAL_ID == -1? FRONT_ID : LOGICAL_ID;
+            int cameraId = SWITCH_ID == -1? FRONT_ID : SWITCH_ID;
             applyZoomAndUpdate(cameraId);
         }
         mUI.updateFaceViewCameraBound(mCropRegion[getMainCameraId()]);
@@ -2632,9 +2661,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                     return cameraId == BAYER_ID;
                 case MONO_MODE:
                     return cameraId == MONO_ID;
+                case SWITCH_MODE:
+                    return cameraId == SWITCH_ID;
             }
-        } else if (LOGICAL_ID != -1) {
-            return cameraId == LOGICAL_ID;
+        } else if (SWITCH_ID != -1) {
+            return cameraId == SWITCH_ID;
         } else {
             return cameraId == FRONT_ID;
         }
@@ -2801,9 +2832,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                 case MONO_MODE:
                     triggerFocusAtPoint(x, y, MONO_ID);
                     break;
+                case SWITCH_MODE:
+                    triggerFocusAtPoint(x, y, SWITCH_ID);
+                    break;
             }
         } else {
-            int cameraId = LOGICAL_ID == -1? FRONT_ID : LOGICAL_ID;
+            int cameraId = SWITCH_ID == -1? FRONT_ID : SWITCH_ID;
             triggerFocusAtPoint(x, y, cameraId);
         }
     }
@@ -2816,10 +2850,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                     return BAYER_ID;
                 case MONO_MODE:
                     return MONO_ID;
+                case SWITCH_MODE:
+                    return SWITCH_ID;
             }
             return 0;
         } else {
-            int cameraId = LOGICAL_ID == -1? FRONT_ID : LOGICAL_ID;
+            int cameraId = SWITCH_ID == -1? FRONT_ID : SWITCH_ID;
             return cameraId;
         }
     }
@@ -4514,9 +4550,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                         updatePreviewBayer |= applyPreferenceToPreview(BAYER_ID, key, value);
                         updatePreviewMono |= applyPreferenceToPreview(MONO_ID, key, value);
                         break;
+                    case SWITCH_MODE:
+                        updatePreviewMono |= applyPreferenceToPreview(SWITCH_ID, key, value);
+                        break;
                 }
-            } else if (LOGICAL_ID != -1) {
-                updatePreviewLogical = applyPreferenceToPreview(LOGICAL_ID,key,value);
+            } else if (SWITCH_ID != -1) {
+                updatePreviewLogical = applyPreferenceToPreview(SWITCH_ID,key,value);
             }else {
                 updatePreviewFront |= applyPreferenceToPreview(FRONT_ID, key, value);
             }
@@ -4563,9 +4602,9 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         if (updatePreviewLogical) {
             try {
-                if (checkSessionAndBuilder(mCaptureSession[LOGICAL_ID],
-                        mPreviewRequestBuilder[LOGICAL_ID])) {
-                    mCaptureSession[LOGICAL_ID].setRepeatingRequest(mPreviewRequestBuilder[LOGICAL_ID]
+                if (checkSessionAndBuilder(mCaptureSession[SWITCH_ID],
+                        mPreviewRequestBuilder[SWITCH_ID])) {
+                    mCaptureSession[SWITCH_ID].setRepeatingRequest(mPreviewRequestBuilder[SWITCH_ID]
                             .build(), mCaptureCallback, mCameraHandler);
                 }
             } catch (CameraAccessException | IllegalStateException e) {

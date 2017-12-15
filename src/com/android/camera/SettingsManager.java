@@ -603,8 +603,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public int getInitialCameraId(SharedPreferences pref) {
         int switchId = Integer.parseInt(
                 pref.getString(SettingsManager.KEY_SWITCH_CAMERA,"-1"));
-        CaptureModule.LOGICAL_ID = switchId;
-        Log.d(TAG,"LOGICAL_ID = " + switchId);
+        CaptureModule.SWITCH_ID = switchId;
+        Log.d(TAG,"SWITCH_ID = " + switchId);
         if (switchId != -1) return switchId;
         String value = pref.getString(SettingsManager.KEY_CAMERA_ID, "0");
         int frontBackId = Integer.parseInt(value);
