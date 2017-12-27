@@ -98,7 +98,9 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final int SCENE_MODE_SHARPSHOOTER_INT = SCENE_MODE_CUSTOM_START + 7;
     public static final int SCENE_MODE_TRACKINGFOCUS_INT = SCENE_MODE_CUSTOM_START + 8;
     public static final int SCENE_MODE_PROMODE_INT = SCENE_MODE_CUSTOM_START + 9;
+    public static final int SCENE_MODE_BOKEH_INT = SCENE_MODE_CUSTOM_START + 10;
     public static final String SCENE_MODE_DUAL_STRING = "100";
+    public static final String SCENE_MODE_BOKEH_STRING = "110";
     public static final String KEY_CAMERA_SAVEPATH = "pref_camera2_savepath_key";
     public static final String KEY_RECORD_LOCATION = "pref_camera2_recordlocation_key";
     public static final String KEY_JPEG_QUALITY = "pref_camera2_jpegquality_key";
@@ -110,6 +112,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_MONO_PREVIEW = "pref_camera2_mono_preview_key";
     public static final String KEY_CLEARSIGHT = "pref_camera2_clearsight_key";
     public static final String KEY_MPO = "pref_camera2_mpo_key";
+    public static final String KEY_BOKEH_BLUR_DEGREE = "pref_camera2_bokeh_blur_key";
     public static final String KEY_FILTER_MODE = "pref_camera2_filter_mode_key";
     public static final String KEY_COLOR_EFFECT = "pref_camera2_coloreffect_key";
     public static final String KEY_SCENE_MODE = "pref_camera2_scenemode_key";
@@ -1260,6 +1263,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         if (SharpshooterFilter.isSupportedStatic()) modes.add(SCENE_MODE_SHARPSHOOTER_INT + "");
         if (TrackingFocusFrameListener.isSupportedStatic()) modes.add(SCENE_MODE_TRACKINGFOCUS_INT + "");
         modes.add("" + SCENE_MODE_PROMODE_INT);
+        modes.add("" + SCENE_MODE_BOKEH_INT);
         for (int mode : sceneModes) {
             modes.add("" + mode);
         }

@@ -128,7 +128,6 @@
         <item>@string/pref_camera2_mpo_value_on</item>
     </string-array>
 
-
     <!-- Refer to CONTROL_SCENE_MODE of Camera2 API for values
         -1 refers to ones not supported in Camera2 API
         0 is special case added for auto (meaning off)
@@ -158,6 +157,7 @@
         <item>108</item>
         <item>104</item>
         <item>109</item>
+        <item>110</item>
     </string-array>
 
     <!-- Camera Preferences Scene Mode dialog box entries -->
@@ -185,6 +185,7 @@
         <item>@string/pref_camera_scenemode_entry_trackingfocus</item>
         <item>@string/pref_camera_scenemode_entry_panorama</item>
         <item>@string/pref_camera_scenemode_entry_promode</item>
+        <item>@string/pref_camera_scenemode_entry_bokeh</item>
     </string-array>
 
     <array name="pref_camera2_scenemode_thumbnails" translatable="false">
@@ -211,6 +212,7 @@
         <item>@drawable/tracking_focus</item>
         <item>@drawable/scene_panorama</item>
         <item>@drawable/promode</item>
+        <item>@drawable/ic_bokeh_off</item>
     </array>
 
     <array name="pref_camera2_scenemode_black_thumbnails" translatable="false">
@@ -237,6 +239,7 @@
         <item>@drawable/ic_scene_mode_black_tracking_focus</item>
         <item>@drawable/ic_scene_mode_black_panorama</item>
         <item>@drawable/ic_scene_mode_black_dual_camera</item>
+        <item>@drawable/ic_bokeh_on</item>
     </array>
 
     <!-- Camera Preferences Scene Mode dialog box entries -->
@@ -264,6 +267,7 @@
         <item>@string/pref_camera2_scene_mode_tracking_focus_instructional_content</item>
         <item>@string/pref_camera2_scene_mode_panorama_instructional_content</item>
         <item>@string/pref_camera2_scene_mode_pro_instructional_content</item>
+        <item>""</item>
     </string-array>
 
     <string-array name="pref_camera2_whitebalance_entryvalues" translatable="false">
