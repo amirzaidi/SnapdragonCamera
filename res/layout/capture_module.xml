@@ -114,6 +114,29 @@
         </com.android.camera.ui.RotateLayout>
     </FrameLayout>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <com.android.camera.ui.RotateLayout
+            android:id="@+id/bokeh_tip_rect"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:visibility="gone"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="60dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#3F000000"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:id="@+id/bokeh_status"
+                android:visibility="gone"/>
+        </com.android.camera.ui.RotateLayout>
+    </FrameLayout>
+
     <include
         layout="@layout/scene_mode_label"/>
 

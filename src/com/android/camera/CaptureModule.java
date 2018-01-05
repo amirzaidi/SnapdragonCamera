@@ -161,6 +161,15 @@ public class CaptureModule implements CameraModule, PhotoController,
             new MeteringRectangle(0, 0, 0, 0, 0)};
     private static final String EXTRA_QUICK_CAPTURE =
             "android.intent.extra.quickCapture";
+    //0~6 is for bokeh toast message
+    private static final int NO_DEPTH_EFFECT = 0;
+    private static final int DEPTH_EFFECT_SUCCESS = 1;
+    private static final int TOO_NEAR = 2;
+    private static final int TOO_FAR = 3;
+    private static final int LOW_LIGHT = 4;
+    private static final int SUBJECT_NOT_FOUND = 5;
+    private static final int TOUCH_TO_FOCUS = 6;
+
     /**
      * Camera state: Showing camera preview.
      */
@@ -262,6 +271,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             "org.codeaurora.qcamera3.bokeh.enable", Boolean.class);
     public static final CaptureRequest.Key<Integer> bokeh_blur_level = new CaptureRequest.Key<>(
             "org.codeaurora.qcamera3.bokeh.blurLevel", Integer.class);
+    public static final CaptureResult.Key<Integer> bokeh_status =
+            new CaptureResult.Key<>("org.codeaurora.qcamera3.bokeh.status", Integer.class);
 
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
@@ -607,10 +618,66 @@ public class CaptureModule implements CameraModule, PhotoController,
                     updateGraghView();
                 }
             }
+            showBokehStatusMessage(id, result);
             processCaptureResult(result);
             mPostProcessor.onMetaAvailable(result);
         }
     };
+
+    private void showBokehStatusMessage(int id, CaptureResult partialResult) {
+        if (!mBokehEnabled || partialResult == null) {
+            return;
+        }
+        Integer status = -1;
+        try {
+            status = partialResult.get(bokeh_status);
+            if (status == null) {
+                return;
+            }
+        } catch (IllegalArgumentException e) {
+            Log.d(TAG, "cannot find vendor tag: " + bokeh_status);
+        }
+        final String tip;
+        switch (status) {
+            case TOO_FAR:
+                tip = "Too far";
+                break;
+            case TOO_NEAR:
+                tip = "Too near";
+                break;
+            case LOW_LIGHT:
+                tip = "Low light";
+                break;
+            case SUBJECT_NOT_FOUND:
+                tip = "Object not found";
+                break;
+            case DEPTH_EFFECT_SUCCESS:
+                tip = "Depth effect success";
+                break;
+            case NO_DEPTH_EFFECT:
+                tip = "NO depth effect";
+                break;
+            default:
+                tip = "Message type =" + status;
+                break;
+        }
+        boolean mDepthSuccess = status == DEPTH_EFFECT_SUCCESS;
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mUI.getBokehTipView() != null) {
+                    if (!mDepthSuccess) {
+                        mUI.getBokehTipRct().setVisibility(View.VISIBLE);
+                        mUI.getBokehTipView().setVisibility(View.VISIBLE);
+                        mUI.getBokehTipView().setText(tip);
+                    } else {
+                        mUI.getBokehTipView().setVisibility(View.GONE);
+                        mUI.getBokehTipRct().setVisibility(View.GONE);
+                    }
+                }
+            }
+        });
+    }
 
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
 
@@ -5114,6 +5181,11 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.initializeBokehMode(!mPaused && mBokehEnabled);
         if (mPaused || !mBokehEnabled) {//disable bokeh mode
             mBokehRequestBuilder = null;
+        }
+        if (mBokehEnabled) {
+            keepScreenOn();
+        } else {
+            keepScreenOnAwhile();
         }
     }
 	

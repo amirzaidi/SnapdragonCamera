@@ -189,6 +189,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private ImageView mMakeupButton;
     private SeekBar mMakeupSeekBar;
     private SeekBar mBokehSeekBar;
+    private TextView mBokehTipText;
+    private RotateLayout mBokehTipRect;
     private View mMakeupSeekBarLayout;
     private View mSeekbarBody;
     private TextView mRecordingTimeView;
@@ -357,6 +359,8 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                         .apply();
             }
         });
+        mBokehTipText = mRootView.findViewById(R.id.bokeh_status);
+        mBokehTipRect = (RotateLayout) mRootView.findViewById(R.id.bokeh_tip_rect);
         initFilterModeButton();
         initSceneModeButton();
         initSwitchCamera();
@@ -618,9 +622,20 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mBokehSeekBar.setVisibility(View.VISIBLE);
             mVideoButton.setVisibility(View.INVISIBLE);
         } else {
+            if (mBokehTipRect != null) {
+                mBokehTipRect.setVisibility(View.INVISIBLE);
+            }
             mBokehSeekBar.setVisibility(View.INVISIBLE);
             mVideoButton.setVisibility(View.VISIBLE);
         }
+    }
+
+    public TextView getBokehTipView() {
+        return mBokehTipText;
+    }
+
+    public RotateLayout getBokehTipRct() {
+        return mBokehTipRect;
     }
 
     // called from onResume but only the first time
@@ -1544,6 +1559,16 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
                 mSceneModeName.setRotation(0);
                 mSceneModeLabelCloseIcon.setRotation(0);
                 mSceneModeLabelRect.setOrientation(orientation, false);
+            }
+        }
+
+        if (mBokehTipRect != null) {
+            if (orientation == 180) {
+                mBokehTipText.setRotation(180);
+                mBokehTipRect.setOrientation(0, false);
+            } else {
+                mBokehTipText.setRotation(0);
+                mBokehTipRect.setOrientation(orientation, false);
             }
         }
 
