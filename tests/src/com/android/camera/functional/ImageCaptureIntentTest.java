@@ -132,7 +132,7 @@ public class ImageCaptureIntentTest extends ActivityInstrumentationTestCase2 <Ca
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                getActivity().findViewById(R.id.btn_done).performClick();
+                getActivity().findViewById(R.id.done_button).performClick();
             }
         });
     }
