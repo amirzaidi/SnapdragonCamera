@@ -358,7 +358,7 @@ public class CameraControls extends RotatableLayout {
         if (retake != null) {
             mReviewRetakeButton = retake;
             mReviewCancelButton = findViewById(R.id.btn_cancel);
-            mReviewDoneButton = findViewById(R.id.btn_done);
+            mReviewDoneButton = findViewById(R.id.done_button);
 
             center(mReviewRetakeButton, shutter, rotation);
             toLeft(mReviewCancelButton, shutter, rotation);
