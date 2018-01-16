@@ -601,6 +601,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
     }
 
     public int getInitialCameraId(SharedPreferences pref) {
+        int switchId = Integer.parseInt(
+                pref.getString(SettingsManager.KEY_SWITCH_CAMERA,"-1"));
+        CaptureModule.LOGICAL_ID = switchId;
+        Log.d(TAG,"LOGICAL_ID = " + switchId);
+        if (switchId != -1) return switchId;
         String value = pref.getString(SettingsManager.KEY_CAMERA_ID, "0");
         int frontBackId = Integer.parseInt(value);
         if (frontBackId == CaptureModule.FRONT_ID) return frontBackId;
@@ -1175,9 +1180,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
         List<String> res = new ArrayList<>();
         for (int i = 0; i < sizes.length; i++) {
             if (CameraSettings.VIDEO_QUALITY_TABLE.containsKey(sizes[i].toString())) {
-                int profile = CameraSettings.VIDEO_QUALITY_TABLE.get(sizes[i].toString());
-
-                if (CamcorderProfile.hasProfile(cameraId, profile)) {
+                Integer profile = CameraSettings.VIDEO_QUALITY_TABLE.get(sizes[i].toString());
+                if (profile != null) {
                     res.add(sizes[i].toString());
                 }
             }
