@@ -116,6 +116,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_SCEND_MODE_INSTRUCTIONAL = "pref_camera2_scenemode_instructional";
     public static final String KEY_REDEYE_REDUCTION = "pref_camera2_redeyereduction_key";
     public static final String KEY_CAMERA_ID = "pref_camera2_id_key";
+    public static final String KEY_SWITCH_CAMERA = "pref_camera2_switch_camera_key";
     public static final String KEY_PICTURE_SIZE = "pref_camera2_picturesize_key";
     public static final String KEY_ISO = "pref_camera2_iso_key";
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
@@ -207,6 +208,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 String cameraId = cameraIdList[i];
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
+                Log.d(TAG,"cameraIdList size ="+cameraIdList.length);
                 byte monoOnly = 0;
                 try {
                     monoOnly = characteristics.get(CaptureModule.MetaDataMonoOnlyKey);
@@ -853,11 +855,26 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     private void buildCameraId() {
         int numOfCameras = mCharacteristics.size();
+        CharSequence[] fullEntryValues = new CharSequence[numOfCameras + 1];
+        CharSequence[] fullEntries = new CharSequence[numOfCameras + 1];
+        for(int i = 0; i < numOfCameras ; i++) {
+            int facing = mCharacteristics.get(i).get(CameraCharacteristics.LENS_FACING);
+            String facingString =
+                    facing == CameraCharacteristics.LENS_FACING_FRONT? "front" : "back";
+            fullEntries[i] = "camera " + i +" facing:"+facingString;
+            fullEntryValues[i] = "" + i;
+            Log.d(TAG,"add "+fullEntries[i]+"="+ fullEntryValues[i]);
+        }
+        fullEntries[numOfCameras] = "disable";
+        fullEntryValues[numOfCameras] = "" + -1;
+        ListPreference switchPref = mPreferenceGroup.findPreference(KEY_SWITCH_CAMERA);
+        switchPref.setEntries(fullEntries);
+        switchPref.setEntryValues(fullEntryValues);
         if (!mIsFrontCameraPresent) {
+            Log.d(TAG,"no front camera,remove camera id pref");
             removePreference(mPreferenceGroup, KEY_CAMERA_ID);
             return;
         }
-
         CharSequence[] entryValues = new CharSequence[numOfCameras];
         CharSequence[] entries = new CharSequence[numOfCameras];
         //TODO: Modify this after bayer/mono/front/back determination is done
@@ -949,6 +966,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ArrayList<String> supported = new ArrayList<String>();
         supported.add("off");
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        if (videoQuality == null) return supported;
         String videoSizeStr = videoQuality.getValue();
         if (videoSizeStr != null) {
             Size videoSize = parseSize(videoSizeStr);
@@ -1297,8 +1315,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
     private boolean isCurrentVideoResolutionSupportedByEncoder(VideoEncoderCap encoderCap) {
         boolean supported = false;
         ListPreference videoQuality = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        if (videoQuality == null) return supported;
         String videoSizeStr = videoQuality.getValue();
-
         if (videoSizeStr != null) {
             Size videoSize = parseSize(videoSizeStr);
 
