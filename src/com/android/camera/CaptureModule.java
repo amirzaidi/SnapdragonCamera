@@ -28,6 +28,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
@@ -72,6 +73,7 @@ import android.os.Bundle;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Range;
@@ -256,6 +258,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                     byte[].class);
     public static final CameraCharacteristics.Key<int[]> hfrSizeList =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.hfr.sizes", int[].class);
+    public static final CaptureRequest.Key<Boolean> bokeh_enable = new CaptureRequest.Key<>(
+            "org.codeaurora.qcamera3.bokeh.enable", Boolean.class);
+    public static final CaptureRequest.Key<Integer> bokeh_blur_level = new CaptureRequest.Key<>(
+            "org.codeaurora.qcamera3.bokeh.blurLevel", Integer.class);
 
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
@@ -387,6 +393,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mHighSpeedCapture = false;
     private boolean mHighSpeedRecordingMode = false; //HFR
     private int mHighSpeedCaptureRate;
+    private boolean mBokehEnabled = false;
+    private CaptureRequest.Builder mBokehRequestBuilder;
     private CaptureRequest.Builder mVideoRequestBuilder;
 
     public static int statsdata[] = new int[1024];
@@ -2179,6 +2187,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applySaturationLevel(builder);
         applyAntiBandingLevel(builder);
         applyHistogram(builder);
+        enableBokeh(builder);
     }
 
     /**
@@ -2299,6 +2308,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         stopBackgroundThread();
         mLastJpegData = null;
         setProModeVisible();
+        setBokehModeVisible();
         mJpegImageData = null;
         closeVideoFileDescriptor();
     }
@@ -2524,6 +2534,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mUI.enableShutter(true);
         mUI.enableVideo(true);
         setProModeVisible();
+        setBokehModeVisible();
 
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         if (Integer.parseInt(scene) != SettingsManager.SCENE_MODE_UBIFOCUS_INT) {
@@ -4097,6 +4108,36 @@ public class CaptureModule implements CameraModule, PhotoController,
         updateGraghViewVisibility(View.GONE);
     }
 
+    private void enableBokeh(CaptureRequest.Builder request) {
+        if (mBokehEnabled) {
+            mBokehRequestBuilder = request;
+            try {
+                request.set(CaptureModule.bokeh_enable, true);
+                final SharedPreferences prefs =
+                        PreferenceManager.getDefaultSharedPreferences(mActivity);
+                int progress = prefs.getInt(SettingsManager.KEY_BOKEH_BLUR_DEGREE, 50);
+                request.set(CaptureModule.bokeh_blur_level, progress);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "can not find vendor tag : org.codeaurora.qcamera3.bokeh");
+            }
+        }
+    }
+
+    public void setBokehBlurDegree(int degree) {
+        if (!checkSessionAndBuilder(mCaptureSession[getMainCameraId()], mBokehRequestBuilder)) {
+            return;
+        }
+        try {
+            mBokehRequestBuilder.set(CaptureModule.bokeh_blur_level, degree);
+            mCaptureSession[getMainCameraId()].setRepeatingRequest(mBokehRequestBuilder
+                    .build(), mCaptureCallback, mCameraHandler);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "can not find vendor tag : " + CaptureModule.bokeh_blur_level);
+        } catch (CameraAccessException e) {
+            Log.e(TAG, "Camera Access Exception in setBokehBlurDegree");
+        }
+    }
+
     private void updateGraghViewVisibility(final int visibility) {
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
@@ -4239,7 +4280,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         if (mode != CaptureRequest.CONTROL_SCENE_MODE_DISABLED
                 && mode != SettingsManager.SCENE_MODE_DUAL_INT
-                && mode != SettingsManager.SCENE_MODE_PROMODE_INT) {
+                && mode != SettingsManager.SCENE_MODE_PROMODE_INT
+                && mode != SettingsManager.SCENE_MODE_BOKEH_INT) {
             request.set(CaptureRequest.CONTROL_SCENE_MODE, mode);
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_USE_SCENE_MODE);
         } else {
@@ -5061,6 +5103,18 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         }
         mUI.initializeProMode(!mPaused && promode);
+    }
+
+    private void setBokehModeVisible() {
+        String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
+        if (scene != null) {
+            int mode = Integer.parseInt(scene);
+            mBokehEnabled = mode == SettingsManager.SCENE_MODE_BOKEH_INT;
+        }
+        mUI.initializeBokehMode(!mPaused && mBokehEnabled);
+        if (mPaused || !mBokehEnabled) {//disable bokeh mode
+            mBokehRequestBuilder = null;
+        }
     }
 	
     boolean checkSessionAndBuilder(CameraCaptureSession session, CaptureRequest.Builder builder) {
