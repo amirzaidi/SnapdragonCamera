@@ -244,7 +244,7 @@ public class FocusOverlayManager {
 
         if (needAutoFocusCall()) {
             // User releases half-pressed focus key.
-            if (mState == STATE_FOCUSING || mState == STATE_SUCCESS
+            if (mState == STATE_SUCCESS
                     || mState == STATE_FAIL) {
                 cancelAutoFocus();
             }

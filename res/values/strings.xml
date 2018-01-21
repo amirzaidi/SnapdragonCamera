@@ -412,6 +412,7 @@
     <!-- Scene mode for refocus feature [CHAR LIMIT=16] -->
     <string name="pref_camera_scenemode_entry_refocus">UbiFocus</string>
     <string name="pref_camera_scenemode_entry_optizoom">OptiZoom</string>
+    <string name="pref_camera_scenemode_entry_bokeh">Bokeh</string>
 
     <!-- Settings menu, scene mode labels [CHAR LIMIT=50] -->
     <string name="pref_camera_scenemode_label_auto">NONE</string>

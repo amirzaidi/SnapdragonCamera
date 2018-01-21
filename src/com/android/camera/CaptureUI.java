@@ -188,6 +188,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     private View mFrontBackSwitcher;
     private ImageView mMakeupButton;
     private SeekBar mMakeupSeekBar;
+    private SeekBar mBokehSeekBar;
     private View mMakeupSeekBarLayout;
     private View mSeekbarBody;
     private TextView mRecordingTimeView;
@@ -334,6 +335,26 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             @Override
             public void onClick(View v) {
                 mSettingsManager.setValue(SettingsManager.KEY_SCENE_MODE, "" + SettingsManager.SCENE_MODE_AUTO_INT);
+            }
+        });
+        mBokehSeekBar = (SeekBar) mRootView.findViewById(R.id.bokeh_seekbar);
+        mBokehSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                module.setBokehBlurDegree(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                final SharedPreferences prefs =
+                        PreferenceManager.getDefaultSharedPreferences(mActivity);
+                prefs.edit().putInt(SettingsManager.KEY_BOKEH_BLUR_DEGREE, seekBar.getProgress())
+                        .apply();
             }
         });
         initFilterModeButton();
@@ -588,6 +609,20 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             mVideoButton.setVisibility(View.VISIBLE);
     }
 
+    public void initializeBokehMode(boolean bokehmode) {
+        if (bokehmode) {
+            final SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(mActivity);
+            int progress = prefs.getInt(SettingsManager.KEY_BOKEH_BLUR_DEGREE, 50);
+            mBokehSeekBar.setProgress(progress);
+            mBokehSeekBar.setVisibility(View.VISIBLE);
+            mVideoButton.setVisibility(View.INVISIBLE);
+        } else {
+            mBokehSeekBar.setVisibility(View.INVISIBLE);
+            mVideoButton.setVisibility(View.VISIBLE);
+        }
+    }
+
     // called from onResume but only the first time
     public void initializeFirstTime() {
         // Initialize shutter button.
@@ -663,6 +698,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void initSwitchCamera() {
         mFrontBackSwitcher.setVisibility(View.INVISIBLE);
         String value = mSettingsManager.getValue(SettingsManager.KEY_CAMERA_ID);
+        Log.d(TAG,"value of KEY_CAMERA_ID is null? " + (value==null));
         if (value == null)
             return;
 

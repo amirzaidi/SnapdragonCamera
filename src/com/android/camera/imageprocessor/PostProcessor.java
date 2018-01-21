@@ -682,6 +682,8 @@ public class PostProcessor{
         if(setFilter(postFilterId) || isFlashModeOn || isTrackingFocusOn || isMakeupOn || isSelfieMirrorOn
                 || PersistUtil.getCameraZSLDisabled()
                 || !SettingsManager.getInstance().isZSLInAppEnabled()
+                || SettingsManager.SCENE_MODE_BOKEH_STRING.equals(
+                        SettingsManager.getInstance().getValue(SettingsManager.KEY_SCENE_MODE))
                 || "enable".equals(
                          SettingsManager.getInstance().getValue(SettingsManager.KEY_AUTO_HDR))
                 || SettingsManager.getInstance().isCamera2HDRSupport()

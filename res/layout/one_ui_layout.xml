@@ -222,4 +222,16 @@
             </com.android.camera.ui.RotateLayout>
         </RelativeLayout>
     </LinearLayout>
+
+    <SeekBar
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:maxHeight="3dip"
+        android:minHeight="1dip"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="90dp"
+        android:progressDrawable="@drawable/beautify_progressbar_style"
+        android:thumb="@drawable/ic_beautify_oval"
+        android:id="@+id/bokeh_seekbar"
+        android:visibility="invisible"/>
 </com.android.camera.ui.OneUICameraControls>
